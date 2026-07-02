@@ -77,7 +77,9 @@
 
   /* photo tagging */
   .stage{position:relative;margin-top:14px;border-radius:14px;overflow:hidden;border:1px solid var(--panel-line);touch-action:none;user-select:none;}
-  .stage img{display:block;width:100%;}
+  .stage img{display:block;width:100%;pointer-events:none;-webkit-user-drag:none;user-select:none;}
+  .stage .box .del{position:absolute;top:-10px;right:-10px;width:22px;height:22px;border-radius:50%;background:#ff9a8f;color:#3a0a05;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;cursor:pointer;box-shadow:0 1px 4px #0007;}
+  .stage .box.live{pointer-events:none;}
   .stage .box{position:absolute;border:2px solid var(--gold);border-radius:8px;box-shadow:0 0 0 9999px #14102b00;background:#ffce7218;}
   .stage .box b{position:absolute;top:-9px;left:-2px;transform:translateY(-100%);background:var(--gold);color:#3a2a05;font-size:10px;font-weight:800;padding:2px 6px;border-radius:6px;white-space:nowrap;}
   .hint{font-size:12.5px;color:var(--muted);margin-top:8px;}
@@ -171,10 +173,14 @@ async function auth(mode){
   if(!email||password.length<6){ return showMsg(m,'err','Enter an email and a password of at least 6 characters.'); }
   showMsg(m,'info','Working…');
   const fn = mode==='up' ? sb.auth.signUp({email,password}) : sb.auth.signInWithPassword({email,password});
-  const { error } = await fn;
+  const { data, error } = await fn;
   if(error){
-    if(/confirm/i.test(error.message)) showMsg(m,'info','Check your email to confirm, then sign in. (Or ask me to switch confirmation off for now.)');
+    if(/not confirmed|confirm/i.test(error.message)) showMsg(m,'info','Your account needs confirming. Ask the keeper to confirm it, then tap Sign in.');
     else showMsg(m,'err',error.message);
+  } else if(mode==='up' && !data.session){
+    showMsg(m,'info','Account created. Now tap Sign in with the same email and password.');
+  } else {
+    showMsg(m,'info','Signed in\u2026');
   }
 }
 
@@ -256,41 +262,51 @@ function onFile(e){
   const f=e.target.files[0]; if(!f) return;
   const url=URL.createObjectURL(f);
   const wrap=$('#stagewrap'); wrap.innerHTML='';
-  const stage=el(`<div class="stage" id="stage"><img id="ph" src="${url}" alt=""/></div>`);
+  const stage=el(`<div class="stage" id="stage"><img id="ph" src="${url}" alt="" draggable="false"/></div>`);
   wrap.append(stage);
   wrap.append(el(`<p class="hint">Drag across each face to mark a person. Each box adds a line below to name them.</p>`));
   enableTagging(stage);
 }
 
 function enableTagging(stage){
-  let drawing=null, start=null;
-  const rect=()=>stage.getBoundingClientRect();
-  const pt=(ev)=>{ const r=rect(); const c=ev.touches?ev.touches[0]:ev; return { x:(c.clientX-r.left)/r.width, y:(c.clientY-r.top)/r.height }; };
+  let start=null, preview=null;
+  const pt=(ev)=>{ const r=stage.getBoundingClientRect(); return { x:(ev.clientX-r.left)/r.width, y:(ev.clientY-r.top)/r.height }; };
+  const finish=()=>{
+    if(!preview) return;
+    const b=preview._box; preview.remove(); preview=null;
+    if(b && b.w>0.03 && b.h>0.03){ TAGS.push({box:b,name:''}); }
+    renderAll();
+  };
   stage.addEventListener('pointerdown',(ev)=>{
     if(ev.target.closest('.box')) return;
-    start=pt(ev); drawing=el('<div class="box"></div>'); stage.append(drawing); stage.setPointerCapture(ev.pointerId);
+    ev.preventDefault();
+    start=pt(ev); preview=el('<div class="box live"></div>'); stage.append(preview);
+    try{ stage.setPointerCapture(ev.pointerId); }catch(e){}
   });
   stage.addEventListener('pointermove',(ev)=>{
-    if(!drawing) return;
+    if(!preview) return;
     const p=pt(ev);
     const x=Math.min(p.x,start.x), y=Math.min(p.y,start.y), w=Math.abs(p.x-start.x), h=Math.abs(p.y-start.y);
-    Object.assign(drawing.style,{left:x*100+'%',top:y*100+'%',width:w*100+'%',height:h*100+'%'});
-    drawing._box={x,y,w,h};
+    Object.assign(preview.style,{left:x*100+'%',top:y*100+'%',width:w*100+'%',height:h*100+'%'});
+    preview._box={x,y,w,h};
   });
-  stage.addEventListener('pointerup',()=>{
-    if(!drawing) return;
-    const b=drawing._box;
-    if(!b || b.w<0.04 || b.h<0.04){ drawing.remove(); drawing=null; return; }
-    const idx=TAGS.length; TAGS.push({box:b,name:''});
-    drawing.append(el(`<b>${idx+1}</b>`));
-    drawing._idx=idx;
-    drawing=null; renderTags();
-  });
+  stage.addEventListener('pointerup',finish);
+  stage.addEventListener('pointercancel',finish);
+  stage.addEventListener('lostpointercapture',finish);
 }
-
-function renderTags(){
+function renderAll(){
+  const stage=$('#stage');
+  if(stage){
+    stage.querySelectorAll('.box').forEach(b=>b.remove());
+    TAGS.forEach((t,i)=>{
+      const b=el(`<div class="box"><b>${i+1}</b><span class="del">\u00d7</span></div>`);
+      Object.assign(b.style,{left:t.box.x*100+'%',top:t.box.y*100+'%',width:t.box.w*100+'%',height:t.box.h*100+'%'});
+      b.querySelector('.del').onclick=(e)=>{ e.stopPropagation(); TAGS.splice(i,1); renderAll(); };
+      stage.append(b);
+    });
+  }
   const list=$('#taglist'); if(!list) return;
-  list.innerHTML = TAGS.length?'<div class="eyebrow" style="margin-bottom:2px">Who\'s in this photo?</div>':'';
+  list.innerHTML = TAGS.length?'<div class="eyebrow" style="margin-bottom:2px">Who is in this photo?</div>':'';
   TAGS.forEach((t,i)=>{
     const row=el(`<div class="tagrow">
       <div class="num">${i+1}</div>
@@ -298,17 +314,8 @@ function renderTags(){
       <button class="x">remove</button>
     </div>`);
     row.querySelector('input').oninput=(e)=>{ TAGS[i].name=e.target.value; };
-    row.querySelector('.x').onclick=()=>{ TAGS.splice(i,1); rebuildBoxes(); renderTags(); };
+    row.querySelector('.x').onclick=()=>{ TAGS.splice(i,1); renderAll(); };
     list.append(row);
-  });
-}
-function rebuildBoxes(){
-  const stage=$('#stage'); if(!stage) return;
-  stage.querySelectorAll('.box').forEach(b=>b.remove());
-  TAGS.forEach((t,i)=>{
-    const b=el(`<div class="box"><b>${i+1}</b></div>`);
-    Object.assign(b.style,{left:t.box.x*100+'%',top:t.box.y*100+'%',width:t.box.w*100+'%',height:t.box.h*100+'%'});
-    stage.append(b);
   });
 }
 
@@ -341,7 +348,7 @@ async function submitMemory(){
       if(subj.error) throw subj.error;
     }
     showMsg(m,'ok','Sent to the queue. '+(STATE.isKeeper?'Open Review to light it up.':'A keeper will review it soon.'));
-    $('#story').value=''; $('#when').value=''; $('#where').value=''; $('#file').value=''; $('#stagewrap').innerHTML=''; TAGS=[]; renderTags();
+    $('#story').value=''; $('#when').value=''; $('#where').value=''; $('#file').value=''; $('#stagewrap').innerHTML=''; TAGS=[]; renderAll();
     await loadPeople();
   }catch(err){ showMsg(m,'err', err.message||'Something went wrong. Nothing was published.'); }
   finally{ btn.disabled=false; btn.textContent=old; }
