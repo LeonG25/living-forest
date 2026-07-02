@@ -11,7 +11,7 @@
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=Nunito:wght@400;500;600;700;800&display=swap');
   :root{
     --night-1:#140f2b; --night-2:#241a46; --panel:#ffffff0d; --panel-line:#ffffff1f;
-    --gold:#ffce72; --gold-soft:#ffe6ad; --cream:#f4ecdd; --muted:#a79edl; --muted:#a79ed6;
+    --gold:#ffce72; --gold-soft:#ffe6ad; --cream:#f4ecdd; --muted:#a79ed6;
     --violet:#b58fd8; --good:#7fd9a6; --bad:#ff9a8f;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -27,7 +27,6 @@
   input,textarea,select{font-family:inherit;}
   .wrap{max-width:560px;margin:0 auto;padding:18px 16px 120px;}
 
-  /* stars backdrop */
   .stars{position:fixed;inset:0;z-index:-1;overflow:hidden;}
   .stars i{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;opacity:.5;animation:tw 4s infinite ease-in-out;}
   @keyframes tw{0%,100%{opacity:.18}50%{opacity:.7}}
@@ -60,6 +59,7 @@
     font-weight:800;font-size:15px;padding:14px 16px;border-radius:14px;margin-top:18px;}
   .btn:disabled{opacity:.5;}
   .btn.secondary{background:transparent;color:var(--gold-soft);border:1px solid var(--gold);}
+  .btn.danger{background:transparent;color:var(--bad);border:1px solid #ff9a8f66;}
 
   .msg{margin-top:12px;font-size:13.5px;line-height:1.5;padding:10px 12px;border-radius:12px;display:none;}
   .msg.show{display:block;}
@@ -67,7 +67,6 @@
   .msg.err{background:#ff9a8f12;border:1px solid #ff9a8f44;color:var(--bad);}
   .msg.info{background:#b58fd815;border:1px solid #b58fd844;color:var(--violet);}
 
-  /* tabs */
   .tabs{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:6px;
     padding:10px 10px calc(10px + env(safe-area-inset-bottom));background:#0e0a22e8;
     border-top:1px solid var(--panel-line);backdrop-filter:blur(8px);z-index:5;}
@@ -75,12 +74,17 @@
     padding:9px 14px;border-radius:999px;}
   .tabs button.active{color:#3a2a05;background:linear-gradient(180deg,var(--gold-soft),var(--gold));}
 
-  /* photo tagging */
+  /* kind selector */
+  .kindsel{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px;}
+  .kindsel button{background:#0e0a22;border:1px solid var(--panel-line);color:var(--muted);
+    font-weight:800;font-size:12.5px;padding:8px 13px;border-radius:999px;}
+  .kindsel button.on{color:#3a2a05;background:linear-gradient(180deg,var(--gold-soft),var(--gold));border-color:transparent;}
+
   .stage{position:relative;margin-top:14px;border-radius:14px;overflow:hidden;border:1px solid var(--panel-line);touch-action:none;user-select:none;}
   .stage img{display:block;width:100%;pointer-events:none;-webkit-user-drag:none;user-select:none;}
   .stage .box .del{position:absolute;top:-10px;right:-10px;width:22px;height:22px;border-radius:50%;background:#ff9a8f;color:#3a0a05;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;cursor:pointer;box-shadow:0 1px 4px #0007;}
   .stage .box.live{pointer-events:none;}
-  .stage .box{position:absolute;border:2px solid var(--gold);border-radius:8px;box-shadow:0 0 0 9999px #14102b00;background:#ffce7218;}
+  .stage .box{position:absolute;border:2px solid var(--gold);border-radius:8px;background:#ffce7218;}
   .stage .box b{position:absolute;top:-9px;left:-2px;transform:translateY(-100%);background:var(--gold);color:#3a2a05;font-size:10px;font-weight:800;padding:2px 6px;border-radius:6px;white-space:nowrap;}
   .hint{font-size:12.5px;color:var(--muted);margin-top:8px;}
   .taglist{margin-top:6px;}
@@ -88,27 +92,36 @@
   .tagrow .num{width:22px;height:22px;flex:none;border-radius:50%;background:#ffce7222;color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;}
   .tagrow input{flex:1;}
   .tagrow .x{flex:none;background:transparent;color:var(--bad);border:1px solid #ff9a8f44;border-radius:10px;padding:8px 10px;font-weight:800;}
+  .addppl{background:transparent;color:var(--gold-soft);border:1px dashed var(--gold);border-radius:10px;padding:9px 12px;font-weight:800;font-size:12.5px;margin-top:10px;}
 
   .item{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--panel-line);}
   .item:last-child{border-bottom:none;}
   .thumb{width:64px;height:64px;flex:none;border-radius:12px;object-fit:cover;background:#0e0a22;border:1px solid var(--panel-line);}
+  .kindtag{width:64px;flex:none;font-size:10px;text-align:center;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.5px;}
   .item .meta{font-size:13px;color:var(--muted);line-height:1.4;}
   .item .meta b{color:var(--cream);}
   .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;}
   .chip{font-size:11px;background:#b58fd81f;border:1px solid #b58fd83a;color:var(--cream);padding:2px 8px;border-radius:999px;}
-  .approve{background:var(--good);color:#06351f;font-weight:800;border-radius:10px;padding:8px 12px;font-size:12.5px;margin-top:8px;}
+  .rowbtns{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap;}
+  .rowbtns button{font-size:12px;font-weight:800;border-radius:10px;padding:7px 11px;border:1px solid var(--panel-line);background:transparent;color:var(--cream);}
+  .rowbtns .approve{background:var(--good);color:#06351f;border-color:transparent;}
+  .rowbtns .edit{color:var(--gold-soft);border-color:#ffce7255;}
+  .rowbtns .del{color:var(--bad);border-color:#ff9a8f44;}
+  .mediaprev{width:100%;margin-top:4px;border-radius:10px;overflow:hidden;}
+  .mediaprev audio{width:100%;}
+  .mediaprev video{width:100%;border-radius:10px;background:#000;}
   .empty{color:var(--muted);font-size:14px;line-height:1.5;text-align:center;padding:24px 8px;}
-  .pill{display:inline-block;font-size:11px;font-weight:800;color:var(--gold);background:#ffce7218;border:1px solid #ffce7240;border-radius:999px;padding:2px 9px;margin-left:8px;}
   .spin{display:inline-block;width:15px;height:15px;border:2px solid #3a2a0566;border-top-color:#3a2a05;border-radius:50%;animation:sp .7s linear infinite;}
   @keyframes sp{to{transform:rotate(360deg)}}
   .center{min-height:70dvh;display:flex;flex-direction:column;justify-content:center;}
   .footnote{text-align:center;color:var(--muted);font-size:12px;margin-top:18px;}
+  .curmedia{margin-top:12px;}
+  .curmedia img{width:100%;border-radius:12px;border:1px solid var(--panel-line);display:block;}
 </style>
 </head>
 <body>
 <div class="stars" id="stars"></div>
 <div class="wrap" id="app"></div>
-
 <datalist id="people-list"></datalist>
 
 <script>
@@ -116,15 +129,21 @@ const SUPABASE_URL = 'https://oabcdrktuikifbormjip.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ---------- tiny helpers ----------
 const $ = (s, r=document) => r.querySelector(s);
 const el = (html) => { const t=document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstChild; };
 const esc = (s) => (s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const star = (sz=26,lit=true)=>`<svg class="stardot" width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none"><path d="M12 2.6l2.5 5.6 6.1.6-4.6 4 1.4 6-5.4-3.2L6.6 18.8l1.4-6-4.6-4 6.1-.6z" fill="${lit?'#ffce72':'#3a2f55'}" stroke="#ffe6ad" stroke-width="${lit?0:1}" opacity="${lit?1:.7}"/></svg>`;
 
-let STATE = { user:null, isKeeper:false, people:[], tab:'contribute' };
+const KINDS = {
+  photo:  {label:'Photo',  file:true,  accept:'image/*', boxes:true,  story:"Its story — in whose words?"},
+  voice:  {label:'Voice',  file:true,  accept:'audio/*', boxes:false, story:"About this recording — who's speaking, what it is"},
+  text:   {label:'Story',  file:false, accept:null,      boxes:false, story:"The memory — in their words"},
+  video:  {label:'Video',  file:true,  accept:'video/*', boxes:false, story:"About this video"},
+  object: {label:'Object', file:true,  accept:'image/*', boxes:false, story:"What is it, and what does it mean?"},
+};
 
-// twinkling backdrop
+let STATE = { user:null, isKeeper:false, people:[], tab:'contribute', addKind:'photo', editing:null, returnTab:'forest' };
+
 (function(){ const s=$('#stars'); let h=''; for(let i=0;i<46;i++){h+=`<i style="left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*4}s"></i>`;} s.innerHTML=h; })();
 
 // ---------- auth ----------
@@ -138,16 +157,13 @@ async function init(){
     if(!u && STATE.user){ STATE.user=null; renderAuth(); }
   });
 }
-
 async function afterLogin(){
-  // make sure a profile row exists for provenance
   await sb.from('profiles').upsert({ id:STATE.user.id, display_name:STATE.user.email }).select();
   const { data:prof } = await sb.from('profiles').select('is_keeper').eq('id',STATE.user.id).single();
   STATE.isKeeper = !!prof?.is_keeper;
   await loadPeople();
   render();
 }
-
 function renderAuth(){
   const app=$('#app'); app.innerHTML='';
   app.append(el(`<div class="center">
@@ -166,12 +182,11 @@ function renderAuth(){
   $('#signin').onclick = ()=>auth('in');
   $('#signup').onclick = ()=>auth('up');
 }
-
 async function auth(mode){
   const email=$('#email').value.trim(), password=$('#pw').value;
   const m=$('#authmsg');
   if(!email||password.length<6){ return showMsg(m,'err','Enter an email and a password of at least 6 characters.'); }
-  showMsg(m,'info','Working…');
+  showMsg(m,'info','Working\u2026');
   const fn = mode==='up' ? sb.auth.signUp({email,password}) : sb.auth.signInWithPassword({email,password});
   const { data, error } = await fn;
   if(error){
@@ -179,12 +194,10 @@ async function auth(mode){
     else showMsg(m,'err',error.message);
   } else if(mode==='up' && !data.session){
     showMsg(m,'info','Account created. Now tap Sign in with the same email and password.');
-  } else {
-    showMsg(m,'info','Signed in\u2026');
-  }
+  } else { showMsg(m,'info','Signed in\u2026'); }
 }
 
-// ---------- data ----------
+// ---------- data helpers ----------
 async function loadPeople(){
   const { data } = await sb.from('people').select('id,display_name').order('display_name');
   STATE.people = data||[];
@@ -199,6 +212,18 @@ async function ensurePerson(name){
   if(error) throw error;
   STATE.people.push(data); return data.id;
 }
+async function uploadFile(file){
+  const ext=(file.name.split('.').pop()||'bin').toLowerCase();
+  const path=`${STATE.user.id}/${crypto.randomUUID()}.${ext}`;
+  const up=await sb.storage.from('family').upload(path,file,{contentType:file.type||undefined});
+  if(up.error) throw up.error;
+  return path;
+}
+async function signed(path){
+  if(!path) return '';
+  try{ const s=await sb.storage.from('family').createSignedUrl(path,3600); return s.data?.signedUrl||''; }catch(e){ return ''; }
+}
+function canManage(a){ return STATE.isKeeper || a.contributor_user===STATE.user.id; }
 
 // ---------- app shell ----------
 function render(){
@@ -207,41 +232,64 @@ function render(){
     <div class="brand">${star(26)}<h1 class="disp">The Living Forest</h1></div>
     <div style="text-align:right"><div class="who">${esc(STATE.user.email)}</div><button class="ghost" id="out">Sign out</button></div>
   </header>`));
-  const body=el('<div id="body"></div>'); app.append(body);
+  app.append(el('<div id="body"></div>'));
   const tabs=el(`<nav class="tabs">
-    <button data-t="contribute">Add a memory</button>
+    <button data-t="contribute">Add</button>
     ${STATE.isKeeper?'<button data-t="review">Review</button>':''}
     <button data-t="forest">The forest</button>
   </nav>`); app.append(tabs);
-  tabs.querySelectorAll('button').forEach(b=>{ b.onclick=()=>{STATE.tab=b.dataset.t; paint();}; });
+  tabs.querySelectorAll('button').forEach(b=>{ b.onclick=()=>{ STATE.editing=null; STATE.tab=b.dataset.t; paint(); }; });
   $('#out').onclick = ()=>sb.auth.signOut();
   paint();
 }
 function paint(){
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.t===STATE.tab));
   const body=$('#body'); body.innerHTML='';
-  if(STATE.tab==='contribute') viewContribute(body);
+  if(STATE.tab==='contribute') viewForm(body);
   if(STATE.tab==='review') viewReview(body);
   if(STATE.tab==='forest') viewForest(body);
 }
 
-// ---------- CONTRIBUTE ----------
-let TAGS=[]; // {box:{x,y,w,h}, name}
-function viewContribute(root){
-  TAGS=[];
+// ---------- ADD / EDIT form ----------
+let TAGS=[];        // [{box:{x,y,w,h}, name}]  photo faces
+let PEOPLE=[];      // [name]  people-about for non-photo
+let NEWFILE=null;   // File chosen to upload/replace
+
+function viewForm(root){
+  TAGS=[]; PEOPLE=['']; NEWFILE=null;
+  const editing = STATE.editing;
+  const kind = editing ? editing.kind : STATE.addKind;
+  const K = KINDS[kind];
+
+  if(editing){
+    // hydrate from the artefact being edited
+    (editing.subjects||[]).forEach(s=>{
+      const nm = s.people?.display_name||'';
+      if(s.detail && typeof s.detail==='object') TAGS.push({box:s.detail, name:nm});
+      else PEOPLE.push(nm);
+    });
+    if(!PEOPLE.length) PEOPLE=[''];
+  }
+
+  const meta = editing?.metadata||{};
   root.append(el(`<div class="card">
-    <div class="eyebrow">Tend the forest</div>
-    <h2 class="disp">Add a memory</h2>
-    <p class="lede">Choose a photo, mark who's in it, and tell its story. It waits in the queue until you approve it.</p>
-    <label class="field"><span>The photo</span><input id="file" type="file" accept="image/*"/></label>
+    <div class="eyebrow">${editing?'Edit':'Tend the forest'}</div>
+    <h2 class="disp">${editing?'Edit this memory':'Add a memory'}</h2>
+    ${editing?'':`<p class="lede">Choose what kind of memory, then tell its story. It waits in the queue until a keeper lights it up.</p>
+    <div class="kindsel" id="kindsel">
+      ${Object.entries(KINDS).map(([k,v])=>`<button data-k="${k}" class="${k===kind?'on':''}">${v.label}</button>`).join('')}
+    </div>`}
+
+    <div id="filewrap"></div>
     <div id="stagewrap"></div>
     <div class="taglist" id="taglist"></div>
+    <div id="pplwrap"></div>
 
-    <label class="field"><span>Its story — in whose words?</span>
-      <textarea id="story" placeholder="What's happening here, who they are, what you remember…"></textarea></label>
+    <label class="field"><span id="storylbl">${esc(K.story)}</span>
+      <textarea id="story" placeholder="What's happening here, who they are, what you remember\u2026">${esc(editing?.body||'')}</textarea></label>
     <div class="row">
-      <label class="field"><span>Roughly when</span><input id="when" type="text" placeholder="e.g. 1962, or “the 60s”"/></label>
-      <label class="field"><span>Where</span><input id="where" type="text" placeholder="e.g. Casablanca"/></label>
+      <label class="field"><span>Roughly when</span><input id="when" type="text" placeholder="e.g. 1962, or \u201cthe 60s\u201d" value="${esc(meta.when||'')}"/></label>
+      <label class="field"><span>Where</span><input id="where" type="text" placeholder="e.g. Casablanca" value="${esc(meta.where||'')}"/></label>
     </div>
     <label class="field"><span>How sure are we?</span>
       <select id="certainty">
@@ -250,24 +298,74 @@ function viewContribute(root){
         <option value="uncertain">Uncertain — a guess worth keeping</option>
       </select></label>
 
-    <button class="btn" id="submit">Send to the queue</button>
+    <button class="btn" id="submit">${editing?'Save changes':'Send to the queue'}</button>
+    ${editing?'<button class="btn secondary" id="cancel">Cancel</button>':''}
+    ${editing&&canManage(editing)?'<button class="btn danger" id="delete">Delete this memory</button>':''}
     <div class="msg" id="cmsg"></div>
   </div>`));
 
-  $('#file').onchange = onFile;
-  $('#submit').onclick = submitMemory;
+  if(editing) $('#certainty').value = editing.certainty||'remembered';
+
+  if(!editing){
+    $('#kindsel').querySelectorAll('button').forEach(b=>{
+      b.onclick=()=>{ STATE.addKind=b.dataset.k; paint(); };
+    });
+  }
+
+  renderFileArea(kind, editing);
+  renderPeopleArea(kind);
+  $('#submit').onclick = ()=> editing ? saveEdit() : submitNew();
+  if(editing){ $('#cancel').onclick=()=>{ STATE.editing=null; STATE.tab=STATE.returnTab; paint(); }; }
+  const delBtn=$('#delete'); if(delBtn) delBtn.onclick=()=>deleteArtefact(editing);
 }
 
-function onFile(e){
+async function renderFileArea(kind, editing){
+  const K=KINDS[kind];
+  const fw=$('#filewrap'); fw.innerHTML='';
+  if(!K.file){ return; }
+  const verb = editing ? 'Replace the file (optional)' : (kind==='object'?'A photo of the object':kind==='voice'?'The recording':kind==='video'?'The video':'The photo');
+  fw.append(el(`<label class="field"><span>${verb}</span><input id="file" type="file" accept="${K.accept}"/></label>`));
+
+  // show current media when editing
+  if(editing && editing.storage_path){
+    const url = await signed(editing.storage_path);
+    const cur=$('#filewrap');
+    if(kind==='photo'||kind==='object'){
+      if(K.boxes){ mountStage(url); }
+      else cur.append(el(`<div class="curmedia"><img src="${url}" alt=""/></div>`));
+    } else if(kind==='voice'){
+      cur.append(el(`<div class="curmedia mediaprev"><audio controls src="${url}"></audio></div>`));
+    } else if(kind==='video'){
+      cur.append(el(`<div class="curmedia mediaprev"><video controls src="${url}"></video></div>`));
+    }
+  }
+  $('#file').onchange = (e)=>onFile(e, kind);
+}
+
+function onFile(e, kind){
   const f=e.target.files[0]; if(!f) return;
+  NEWFILE=f;
   const url=URL.createObjectURL(f);
+  if(KINDS[kind].boxes){
+    TAGS=[];  // new image, start tags fresh
+    mountStage(url);
+  } else {
+    const fw=$('#filewrap');
+    let prev=fw.querySelector('.curmedia'); if(prev) prev.remove();
+    if(kind==='video') fw.append(el(`<div class="curmedia mediaprev"><video controls src="${url}"></video></div>`));
+    else if(kind==='voice') fw.append(el(`<div class="curmedia mediaprev"><audio controls src="${url}"></audio></div>`));
+    else fw.append(el(`<div class="curmedia"><img src="${url}" alt=""/></div>`));
+  }
+}
+
+function mountStage(url){
   const wrap=$('#stagewrap'); wrap.innerHTML='';
   const stage=el(`<div class="stage" id="stage"><img id="ph" src="${url}" alt="" draggable="false"/></div>`);
   wrap.append(stage);
   wrap.append(el(`<p class="hint">Drag across each face to mark a person. Each box adds a line below to name them.</p>`));
   enableTagging(stage);
+  renderTags();
 }
-
 function enableTagging(stage){
   let start=null, preview=null;
   const pt=(ev)=>{ const r=stage.getBoundingClientRect(); return { x:(ev.clientX-r.left)/r.width, y:(ev.clientY-r.top)/r.height }; };
@@ -275,7 +373,7 @@ function enableTagging(stage){
     if(!preview) return;
     const b=preview._box; preview.remove(); preview=null;
     if(b && b.w>0.03 && b.h>0.03){ TAGS.push({box:b,name:''}); }
-    renderAll();
+    renderTags();
   };
   stage.addEventListener('pointerdown',(ev)=>{
     if(ev.target.closest('.box')) return;
@@ -294,117 +392,211 @@ function enableTagging(stage){
   stage.addEventListener('pointercancel',finish);
   stage.addEventListener('lostpointercapture',finish);
 }
-function renderAll(){
+function renderTags(){
   const stage=$('#stage');
   if(stage){
     stage.querySelectorAll('.box').forEach(b=>b.remove());
     TAGS.forEach((t,i)=>{
       const b=el(`<div class="box"><b>${i+1}</b><span class="del">\u00d7</span></div>`);
       Object.assign(b.style,{left:t.box.x*100+'%',top:t.box.y*100+'%',width:t.box.w*100+'%',height:t.box.h*100+'%'});
-      b.querySelector('.del').onclick=(e)=>{ e.stopPropagation(); TAGS.splice(i,1); renderAll(); };
+      b.querySelector('.del').onclick=(e)=>{ e.stopPropagation(); TAGS.splice(i,1); renderTags(); };
       stage.append(b);
     });
   }
   const list=$('#taglist'); if(!list) return;
   list.innerHTML = TAGS.length?'<div class="eyebrow" style="margin-bottom:2px">Who is in this photo?</div>':'';
   TAGS.forEach((t,i)=>{
-    const row=el(`<div class="tagrow">
-      <div class="num">${i+1}</div>
+    const row=el(`<div class="tagrow"><div class="num">${i+1}</div>
       <input type="text" list="people-list" placeholder="Name this person" value="${esc(t.name)}"/>
-      <button class="x">remove</button>
-    </div>`);
+      <button class="x">remove</button></div>`);
     row.querySelector('input').oninput=(e)=>{ TAGS[i].name=e.target.value; };
-    row.querySelector('.x').onclick=()=>{ TAGS.splice(i,1); renderAll(); };
+    row.querySelector('.x').onclick=()=>{ TAGS.splice(i,1); renderTags(); };
     list.append(row);
   });
 }
 
-async function submitMemory(){
-  const m=$('#cmsg');
-  const file=$('#file').files[0];
-  if(!file) return showMsg(m,'err','Choose a photo first.');
-  const named = TAGS.filter(t=>t.name.trim());
-  const btn=$('#submit'); btn.disabled=true; const old=btn.textContent; btn.innerHTML='<span class="spin"></span> Sending…';
+function renderPeopleArea(kind){
+  const pw=$('#pplwrap'); pw.innerHTML='';
+  if(KINDS[kind].boxes) return;   // photos use face boxes instead
+  pw.append(el(`<label class="field"><span>People in this memory (optional)</span></label>`));
+  const list=el('<div class="taglist" id="ppllist"></div>'); pw.append(list);
+  const add=el('<button class="addppl" type="button">+ add a person</button>'); pw.append(add);
+  add.onclick=()=>{ PEOPLE.push(''); drawPeople(); };
+  drawPeople();
+}
+function drawPeople(){
+  const list=$('#ppllist'); if(!list) return;
+  list.innerHTML='';
+  PEOPLE.forEach((nm,i)=>{
+    const row=el(`<div class="tagrow"><div class="num">${i+1}</div>
+      <input type="text" list="people-list" placeholder="Name a person" value="${esc(nm)}"/>
+      <button class="x">remove</button></div>`);
+    row.querySelector('input').oninput=(e)=>{ PEOPLE[i]=e.target.value; };
+    row.querySelector('.x').onclick=()=>{ PEOPLE.splice(i,1); if(!PEOPLE.length) PEOPLE=['']; drawPeople(); };
+    list.append(row);
+  });
+}
+
+function collectMeta(){
+  const meta={}; const w=$('#when').value.trim(), p=$('#where').value.trim();
+  if(w) meta.when=w; if(p) meta.where=p; return meta;
+}
+async function buildSubjects(artefactId, kind){
+  const rows=[];
+  if(KINDS[kind].boxes){
+    for(const t of TAGS){ if(t.name.trim()){ const pid=await ensurePerson(t.name); rows.push({artefact_id:artefactId, person_id:pid, detail:t.box}); } }
+  } else {
+    for(const nm of PEOPLE){ if(nm.trim()){ const pid=await ensurePerson(nm); rows.push({artefact_id:artefactId, person_id:pid, detail:null}); } }
+  }
+  return rows;
+}
+
+async function submitNew(){
+  const m=$('#cmsg'); const kind=STATE.addKind; const K=KINDS[kind];
+  if(K.file && !NEWFILE) return showMsg(m,'err','Choose a '+(kind==='voice'?'recording':kind==='video'?'video':'file')+' first.');
+  if(!K.file && !$('#story').value.trim()) return showMsg(m,'err','Write the memory first.');
+  const btn=$('#submit'); btn.disabled=true; const old=btn.textContent; btn.innerHTML='<span class="spin"></span> Sending\u2026';
   try{
-    // 1) upload to the private bucket
-    const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
-    const path=`${STATE.user.id}/${crypto.randomUUID()}.${ext}`;
-    const up=await sb.storage.from('family').upload(path,file,{contentType:file.type});
-    if(up.error) throw up.error;
-    // 2) the artefact, with provenance + certainty, waiting for review
-    const meta={}; const w=$('#when').value.trim(), p=$('#where').value.trim();
-    if(w) meta.when=w; if(p) meta.where=p;
+    let path=null; if(K.file && NEWFILE) path=await uploadFile(NEWFILE);
     const art=await sb.from('artefacts').insert({
-      kind:'photo', storage_path:path, body:$('#story').value.trim()||null,
+      kind, storage_path:path, body:$('#story').value.trim()||null,
       contributor_user:STATE.user.id, certainty:$('#certainty').value,
-      status:'in_review', metadata:meta
+      status:'in_review', metadata:collectMeta()
     }).select('id').single();
     if(art.error) throw art.error;
-    // 3) the people in it
-    if(named.length){
-      const rows=[];
-      for(const t of named){ const pid=await ensurePerson(t.name); rows.push({artefact_id:art.data.id, person_id:pid, detail:t.box}); }
-      const subj=await sb.from('artefact_subjects').insert(rows);
-      if(subj.error) throw subj.error;
-    }
+    const rows=await buildSubjects(art.data.id, kind);
+    if(rows.length){ const s=await sb.from('artefact_subjects').insert(rows); if(s.error) throw s.error; }
     showMsg(m,'ok','Sent to the queue. '+(STATE.isKeeper?'Open Review to light it up.':'A keeper will review it soon.'));
-    $('#story').value=''; $('#when').value=''; $('#where').value=''; $('#file').value=''; $('#stagewrap').innerHTML=''; TAGS=[]; renderAll();
     await loadPeople();
+    setTimeout(()=>{ STATE.tab=STATE.isKeeper?'review':'forest'; paint(); }, 900);
   }catch(err){ showMsg(m,'err', err.message||'Something went wrong. Nothing was published.'); }
   finally{ btn.disabled=false; btn.textContent=old; }
 }
 
-// ---------- REVIEW (keeper) ----------
+async function saveEdit(){
+  const m=$('#cmsg'); const a=STATE.editing; const kind=a.kind; const K=KINDS[kind];
+  const btn=$('#submit'); btn.disabled=true; const old=btn.textContent; btn.innerHTML='<span class="spin"></span> Saving\u2026';
+  try{
+    let newPath=null, oldPath=null;
+    if(K.file && NEWFILE){ newPath=await uploadFile(NEWFILE); oldPath=a.storage_path; }
+    // owner edits re-enter review; keeper edits keep current status
+    const patch={ body:$('#story').value.trim()||null, certainty:$('#certainty').value, metadata:collectMeta() };
+    if(newPath) patch.storage_path=newPath;
+    if(!STATE.isKeeper) patch.status='in_review';
+    const up=await sb.from('artefacts').update(patch).eq('id',a.id);
+    if(up.error) throw up.error;
+    // reconcile subjects: clear then re-add current set
+    const del=await sb.from('artefact_subjects').delete().eq('artefact_id',a.id);
+    if(del.error) throw del.error;
+    const rows=await buildSubjects(a.id, kind);
+    if(rows.length){ const s=await sb.from('artefact_subjects').insert(rows); if(s.error) throw s.error; }
+    if(newPath && oldPath){ try{ await sb.storage.from('family').remove([oldPath]); }catch(e){} }
+    await loadPeople();
+    showMsg(m,'ok','Saved.'+(!STATE.isKeeper?' It goes back to the keeper for review.':''));
+    setTimeout(()=>{ STATE.editing=null; STATE.tab=STATE.returnTab; paint(); }, 900);
+  }catch(err){ showMsg(m,'err', err.message||'Could not save.'); }
+  finally{ btn.disabled=false; btn.textContent=old; }
+}
+
+async function deleteArtefact(a){
+  if(!confirm('Delete this memory for everyone? This cannot be undone.')) return;
+  const m=$('#cmsg');
+  try{
+    await sb.from('artefact_subjects').delete().eq('artefact_id',a.id);
+    const del=await sb.from('artefacts').delete().eq('id',a.id);
+    if(del.error) throw del.error;
+    if(a.storage_path){ try{ await sb.storage.from('family').remove([a.storage_path]); }catch(e){} }
+    STATE.editing=null; STATE.tab=STATE.returnTab; paint();
+  }catch(err){ if(m) showMsg(m,'err', err.message||'Could not delete.'); else alert(err.message); }
+}
+
+// ---------- REVIEW ----------
 async function viewReview(root){
   root.append(el(`<div class="card"><div class="eyebrow">Keeper</div><h2 class="disp">Waiting for you</h2>
-    <p class="lede">Nothing reaches the children's forest until you approve it.</p><div id="queue"><div class="empty">Looking…</div></div></div>`));
+    <p class="lede">Nothing reaches the children's forest until you approve it.</p><div id="queue"><div class="empty">Looking\u2026</div></div></div>`));
   const { data, error } = await sb.from('artefacts')
-    .select('id,body,metadata,certainty,storage_path,created_at, artefact_subjects(detail, people(display_name))')
+    .select('id,kind,body,metadata,certainty,storage_path,contributor_user,created_at, artefact_subjects(detail, people(display_name))')
     .eq('status','in_review').order('created_at',{ascending:false});
   const q=$('#queue');
   if(error){ q.innerHTML=`<div class="empty">${esc(error.message)}</div>`; return; }
   if(!data.length){ q.innerHTML='<div class="empty">The queue is empty. Add a memory and it will appear here.</div>'; return; }
   q.innerHTML='';
-  for(const a of data){ q.append(await itemCard(a,true)); }
+  for(const a of data){ q.append(await itemCard(a,'review')); }
 }
 
 // ---------- FOREST ----------
 async function viewForest(root){
   root.append(el(`<div class="card"><div class="eyebrow">What's been lit</div><h2 class="disp">The forest so far</h2>
-    <p class="lede">Every published memory, and the people it lit up.</p><div id="list"><div class="empty">Looking…</div></div></div>`));
+    <p class="lede">Every published memory, and the people it lit up.</p><div id="list"><div class="empty">Looking\u2026</div></div></div>`));
   const { data, error } = await sb.from('artefacts')
-    .select('id,body,metadata,certainty,storage_path,published_at, artefact_subjects(detail, people(display_name))')
+    .select('id,kind,body,metadata,certainty,storage_path,contributor_user,published_at, artefact_subjects(detail, people(display_name))')
     .eq('status','published').order('published_at',{ascending:false});
   const l=$('#list');
   if(error){ l.innerHTML=`<div class="empty">${esc(error.message)}</div>`; return; }
-  if(!data.length){ l.innerHTML='<div class="empty">No stars lit yet. The first memory you approve will appear here.</div>'; return; }
+  if(!data.length){ l.innerHTML='<div class="empty">No stars lit yet. The first memory a keeper approves will appear here.</div>'; return; }
   l.innerHTML='';
-  for(const a of data){ l.append(await itemCard(a,false)); }
+  for(const a of data){ l.append(await itemCard(a,'forest')); }
 }
 
-async function itemCard(a, keeper){
-  let src='';
-  try{ const s=await sb.storage.from('family').createSignedUrl(a.storage_path,3600); src=s.data?.signedUrl||''; }catch(e){}
+async function itemCard(a, ctx){
+  const kind=a.kind||'photo';
+  const url = a.storage_path ? await signed(a.storage_path) : '';
   const names=(a.artefact_subjects||[]).map(s=>s.people?.display_name).filter(Boolean);
   const when=a.metadata?.when, where=a.metadata?.where;
-  const sub=[when,where].filter(Boolean).join(' · ');
+  const sub=[when,where].filter(Boolean).join(' \u00b7 ');
+
+  let media='';
+  if(kind==='photo'||kind==='object') media = url?`<img class="thumb" src="${url}" alt=""/>`:'<div class="thumb"></div>';
+  else media = `<div class="thumb" style="display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--muted);text-transform:uppercase">${kind}</div>`;
+
   const card=el(`<div class="item">
-    <img class="thumb" src="${src}" alt=""/>
+    <div style="flex:none">${media}<div class="kindtag">${KINDS[kind]?KINDS[kind].label:kind}</div></div>
     <div style="flex:1">
-      <div class="meta">${a.body?`<b>${esc(a.body.slice(0,90))}${a.body.length>90?'…':''}</b><br>`:''}${sub?esc(sub)+' · ':''}<span style="opacity:.8">${esc(a.certainty)}</span></div>
+      <div class="meta">${a.body?`<b>${esc(a.body.slice(0,110))}${a.body.length>110?'\u2026':''}</b><br>`:''}${sub?esc(sub)+' \u00b7 ':''}<span style="opacity:.8">${esc(a.certainty||'')}</span></div>
+      ${(kind==='voice'&&url)?`<div class="mediaprev"><audio controls src="${url}"></audio></div>`:''}
+      ${(kind==='video'&&url)?`<div class="mediaprev"><video controls src="${url}"></video></div>`:''}
       <div class="chips">${names.map(n=>`<span class="chip">${esc(n)}</span>`).join('')||'<span class="chip" style="opacity:.6">no one tagged</span>'}</div>
-      ${keeper?'<button class="approve">Light it up ✦</button>':''}
+      <div class="rowbtns"></div>
     </div>
   </div>`);
-  if(keeper){
-    card.querySelector('.approve').onclick=async(ev)=>{
+
+  const bar=card.querySelector('.rowbtns');
+  if(ctx==='review'){
+    const ap=el('<button class="approve">Light it up \u2726</button>');
+    ap.onclick=async(ev)=>{
       ev.target.disabled=true; ev.target.innerHTML='<span class="spin"></span>';
       const { error } = await sb.from('artefacts').update({status:'published',published_at:new Date().toISOString()}).eq('id',a.id);
-      if(error){ ev.target.textContent=error.message; }
-      else { card.style.transition='.4s'; card.style.opacity='0'; setTimeout(()=>card.remove(),400); }
+      if(error){ ev.target.textContent=error.message; } else { card.style.transition='.4s'; card.style.opacity='0'; setTimeout(()=>card.remove(),400); }
     };
+    bar.append(ap);
+  }
+  if(canManage(a)){
+    const ed=el('<button class="edit">Edit</button>');
+    ed.onclick=()=>startEdit(a);
+    bar.append(ed);
+    const dl=el('<button class="del">Delete</button>');
+    dl.onclick=()=>quickDelete(a, card);
+    bar.append(dl);
   }
   return card;
+}
+
+async function startEdit(a){
+  const { data:subs } = await sb.from('artefact_subjects').select('detail, person_id, people(display_name)').eq('artefact_id',a.id);
+  STATE.editing = { ...a, subjects: subs||[] };
+  STATE.returnTab = STATE.tab;
+  STATE.tab='contribute';
+  paint();
+}
+async function quickDelete(a, card){
+  if(!confirm('Delete this memory for everyone? This cannot be undone.')) return;
+  try{
+    await sb.from('artefact_subjects').delete().eq('artefact_id',a.id);
+    const del=await sb.from('artefacts').delete().eq('id',a.id);
+    if(del.error) throw del.error;
+    if(a.storage_path){ try{ await sb.storage.from('family').remove([a.storage_path]); }catch(e){} }
+    card.style.transition='.4s'; card.style.opacity='0'; setTimeout(()=>card.remove(),400);
+  }catch(err){ alert(err.message||'Could not delete.'); }
 }
 
 function showMsg(node,kind,text){ node.className='msg show '+kind; node.textContent=text; }
