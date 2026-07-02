@@ -45,7 +45,7 @@
 
   label.field{display:block;margin:14px 0 0;}
   label.field > span{display:block;font-size:13px;font-weight:700;color:var(--gold-soft);margin-bottom:6px;}
-  input[type=text],input[type=email],input[type=password],textarea,select{
+  input[type=text],input[type=email],input[type=password],input[type=date],input[type=number],textarea,select{
     width:100%;background:#0e0a22;border:1px solid var(--panel-line);border-radius:12px;
     color:var(--cream);padding:12px 13px;font-size:15px;outline:none;
   }
@@ -74,11 +74,12 @@
     padding:9px 14px;border-radius:999px;}
   .tabs button.active{color:#3a2a05;background:linear-gradient(180deg,var(--gold-soft),var(--gold));}
 
-  /* kind selector */
-  .kindsel{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px;}
+  .grouplbl{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:12px 0 4px;}
+  .kindsel{display:flex;flex-wrap:wrap;gap:7px;margin-top:2px;}
   .kindsel button{background:#0e0a22;border:1px solid var(--panel-line);color:var(--muted);
     font-weight:800;font-size:12.5px;padding:8px 13px;border-radius:999px;}
   .kindsel button.on{color:#3a2a05;background:linear-gradient(180deg,var(--gold-soft),var(--gold));border-color:transparent;}
+  .kindsel.web button.on{background:linear-gradient(180deg,#cbaef0,var(--violet));color:#241a46;}
 
   .stage{position:relative;margin-top:14px;border-radius:14px;overflow:hidden;border:1px solid var(--panel-line);touch-action:none;user-select:none;}
   .stage img{display:block;width:100%;pointer-events:none;-webkit-user-drag:none;user-select:none;}
@@ -123,6 +124,7 @@
 <div class="stars" id="stars"></div>
 <div class="wrap" id="app"></div>
 <datalist id="people-list"></datalist>
+<datalist id="place-list"></datalist>
 
 <script>
 const SUPABASE_URL = 'https://oabcdrktuikifbormjip.supabase.co';
@@ -141,8 +143,11 @@ const KINDS = {
   video:  {label:'Video',  file:true,  accept:'video/*', boxes:false, story:"About this video"},
   object: {label:'Object', file:true,  accept:'image/*', boxes:false, story:"What is it, and what does it mean?"},
 };
+const ATOMS = { person:{label:'Person'}, place:{label:'Place'}, event:{label:'Event'}, relationship:{label:'Relationship'} };
+const REL_KINDS = ['parent','spouse','sibling','friend','mentor','neighbour','other'];
+const EVENT_KINDS = ['birth','marriage','move','work','death','other'];
 
-let STATE = { user:null, isKeeper:false, people:[], tab:'contribute', addKind:'photo', editing:null, returnTab:'forest' };
+let STATE = { user:null, isKeeper:false, people:[], places:[], tab:'contribute', addKind:'photo', editing:null, returnTab:'forest' };
 
 (function(){ const s=$('#stars'); let h=''; for(let i=0;i<46;i++){h+=`<i style="left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*4}s"></i>`;} s.innerHTML=h; })();
 
@@ -161,7 +166,7 @@ async function afterLogin(){
   await sb.from('profiles').upsert({ id:STATE.user.id, display_name:STATE.user.email }).select();
   const { data:prof } = await sb.from('profiles').select('is_keeper').eq('id',STATE.user.id).single();
   STATE.isKeeper = !!prof?.is_keeper;
-  await loadPeople();
+  await loadPeople(); await loadPlaces();
   render();
 }
 function renderAuth(){
@@ -203,6 +208,11 @@ async function loadPeople(){
   STATE.people = data||[];
   $('#people-list').innerHTML = STATE.people.map(p=>`<option value="${esc(p.display_name)}">`).join('');
 }
+async function loadPlaces(){
+  const { data } = await sb.from('places').select('id,name').order('name');
+  STATE.places = data||[];
+  $('#place-list').innerHTML = STATE.places.map(p=>`<option value="${esc(p.name)}">`).join('');
+}
 async function ensurePerson(name){
   name=name.trim();
   const found = STATE.people.find(p=>p.display_name.toLowerCase()===name.toLowerCase());
@@ -211,6 +221,14 @@ async function ensurePerson(name){
     .insert({ display_name:name, created_by:STATE.user.id, status:'published' }).select('id,display_name').single();
   if(error) throw error;
   STATE.people.push(data); return data.id;
+}
+async function resolvePlace(name){
+  name=(name||'').trim(); if(!name) return null;
+  const found = STATE.places.find(p=>p.name.toLowerCase()===name.toLowerCase());
+  if(found) return found.id;
+  const { data, error } = await sb.from('places').insert({ name }).select('id,name').single();
+  if(error) throw error;
+  STATE.places.push(data); return data.id;
 }
 async function uploadFile(file){
   const ext=(file.name.split('.').pop()||'bin').toLowerCase();
@@ -250,19 +268,34 @@ function paint(){
   if(STATE.tab==='forest') viewForest(body);
 }
 
-// ---------- ADD / EDIT form ----------
-let TAGS=[];        // [{box:{x,y,w,h}, name}]  photo faces
-let PEOPLE=[];      // [name]  people-about for non-photo
-let NEWFILE=null;   // File chosen to upload/replace
+// ---------- ADD dispatcher ----------
+let TAGS=[]; let PEOPLE=[]; let NEWFILE=null;
 
 function viewForm(root){
-  TAGS=[]; PEOPLE=['']; NEWFILE=null;
   const editing = STATE.editing;
+  if(editing){ artefactForm(root, editing); return; }   // editing is always an artefact
+  const kind = STATE.addKind;
+  root.append(el(`<div class="card">
+    <div class="eyebrow">Tend the forest</div>
+    <h2 class="disp">Add to the forest</h2>
+    <p class="lede">A memory to light up a face — or a piece of the web that connects them.</p>
+    <div class="grouplbl">A memory</div>
+    <div class="kindsel" id="kmem">${Object.entries(KINDS).map(([k,v])=>`<button data-k="${k}" class="${k===kind?'on':''}">${v.label}</button>`).join('')}</div>
+    <div class="grouplbl">The web</div>
+    <div class="kindsel web" id="katom">${Object.entries(ATOMS).map(([k,v])=>`<button data-k="${k}" class="${k===kind?'on':''}">${v.label}</button>`).join('')}</div>
+  </div>`));
+  root.querySelectorAll('#kmem button, #katom button').forEach(b=>{ b.onclick=()=>{ STATE.addKind=b.dataset.k; paint(); }; });
+  const host=el('<div id="formhost"></div>'); root.append(host);
+  if(KINDS[kind]) artefactForm(host, null);
+  else atomForm(host, kind);
+}
+
+// ---------- ARTEFACT form (add + edit) ----------
+function artefactForm(root, editing){
+  TAGS=[]; PEOPLE=['']; NEWFILE=null;
   const kind = editing ? editing.kind : STATE.addKind;
   const K = KINDS[kind];
-
   if(editing){
-    // hydrate from the artefact being edited
     (editing.subjects||[]).forEach(s=>{
       const nm = s.people?.display_name||'';
       if(s.detail && typeof s.detail==='object') TAGS.push({box:s.detail, name:nm});
@@ -270,25 +303,18 @@ function viewForm(root){
     });
     if(!PEOPLE.length) PEOPLE=[''];
   }
-
   const meta = editing?.metadata||{};
   root.append(el(`<div class="card">
-    <div class="eyebrow">${editing?'Edit':'Tend the forest'}</div>
-    <h2 class="disp">${editing?'Edit this memory':'Add a memory'}</h2>
-    ${editing?'':`<p class="lede">Choose what kind of memory, then tell its story. It waits in the queue until a keeper lights it up.</p>
-    <div class="kindsel" id="kindsel">
-      ${Object.entries(KINDS).map(([k,v])=>`<button data-k="${k}" class="${k===kind?'on':''}">${v.label}</button>`).join('')}
-    </div>`}
-
+    <div class="eyebrow">${editing?'Edit':K.label}</div>
+    <h2 class="disp">${editing?'Edit this memory':'Add a '+K.label.toLowerCase()}</h2>
     <div id="filewrap"></div>
     <div id="stagewrap"></div>
     <div class="taglist" id="taglist"></div>
     <div id="pplwrap"></div>
-
     <label class="field"><span id="storylbl">${esc(K.story)}</span>
       <textarea id="story" placeholder="What's happening here, who they are, what you remember\u2026">${esc(editing?.body||'')}</textarea></label>
     <div class="row">
-      <label class="field"><span>Roughly when</span><input id="when" type="text" placeholder="e.g. 1962, or \u201cthe 60s\u201d" value="${esc(meta.when||'')}"/></label>
+      <label class="field"><span>Roughly when</span><input id="when" type="text" placeholder="e.g. 1962" value="${esc(meta.when||'')}"/></label>
       <label class="field"><span>Where</span><input id="where" type="text" placeholder="e.g. Casablanca" value="${esc(meta.where||'')}"/></label>
     </div>
     <label class="field"><span>How sure are we?</span>
@@ -297,21 +323,12 @@ function viewForm(root){
         <option value="documented">Documented — there's a record</option>
         <option value="uncertain">Uncertain — a guess worth keeping</option>
       </select></label>
-
     <button class="btn" id="submit">${editing?'Save changes':'Send to the queue'}</button>
     ${editing?'<button class="btn secondary" id="cancel">Cancel</button>':''}
     ${editing&&canManage(editing)?'<button class="btn danger" id="delete">Delete this memory</button>':''}
     <div class="msg" id="cmsg"></div>
   </div>`));
-
   if(editing) $('#certainty').value = editing.certainty||'remembered';
-
-  if(!editing){
-    $('#kindsel').querySelectorAll('button').forEach(b=>{
-      b.onclick=()=>{ STATE.addKind=b.dataset.k; paint(); };
-    });
-  }
-
   renderFileArea(kind, editing);
   renderPeopleArea(kind);
   $('#submit').onclick = ()=> editing ? saveEdit() : submitNew();
@@ -325,46 +342,34 @@ async function renderFileArea(kind, editing){
   if(!K.file){ return; }
   const verb = editing ? 'Replace the file (optional)' : (kind==='object'?'A photo of the object':kind==='voice'?'The recording':kind==='video'?'The video':'The photo');
   fw.append(el(`<label class="field"><span>${verb}</span><input id="file" type="file" accept="${K.accept}"/></label>`));
-
-  // show current media when editing
   if(editing && editing.storage_path){
     const url = await signed(editing.storage_path);
     const cur=$('#filewrap');
     if(kind==='photo'||kind==='object'){
-      if(K.boxes){ mountStage(url); }
-      else cur.append(el(`<div class="curmedia"><img src="${url}" alt=""/></div>`));
-    } else if(kind==='voice'){
-      cur.append(el(`<div class="curmedia mediaprev"><audio controls src="${url}"></audio></div>`));
-    } else if(kind==='video'){
-      cur.append(el(`<div class="curmedia mediaprev"><video controls src="${url}"></video></div>`));
-    }
+      if(K.boxes){ mountStage(url); } else cur.append(el(`<div class="curmedia"><img src="${url}" alt=""/></div>`));
+    } else if(kind==='voice'){ cur.append(el(`<div class="curmedia mediaprev"><audio controls src="${url}"></audio></div>`)); }
+    else if(kind==='video'){ cur.append(el(`<div class="curmedia mediaprev"><video controls src="${url}"></video></div>`)); }
   }
   $('#file').onchange = (e)=>onFile(e, kind);
 }
-
 function onFile(e, kind){
   const f=e.target.files[0]; if(!f) return;
   NEWFILE=f;
   const url=URL.createObjectURL(f);
-  if(KINDS[kind].boxes){
-    TAGS=[];  // new image, start tags fresh
-    mountStage(url);
-  } else {
-    const fw=$('#filewrap');
-    let prev=fw.querySelector('.curmedia'); if(prev) prev.remove();
+  if(KINDS[kind].boxes){ TAGS=[]; mountStage(url); }
+  else {
+    const fw=$('#filewrap'); let prev=fw.querySelector('.curmedia'); if(prev) prev.remove();
     if(kind==='video') fw.append(el(`<div class="curmedia mediaprev"><video controls src="${url}"></video></div>`));
     else if(kind==='voice') fw.append(el(`<div class="curmedia mediaprev"><audio controls src="${url}"></audio></div>`));
     else fw.append(el(`<div class="curmedia"><img src="${url}" alt=""/></div>`));
   }
 }
-
 function mountStage(url){
   const wrap=$('#stagewrap'); wrap.innerHTML='';
   const stage=el(`<div class="stage" id="stage"><img id="ph" src="${url}" alt="" draggable="false"/></div>`);
   wrap.append(stage);
   wrap.append(el(`<p class="hint">Drag across each face to mark a person. Each box adds a line below to name them.</p>`));
-  enableTagging(stage);
-  renderTags();
+  enableTagging(stage); renderTags();
 }
 function enableTagging(stage){
   let start=null, preview=null;
@@ -414,10 +419,9 @@ function renderTags(){
     list.append(row);
   });
 }
-
 function renderPeopleArea(kind){
   const pw=$('#pplwrap'); pw.innerHTML='';
-  if(KINDS[kind].boxes) return;   // photos use face boxes instead
+  if(KINDS[kind].boxes) return;
   pw.append(el(`<label class="field"><span>People in this memory (optional)</span></label>`));
   const list=el('<div class="taglist" id="ppllist"></div>'); pw.append(list);
   const add=el('<button class="addppl" type="button">+ add a person</button>'); pw.append(add);
@@ -436,7 +440,6 @@ function drawPeople(){
     list.append(row);
   });
 }
-
 function collectMeta(){
   const meta={}; const w=$('#when').value.trim(), p=$('#where').value.trim();
   if(w) meta.when=w; if(p) meta.where=p; return meta;
@@ -450,7 +453,6 @@ async function buildSubjects(artefactId, kind){
   }
   return rows;
 }
-
 async function submitNew(){
   const m=$('#cmsg'); const kind=STATE.addKind; const K=KINDS[kind];
   if(K.file && !NEWFILE) return showMsg(m,'err','Choose a '+(kind==='voice'?'recording':kind==='video'?'video':'file')+' first.');
@@ -472,20 +474,17 @@ async function submitNew(){
   }catch(err){ showMsg(m,'err', err.message||'Something went wrong. Nothing was published.'); }
   finally{ btn.disabled=false; btn.textContent=old; }
 }
-
 async function saveEdit(){
   const m=$('#cmsg'); const a=STATE.editing; const kind=a.kind; const K=KINDS[kind];
   const btn=$('#submit'); btn.disabled=true; const old=btn.textContent; btn.innerHTML='<span class="spin"></span> Saving\u2026';
   try{
     let newPath=null, oldPath=null;
     if(K.file && NEWFILE){ newPath=await uploadFile(NEWFILE); oldPath=a.storage_path; }
-    // owner edits re-enter review; keeper edits keep current status
     const patch={ body:$('#story').value.trim()||null, certainty:$('#certainty').value, metadata:collectMeta() };
     if(newPath) patch.storage_path=newPath;
     if(!STATE.isKeeper) patch.status='in_review';
     const up=await sb.from('artefacts').update(patch).eq('id',a.id);
     if(up.error) throw up.error;
-    // reconcile subjects: clear then re-add current set
     const del=await sb.from('artefact_subjects').delete().eq('artefact_id',a.id);
     if(del.error) throw del.error;
     const rows=await buildSubjects(a.id, kind);
@@ -497,7 +496,6 @@ async function saveEdit(){
   }catch(err){ showMsg(m,'err', err.message||'Could not save.'); }
   finally{ btn.disabled=false; btn.textContent=old; }
 }
-
 async function deleteArtefact(a){
   if(!confirm('Delete this memory for everyone? This cannot be undone.')) return;
   const m=$('#cmsg');
@@ -508,6 +506,162 @@ async function deleteArtefact(a){
     if(a.storage_path){ try{ await sb.storage.from('family').remove([a.storage_path]); }catch(e){} }
     STATE.editing=null; STATE.tab=STATE.returnTab; paint();
   }catch(err){ if(m) showMsg(m,'err', err.message||'Could not delete.'); else alert(err.message); }
+}
+
+// ---------- ATOM forms ----------
+function atomForm(root, kind){
+  if(kind==='person') return personForm(root);
+  if(kind==='place') return placeForm(root);
+  if(kind==='event') return eventForm(root);
+  if(kind==='relationship') return relForm(root);
+}
+function personForm(root){
+  root.append(el(`<div class="card">
+    <div class="eyebrow">Person</div><h2 class="disp">Add a person</h2>
+    <p class="lede">Someone not yet in a photo — a child, a grandparent, an unknown branch.</p>
+    <label class="field"><span>Their name</span><input id="pname" type="text" placeholder="Full name"/></label>
+    <label class="field"><span>What they were called (optional)</span><input id="pcalled" type="text" placeholder="e.g. Baba, Lucia"/></label>
+    <div class="row">
+      <label class="field"><span>Living?</span><select id="pliving"><option value="">Unknown</option><option value="yes">Living</option><option value="no">Remembered</option></select></label>
+      <label class="field"><span>Branch (optional)</span><input id="pbranch" type="text" placeholder="e.g. Golnick"/></label>
+    </div>
+    <div class="row">
+      <label class="field"><span>Born (optional)</span><input id="pborn" type="date"/></label>
+      <label class="field"><span>Died (optional)</span><input id="pdied" type="date"/></label>
+    </div>
+    <label class="field"><span>A note (optional)</span><textarea id="pnote" placeholder="Anything to remember them by"></textarea></label>
+    <button class="btn" id="psave">Add to the forest</button>
+    <div class="msg" id="amsg"></div>
+  </div>`));
+  $('#psave').onclick=async()=>{
+    const m=$('#amsg'); const name=$('#pname').value.trim();
+    if(!name) return showMsg(m,'err','A name is needed.');
+    const btn=$('#psave'); btn.disabled=true; const old=btn.textContent; btn.innerHTML='<span class="spin"></span> Adding\u2026';
+    try{
+      const living=$('#pliving').value;
+      const row={ display_name:name, created_by:STATE.user.id, status:'published',
+        called_name:$('#pcalled').value.trim()||null,
+        branch:$('#pbranch').value.trim()||null,
+        birth_date:$('#pborn').value||null, death_date:$('#pdied').value||null,
+        is_living: living===''?null:(living==='yes'),
+        metadata: $('#pnote').value.trim()?{note:$('#pnote').value.trim()}:{} };
+      const { error } = await sb.from('people').insert(row);
+      if(error) throw error;
+      await loadPeople();
+      showMsg(m,'ok','Added. '+esc(name)+' is in the forest.');
+      setTimeout(()=>{ paint(); },900);
+    }catch(err){ showMsg(m,'err',err.message||'Could not add.'); }
+    finally{ btn.disabled=false; btn.textContent=old; }
+  };
+}
+function placeForm(root){
+  root.append(el(`<div class="card">
+    <div class="eyebrow">Place</div><h2 class="disp">Add a place</h2>
+    <p class="lede">A village, a ship, a house — somewhere lives were lived.</p>
+    <label class="field"><span>Name</span><input id="plname" type="text" placeholder="e.g. Minsk, or “the bakery on Rue Lafayette”"/></label>
+    <label class="field"><span>Country (optional)</span><input id="plcountry" type="text" placeholder="e.g. Belarus"/></label>
+    <div class="row">
+      <label class="field"><span>Latitude (optional)</span><input id="pllat" type="number" step="any" placeholder="53.9"/></label>
+      <label class="field"><span>Longitude (optional)</span><input id="pllon" type="number" step="any" placeholder="27.56"/></label>
+    </div>
+    <label class="field"><span>A note (optional)</span><textarea id="plnote" placeholder="What was it, what happened there"></textarea></label>
+    <button class="btn" id="plsave">Add to the forest</button>
+    <div class="msg" id="amsg"></div>
+  </div>`));
+  $('#plsave').onclick=async()=>{
+    const m=$('#amsg'); const name=$('#plname').value.trim();
+    if(!name) return showMsg(m,'err','A name is needed.');
+    const btn=$('#plsave'); btn.disabled=true; const old=btn.textContent; btn.innerHTML='<span class="spin"></span> Adding\u2026';
+    try{
+      const lat=parseFloat($('#pllat').value), lon=parseFloat($('#pllon').value);
+      const row={ name, country:$('#plcountry').value.trim()||null,
+        lat:isNaN(lat)?null:lat, lon:isNaN(lon)?null:lon,
+        metadata:$('#plnote').value.trim()?{note:$('#plnote').value.trim()}:{} };
+      const { error } = await sb.from('places').insert(row);
+      if(error) throw error;
+      await loadPlaces();
+      showMsg(m,'ok','Added the place “'+esc(name)+'”.');
+      setTimeout(()=>{ paint(); },900);
+    }catch(err){ showMsg(m,'err',err.message||'Could not add.'); }
+    finally{ btn.disabled=false; btn.textContent=old; }
+  };
+}
+function eventForm(root){
+  root.append(el(`<div class="card">
+    <div class="eyebrow">Event</div><h2 class="disp">Add a moment</h2>
+    <p class="lede">A dated moment — born, married, moved, crossed a sea.</p>
+    <label class="field"><span>What happened</span><input id="evtitle" type="text" placeholder="e.g. Rita and Sasha married"/></label>
+    <div class="row">
+      <label class="field"><span>Kind</span><select id="evkind">${EVENT_KINDS.map(k=>`<option value="${k}">${k}</option>`).join('')}</select></label>
+      <label class="field"><span>When (optional)</span><input id="evdate" type="date"/></label>
+    </div>
+    <label class="field"><span>Where (optional)</span><input id="evplace" type="text" list="place-list" placeholder="A place — pick or type a new one"/></label>
+    <label class="field"><span>Who was there (optional)</span></label>
+    <div class="taglist" id="evppl"></div>
+    <button class="addppl" type="button" id="evadd">+ add a person</button>
+    <label class="field"><span>The story (optional)</span><textarea id="evdesc" placeholder="What happened, in whose words"></textarea></label>
+    <button class="btn" id="evsave">Add to the forest</button>
+    <div class="msg" id="amsg"></div>
+  </div>`));
+  let evPeople=[''];
+  const draw=()=>{ const l=$('#evppl'); l.innerHTML=''; evPeople.forEach((nm,i)=>{
+    const row=el(`<div class="tagrow"><div class="num">${i+1}</div><input type="text" list="people-list" placeholder="Name a person" value="${esc(nm)}"/><button class="x">remove</button></div>`);
+    row.querySelector('input').oninput=(e)=>{ evPeople[i]=e.target.value; };
+    row.querySelector('.x').onclick=()=>{ evPeople.splice(i,1); if(!evPeople.length) evPeople=['']; draw(); };
+    l.append(row); }); };
+  draw();
+  $('#evadd').onclick=()=>{ evPeople.push(''); draw(); };
+  $('#evsave').onclick=async()=>{
+    const m=$('#amsg'); const title=$('#evtitle').value.trim();
+    if(!title) return showMsg(m,'err','Describe what happened.');
+    const btn=$('#evsave'); btn.disabled=true; const old=btn.textContent; btn.innerHTML='<span class="spin"></span> Adding\u2026';
+    try{
+      const place_id = await resolvePlace($('#evplace').value);
+      const ev=await sb.from('events').insert({ title, kind:$('#evkind').value, event_date:$('#evdate').value||null,
+        place_id, description:$('#evdesc').value.trim()||null, metadata:{} }).select('id').single();
+      if(ev.error) throw ev.error;
+      const parts=[];
+      for(const nm of evPeople){ if(nm.trim()){ const pid=await ensurePerson(nm); parts.push({event_id:ev.data.id, person_id:pid}); } }
+      if(parts.length){ const p=await sb.from('event_participants').insert(parts); if(p.error) throw p.error; }
+      await loadPeople(); await loadPlaces();
+      showMsg(m,'ok','Added the moment.');
+      setTimeout(()=>{ paint(); },900);
+    }catch(err){ showMsg(m,'err',err.message||'Could not add.'); }
+    finally{ btn.disabled=false; btn.textContent=old; }
+  };
+}
+function relForm(root){
+  root.append(el(`<div class="card">
+    <div class="eyebrow">Relationship</div><h2 class="disp">Connect two people</h2>
+    <p class="lede">Blood, marriage, or friendship — the ties that make a forest.</p>
+    <label class="field"><span>This person</span><input id="rfrom" type="text" list="people-list" placeholder="Name"/></label>
+    <label class="field"><span>Is the…</span>
+      <select id="rkind">${REL_KINDS.map(k=>`<option value="${k}">${k}</option>`).join('')}</select></label>
+    <label class="field"><span>…of this person</span><input id="rto" type="text" list="people-list" placeholder="Name"/></label>
+    <label class="field"><span>How sure are we?</span>
+      <select id="rcert"><option value="remembered">Remembered</option><option value="documented">Documented</option><option value="uncertain">Uncertain</option></select></label>
+    <label class="field"><span>A note (optional)</span><textarea id="rnote" placeholder="e.g. childhood friends from the same village"></textarea></label>
+    <button class="btn" id="rsave">Draw the connection</button>
+    <div class="msg" id="amsg"></div>
+  </div>`));
+  $('#rsave').onclick=async()=>{
+    const m=$('#amsg'); const from=$('#rfrom').value.trim(), to=$('#rto').value.trim();
+    if(!from||!to) return showMsg(m,'err','Name both people.');
+    if(from.toLowerCase()===to.toLowerCase()) return showMsg(m,'err','Pick two different people.');
+    const btn=$('#rsave'); btn.disabled=true; const old=btn.textContent; btn.innerHTML='<span class="spin"></span> Connecting\u2026';
+    try{
+      const kind=$('#rkind').value;
+      const fromId=await ensurePerson(from), toId=await ensurePerson(to);
+      const { error } = await sb.from('relationships').insert({ from_person:fromId, to_person:toId, kind,
+        certainty:$('#rcert').value, note:$('#rnote').value.trim()||null });
+      if(error) throw error;
+      if(kind==='friend'){ try{ await sb.from('people').update({is_friend:true}).in('id',[fromId,toId]); }catch(e){} }
+      await loadPeople();
+      showMsg(m,'ok','Connected '+esc(from)+' and '+esc(to)+'.');
+      setTimeout(()=>{ paint(); },900);
+    }catch(err){ showMsg(m,'err',err.message||'Could not connect.'); }
+    finally{ btn.disabled=false; btn.textContent=old; }
+  };
 }
 
 // ---------- REVIEW ----------
@@ -537,18 +691,15 @@ async function viewForest(root){
   l.innerHTML='';
   for(const a of data){ l.append(await itemCard(a,'forest')); }
 }
-
 async function itemCard(a, ctx){
   const kind=a.kind||'photo';
   const url = a.storage_path ? await signed(a.storage_path) : '';
   const names=(a.artefact_subjects||[]).map(s=>s.people?.display_name).filter(Boolean);
   const when=a.metadata?.when, where=a.metadata?.where;
   const sub=[when,where].filter(Boolean).join(' \u00b7 ');
-
   let media='';
   if(kind==='photo'||kind==='object') media = url?`<img class="thumb" src="${url}" alt=""/>`:'<div class="thumb"></div>';
   else media = `<div class="thumb" style="display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--muted);text-transform:uppercase">${kind}</div>`;
-
   const card=el(`<div class="item">
     <div style="flex:none">${media}<div class="kindtag">${KINDS[kind]?KINDS[kind].label:kind}</div></div>
     <div style="flex:1">
@@ -559,7 +710,6 @@ async function itemCard(a, ctx){
       <div class="rowbtns"></div>
     </div>
   </div>`);
-
   const bar=card.querySelector('.rowbtns');
   if(ctx==='review'){
     const ap=el('<button class="approve">Light it up \u2726</button>');
@@ -571,22 +721,15 @@ async function itemCard(a, ctx){
     bar.append(ap);
   }
   if(canManage(a)){
-    const ed=el('<button class="edit">Edit</button>');
-    ed.onclick=()=>startEdit(a);
-    bar.append(ed);
-    const dl=el('<button class="del">Delete</button>');
-    dl.onclick=()=>quickDelete(a, card);
-    bar.append(dl);
+    const ed=el('<button class="edit">Edit</button>'); ed.onclick=()=>startEdit(a); bar.append(ed);
+    const dl=el('<button class="del">Delete</button>'); dl.onclick=()=>quickDelete(a, card); bar.append(dl);
   }
   return card;
 }
-
 async function startEdit(a){
   const { data:subs } = await sb.from('artefact_subjects').select('detail, person_id, people(display_name)').eq('artefact_id',a.id);
   STATE.editing = { ...a, subjects: subs||[] };
-  STATE.returnTab = STATE.tab;
-  STATE.tab='contribute';
-  paint();
+  STATE.returnTab = STATE.tab; STATE.tab='contribute'; paint();
 }
 async function quickDelete(a, card){
   if(!confirm('Delete this memory for everyone? This cannot be undone.')) return;
