@@ -550,7 +550,7 @@ async function openPerson(id){
 }
 async function openEditArtefact(id){
   const {data:a,error}=await sb.from('artefacts')
-    .select('id,kind,body,metadata,certainty,storage_path,status,contributor_user, artefact_subjects(id,person_id,people(display_name))')
+    .select('id,kind,body,metadata,certainty,storage_path,status,contributor_user, artefact_subjects(person_id,detail,people(display_name))')
     .eq('id',id).single();
   if(error||!a)return alert(error?.message||'Could not load this memory.');
   const isImg=(a.kind==='photo'||a.kind==='object');
@@ -581,7 +581,7 @@ async function openEditArtefact(id){
       const rb=await rotate90(blob);
       const ext=(a.storage_path.split('.').pop()||'jpg');
       const newPath=await uploadFile(new File([rb],'photo.'+ext,{type:rb.type}));
-      for(const s of (a.artefact_subjects||[])){ if(s.detail&&s.detail.w){ const nb=box90(s.detail); await sb.from('artefact_subjects').update({detail:nb}).eq('id',s.id); s.detail=nb; } }
+      for(const s of (a.artefact_subjects||[])){ if(s.detail&&s.detail.w){ const nb=box90(s.detail); await sb.from('artefact_subjects').update({detail:nb}).eq('artefact_id',a.id).eq('person_id',s.person_id); s.detail=nb; } }
       const patch={storage_path:newPath}; if(!S.isKeeper && a.status==='published') patch.status='in_review';
       const {error:ue}=await sb.from('artefacts').update(patch).eq('id',a.id); if(ue)throw ue;
       const oldPath=a.storage_path; a.storage_path=newPath;
@@ -596,15 +596,16 @@ async function openEditArtefact(id){
     a.artefact_subjects.forEach(s=>{
       const row=el(`<div class="rel"><span class="nm">${esc(s.people?.display_name||'—')}</span><button class="x">remove</button></div>`);
       row.querySelector('.nm').onclick=()=>{closeOverlay();openPerson(s.person_id);};
-      row.querySelector('.x').onclick=async()=>{ await sb.from('artefact_subjects').delete().eq('id',s.id);
-        a.artefact_subjects=a.artefact_subjects.filter(x=>x.id!==s.id); renderSubs(); await loadAll(); if(S.tab==='forest')drawForest(); };
+      row.querySelector('.x').onclick=async()=>{ await sb.from('artefact_subjects').delete().eq('artefact_id',a.id).eq('person_id',s.person_id);
+        a.artefact_subjects=a.artefact_subjects.filter(x=>x.person_id!==s.person_id); renderSubs(); await loadAll(); if(S.tab==='forest')drawForest(); };
       c.append(row);
     });
   };
   renderSubs();
   $('#ea-addbtn').onclick=async()=>{ const nm=$('#ea-add').value.trim(); if(!nm)return;
     try{ const pid=await ensurePerson(nm);
-      const {data:ns,error:e2}=await sb.from('artefact_subjects').insert({artefact_id:a.id,person_id:pid,detail:null}).select('id,person_id,people(display_name)').single();
+      if((a.artefact_subjects||[]).some(s=>s.person_id===pid)){ $('#ea-add').value=''; return; }
+      const {data:ns,error:e2}=await sb.from('artefact_subjects').insert({artefact_id:a.id,person_id:pid,detail:null}).select('person_id,detail,people(display_name)').single();
       if(e2)throw e2; a.artefact_subjects.push(ns); $('#ea-add').value=''; renderSubs(); await loadAll(); if(S.tab==='forest')drawForest();
     }catch(err){showMsg($('#ea-msg'),'err',err.message);} };
   $('#ea-save').onclick=async()=>{ const m=$('#ea-msg'); const btn=$('#ea-save'); btn.disabled=true; const old=btn.textContent; btn.innerHTML='<span class="spin"></span>';
