@@ -218,7 +218,7 @@ async function auth(mode){
 async function loadAll(){
   const [pp,rr,art]=await Promise.all([
     sb.from('people').select('id,display_name,called_name,birth_date,death_date,is_living,is_friend,branch,primary_asset,metadata').order('display_name'),
-    sb.from('relationships').select('id,from_person,to_person,kind'),
+    sb.from('relationships').select('id,from_person,to_person,kind,created_by'),
     sb.from('artefacts').select('id,kind,body,metadata,certainty,storage_path,published_at, artefact_subjects(person_id, detail, people(display_name))').eq('status','published').order('published_at',{ascending:false}),
   ]);
   S.people=pp.data||[]; S.rels=rr.data||[]; S.artefacts=art.data||[];
@@ -251,6 +251,24 @@ async function uploadFile(file){
   const up=await sb.storage.from('family').upload(path,file,{contentType:file.type||undefined});
   if(up.error)throw up.error; return path;
 }
+// rotate an image blob/file 90° clockwise, return a new Blob
+function rotate90(src){
+  return new Promise((resolve,reject)=>{
+    const url=URL.createObjectURL(src), img=new Image();
+    img.onload=()=>{ try{
+      const w=img.naturalWidth,h=img.naturalHeight;
+      const c=document.createElement('canvas'); c.width=h; c.height=w;
+      const ctx=c.getContext('2d'); ctx.translate(h,0); ctx.rotate(Math.PI/2); ctx.drawImage(img,0,0);
+      URL.revokeObjectURL(url);
+      const type=(src.type&&src.type.startsWith('image/'))?src.type:'image/jpeg';
+      c.toBlob(b=>b?resolve(b):reject(new Error('Could not rotate')), type, 0.92);
+    }catch(e){URL.revokeObjectURL(url);reject(e);} };
+    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Could not load image'));};
+    img.src=url;
+  });
+}
+// a normalized face box rotated to match a 90° CW image rotation
+const box90=(b)=> (b&&typeof b==='object'&&b.w)?{x:1-b.y-b.h,y:b.x,w:b.h,h:b.w}:b;
 async function signed(path){ if(!path)return''; try{const s=await sb.storage.from('family').createSignedUrl(path,3600);return s.data?.signedUrl||'';}catch(e){return'';} }
 async function mountFace(disc,path,box,fallback){
   if(!disc)return;
@@ -503,11 +521,12 @@ async function openPerson(id){
       const other=personById(otherId);if(!other)return;
       let label=r.kind;
       if(r.kind==='parent')label=r.from_person===id?'parent of':'child of';
-      const row=el(`<div class="rel"><span class="k"${S.isKeeper?' style="cursor:pointer;text-decoration:underline dotted"':''}>${esc(label)}</span><span class="nm">${esc(other.display_name)}</span>${S.isKeeper?'<button class="x">remove</button>':''}</div>`);
+      const mine=S.isKeeper||r.created_by===S.user.id;
+      const row=el(`<div class="rel"><span class="k"${mine?' style="cursor:pointer;text-decoration:underline dotted"':''}>${esc(label)}</span><span class="nm">${esc(other.display_name)}</span>${mine?'<button class="x">remove</button>':''}</div>`);
       row.querySelector('.nm').onclick=()=>openPerson(otherId);
-      if(S.isKeeper)row.querySelector('.k').onclick=()=>openEdge(r);
+      if(mine)row.querySelector('.k').onclick=()=>openEdge(r);
       const x=row.querySelector('.x');if(x)x.onclick=async()=>{ if(!confirm('Remove this connection?'))return;
-        await sb.from('relationships').delete().eq('id',r.id); await loadAll(); openPerson(id); if(S.tab==='forest')drawForest(); };
+        const {error}=await sb.from('relationships').delete().eq('id',r.id); if(error){alert(error.message);return;} await loadAll(); openPerson(id); if(S.tab==='forest')drawForest(); };
       cbox.append(row);
     });
   }
@@ -538,7 +557,7 @@ async function openEditArtefact(id){
   const url=a.storage_path?await signed(a.storage_path):'';
   const box=el(`<div><h3 class="disp">Edit ${esc(KINDS[a.kind]?.label||a.kind)}</h3>
     ${a.status!=='published'?'<div class="sub"><span class="status rev">in review</span></div>':''}
-    ${isImg&&url?`<img src="${url}" style="width:100%;border-radius:12px;margin:6px 0"/>`:''}
+    ${isImg&&url?`<img id="ea-img" src="${url}" style="width:100%;border-radius:12px;margin:6px 0"/><button class="btn sm secondary" id="ea-rot" type="button" style="margin:0 0 4px">⟳ Rotate 90°</button>`:''}
     ${a.kind==='voice'&&url?`<audio controls src="${url}" style="width:100%;margin:6px 0"></audio>`:''}
     ${a.kind==='video'&&url?`<video controls src="${url}" style="width:100%;border-radius:12px;margin:6px 0"></video>`:''}
     <label class="field"><span>${esc(KINDS[a.kind]?.story||'The memory')}</span><textarea id="ea-body">${esc(a.body||'')}</textarea></label>
@@ -554,6 +573,24 @@ async function openEditArtefact(id){
     <div class="msg" id="ea-msg"></div></div>`);
   overlay(box);
   $('#ea-cert').value=a.certainty||'remembered';
+  const rotBtn=$('#ea-rot');
+  if(rotBtn)rotBtn.onclick=async()=>{
+    rotBtn.disabled=true; const lbl=rotBtn.textContent; rotBtn.innerHTML='<span class="spin"></span>';
+    try{
+      const {data:blob,error:de}=await sb.storage.from('family').download(a.storage_path); if(de)throw de;
+      const rb=await rotate90(blob);
+      const ext=(a.storage_path.split('.').pop()||'jpg');
+      const newPath=await uploadFile(new File([rb],'photo.'+ext,{type:rb.type}));
+      for(const s of (a.artefact_subjects||[])){ if(s.detail&&s.detail.w){ const nb=box90(s.detail); await sb.from('artefact_subjects').update({detail:nb}).eq('id',s.id); s.detail=nb; } }
+      const patch={storage_path:newPath}; if(!S.isKeeper && a.status==='published') patch.status='in_review';
+      const {error:ue}=await sb.from('artefacts').update(patch).eq('id',a.id); if(ue)throw ue;
+      const oldPath=a.storage_path; a.storage_path=newPath;
+      try{await sb.storage.from('family').remove([oldPath]);}catch(e){}
+      const nu=await signed(newPath); const im=$('#ea-img'); if(im&&nu)im.src=nu;
+      await loadAll(); if(S.tab==='forest')drawForest();
+      rotBtn.disabled=false; rotBtn.textContent=lbl;
+    }catch(e){ rotBtn.disabled=false; rotBtn.textContent=lbl; showMsg($('#ea-msg'),'err',(e&&e.message)||'Could not rotate.'); }
+  };
   const renderSubs=()=>{ const c=$('#ea-subs');c.innerHTML='';
     if(!(a.artefact_subjects||[]).length){c.innerHTML='<div class="empty" style="padding:6px 0">No one tagged yet.</div>';return;}
     a.artefact_subjects.forEach(s=>{
@@ -669,18 +706,20 @@ async function deletePerson(id){
   }catch(err){alert(err.message||'Could not delete.');}
 }
 function openEdge(r){
-  if(!S.isKeeper){const a=personById(r.from_person),b=personById(r.to_person);
-    return overlay(el(`<div><h3 class="disp">Connection</h3><p class="lede">${esc(a?.display_name||'?')} — ${esc(r.kind)} — ${esc(b?.display_name||'?')}</p><p class="sub">Only the keeper can change connections.</p></div>`));}
+  const mine=S.isKeeper||r.created_by===S.user.id;
+  if(!mine){const a=personById(r.from_person),b=personById(r.to_person);
+    return overlay(el(`<div><h3 class="disp">Connection</h3><p class="lede">${esc(a?.display_name||'?')} — ${esc(r.kind)} — ${esc(b?.display_name||'?')}</p><p class="sub">Only the keeper or whoever added this connection can change it.</p></div>`));}
   const a=personById(r.from_person),b=personById(r.to_person);
   const box=el(`<div><h3 class="disp">Connection</h3>
     <p class="lede">${esc(a?.display_name||'?')} → ${esc(b?.display_name||'?')}</p>
     <label class="field"><span>Type</span><select id="ek">${REL_KINDS.map(k=>`<option value="${k}">${k}</option>`).join('')}</select></label>
     <p class="sub" style="margin-top:8px">For parent, the arrow means the first person is the parent of the second.</p>
     <button class="btn" id="ek-save">Save</button>
-    <button class="btn danger" id="ek-del">Delete connection</button></div>`);
+    <button class="btn danger" id="ek-del">Delete connection</button>
+    <div class="msg" id="ek-msg"></div></div>`);
   overlay(box); $('#ek').value=r.kind;
-  $('#ek-save').onclick=async()=>{ await sb.from('relationships').update({kind:$('#ek').value}).eq('id',r.id); await loadAll(); closeOverlay(); drawForest(); };
-  $('#ek-del').onclick=async()=>{ if(!confirm('Delete this connection?'))return; await sb.from('relationships').delete().eq('id',r.id); await loadAll(); closeOverlay(); drawForest(); };
+  $('#ek-save').onclick=async()=>{ const {error}=await sb.from('relationships').update({kind:$('#ek').value}).eq('id',r.id); if(error){showMsg($('#ek-msg'),'err',error.message);return;} await loadAll(); closeOverlay(); drawForest(); };
+  $('#ek-del').onclick=async()=>{ if(!confirm('Delete this connection?'))return; const {error}=await sb.from('relationships').delete().eq('id',r.id); if(error){showMsg($('#ek-msg'),'err',error.message);return;} await loadAll(); closeOverlay(); drawForest(); };
 }
 
 // ---------- ADD CONTENT ----------
@@ -744,13 +783,31 @@ function onFile(e){
   else{const fw=$('#filewrap');let pv=fw.querySelector('.curmedia');if(pv)pv.remove();
     if(S.addKind==='video')fw.append(el(`<div class="curmedia" style="margin-top:10px"><video controls src="${url}" style="width:100%;border-radius:10px"></video></div>`));
     else if(S.addKind==='voice')fw.append(el(`<div class="curmedia" style="margin-top:10px"><audio controls src="${url}" style="width:100%"></audio></div>`));
-    else fw.append(el(`<div class="curmedia" style="margin-top:10px"><img src="${url}" style="width:100%;border-radius:10px"/></div>`));}
+    else showObjImg(url);}
 }
 function mountStage(url){
   const wrap=$('#stagewrap');wrap.innerHTML='';
   const stage=el(`<div class="stage" id="stage"><img src="${url}" draggable="false"/></div>`);
-  wrap.append(stage);wrap.append(el('<p class="footnote" style="text-align:left;margin-top:6px">Drag across each face to mark who’s there.</p>'));
+  wrap.append(stage);
+  const bar=el('<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:6px"><span class="footnote" style="text-align:left;margin:0">Drag across each face to mark who’s there.</span><button class="btn sm secondary" id="rot-add" type="button" style="margin:0;white-space:nowrap">⟳ Rotate</button></div>');
+  wrap.append(bar);
+  $('#rot-add').onclick=rotateAddPhoto;
   enableTagging(stage);renderTags();
+}
+function showObjImg(url){
+  const fw=$('#filewrap');let pv=fw.querySelector('.curmedia');if(pv)pv.remove();
+  const box=el(`<div class="curmedia" style="margin-top:10px"><img src="${url}" style="width:100%;border-radius:10px"/><button class="btn sm secondary" id="rot-add" type="button" style="margin-top:8px">⟳ Rotate</button></div>`);
+  fw.append(box); $('#rot-add').onclick=rotateAddPhoto;
+}
+async function rotateAddPhoto(){
+  if(!NEWFILE)return; const btn=$('#rot-add'); if(btn)btn.disabled=true;
+  try{
+    const rb=await rotate90(NEWFILE);
+    NEWFILE=new File([rb],(NEWFILE.name||'photo.jpg'),{type:rb.type});
+    const url=URL.createObjectURL(NEWFILE);
+    if(KINDS[S.addKind].boxes){ TAGS=TAGS.map(t=>({box:box90(t.box),name:t.name})); mountStage(url); }
+    else showObjImg(url);
+  }catch(e){ alert(e.message||'Could not rotate'); if(btn)btn.disabled=false; }
 }
 function enableTagging(stage){
   let start=null,preview=null;
