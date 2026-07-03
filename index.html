@@ -414,11 +414,16 @@ function drawForest(){
         u.members.forEach(m=>rep.add(m+'>'+c.root));});
     }
   });
+  // shared-parent lookup, so redundant sibling lines aren't drawn
+  const parentsOf=new Map();
+  S.rels.forEach(r=>{ if(r.kind==='parent'){ if(!parentsOf.has(r.to_person))parentsOf.set(r.to_person,new Set()); parentsOf.get(r.to_person).add(r.from_person); }});
+  const shareParent=(x,y)=>{ const px=parentsOf.get(x),py=parentsOf.get(y); if(!px||!py)return false; for(const v of px)if(py.has(v))return true; return false; };
   // remaining links: friendship, extra marriages, married-in parents
   L.rels.forEach(r=>{ const a=L.pos.get(r.from_person),b=L.pos.get(r.to_person);if(!a||!b)return;
     if(r.kind==='friend') addLine(a.x,a.y,b.x,b.y,'#b58fd8',2,'5 5');
     else if(r.kind==='spouse'){ if(L.homeUnit.get(r.from_person)!==L.homeUnit.get(r.to_person)) addLine(a.x,a.y,b.x,b.y,'#ffce72',2,'2 5'); }
     else if(r.kind==='parent'){ if(!rep.has(r.from_person+'>'+r.to_person)) addLine(a.x,a.y+NODE_H/2,b.x,b.y-NODE_H/2,'#6f6597',1.6,'2 5'); }
+    else if(r.kind==='sibling'){ if(!shareParent(r.from_person,r.to_person)) addLine(a.x,a.y,b.x,b.y,'#8fb6d8',1.6,'3 4'); }
     else addLine(a.x,a.y,b.x,b.y,'#8fb6d8',1.6,'3 4');
   });
   canvas.appendChild(svg);
@@ -518,9 +523,68 @@ async function openPerson(id){
       const isImg=(a.kind==='photo'||a.kind==='object');
       const th=isImg&&url?`<img class="th" src="${url}"/>`:`<div class="th">${esc(a.kind)}</div>`;
       const st=a.status==='published'?'<span class="status pub">lit</span>':'<span class="status rev">in review</span>';
-      mbox.append(el(`<div class="mem">${th}<div class="mt">${a.body?'<b>'+esc(a.body.slice(0,90))+(a.body.length>90?'…':'')+'</b><br>':''}${st} ${esc(a.metadata?.when||'')}</div></div>`));
+      const row=el(`<div class="mem" style="cursor:pointer">${th}<div class="mt">${a.body?'<b>'+esc(a.body.slice(0,90))+(a.body.length>90?'…':'')+'</b><br>':''}${st} ${esc(a.metadata?.when||'')}${a.metadata?.where?' · '+esc(a.metadata.where):''} <span style="color:var(--gold-soft)">· edit ›</span></div></div>`);
+      row.onclick=()=>openEditArtefact(a.id);
+      mbox.append(row);
     }
   }
+}
+async function openEditArtefact(id){
+  const {data:a,error}=await sb.from('artefacts')
+    .select('id,kind,body,metadata,certainty,storage_path,status,contributor_user, artefact_subjects(id,person_id,people(display_name))')
+    .eq('id',id).single();
+  if(error||!a)return alert(error?.message||'Could not load this memory.');
+  const isImg=(a.kind==='photo'||a.kind==='object');
+  const url=a.storage_path?await signed(a.storage_path):'';
+  const box=el(`<div><h3 class="disp">Edit ${esc(KINDS[a.kind]?.label||a.kind)}</h3>
+    ${a.status!=='published'?'<div class="sub"><span class="status rev">in review</span></div>':''}
+    ${isImg&&url?`<img src="${url}" style="width:100%;border-radius:12px;margin:6px 0"/>`:''}
+    ${a.kind==='voice'&&url?`<audio controls src="${url}" style="width:100%;margin:6px 0"></audio>`:''}
+    ${a.kind==='video'&&url?`<video controls src="${url}" style="width:100%;border-radius:12px;margin:6px 0"></video>`:''}
+    <label class="field"><span>${esc(KINDS[a.kind]?.story||'The memory')}</span><textarea id="ea-body">${esc(a.body||'')}</textarea></label>
+    <div class="row"><label class="field"><span>Roughly when</span><input id="ea-when" type="text" value="${esc(a.metadata?.when||'')}"/></label>
+      <label class="field"><span>Where</span><input id="ea-where" type="text" value="${esc(a.metadata?.where||'')}"/></label></div>
+    <label class="field"><span>How sure?</span><select id="ea-cert"><option value="remembered">Remembered</option><option value="documented">Documented</option><option value="uncertain">Uncertain</option></select></label>
+    <div class="eyebrow" style="margin-top:14px">People in this</div>
+    <div id="ea-subs"></div>
+    <div class="tagrow" style="margin-top:8px"><input id="ea-add" type="text" list="people-list" placeholder="Add a person"/><button class="btn sm" id="ea-addbtn">Add</button></div>
+    ${a.storage_path?'<label class="field"><span>Replace the file (optional)</span><input id="ea-file" type="file"/></label>':''}
+    <button class="btn" id="ea-save">${S.isKeeper?'Save':'Submit changes for review'}</button>
+    <button class="btn danger" id="ea-del">Delete this memory</button>
+    <div class="msg" id="ea-msg"></div></div>`);
+  overlay(box);
+  $('#ea-cert').value=a.certainty||'remembered';
+  const renderSubs=()=>{ const c=$('#ea-subs');c.innerHTML='';
+    if(!(a.artefact_subjects||[]).length){c.innerHTML='<div class="empty" style="padding:6px 0">No one tagged yet.</div>';return;}
+    a.artefact_subjects.forEach(s=>{
+      const row=el(`<div class="rel"><span class="nm">${esc(s.people?.display_name||'—')}</span><button class="x">remove</button></div>`);
+      row.querySelector('.nm').onclick=()=>{closeOverlay();openPerson(s.person_id);};
+      row.querySelector('.x').onclick=async()=>{ await sb.from('artefact_subjects').delete().eq('id',s.id);
+        a.artefact_subjects=a.artefact_subjects.filter(x=>x.id!==s.id); renderSubs(); await loadAll(); if(S.tab==='forest')drawForest(); };
+      c.append(row);
+    });
+  };
+  renderSubs();
+  $('#ea-addbtn').onclick=async()=>{ const nm=$('#ea-add').value.trim(); if(!nm)return;
+    try{ const pid=await ensurePerson(nm);
+      const {data:ns,error:e2}=await sb.from('artefact_subjects').insert({artefact_id:a.id,person_id:pid,detail:null}).select('id,person_id,people(display_name)').single();
+      if(e2)throw e2; a.artefact_subjects.push(ns); $('#ea-add').value=''; renderSubs(); await loadAll(); if(S.tab==='forest')drawForest();
+    }catch(err){showMsg($('#ea-msg'),'err',err.message);} };
+  $('#ea-save').onclick=async()=>{ const m=$('#ea-msg'); const btn=$('#ea-save'); btn.disabled=true; const old=btn.textContent; btn.innerHTML='<span class="spin"></span>';
+    const meta={...(a.metadata||{})}; const w=$('#ea-when').value.trim(),p=$('#ea-where').value.trim();
+    if(w)meta.when=w; else delete meta.when; if(p)meta.where=p; else delete meta.where;
+    const patch={body:$('#ea-body').value.trim()||null,certainty:$('#ea-cert').value,metadata:meta};
+    if(!S.isKeeper && a.status==='published') patch.status='in_review';
+    try{ const f=$('#ea-file')?.files?.[0]; if(f){patch.storage_path=await uploadFile(f);}
+      const {error:e3}=await sb.from('artefacts').update(patch).eq('id',a.id); if(e3)throw e3;
+      await loadAll(); closeOverlay(); if(S.tab==='forest')drawForest(); else paint();
+    }catch(err){btn.disabled=false;btn.textContent=old;showMsg(m,'err',err.message||'Could not save.');} };
+  $('#ea-del').onclick=async()=>{ if(!confirm('Delete this memory? This cannot be undone.'))return;
+    try{ await sb.from('artefact_subjects').delete().eq('artefact_id',a.id);
+      const {error:e4}=await sb.from('artefacts').delete().eq('id',a.id); if(e4)throw e4;
+      if(a.storage_path)try{await sb.storage.from('family').remove([a.storage_path]);}catch(e){}
+      await loadAll(); closeOverlay(); if(S.tab==='forest')drawForest(); else paint();
+    }catch(err){showMsg($('#ea-msg'),'err',err.message);} };
 }
 function openAddPerson(anchorId,relKind){
   const anchor=anchorId?personById(anchorId):null;
@@ -747,7 +811,8 @@ async function viewReview(root){
     const card=el(`<div class="mem">${isImg&&url?`<img class="th" src="${url}"/>`:`<div class="th">${esc(a.kind)}</div>`}
       <div class="mt" style="flex:1">${a.body?'<b>'+esc(a.body.slice(0,90))+'</b><br>':''}${esc([a.metadata?.when,a.metadata?.where].filter(Boolean).join(' · '))}
       <div class="chips">${names.map(n=>'<span class="chip">'+esc(n)+'</span>').join('')||'<span class="chip" style="opacity:.6">no one tagged</span>'}</div>
-      <div class="act"><button class="gold" data-go="1">Light it up ✦</button><button class="danger" data-del="1">Delete</button></div></div></div>`);
+      <div class="act"><button class="gold" data-go="1">Light it up ✦</button><button data-edit="1">Edit</button><button class="danger" data-del="1">Delete</button></div></div></div>`);
+    card.querySelector('[data-edit]').onclick=()=>openEditArtefact(a.id);
     card.querySelector('[data-go]').onclick=async(e)=>{e.target.disabled=true;e.target.innerHTML='<span class="spin"></span>';
       const {error}=await sb.from('artefacts').update({status:'published',published_at:new Date().toISOString()}).eq('id',a.id);
       if(error)e.target.textContent=error.message;else{await loadAll();card.style.transition='.4s';card.style.opacity='0';setTimeout(()=>card.remove(),400);}};
@@ -783,7 +848,7 @@ function viewPlaces(root){
     const row=el(`<div class="listrow"><b>${esc(pl.name)}</b> <span class="s">· ${pl.arts.length} ${pl.arts.length===1?'memory':'memories'}</span>
       <div class="thumbs" style="display:flex;gap:6px;margin:7px 0"></div>${peopleChips([...pl.people])}</div>`);
     const tw=row.querySelector('.thumbs');
-    thumbs.forEach(a=>{const t=el('<div class="phimg" style="width:46px;height:46px"></div>');tw.append(t);bgThumb(t,a.storage_path);});
+    thumbs.forEach(a=>{const t=el('<div class="phimg" style="width:46px;height:46px;cursor:pointer"></div>');t.onclick=()=>openEditArtefact(a.id);tw.append(t);bgThumb(t,a.storage_path);});
     if(!thumbs.length)tw.remove();
     wireChips(row); l.append(row);
   });
@@ -802,6 +867,7 @@ function viewTimeline(root){
       ${isImg?`<div class="phimg" style="width:54px;height:54px"></div>`:`<div class="th">${esc(a.kind)}</div>`}
       <div class="mt" style="flex:1"><b>${esc(a.metadata.when)}</b>${a.metadata.where?' · '+esc(a.metadata.where):''}<br>${esc(artTitle(a))}${peopleChips(artPeople(a))}</div></div>`);
     if(isImg)bgThumb(row.querySelector('.phimg'),a.storage_path);
+    row.style.cursor='pointer'; row.addEventListener('click',(e)=>{ if(!e.target.closest('[data-n]'))openEditArtefact(a.id); });
     wireChips(row); l.append(row);
   });
 }
