@@ -74,14 +74,18 @@
     radial-gradient(120% 90% at 50% 0%,#211a40 0%,#160f30 70%);height:66dvh;-webkit-overflow-scrolling:touch;}
   .canvas{position:relative;transform-origin:0 0;}
   .canvas svg.edges{position:absolute;left:0;top:0;overflow:visible;pointer-events:none;}
-  .pnode{position:absolute;transform:translate(-50%,-50%);width:96px;text-align:center;cursor:pointer;user-select:none;}
-  .pnode .disc{width:52px;height:52px;margin:0 auto;border-radius:50%;background:#2a2150;border:2px solid #4a3f74;
-    display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--muted);font-size:16px;overflow:hidden;}
-  .pnode .disc img{width:100%;height:100%;object-fit:cover;}
-  .pnode.lit .disc{background:radial-gradient(circle at 50% 35%,#ffe6ad,#ffce72);border-color:#fff2cf;color:#3a2a05;box-shadow:0 0 16px #ffce7255;}
-  .pnode.sel .disc{border-color:var(--sky);box-shadow:0 0 0 3px #8fb6d855;}
-  .pnode .nm{font-size:12px;font-weight:700;margin-top:5px;line-height:1.15;color:var(--cream);}
-  .pnode .dt{font-size:10px;color:var(--muted);}
+  .pnode{position:absolute;transform:translate(-50%,-50%);width:120px;cursor:pointer;user-select:none;z-index:2;}
+  .pnode .card2{background:#221b42;border:1px solid #40376b;border-radius:13px;padding:8px 6px 7px;box-shadow:0 2px 8px #00000040;height:96px;display:flex;flex-direction:column;align-items:center;}
+  .pnode.lit .card2{border-color:#ffd98a;background:linear-gradient(180deg,#2c2450,#221b42);box-shadow:0 0 16px #ffce7233,0 2px 8px #00000040;}
+  .pnode.sel .card2{border-color:var(--sky);box-shadow:0 0 0 3px #8fb6d855;}
+  .pnode .disc{width:48px;height:48px;flex:none;border-radius:50%;background:#2a2150;border:2px solid #4a3f74;position:relative;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--muted);font-size:15px;}
+  .pnode .disc img{position:absolute;}
+  .pnode.lit .disc{border-color:#fff2cf;color:#3a2a05;}
+  .pnode.lit .disc.noimg{background:radial-gradient(circle at 50% 35%,#ffe6ad,#ffce72);}
+  .pnode .nm{font-size:11.5px;font-weight:700;line-height:1.14;color:var(--cream);margin-top:5px;max-width:112px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .pnode .dt{font-size:10px;color:var(--muted);margin-top:1px;}
+  .phimg{border-radius:9px;background:#0e0a22 center/cover no-repeat;border:1px solid var(--panel-line);flex:none;}
   .emptyforest{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);text-align:center;padding:20px;}
 
   /* overlay sheet */
@@ -139,7 +143,6 @@
 <div class="stars" id="stars"></div>
 <div class="wrap" id="app"></div>
 <datalist id="people-list"></datalist>
-<datalist id="place-list"></datalist>
 
 <script>
 const SUPABASE_URL='https://oabcdrktuikifbormjip.supabase.co';
@@ -162,7 +165,7 @@ const KINDS={
 const REL_KINDS=['parent','spouse','sibling','friend','mentor','neighbour','other'];
 
 let S={user:null,isKeeper:false,tab:'forest',
-  people:[],rels:[],places:[],events:[],litSet:new Set(),
+  people:[],rels:[],artefacts:[],litSet:new Set(),faceOf:new Map(),
   zoom:1, selecting:false, selected:new Set(), addCtx:[], addKind:'photo'};
 
 (function(){const s=$('#stars');let h='';for(let i=0;i<44;i++)h+=`<i style="left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*4}s"></i>`;s.innerHTML=h;})();
@@ -213,18 +216,21 @@ async function auth(mode){
 
 // ---------- data ----------
 async function loadAll(){
-  const [pp,rr,pl,ev,art]=await Promise.all([
+  const [pp,rr,art]=await Promise.all([
     sb.from('people').select('id,display_name,called_name,birth_date,death_date,is_living,is_friend,branch,primary_asset,metadata').order('display_name'),
     sb.from('relationships').select('id,from_person,to_person,kind'),
-    sb.from('places').select('id,name,country,metadata').order('name'),
-    sb.from('events').select('id,title,kind,event_date,place_id,description').order('event_date'),
-    sb.from('artefacts').select('id,kind,status, artefact_subjects(person_id)').eq('status','published'),
+    sb.from('artefacts').select('id,kind,body,metadata,certainty,storage_path,published_at, artefact_subjects(person_id, detail, people(display_name))').eq('status','published').order('published_at',{ascending:false}),
   ]);
-  S.people=pp.data||[]; S.rels=rr.data||[]; S.places=pl.data||[]; S.events=ev.data||[];
-  S.litSet=new Set();
-  (art.data||[]).forEach(a=>(a.artefact_subjects||[]).forEach(s=>s.person_id&&S.litSet.add(s.person_id)));
+  S.people=pp.data||[]; S.rels=rr.data||[]; S.artefacts=art.data||[];
+  S.litSet=new Set(); S.faceOf=new Map();
+  S.artefacts.forEach(a=>{
+    const photo=(a.kind==='photo'||a.kind==='object')&&a.storage_path;
+    (a.artefact_subjects||[]).forEach(s=>{ if(!s.person_id)return; S.litSet.add(s.person_id);
+      if(photo){ const box=(s.detail&&typeof s.detail==='object'&&s.detail.w)?s.detail:null;
+        const cur=S.faceOf.get(s.person_id);
+        if(!cur||(!cur.box&&box)) S.faceOf.set(s.person_id,{path:a.storage_path,box}); } });
+  });
   $('#people-list').innerHTML=S.people.map(p=>`<option value="${esc(p.display_name)}">`).join('');
-  $('#place-list').innerHTML=S.places.map(p=>`<option value="${esc(p.name)}">`).join('');
 }
 const personById=(id)=>S.people.find(p=>p.id===id);
 async function ensurePerson(name){
@@ -233,13 +239,6 @@ async function ensurePerson(name){
   if(f)return f.id;
   const {data,error}=await sb.from('people').insert({display_name:name,created_by:S.user.id,status:'published'}).select().single();
   if(error)throw error; S.people.push(data); return data.id;
-}
-async function resolvePlace(name){
-  name=(name||'').trim(); if(!name)return null;
-  const f=S.places.find(p=>p.name.toLowerCase()===name.toLowerCase());
-  if(f)return f.id;
-  const {data,error}=await sb.from('places').insert({name}).select().single();
-  if(error)throw error; S.places.push(data); return data.id;
 }
 async function addRel(fromId,toId,kind){
   const {error}=await sb.from('relationships').insert({from_person:fromId,to_person:toId,kind});
@@ -253,6 +252,27 @@ async function uploadFile(file){
   if(up.error)throw up.error; return path;
 }
 async function signed(path){ if(!path)return''; try{const s=await sb.storage.from('family').createSignedUrl(path,3600);return s.data?.signedUrl||'';}catch(e){return'';} }
+async function mountFace(disc,path,box,fallback){
+  if(!disc)return;
+  const url=await signed(path);
+  if(!url){disc.classList.add('noimg');disc.textContent=fallback;return;}
+  const img=new Image();
+  img.onload=()=>{
+    disc.textContent='';
+    const D=disc.clientWidth||48, natW=img.naturalWidth||1, natH=img.naturalHeight||1, ar=natH/natW;
+    if(box&&box.w>0.02&&box.h>0.02){
+      const pad=0.5;
+      const bw=Math.min(1,box.w*(1+pad)), bh=Math.min(1,box.h*(1+pad));
+      const bx=Math.max(0,Math.min(1-bw,box.x-box.w*pad/2)), by=Math.max(0,Math.min(1-bh,box.y-box.h*pad/2));
+      const Wd=Math.max(D/bw, D/(bh*ar)), Hd=Wd*ar;
+      img.style.width=Wd+'px'; img.style.height=Hd+'px';
+      img.style.left=(D/2-(bx+bw/2)*Wd)+'px'; img.style.top=(D/2-(by+bh/2)*Hd)+'px';
+    } else { img.style.width='100%'; img.style.height='100%'; img.style.left='0'; img.style.top='0'; img.style.objectFit='cover'; }
+    disc.appendChild(img);
+  };
+  img.onerror=()=>{disc.classList.add('noimg');disc.textContent=fallback;};
+  img.src=url;
+}
 
 // ---------- shell ----------
 function render(){
@@ -285,63 +305,57 @@ function paint(){
 }
 
 // ---------- layout ----------
+const NODE_W=120, NODE_H=96, ROW_H=166, COUPLE_GAP=14, SIB_GAP=30, FAM_GAP=80;
 function computeLayout(){
   const people=S.people, rels=S.rels;
-  const id2=new Map(people.map(p=>[p.id,p]));
-  const parentsOf=new Map(), childrenOf=new Map(), spouse=new Map();
-  people.forEach(p=>{parentsOf.set(p.id,[]);childrenOf.set(p.id,[]);spouse.set(p.id,[]);});
-  rels.forEach(r=>{
-    if(!id2.has(r.from_person)||!id2.has(r.to_person))return;
-    if(r.kind==='parent'){ childrenOf.get(r.from_person).push(r.to_person); parentsOf.get(r.to_person).push(r.from_person); }
-    if(r.kind==='spouse'){ spouse.get(r.from_person).push(r.to_person); spouse.get(r.to_person).push(r.from_person); }
-  });
-  // union-find components over all rels
-  const uf=new Map(people.map(p=>[p.id,p.id]));
-  const find=(a)=>{while(uf.get(a)!==a){uf.set(a,uf.get(uf.get(a)));a=uf.get(a);}return a;};
-  const uni=(a,b)=>{a=find(a);b=find(b);if(a!==b)uf.set(a,b);};
-  rels.forEach(r=>{if(id2.has(r.from_person)&&id2.has(r.to_person))uni(r.from_person,r.to_person);});
-  // generation via longest path from roots
-  const gen=new Map(people.map(p=>[p.id,0]));
-  for(let iter=0;iter<people.length+2;iter++){
-    let changed=false;
-    rels.forEach(r=>{ if(r.kind==='parent'&&id2.has(r.from_person)&&id2.has(r.to_person)){
-      const ng=gen.get(r.from_person)+1; if(ng>gen.get(r.to_person)){gen.set(r.to_person,ng);changed=true;} }});
-    // align spouses
-    people.forEach(p=>spouse.get(p.id).forEach(sp=>{const mx=Math.max(gen.get(p.id),gen.get(sp));if(gen.get(p.id)!==mx){gen.set(p.id,mx);changed=true;}}));
-    if(!changed)break;
-  }
-  // DFS emission order, grouped by component then family
-  const comps=new Map();
-  people.forEach(p=>{const c=find(p.id);if(!comps.has(c))comps.set(c,[]);comps.get(c).push(p.id);});
-  const visited=new Set(), order=[], compOf=new Map();
-  let ci=0;
-  const emit=(id,c)=>{ if(visited.has(id))return; visited.add(id); order.push(id); compOf.set(id,c);
-    spouse.get(id).forEach(sp=>{if(!visited.has(sp)){visited.add(sp);order.push(sp);compOf.set(sp,c);}});
-    childrenOf.get(id).slice().sort().forEach(k=>emit(k,c)); };
-  [...comps.keys()].forEach(c=>{
-    const members=comps.get(c);
-    const roots=members.filter(m=>parentsOf.get(m).length===0);
-    (roots.length?roots:members).forEach(r=>emit(r,ci));
-    members.forEach(m=>{if(!visited.has(m))emit(m,ci);});
-    ci++;
-  });
-  people.forEach(p=>{if(!visited.has(p.id)){order.push(p.id);compOf.set(p.id,ci++);visited.add(p.id);}});
-  // assign x per generation row, gap between components
-  const DX=118, DY=124, GAP=54;
-  const byGen=new Map();
-  order.forEach(id=>{const g=gen.get(id)||0;if(!byGen.has(g))byGen.set(g,[]);byGen.get(g).push(id);});
+  const has=new Set(people.map(p=>p.id));
+  const childrenOf=new Map(), parentsOf=new Map();
+  people.forEach(p=>{childrenOf.set(p.id,[]);parentsOf.set(p.id,[]);});
+  rels.forEach(r=>{ if(!has.has(r.from_person)||!has.has(r.to_person))return;
+    if(r.kind==='parent'){ childrenOf.get(r.from_person).push(r.to_person); parentsOf.get(r.to_person).push(r.from_person); }});
+  const byBirth=(id)=>{const p=people.find(x=>x.id===id);const y=p&&p.birth_date?parseInt(String(p.birth_date).slice(0,4)):9999;return isNaN(y)?9999:y;};
+  const nameOf=(id)=>{const p=people.find(x=>x.id===id);return p?p.display_name:'';};
+  // --- build home units (couples first, then singletons) ---
+  const homeUnit=new Map(), unitList=[]; const seen=new Set();
+  rels.forEach(r=>{ if(r.kind!=='spouse')return; if(!has.has(r.from_person)||!has.has(r.to_person))return;
+    if(homeUnit.has(r.from_person)||homeUnit.has(r.to_person))return;
+    const key=[r.from_person,r.to_person].sort().join('|'); if(seen.has(key))return; seen.add(key);
+    const u={members:[r.from_person,r.to_person],childUnits:[]}; unitList.push(u);
+    homeUnit.set(r.from_person,u); homeUnit.set(r.to_person,u); });
+  people.forEach(p=>{ if(!homeUnit.has(p.id)){ const u={members:[p.id],childUnits:[]}; unitList.push(u); homeUnit.set(p.id,u); }});
+  // root member = one with parents (blood line), else first
+  unitList.forEach(u=>{ u.root = u.members.find(m=>parentsOf.get(m).length>0) ?? u.members[0]; });
+  // strict parent-unit (one per unit) → childUnits
+  unitList.forEach(u=>{ const par=parentsOf.get(u.root)[0]; u.parentUnit=(par!=null)?homeUnit.get(par):null; });
+  unitList.forEach(u=>{ if(u.parentUnit && u.parentUnit!==u) u.parentUnit.childUnits.push(u); });
+  unitList.forEach(u=>u.childUnits.sort((a,b)=>(byBirth(a.root)-byBirth(b.root))||nameOf(a.root).localeCompare(nameOf(b.root))));
+  const baseW=(u)=> u.members.length>1 ? (2*NODE_W+COUPLE_GAP) : NODE_W;
+  const M=new Set();
+  function measure(u){ if(M.has(u)){u.sub=baseW(u);return u.sub;} M.add(u);
+    const k=u.childUnits; if(!k.length){u.sub=baseW(u);return u.sub;}
+    let w=0; k.forEach((c,i)=>{w+=measure(c); if(i<k.length-1)w+=SIB_GAP;}); u.sub=Math.max(baseW(u),w); return u.sub; }
+  const P=new Set();
+  function place(u,left,depth){ if(P.has(u))return; P.add(u); u.depth=depth;
+    const k=u.childUnits;
+    if(!k.length){ u.cx=left+u.sub/2; return; }
+    const cw=k.reduce((a,c,i)=>a+c.sub+(i<k.length-1?SIB_GAP:0),0);
+    let cur=left+(u.sub-cw)/2; k.forEach(c=>{place(c,cur,depth+1);cur+=c.sub+SIB_GAP;});
+    u.cx=(k[0].cx+k[k.length-1].cx)/2; }
+  const roots=unitList.filter(u=>!u.parentUnit || u.parentUnit===u);
+  roots.sort((a,b)=>(byBirth(a.root)-byBirth(b.root)));
+  let xLeft=20, maxDepth=0;
+  roots.forEach(r=>{ measure(r); place(r,xLeft,0); xLeft+=r.sub+FAM_GAP; });
   const pos=new Map(); let maxX=0;
-  [...byGen.keys()].sort((a,b)=>a-b).forEach(g=>{
-    let cursor=0, prevComp=null;
-    byGen.get(g).forEach(id=>{
-      const c=compOf.get(id);
-      if(prevComp!==null&&c!==prevComp)cursor+=GAP;
-      const x=cursor+60, y=g*DY+70;
-      pos.set(id,{x,y}); cursor+=DX; prevComp=c; if(x>maxX)maxX=x;
-    });
-  });
-  const maxG=Math.max(0,...[...byGen.keys()]);
-  return {pos,width:maxX+80,height:maxG*DY+150,rels,id2};
+  unitList.forEach(u=>{ if(u.depth==null)return; maxDepth=Math.max(maxDepth,u.depth);
+    const y=u.depth*ROW_H+NODE_H/2+24;
+    if(u.members.length>1){ const off=(NODE_W+COUPLE_GAP)/2;
+      pos.set(u.members[0],{x:u.cx-off,y}); pos.set(u.members[1],{x:u.cx+off,y}); }
+    else pos.set(u.members[0],{x:u.cx,y});
+    maxX=Math.max(maxX,u.cx+baseW(u)/2); });
+  // any stranded people (shouldn't happen) → a bottom row
+  let sx=20; const strandY=(maxDepth+1)*ROW_H+NODE_H/2+24;
+  people.forEach(p=>{ if(!pos.has(p.id)){ pos.set(p.id,{x:sx+NODE_W/2,y:strandY}); sx+=NODE_W+SIB_GAP; maxDepth=Math.max(maxDepth,maxDepth+1);} });
+  return {pos,unitList,homeUnit,rels,width:maxX+40,height:(maxDepth+1)*ROW_H+60};
 }
 
 // ---------- FOREST ----------
@@ -378,37 +392,51 @@ function drawForest(){
   if(!S.people.length){canvas.append(el(`<div class="emptyforest"><div style="font-size:30px">✦</div><p>The forest is empty.<br>Tap “＋ Person” to plant the first one.</p></div>`));canvas.style.width='100%';canvas.style.height='100%';return;}
   const L=computeLayout();
   canvas.style.width=L.width+'px';canvas.style.height=L.height+'px';canvas._w=L.width;
-  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  const NS='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(NS,'svg');
   svg.setAttribute('class','edges');svg.setAttribute('width',L.width);svg.setAttribute('height',L.height);
-  L.rels.forEach(r=>{
-    const a=L.pos.get(r.from_person),b=L.pos.get(r.to_person);if(!a||!b)return;
-    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
-    let col='#6f6597',dash='',w=2;
-    if(r.kind==='spouse'){col='#ffce72';w=2.5;}
-    else if(r.kind==='friend'){col='#b58fd8';dash='5 5';}
-    else if(r.kind!=='parent'){col='#8fb6d8';dash='3 4';}
-    line.setAttribute('x1',a.x);line.setAttribute('y1',a.y);line.setAttribute('x2',b.x);line.setAttribute('y2',b.y);
-    line.setAttribute('stroke',col);line.setAttribute('stroke-width',w);if(dash)line.setAttribute('stroke-dasharray',dash);
-    line.setAttribute('style','pointer-events:stroke;cursor:pointer;');line.setAttribute('stroke-linecap','round');
-    line.addEventListener('click',()=>openEdge(r));
-    svg.appendChild(line);
+  const addLine=(x1,y1,x2,y2,col,w,dash)=>{const ln=document.createElementNS(NS,'line');
+    ln.setAttribute('x1',x1);ln.setAttribute('y1',y1);ln.setAttribute('x2',x2);ln.setAttribute('y2',y2);
+    ln.setAttribute('stroke',col);ln.setAttribute('stroke-width',w||2);ln.setAttribute('stroke-linecap','round');
+    if(dash)ln.setAttribute('stroke-dasharray',dash);svg.appendChild(ln);};
+  const rep=new Set();
+  // marriage bars + orthogonal child connectors
+  L.unitList.forEach(u=>{ if(u.depth==null)return;
+    const y=L.pos.get(u.members[0]).y;
+    if(u.members.length>1){ const a=L.pos.get(u.members[0]),b=L.pos.get(u.members[1]);
+      addLine(a.x+NODE_W/2,a.y,b.x-NODE_W/2,b.y,'#ffce72',2.5); }
+    if(u.childUnits.length){
+      const busY=y+NODE_H/2+(ROW_H-NODE_H)/2-8;
+      addLine(u.cx,y+NODE_H/2,u.cx,busY,'#6f6597',2);
+      const cxs=u.childUnits.map(c=>L.pos.get(c.root).x);
+      addLine(Math.min(u.cx,...cxs),busY,Math.max(u.cx,...cxs),busY,'#6f6597',2);
+      u.childUnits.forEach(c=>{const cp=L.pos.get(c.root);addLine(cp.x,busY,cp.x,cp.y-NODE_H/2,'#6f6597',2);
+        u.members.forEach(m=>rep.add(m+'>'+c.root));});
+    }
+  });
+  // remaining links: friendship, extra marriages, married-in parents
+  L.rels.forEach(r=>{ const a=L.pos.get(r.from_person),b=L.pos.get(r.to_person);if(!a||!b)return;
+    if(r.kind==='friend') addLine(a.x,a.y,b.x,b.y,'#b58fd8',2,'5 5');
+    else if(r.kind==='spouse'){ if(L.homeUnit.get(r.from_person)!==L.homeUnit.get(r.to_person)) addLine(a.x,a.y,b.x,b.y,'#ffce72',2,'2 5'); }
+    else if(r.kind==='parent'){ if(!rep.has(r.from_person+'>'+r.to_person)) addLine(a.x,a.y+NODE_H/2,b.x,b.y-NODE_H/2,'#6f6597',1.6,'2 5'); }
+    else addLine(a.x,a.y,b.x,b.y,'#8fb6d8',1.6,'3 4');
   });
   canvas.appendChild(svg);
   S.people.forEach(p=>{
     const pt=L.pos.get(p.id);if(!pt)return;
     const lit=S.litSet.has(p.id);
+    const face=S.faceOf.get(p.id);
     const node=el(`<div class="pnode${lit?' lit':''}${S.selected.has(p.id)?' sel':''}" style="left:${pt.x}px;top:${pt.y}px">
-      <div class="disc">${p.primary_asset?'<img src="" data-a="'+esc(p.primary_asset)+'"/>':esc(initials(p.display_name))}</div>
+      <div class="card2"><div class="disc${face?'':' noimg'}">${face?'':esc(initials(p.display_name))}</div>
       <div class="nm">${esc(p.called_name||p.display_name)}</div>
-      <div class="dt">${[yr(p.birth_date),yr(p.death_date)].filter(Boolean).join('–')}</div></div>`);
+      <div class="dt">${[yr(p.birth_date),yr(p.death_date)].filter(Boolean).join('–')||'&nbsp;'}</div></div></div>`);
     node.onclick=(e)=>{e.stopPropagation();
       if(S.selecting){ if(S.selected.has(p.id))S.selected.delete(p.id);else S.selected.add(p.id);
         node.classList.toggle('sel');updateSelInfo(); }
       else openPerson(p.id);
     };
     canvas.appendChild(node);
-    const img=node.querySelector('img[data-a]');
-    if(img)signed(img.getAttribute('data-a')).then(u=>{if(u)img.src=u;else img.replaceWith(el('<span>'+esc(initials(p.display_name))+'</span>'));});
+    if(face) mountFace(node.querySelector('.disc'), face.path, face.box, initials(p.display_name));
   });
   setTimeout(fitForest,30);
 }
@@ -470,8 +498,9 @@ async function openPerson(id){
       const other=personById(otherId);if(!other)return;
       let label=r.kind;
       if(r.kind==='parent')label=r.from_person===id?'parent of':'child of';
-      const row=el(`<div class="rel"><span class="k">${esc(label)}</span><span class="nm">${esc(other.display_name)}</span>${S.isKeeper?'<button class="x">remove</button>':''}</div>`);
+      const row=el(`<div class="rel"><span class="k"${S.isKeeper?' style="cursor:pointer;text-decoration:underline dotted"':''}>${esc(label)}</span><span class="nm">${esc(other.display_name)}</span>${S.isKeeper?'<button class="x">remove</button>':''}</div>`);
       row.querySelector('.nm').onclick=()=>openPerson(otherId);
+      if(S.isKeeper)row.querySelector('.k').onclick=()=>openEdge(r);
       const x=row.querySelector('.x');if(x)x.onclick=async()=>{ if(!confirm('Remove this connection?'))return;
         await sb.from('relationships').delete().eq('id',r.id); await loadAll(); openPerson(id); if(S.tab==='forest')drawForest(); };
       cbox.append(row);
@@ -731,29 +760,49 @@ async function viewReview(root){
 }
 
 // ---------- PLACES ----------
+const parseYear=(t)=>{const m=String(t||'').match(/\d{4}/);return m?parseInt(m[0]):NaN;};
+function artPeople(a){return (a.artefact_subjects||[]).map(s=>s.people&&s.people.display_name).filter(Boolean);}
+function artTitle(a){return a.body?a.body.replace(/\s+/g,' ').slice(0,70)+(a.body.length>70?'…':''):('A '+(a.kind||'memory'));}
+
+function bgThumb(node,path){ signed(path).then(u=>{ if(u){ node.style.backgroundImage=`url(${u})`; node.textContent=''; } }); }
+function peopleChips(ppl){ return ppl.length?'<div class="chips">'+ppl.slice(0,10).map(n=>`<span class="chip" data-n="${esc(n)}">${esc(n)}</span>`).join('')+'</div>':''; }
+function wireChips(row){ row.querySelectorAll('[data-n]').forEach(c=>{const p=S.people.find(x=>x.display_name===c.dataset.n);if(p)c.onclick=()=>openPerson(p.id);}); }
+
 function viewPlaces(root){
-  const card=el(`<div class="card"><div class="eyebrow">Where · one web, another door</div><h2 class="disp">Places</h2>
-    <p class="lede">Every place, and the moments and people tied to it. (A map with pins comes later — this is the same data through the “where” door.)</p><div id="pl"></div></div>`);
+  const card=el(`<div class="card"><div class="eyebrow">Where · the “where” door</div><h2 class="disp">Places</h2>
+    <p class="lede">Every place your photos and stories name, and who was there. Built straight from what you upload.</p><div id="pl"></div></div>`);
   root.append(card);const l=$('#pl',card);
-  if(!S.places.length){l.innerHTML='<div class="empty">No places yet. Add one when you add a moment, or from a person’s memory.</div>';return;}
-  S.places.forEach(pl=>{
-    const evs=S.events.filter(e=>e.place_id===pl.id);
-    const row=el(`<div class="listrow"><b>${esc(pl.name)}</b>${pl.country?' <span class="s">· '+esc(pl.country)+'</span>':''}
-      ${evs.length?'<div class="s">'+evs.map(e=>esc(e.title)).join(' · ')+'</div>':'<div class="s" style="opacity:.6">no moments yet</div>'}</div>`);
-    l.append(row);
+  const map=new Map();
+  S.artefacts.forEach(a=>{ const w=((a.metadata&&a.metadata.where)||'').trim(); if(!w)return; const k=w.toLowerCase();
+    if(!map.has(k))map.set(k,{name:w,arts:[],people:new Set()}); const o=map.get(k);
+    o.arts.push(a); artPeople(a).forEach(n=>o.people.add(n)); });
+  const list=[...map.values()].sort((a,b)=>b.arts.length-a.arts.length||a.name.localeCompare(b.name));
+  if(!list.length){l.innerHTML='<div class="empty">No places yet. Add a photo or story with a “where”, and it appears here.</div>';return;}
+  list.forEach(pl=>{
+    const thumbs=pl.arts.filter(a=>(a.kind==='photo'||a.kind==='object')&&a.storage_path).slice(0,5);
+    const row=el(`<div class="listrow"><b>${esc(pl.name)}</b> <span class="s">· ${pl.arts.length} ${pl.arts.length===1?'memory':'memories'}</span>
+      <div class="thumbs" style="display:flex;gap:6px;margin:7px 0"></div>${peopleChips([...pl.people])}</div>`);
+    const tw=row.querySelector('.thumbs');
+    thumbs.forEach(a=>{const t=el('<div class="phimg" style="width:46px;height:46px"></div>');tw.append(t);bgThumb(t,a.storage_path);});
+    if(!thumbs.length)tw.remove();
+    wireChips(row); l.append(row);
   });
 }
 // ---------- TIMELINE ----------
 function viewTimeline(root){
-  const card=el(`<div class="card"><div class="eyebrow">When · one web, another door</div><h2 class="disp">Timeline</h2>
-    <p class="lede">The family’s moments in order.</p><div id="tl"></div></div>`);
+  const card=el(`<div class="card"><div class="eyebrow">When · the “when” door</div><h2 class="disp">Timeline</h2>
+    <p class="lede">Every photo and story with a rough date, in order. Built straight from what you upload.</p><div id="tl"></div></div>`);
   root.append(card);const l=$('#tl',card);
-  const evs=S.events.filter(e=>e.event_date).sort((a,b)=>String(a.event_date).localeCompare(String(b.event_date)));
-  if(!evs.length){l.innerHTML='<div class="empty">No dated moments yet. Add an event with a date and it appears here.</div>';return;}
-  evs.forEach(e=>{
-    const place=e.place_id?S.places.find(p=>p.id===e.place_id):null;
-    l.append(el(`<div class="listrow"><b>${yr(e.event_date)}</b> — ${esc(e.title)}
-      <div class="s">${esc(e.kind||'')}${place?' · '+esc(place.name):''}</div></div>`));
+  const items=S.artefacts.filter(a=>a.metadata&&a.metadata.when).map(a=>({a,year:parseYear(a.metadata.when)}));
+  items.sort((x,y)=>(isNaN(x.year)?9999:x.year)-(isNaN(y.year)?9999:y.year));
+  if(!items.length){l.innerHTML='<div class="empty">No dated memories yet. Add a photo or story with a rough “when”, and it appears here.</div>';return;}
+  items.forEach(({a})=>{
+    const isImg=(a.kind==='photo'||a.kind==='object')&&a.storage_path;
+    const row=el(`<div class="mem">
+      ${isImg?`<div class="phimg" style="width:54px;height:54px"></div>`:`<div class="th">${esc(a.kind)}</div>`}
+      <div class="mt" style="flex:1"><b>${esc(a.metadata.when)}</b>${a.metadata.where?' · '+esc(a.metadata.where):''}<br>${esc(artTitle(a))}${peopleChips(artPeople(a))}</div></div>`);
+    if(isImg)bgThumb(row.querySelector('.phimg'),a.storage_path);
+    wireChips(row); l.append(row);
   });
 }
 
