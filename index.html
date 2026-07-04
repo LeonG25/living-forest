@@ -175,6 +175,15 @@
 .fmark.hint{border:3px dashed var(--gold);animation:pulse 1s ease-in-out infinite;}
 @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
 @media (prefers-reduced-motion: reduce){.fmark.hint{animation:none;opacity:.9}.pnode.play .card2{transition:none}}
+.fmark.mystery{border:2px solid var(--gold);background:rgba(20,15,43,.6);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:auto;}
+.fmark.mystery span{position:static;transform:none;background:var(--gold);color:#3a2a05;border-radius:50%;min-width:22px;height:22px;padding:0 6px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;white-space:nowrap;}
+.fmark.sel{box-shadow:0 0 0 3px #ffe6ad,0 0 12px #ffce72aa;}
+.reveal-label{position:absolute;left:0;bottom:-2px;transform:translateY(100%);background:var(--good);color:#06351f;font-size:11px;font-weight:800;padding:1px 6px;border-radius:6px;white-space:nowrap;}
+.clues{margin-top:12px;text-align:left;}
+.clue{font-size:13px;color:var(--cream);line-height:1.5;padding:2px 0;}
+.names{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;justify-content:center;}
+.namechip{background:#241a46;border:1px solid var(--panel-line);color:var(--cream);border-radius:999px;padding:8px 13px;font-weight:700;font-size:13px;}
+.namechip.placed{opacity:.4;text-decoration:line-through;}
 </style>
 </head>
 <body>
@@ -1120,10 +1129,22 @@ function photosWith(pid){
     && (a.artefact_subjects||[]).filter(s=>s.detail&&s.detail.w).length>=2)
     .sort((x,y)=>(y.artefact_subjects||[]).length-(x.artefact_subjects||[]).length);
 }
+function wiwPhotoFor(pid){
+  const cand=(S.artefacts||[]).filter(a=>(a.kind==='photo'||a.kind==='object')&&a.storage_path
+    && (a.artefact_subjects||[]).some(s=>s.person_id===pid&&s.detail&&s.detail.w)
+    && (a.artefact_subjects||[]).filter(s=>s.detail&&s.detail.w).length>=3
+    && (a.artefact_subjects||[]).filter(s=>s.detail&&s.detail.w).length<=6);
+  if(!cand.length)return null;
+  const target=(S.player&&S.player.age&&S.player.age<11)?3:5;
+  cand.sort((x,y)=>Math.abs((x.artefact_subjects||[]).filter(s=>s.detail&&s.detail.w).length-target)
+                  -Math.abs((y.artefact_subjects||[]).filter(s=>s.detail&&s.detail.w).length-target));
+  return cand[0];
+}
 function openMeet(pid){
   const person=personById(pid); if(!person)return;
   const met=isMet(pid), rc=ringCount(pid);
   const photos=photosWith(pid);
+  const wiw=wiwPhotoFor(pid);
   const box=el(`<div style="text-align:center">
     <div class="meetface${met&&S.faceOf.has(pid)?'':' noimg'}" id="mf">${met&&S.faceOf.has(pid)?'':(met?esc(initials(person.display_name)):'✦')}</div>
     <h3 class="disp">${met?esc(person.display_name):'A dim star'}</h3>
@@ -1132,10 +1153,12 @@ function openMeet(pid){
          :`<p class="lede">Play a game to meet them.</p>`}
     ${photos.length?`<button class="btn" id="startfind">${met?'Find them again':'Find them in a photo'}</button>`
                    :`<p class="sub">No group photo has them yet — more games are coming.</p>`}
+    ${wiw?`<button class="btn secondary" id="startwiw" style="margin-top:10px">Who is who? — a puzzle</button>`:''}
   </div>`);
   overlay(box);
   if(met&&S.faceOf.has(pid)){ const f=S.faceOf.get(pid); mountFace($('#mf'),f.path,f.box,initials(person.display_name)); }
   const sf=$('#startfind'); if(sf)sf.onclick=()=>{ closeOverlay(); findThemPhoto(photos[0].id,pid); };
+  const sw=$('#startwiw'); if(sw)sw.onclick=()=>{ closeOverlay(); whoIsWho(wiw.id,pid); };
 }
 const inBox=(x,y,b)=> b&&x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h;
 function chime(){ try{ const A=window.AudioContext||window.webkitAudioContext; if(!A)return; const a=new A(); const o=a.createOscillator(),g=a.createGain(); o.frequency.value=880; o.type='sine'; o.connect(g); g.connect(a.destination); g.gain.setValueAtTime(0.0001,a.currentTime); g.gain.exponentialRampToValueAtTime(0.12,a.currentTime+0.02); g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+0.5); o.start(); o.stop(a.currentTime+0.55);}catch(e){} }
@@ -1191,7 +1214,126 @@ async function findThemPhoto(artId,focusPid){
   });
   refresh();
 }
+// ================= BACK-BUTTON GUARD =================
+// Phone "back" should step back through the app (close a sheet, exit a game,
+// leave play) instead of quitting. Only leaves the app after a confirm.
+let backArmed=false;
+function armBack(){ try{ history.pushState({lf:1},''); }catch(e){} }
+function initBackGuard(){
+  if(backArmed)return; backArmed=true; armBack();
+  window.addEventListener('popstate', ()=>{
+    if(document.getElementById('scrim')){ closeOverlay(); armBack(); return; }
+    if(S.mode==='wander'){
+      if(S.wtab && S.wtab!=='stars'){ S.wtab='stars'; paintWander(); armBack(); return; }
+      exitWander(); armBack(); return;
+    }
+    if(S.tab && S.tab!=='forest'){ S.tab='forest'; paint(); armBack(); return; }
+    if(confirm('Leave The Living Forest?')){ history.back(); }
+    else { armBack(); }
+  });
+}
+
+// ================= WHO IS WHO? (deduction) =================
+function ltr(subs){ return subs.slice().sort((a,b)=>(a.detail.x+a.detail.w/2)-(b.detail.x+b.detail.w/2)); }
+function permsOf(a){ if(a.length<=1)return [a]; const out=[]; a.forEach((x,i)=>{ for(const p of permsOf(a.slice(0,i).concat(a.slice(i+1)))) out.push([x].concat(p)); }); return out; }
+function whoName(pid){ return (personById(pid)||{}).display_name||'someone'; }
+async function whoIsWho(artId, focusPid){
+  const art=(S.artefacts||[]).find(a=>a.id===artId); if(!art)return;
+  const order=ltr((art.artefact_subjects||[]).filter(s=>s.detail&&s.detail.w&&s.person_id));
+  const N=order.length; if(N<3)return;
+  const sol=order.map(o=>o.person_id);
+  const nm=(pid)=>whoName(pid);
+  // clue pool (all TRUE); positional ones constrain the arrangement
+  const pool=[];
+  for(let i=0;i<N;i++)for(let j=i+1;j<N;j++){
+    const A=sol[i],B=sol[j];
+    pool.push({t:`${nm(A)} is somewhere to the left of ${nm(B)}.`,c:1,f:p=>p.indexOf(A)<p.indexOf(B)});
+  }
+  for(let i=0;i<N-1;i++){ const A=sol[i],B=sol[i+1];
+    pool.push({t:`${nm(A)} stands directly to the left of ${nm(B)}.`,c:1,f:p=>p.indexOf(B)-p.indexOf(A)===1}); }
+  pool.push({t:`${nm(sol[0])} is on the far left.`,c:1,f:p=>p[0]===sol[0]});
+  pool.push({t:`${nm(sol[N-1])} is on the far right.`,c:1,f:p=>p[N-1]===sol[N-1]});
+  // relationship flavour (true, non-constraining) from real data
+  const ids=new Set(sol); const rel=[];
+  (S.rels||[]).forEach(r=>{ if(ids.has(r.from_person)&&ids.has(r.to_person)){
+    const a=nm(r.from_person),b=nm(r.to_person);
+    if(r.kind==='spouse') rel.push(`${a} and ${b} are married.`);
+    else if(r.kind==='parent') rel.push(`${a} is ${b}’s parent.`);
+    else if(r.kind==='sibling') rel.push(`${a} and ${b} are brother or sister.`);
+    else if(r.kind==='friend') rel.push(`${a} and ${b} are close friends.`);
+  }});
+  // pick a minimal set of positional clues that make the solution unique
+  const allPerms=permsOf(sol);
+  const consistent=(cl)=>allPerms.filter(p=>cl.every(c=>c.f(p))).length;
+  const shuffled=pool.slice().sort(()=>Math.random()-0.5);
+  const chosen=[];
+  for(const c of shuffled){ chosen.push(c); if(consistent(chosen)===1)break; }
+  if(consistent(chosen)!==1){ for(const c of pool){ if(chosen.indexOf(c)<0){ chosen.push(c); if(consistent(chosen)===1)break; } } }
+  const clueTexts=chosen.map(c=>c.t).concat(rel.slice(0,2));
+  const url=await signed(art.storage_path);
+  const when=art.metadata&&art.metadata.when, where=art.metadata&&art.metadata.where;
+  const assign=new Array(N).fill(null); let selPos=null;
+  const namesShuffled=sol.slice().sort(()=>Math.random()-0.5);
+  let solved=false;
+  const box=el(`<div class="findwrap">
+    <div class="findtop"><b>Who is who?</b><div class="sub">Match every name to a face using the clues.</div></div>
+    <div class="stage2" id="wstage"><img id="wimg" src="${url}" draggable="false"/><div id="wmarks"></div></div>
+    <div class="clues" id="wclues"></div>
+    <div class="names" id="wnames"></div>
+    <div class="msg" id="wmsg"></div>
+    <div class="row" style="margin-top:6px"><button class="btn secondary" id="whint">Give a hint</button><button class="btn" id="wcheck">Check</button></div>
+    <button class="btn ghostbtn" id="wclose" style="margin-top:8px">Done for now</button>
+  </div>`);
+  overlay(box);
+  $('#wclues').innerHTML='<div class="eyebrow">Clues</div>'+clueTexts.map(t=>`<div class="clue">• ${esc(t)}</div>`).join('');
+  function drawMarks(){
+    const m=$('#wmarks'); if(!m)return; m.innerHTML='';
+    order.forEach((s,i)=>{ const b=s.detail; const who=assign[i];
+      if(solved){
+        const d=el(`<div class="fmark" style="left:${b.x*100}%;top:${b.y*100}%;width:${b.w*100}%;height:${b.h*100}%;border:2px solid var(--good);background:transparent"><span class="reveal-label">${esc(nm(s.person_id))}</span></div>`);
+        m.append(d); return;
+      }
+      const d=el(`<div class="fmark mystery${selPos===i?' sel':''}" style="left:${b.x*100}%;top:${b.y*100}%;width:${b.w*100}%;height:${b.h*100}%"><span>${who?esc(nm(who)):(i+1)}</span></div>`);
+      d.onclick=(e)=>{ e.stopPropagation(); selPos=(selPos===i?null:i); drawMarks(); };
+      m.append(d);
+    });
+  }
+  function renderNames(){
+    const n=$('#wnames'); if(!n)return; n.innerHTML='';
+    namesShuffled.forEach(pid=>{ const placed=assign.indexOf(pid)>=0;
+      const chip=el(`<button class="namechip${placed?' placed':''}">${esc(nm(pid))}</button>`);
+      chip.onclick=()=>{ if(solved)return;
+        if(selPos==null){ showMsg($('#wmsg'),'info','Tap a numbered face first, then a name.'); return; }
+        const prev=assign.indexOf(pid); if(prev>=0)assign[prev]=null;
+        assign[selPos]=pid; selPos=null; $('#wmsg').className='msg'; drawMarks(); renderNames();
+      };
+      n.append(chip);
+    });
+  }
+  drawMarks(); renderNames();
+  $('#wclose').onclick=()=>{ closeOverlay(); if(S.mode==='wander')paintWander(); };
+  $('#whint').onclick=()=>{ if(solved)return;
+    for(let i=0;i<N;i++){ if(assign[i]!==sol[i]){ const prev=assign.indexOf(sol[i]); if(prev>=0)assign[prev]=null; assign[i]=sol[i]; drawMarks(); renderNames(); showMsg($('#wmsg'),'info','Placed '+nm(sol[i])+' for you.'); return; } }
+    showMsg($('#wmsg'),'ok','Everyone is placed right — tap Check!');
+  };
+  $('#wcheck').onclick=()=>{ if(solved)return;
+    if(assign.indexOf(null)>=0){ showMsg($('#wmsg'),'info','Place every name first.'); return; }
+    const correct=order.every((s,i)=>assign[i]===s.person_id);
+    if(correct){
+      solved=true; drawMarks();
+      order.forEach(s=>{ fillSegment(s.person_id,'face'); fillSegment(s.person_id,'people'); });
+      addJournal('You worked out who was who'+(where?' in '+where:'')+(when?', '+when:'')+'.');
+      chime(); showMsg($('#wmsg'),'ok','That’s everyone — you knew them all. ✦');
+      $('#wcheck').style.display='none'; $('#whint').style.display='none';
+      $('#wnames').innerHTML=''; $('#wclose').textContent='Back to the sky';
+    } else {
+      const bad=chosen.find(c=>!c.f(assign));
+      showMsg($('#wmsg'),'info', bad?('Something doesn’t fit — “'+bad.t+'” Try again.'):'Not quite — check the clues again.');
+    }
+  };
+}
 init();
+initBackGuard();
 </script>
 </body>
 </html>
