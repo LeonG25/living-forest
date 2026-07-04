@@ -7,6 +7,8 @@
 <title>The Living Forest</title>
 <link rel="manifest" href='data:application/manifest+json,{"name":"The Living Forest","short_name":"Forest","start_url":".","display":"standalone","background_color":"#140f2b","theme_color":"#140f2b","icons":[]}' />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=Nunito:wght@400;500;600;700;800&display=swap');
   :root{
@@ -137,6 +139,42 @@
   .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:8px;}
   .legend span{display:inline-flex;align-items:center;gap:5px;}
   .legend i{width:16px;height:0;border-top:2px solid;display:inline-block;}
+/* ---- play (wander) ---- */
+.wprompt{text-align:center;color:var(--gold-soft);font-size:14px;padding:10px 14px;line-height:1.4;}
+.viewport.wander{background:radial-gradient(120% 90% at 50% 0%,#1c1540,#0e0a22);}
+.zoom.wander{display:flex;gap:6px;justify-content:center;padding:8px;}
+.zoom.wander button{background:#ffffff12;color:var(--cream);border:1px solid var(--panel-line);border-radius:10px;padding:6px 12px;font-weight:800;}
+.pnode.play .card2{transition:opacity .5s, filter .5s;}
+.pnode.play.dim .card2{opacity:.42;filter:grayscale(.7) brightness(.7);border-style:dashed;}
+.pnode.play.dim .disc{background:#241a46;}
+.pnode.play .nm{min-height:14px;}
+.ring{display:inline-flex;gap:4px;justify-content:center;}
+.ring i{width:7px;height:7px;border-radius:50%;background:#4a3f74;display:inline-block;}
+.ring i.on{background:radial-gradient(circle at 40% 35%,#ffe6ad,#ffce72);box-shadow:0 0 6px #ffce7288;}
+.pnode.play .dt .ring{transform:scale(.9);}
+.prow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--panel-line);}
+.prow:last-child{border-bottom:none;}
+.btn.sm{width:auto;display:inline-flex;padding:7px 12px;font-size:13px;margin:0;border-radius:10px;}
+.btn.ghostbtn{background:transparent;color:var(--bad);border:1px solid #ff9a8f44;}
+.jrow{padding:11px 2px;border-bottom:1px solid var(--panel-line);font-size:14px;line-height:1.45;color:var(--cream);}
+.jrow:last-child{border-bottom:none;}
+.meetface{width:96px;height:96px;border-radius:50%;margin:2px auto 8px;position:relative;overflow:hidden;border:2px solid #fff2cf;
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:26px;color:#3a2a05;
+  background:radial-gradient(circle at 50% 35%,#ffe6ad,#ffce72);}
+.meetface.noimg{background:#241a46;color:var(--gold);border-color:#4a3f74;}
+.meetface img{position:absolute;}
+.findwrap{}
+.findtop{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px;}
+.findtop b{font-size:19px;font-family:'Fraunces',serif;}
+.stage2{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--panel-line);cursor:pointer;user-select:none;}
+.stage2 img{display:block;width:100%;pointer-events:none;-webkit-user-drag:none;}
+.stage2 #marks{position:absolute;inset:0;pointer-events:none;}
+.fmark{position:absolute;border-radius:8px;box-sizing:border-box;}
+.fmark.good{border:3px solid var(--good);box-shadow:0 0 0 9999px #0e0a2200,0 0 14px #7fd9a6aa;background:#7fd9a61a;}
+.fmark.good span{position:absolute;left:0;bottom:-2px;transform:translateY(100%);background:var(--good);color:#06351f;font-size:11px;font-weight:800;padding:1px 6px;border-radius:6px;white-space:nowrap;}
+.fmark.hint{border:3px dashed var(--gold);animation:pulse 1s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+@media (prefers-reduced-motion: reduce){.fmark.hint{animation:none;opacity:.9}.pnode.play .card2{transition:none}}
 </style>
 </head>
 <body>
@@ -165,8 +203,9 @@ const KINDS={
 const REL_KINDS=['parent','spouse','sibling','friend','mentor','neighbour','other'];
 
 let S={user:null,isKeeper:false,tab:'forest',
-  people:[],rels:[],artefacts:[],litSet:new Set(),faceOf:new Map(),
-  zoom:1, selecting:false, selected:new Set(), addCtx:[], addKind:'photo'};
+  people:[],rels:[],artefacts:[],litSet:new Set(),faceOf:new Map(),geo:new Map(),
+  zoom:1, selecting:false, selected:new Set(), addCtx:[], addKind:'photo',
+  mode:'tend', player:null, players:[], prog:{}, wtab:'stars'};
 
 (function(){const s=$('#stars');let h='';for(let i=0;i<44;i++)h+=`<i style="left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*4}s"></i>`;s.innerHTML=h;})();
 
@@ -185,6 +224,7 @@ async function afterLogin(){
   await sb.from('profiles').upsert({id:S.user.id,display_name:S.user.email}).select();
   const {data:prof}=await sb.from('profiles').select('is_keeper').eq('id',S.user.id).single();
   S.isKeeper=!!prof?.is_keeper;
+  loadPlay();
   await loadAll(); render();
 }
 function renderAuth(){
@@ -216,12 +256,14 @@ async function auth(mode){
 
 // ---------- data ----------
 async function loadAll(){
-  const [pp,rr,art]=await Promise.all([
+  const [pp,rr,art,geo]=await Promise.all([
     sb.from('people').select('id,display_name,called_name,birth_date,death_date,is_living,is_friend,branch,primary_asset,metadata').order('display_name'),
     sb.from('relationships').select('id,from_person,to_person,kind,created_by'),
     sb.from('artefacts').select('id,kind,body,metadata,certainty,storage_path,published_at, artefact_subjects(person_id, detail, people(display_name))').eq('status','published').order('published_at',{ascending:false}),
+    sb.from('place_geo').select('name,lat,lng,label'),
   ]);
   S.people=pp.data||[]; S.rels=rr.data||[]; S.artefacts=art.data||[];
+  S.geo=new Map((geo.data||[]).filter(r=>r.lat!=null).map(r=>[r.name,{lat:r.lat,lng:r.lng,label:r.label}]));
   S.litSet=new Set(); S.faceOf=new Map();
   S.artefacts.forEach(a=>{
     const photo=(a.kind==='photo'||a.kind==='object')&&a.storage_path;
@@ -294,10 +336,13 @@ async function mountFace(disc,path,box,fallback){
 
 // ---------- shell ----------
 function render(){
+  if(S.mode==='wander')return renderWander();
   const app=$('#app');app.innerHTML='';
   app.append(el(`<header class="top">
     <div class="brand"><span style="font-size:20px">✦</span><h1 class="disp">The Living Forest</h1></div>
-    <div style="text-align:right"><div class="who">${esc(S.user.email)}</div><button class="ghost" id="out">Sign out</button></div>
+    <div style="text-align:right"><div class="who">${esc(S.user.email)}</div>
+      <button class="ghost" id="play" style="border-color:var(--gold);color:var(--gold-soft)">▶ Play</button>
+      <button class="ghost" id="out">Sign out</button></div>
   </header>`));
   app.append(el('<div id="body"></div>'));
   const tabs=el(`<nav class="tabs">
@@ -309,6 +354,7 @@ function render(){
   </nav>`);
   app.append(tabs);
   tabs.querySelectorAll('button').forEach(b=>b.onclick=()=>{S.addCtx=[];S.tab=b.dataset.t;paint();});
+  $('#play').onclick=enterWander;
   $('#out').onclick=()=>sb.auth.signOut();
   paint();
 }
@@ -378,6 +424,17 @@ function computeLayout(){
 
 // ---------- FOREST ----------
 function viewForest(root){
+  if(S.mode==='wander'){
+    root.append(el(`<div class="wprompt">Someone is waiting to be remembered… tap a dim star to meet them.</div>`));
+    const vpw=el('<div class="viewport wander" id="vp"><div class="canvas" id="canvas"></div></div>');
+    root.append(vpw);
+    root.append(el(`<div class="zoom wander"><button id="zout">−</button><button id="zin">＋</button><button id="zfit">Fit</button></div>`));
+    $('#zin').onclick=()=>{S.zoom=Math.min(1.8,S.zoom+0.15);applyZoom();};
+    $('#zout').onclick=()=>{S.zoom=Math.max(0.4,S.zoom-0.15);applyZoom();};
+    $('#zfit').onclick=fitForest;
+    drawForest();
+    return;
+  }
   root.append(el(`<div class="forestbar">
     <button class="tool" id="addroot">＋ Person</button>
     <button class="tool" id="seltoggle">Select</button>
@@ -447,19 +504,25 @@ function drawForest(){
   canvas.appendChild(svg);
   S.people.forEach(p=>{
     const pt=L.pos.get(p.id);if(!pt)return;
-    const lit=S.litSet.has(p.id);
+    const wander=S.mode==='wander';
+    const met=wander?isMet(p.id):true;
+    const showFace=wander?(met&&S.faceOf.has(p.id)):S.faceOf.has(p.id);
     const face=S.faceOf.get(p.id);
-    const node=el(`<div class="pnode${lit?' lit':''}${S.selected.has(p.id)?' sel':''}" style="left:${pt.x}px;top:${pt.y}px">
-      <div class="card2"><div class="disc${face?'':' noimg'}">${face?'':esc(initials(p.display_name))}</div>
-      <div class="nm">${esc(p.called_name||p.display_name)}</div>
-      <div class="dt">${[yr(p.birth_date),yr(p.death_date)].filter(Boolean).join('–')||'&nbsp;'}</div></div></div>`);
+    const lit=wander?met:S.litSet.has(p.id);
+    const nm=wander&&!met?'✦':esc(p.called_name||p.display_name);
+    const dt=wander?(met?ringDots(p.id):'to be met'):([yr(p.birth_date),yr(p.death_date)].filter(Boolean).join('–')||'&nbsp;');
+    const node=el(`<div class="pnode${lit?' lit':''}${wander?' play':''}${wander&&!met?' dim':''}${S.selected.has(p.id)?' sel':''}" style="left:${pt.x}px;top:${pt.y}px">
+      <div class="card2"><div class="disc${showFace?'':' noimg'}">${showFace?'':(wander&&!met?'✦':esc(initials(p.display_name)))}</div>
+      <div class="nm">${nm}</div>
+      <div class="dt">${dt}</div></div></div>`);
     node.onclick=(e)=>{e.stopPropagation();
+      if(wander){ openMeet(p.id); return; }
       if(S.selecting){ if(S.selected.has(p.id))S.selected.delete(p.id);else S.selected.add(p.id);
         node.classList.toggle('sel');updateSelInfo(); }
       else openPerson(p.id);
     };
     canvas.appendChild(node);
-    if(face) mountFace(node.querySelector('.disc'), face.path, face.box, initials(p.display_name));
+    if(showFace) mountFace(node.querySelector('.disc'), face.path, face.box, initials(p.display_name));
   });
   setTimeout(fitForest,30);
 }
@@ -891,25 +954,65 @@ function bgThumb(node,path){ signed(path).then(u=>{ if(u){ node.style.background
 function peopleChips(ppl){ return ppl.length?'<div class="chips">'+ppl.slice(0,10).map(n=>`<span class="chip" data-n="${esc(n)}">${esc(n)}</span>`).join('')+'</div>':''; }
 function wireChips(row){ row.querySelectorAll('[data-n]').forEach(c=>{const p=S.people.find(x=>x.display_name===c.dataset.n);if(p)c.onclick=()=>openPerson(p.id);}); }
 
+let PLACEMAP=null;
 function viewPlaces(root){
   const card=el(`<div class="card"><div class="eyebrow">Where · the “where” door</div><h2 class="disp">Places</h2>
-    <p class="lede">Every place your photos and stories name, and who was there. Built straight from what you upload.</p><div id="pl"></div></div>`);
+    <p class="lede">Every place your photos and stories name, and who was there. Tap a light to jump to it.</p>
+    <div id="placemap" style="height:300px;border-radius:14px;overflow:hidden;margin:10px 0;background:#0e0a22"></div>
+    <div id="pl"></div></div>`);
   root.append(card);const l=$('#pl',card);
   const map=new Map();
   S.artefacts.forEach(a=>{ const w=((a.metadata&&a.metadata.where)||'').trim(); if(!w)return; const k=w.toLowerCase();
     if(!map.has(k))map.set(k,{name:w,arts:[],people:new Set()}); const o=map.get(k);
     o.arts.push(a); artPeople(a).forEach(n=>o.people.add(n)); });
   const list=[...map.values()].sort((a,b)=>b.arts.length-a.arts.length||a.name.localeCompare(b.name));
-  if(!list.length){l.innerHTML='<div class="empty">No places yet. Add a photo or story with a “where”, and it appears here.</div>';return;}
-  list.forEach(pl=>{
+  if(!list.length){ const pm=$('#placemap');if(pm)pm.remove(); l.innerHTML='<div class="empty">No places yet. Add a photo or story with a “where”, and it appears here.</div>';return;}
+  list.forEach((pl,i)=>{
+    pl._i=i;
     const thumbs=pl.arts.filter(a=>(a.kind==='photo'||a.kind==='object')&&a.storage_path).slice(0,5);
-    const row=el(`<div class="listrow"><b>${esc(pl.name)}</b> <span class="s">· ${pl.arts.length} ${pl.arts.length===1?'memory':'memories'}</span>
+    const row=el(`<div class="listrow" id="pl-${i}"><b>${esc(pl.name)}</b> <span class="s">· ${pl.arts.length} ${pl.arts.length===1?'memory':'memories'}</span>
       <div class="thumbs" style="display:flex;gap:6px;margin:7px 0"></div>${peopleChips([...pl.people])}</div>`);
     const tw=row.querySelector('.thumbs');
     thumbs.forEach(a=>{const t=el('<div class="phimg" style="width:46px;height:46px;cursor:pointer"></div>');t.onclick=()=>openEditArtefact(a.id);tw.append(t);bgThumb(t,a.storage_path);});
     if(!thumbs.length)tw.remove();
     wireChips(row); l.append(row);
   });
+  renderPlaceMap(list);
+}
+async function geocode(q){
+  try{
+    const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(q),{headers:{'Accept':'application/json'}});
+    const d=await r.json();
+    if(d&&d[0])return {lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon),label:d[0].display_name};
+  }catch(e){}
+  return null;
+}
+function renderPlaceMap(list){
+  const host=$('#placemap'); if(!host||!window.L)return;
+  if(PLACEMAP){try{PLACEMAP.remove();}catch(e){} PLACEMAP=null;}
+  const m=L.map(host,{zoomControl:true,attributionControl:true,scrollWheelZoom:false}).setView([31.8,34.8],3);
+  PLACEMAP=m;
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',{subdomains:'abcd',maxZoom:19,
+    attribution:'&copy; OpenStreetMap, &copy; CARTO'}).addTo(m);
+  const pts=[];
+  const addMarker=(pl,lat,lng)=>{
+    const r=6+Math.min(12,(pl.arts.length-1)*3);
+    const mk=L.circleMarker([lat,lng],{radius:r,color:'#ffe6ad',weight:2,fillColor:'#ffce72',fillOpacity:.85}).addTo(m);
+    mk.bindTooltip(`${esc(pl.name)} · ${pl.arts.length}`,{direction:'top',offset:[0,-4]});
+    mk.on('click',()=>{ const c=document.getElementById('pl-'+pl._i); if(c){c.scrollIntoView({behavior:'smooth',block:'center'});
+      c.style.transition='box-shadow .4s'; c.style.boxShadow='0 0 0 2px var(--gold)'; setTimeout(()=>c.style.boxShadow='',1400);} });
+    pts.push([lat,lng]);
+  };
+  const fit=()=>{ if(pts.length===1)m.setView(pts[0],9); else if(pts.length>1)m.fitBounds(pts,{padding:[34,34],maxZoom:10}); };
+  const missing=[];
+  list.forEach(pl=>{ const g=S.geo.get(pl.name); if(g)addMarker(pl,g.lat,g.lng); else missing.push(pl); });
+  fit(); setTimeout(()=>{try{m.invalidateSize();fit();}catch(e){}},80);
+  if(missing.length){ (async()=>{ for(const pl of missing){
+    const g=await geocode(pl.name);
+    if(g){ S.geo.set(pl.name,g); addMarker(pl,g.lat,g.lng); fit();
+      try{await sb.from('place_geo').upsert({name:pl.name,lat:g.lat,lng:g.lng,label:g.label});}catch(e){} }
+    await new Promise(r=>setTimeout(r,1200));
+  } })(); }
 }
 // ---------- TIMELINE ----------
 function viewTimeline(root){
@@ -931,6 +1034,163 @@ function viewTimeline(root){
 }
 
 function showMsg(node,kind,text){node.className='msg show '+kind;node.textContent=text;}
+
+// ================= PLAY (Wander) =================
+const SEGS=['face','story','place','people','reel'];
+function loadPlay(){
+  try{S.players=JSON.parse(localStorage.getItem('lf_players')||'[]');}catch(e){S.players=[];}
+  try{S.prog=JSON.parse(localStorage.getItem('lf_prog')||'{}');}catch(e){S.prog={};}
+  const last=localStorage.getItem('lf_player');
+  S.player=S.players.find(p=>p.id===last)||null;
+}
+function savePlay(){
+  try{ localStorage.setItem('lf_players',JSON.stringify(S.players));
+    localStorage.setItem('lf_prog',JSON.stringify(S.prog));
+    if(S.player)localStorage.setItem('lf_player',S.player.id);
+  }catch(e){}
+}
+function progOf(pid){ if(!S.prog[pid])S.prog[pid]={met:{},journal:[]}; const p=S.prog[pid]; if(!p.met)p.met={}; if(!p.journal)p.journal=[]; return p; }
+function metOf(personId){ if(!S.player)return null; return progOf(S.player.id).met[personId]||null; }
+function ringCount(personId){ const m=metOf(personId); return m?SEGS.filter(s=>m[s]).length:0; }
+function isMet(personId){ return ringCount(personId)>0; }
+function ringDots(personId){ const m=metOf(personId)||{}; return '<span class="ring">'+SEGS.map(s=>`<i class="${m[s]?'on':''}"></i>`).join('')+'</span>'; }
+function fillSegment(personId,seg,note){ if(!S.player)return; const pr=progOf(S.player.id); const m=pr.met[personId]||(pr.met[personId]={}); m[seg]=true; if(note)pr.journal.unshift({text:note,ts:Date.now(),person:personId}); savePlay(); }
+function addJournal(text,personId){ if(!S.player)return; const pr=progOf(S.player.id); pr.journal.unshift({text,ts:Date.now(),person:personId||null}); savePlay(); }
+
+function enterWander(){ S.mode='wander'; S.wtab='stars'; render(); }
+function exitWander(){ S.mode='tend'; S.tab='forest'; render(); }
+
+function renderWander(){
+  const app=$('#app');app.innerHTML='';
+  app.append(el(`<header class="top">
+    <div class="brand"><span style="font-size:20px">✦</span><h1 class="disp">The Living Forest</h1></div>
+    <div style="text-align:right">
+      ${S.player?`<button class="ghost" id="who">${esc(S.player.name)} ⌄</button>`:''}
+      <button class="ghost" id="exitplay">Exit ✕</button></div>
+  </header>`));
+  app.append(el('<div id="body"></div>'));
+  app.append(el(`<nav class="tabs">
+    <button data-w="stars">The sky</button>
+    <button data-w="journal">Journal</button>
+  </nav>`));
+  document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{S.wtab=b.dataset.w;paintWander();});
+  $('#exitplay').onclick=exitWander;
+  const who=$('#who'); if(who)who.onclick=()=>{S.player=null;paintWho($('#body'));};
+  if(!S.player){ paintWho($('#body')); return; }
+  paintWander();
+}
+function paintWander(){
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.w===S.wtab));
+  const body=$('#body');if(!body)return;body.innerHTML='';
+  if(!S.player){ paintWho(body); return; }
+  if(S.wtab==='stars') viewForest(body);
+  else viewJournal(body);
+}
+function paintWho(body){
+  body.innerHTML='';
+  const card=el(`<div class="card"><div class="eyebrow">Who’s playing?</div>
+    <h2 class="disp">Pick a stargazer</h2>
+    <p class="lede">This only sets how gentle the games are — it isn’t a login.</p>
+    <div id="plist"></div>
+    <div class="row" style="margin-top:12px"><input id="pn" type="text" placeholder="A name"/><input id="pa" type="number" min="3" max="17" placeholder="Age" style="max-width:96px"/></div>
+    <button class="btn" id="padd">Add stargazer</button></div>`);
+  body.append(card);
+  const list=$('#plist');
+  if(S.players.length) S.players.forEach(pl=>{
+    const row=el(`<div class="prow"><span>${esc(pl.name)}${pl.age?' · '+pl.age:''}</span><span><button class="btn sm" data-pick>Play</button> <button class="btn sm ghostbtn" data-del>✕</button></span></div>`);
+    row.querySelector('[data-pick]').onclick=()=>{ S.player=pl; savePlay(); renderWander(); };
+    row.querySelector('[data-del]').onclick=()=>{ if(!confirm('Remove '+pl.name+'? Their journal stays saved.'))return; S.players=S.players.filter(x=>x.id!==pl.id); savePlay(); paintWho(body); };
+    list.append(row);
+  });
+  else list.innerHTML='<div class="empty" style="padding:8px 0">No stargazers yet — add one below.</div>';
+  $('#padd').onclick=()=>{ const n=$('#pn').value.trim(); const a=parseInt($('#pa').value)||null; if(!n)return;
+    const pl={id:'pl_'+Math.random().toString(36).slice(2,8),name:n,age:a}; S.players.push(pl); S.player=pl; savePlay(); renderWander(); };
+}
+function viewJournal(root){
+  const pr=progOf(S.player.id);
+  root.append(el(`<div class="card"><div class="eyebrow">${esc(S.player.name)}’s journal</div>
+    <h2 class="disp">What you’ve discovered</h2><div id="jl"></div></div>`));
+  const l=$('#jl');
+  if(!pr.journal.length){ l.innerHTML='<div class="empty">Nothing yet. Meet someone in the sky and it will be written here.</div>'; return; }
+  pr.journal.forEach(j=>{ const row=el(`<div class="jrow">✦ ${esc(j.text)}</div>`); if(j.person){row.style.cursor='pointer';row.onclick=()=>openMeet(j.person);} l.append(row); });
+}
+function photosWith(pid){
+  return (S.artefacts||[]).filter(a=>(a.kind==='photo'||a.kind==='object')&&a.storage_path
+    && (a.artefact_subjects||[]).some(s=>s.person_id===pid&&s.detail&&s.detail.w)
+    && (a.artefact_subjects||[]).filter(s=>s.detail&&s.detail.w).length>=2)
+    .sort((x,y)=>(y.artefact_subjects||[]).length-(x.artefact_subjects||[]).length);
+}
+function openMeet(pid){
+  const person=personById(pid); if(!person)return;
+  const met=isMet(pid), rc=ringCount(pid);
+  const photos=photosWith(pid);
+  const box=el(`<div style="text-align:center">
+    <div class="meetface${met&&S.faceOf.has(pid)?'':' noimg'}" id="mf">${met&&S.faceOf.has(pid)?'':(met?esc(initials(person.display_name)):'✦')}</div>
+    <h3 class="disp">${met?esc(person.display_name):'A dim star'}</h3>
+    <div style="margin:6px 0">${ringDots(pid)}</div>
+    ${met?`<p class="lede">You’ve lit ${rc} of 5 lights for ${esc(person.called_name||person.display_name)}.</p>`
+         :`<p class="lede">Play a game to meet them.</p>`}
+    ${photos.length?`<button class="btn" id="startfind">${met?'Find them again':'Find them in a photo'}</button>`
+                   :`<p class="sub">No group photo has them yet — more games are coming.</p>`}
+  </div>`);
+  overlay(box);
+  if(met&&S.faceOf.has(pid)){ const f=S.faceOf.get(pid); mountFace($('#mf'),f.path,f.box,initials(person.display_name)); }
+  const sf=$('#startfind'); if(sf)sf.onclick=()=>{ closeOverlay(); findThemPhoto(photos[0].id,pid); };
+}
+const inBox=(x,y,b)=> b&&x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h;
+function chime(){ try{ const A=window.AudioContext||window.webkitAudioContext; if(!A)return; const a=new A(); const o=a.createOscillator(),g=a.createGain(); o.frequency.value=880; o.type='sine'; o.connect(g); g.connect(a.destination); g.gain.setValueAtTime(0.0001,a.currentTime); g.gain.exponentialRampToValueAtTime(0.12,a.currentTime+0.02); g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+0.5); o.start(); o.stop(a.currentTime+0.55);}catch(e){} }
+async function findThemPhoto(artId,focusPid){
+  const art=(S.artefacts||[]).find(a=>a.id===artId); if(!art)return;
+  const subs=(art.artefact_subjects||[]).filter(s=>s.detail&&s.detail.w&&s.person_id);
+  if(!subs.length)return;
+  const url=await signed(art.storage_path);
+  const when=art.metadata&&art.metadata.when, where=art.metadata&&art.metadata.where;
+  const nameOf=(s)=>(s.people&&s.people.display_name)||(personById(s.person_id)||{}).display_name||'someone';
+  const targets=subs.slice().sort((a,b)=>((a.person_id===focusPid)?-1:0)-((b.person_id===focusPid)?-1:0));
+  const found=new Set(); let misses=0;
+  const young=!!(S.player&&S.player.age&&S.player.age<11);
+  const box=el(`<div class="findwrap">
+    <div class="findtop"><b id="findq"></b><div id="findprog" class="sub"></div></div>
+    <div class="stage2" id="stage2"><img id="findimg" src="${url}" draggable="false"/><div id="marks"></div></div>
+    <div class="msg" id="findmsg"></div>
+    <button class="btn secondary" id="findclose" style="margin-top:10px">Done for now</button>
+  </div>`);
+  overlay(box);
+  $('#findclose').onclick=()=>{ closeOverlay(); if(S.mode==='wander')paintWander(); };
+  const nextTarget=()=>targets.find(t=>!found.has(t.person_id));
+  function clearHint(){ const h=$('#marks').querySelector('.hint'); if(h)h.remove(); }
+  function mark(s,cls,label){ const b=s.detail;
+    const d=el(`<div class="fmark ${cls}" style="left:${b.x*100}%;top:${b.y*100}%;width:${b.w*100}%;height:${b.h*100}%">${label?`<span>${esc(label)}</span>`:''}</div>`);
+    $('#marks').append(d); return d; }
+  function refresh(){ const t=nextTarget();
+    if(!t){ $('#findq').textContent='You lit '+targets.length+' star'+(targets.length>1?'s':'')+'! ✦';
+      $('#findprog').textContent=''; showMsg($('#findmsg'),'ok','Beautiful — the sky is brighter.');
+      addJournal('You found '+targets.map(nameOf).join(', ')+(where?' together in '+where:'')+(when?', '+when:'')+'.');
+      $('#findclose').textContent='Back to the sky'; return; }
+    misses=0; clearHint();
+    $('#findq').textContent='Find '+nameOf(t);
+    $('#findprog').textContent=found.size+' / '+targets.length+' found';
+  }
+  $('#stage2').addEventListener('click',(ev)=>{
+    if(ev.target.closest('.fmark'))return;
+    const t=nextTarget(); if(!t)return;
+    const img=$('#findimg'); const r=img.getBoundingClientRect();
+    const x=(ev.clientX-r.left)/r.width, y=(ev.clientY-r.top)/r.height;
+    if(inBox(x,y,t.detail)){
+      found.add(t.person_id); clearHint(); mark(t,'good',nameOf(t));
+      fillSegment(t.person_id,'face','You found '+nameOf(t)+(where?' in '+where:'')+(when?', '+when:'')+'.');
+      fillSegment(t.person_id,'people');
+      chime(); showMsg($('#findmsg'),'ok','Yes — that’s '+nameOf(t)+'.');
+      setTimeout(refresh,750);
+    } else {
+      misses++;
+      const other=subs.find(s=>!found.has(s.person_id)&&s.person_id!==t.person_id&&inBox(x,y,s.detail));
+      showMsg($('#findmsg'),'info', other?('Not quite — that’s someone else. Look for '+nameOf(t)+'.'):('No one there — look again for '+nameOf(t)+'.'));
+      if(misses>=(young?1:2)){ clearHint(); mark(t,'hint',''); }
+    }
+  });
+  refresh();
+}
 init();
 </script>
 </body>
