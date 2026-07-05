@@ -800,46 +800,37 @@ function openEdge(r){
 let TAGS=[],NEWFILE=null;
 function viewAdd(root){
   TAGS=[];NEWFILE=null;
-  if(!S.addCtx.length){
-    S.addCtx=[''];
-    root.append(el(`<div class="card"><div class="eyebrow">Add a memory</div><h2 class="disp">Who is it about?</h2>
-      <p class="lede">Pick the people this memory belongs to, then continue. You can also start from anyone in the forest.</p>
-      <div id="ctxlist"></div>
-      <button class="addppl" id="ctxadd">+ add a person</button>
-      <button class="btn" id="ctxgo">Continue</button></div>`));
-    drawCtx();
-    $('#ctxadd').onclick=()=>{S.addCtx.push('');drawCtx();};
-    $('#ctxgo').onclick=()=>{const named=S.addCtx.map(x=>typeof x==='string'?x.trim():x).filter(Boolean);if(!named.length)return;S.addCtx=named;paint();};
-    return;
-  }
-  const chips=S.addCtx.map(x=>personById(x)?.display_name||(typeof x==='string'?x:'')).filter(Boolean);
+  if(!Array.isArray(S.addCtx))S.addCtx=[];
   root.append(el(`<div class="card">
-    <div class="eyebrow">Add a memory</div><h2 class="disp">A memory for ${chips.length===1?esc(chips[0]):'these people'}</h2>
-    <div class="chips" id="ctxchips"></div>
-    <div class="forestbar" style="margin-top:12px" id="kindsel">
+    <div class="eyebrow">Add a memory</div><h2 class="disp">Add a memory</h2>
+    <p class="lede">Pick what kind it is and choose the file first — then tag who’s in it and add the story.</p>
+    <div class="forestbar" id="kindsel">
       ${Object.entries(KINDS).map(([k,v])=>`<button class="tool ${k===S.addKind?'on':''}" data-k="${k}">${v.label}</button>`).join('')}
     </div>
     <div id="filewrap"></div><div id="stagewrap"></div><div id="taglist"></div>
+    <div class="eyebrow" style="margin:16px 0 2px">Who is it about?</div>
+    <p class="footnote" style="text-align:left;margin:0 0 4px">Anyone this memory belongs to. On a photo you can also drag across faces above to name them.</p>
+    <div id="ctxlist"></div>
+    <button class="addppl" id="ctxadd">+ add a person</button>
     <label class="field"><span id="storylbl">${esc(KINDS[S.addKind].story)}</span><textarea id="story"></textarea></label>
     <div class="row"><label class="field"><span>Roughly when</span><input id="when" type="text" placeholder="e.g. 1962"/></label>
       <label class="field"><span>Where</span><input id="where" type="text" placeholder="e.g. Casablanca"/></label></div>
     <label class="field"><span>How sure?</span><select id="certainty"><option value="remembered">Remembered</option><option value="documented">Documented</option><option value="uncertain">Uncertain</option></select></label>
     <button class="btn" id="csave">Send to the queue</button>
-    <button class="btn secondary" id="cclear">Change people</button>
     <div class="msg" id="cmsg"></div></div>`));
-  const chipbox=$('#ctxchips');
-  S.addCtx.forEach(x=>{const nm=personById(x)?.display_name||(typeof x==='string'?x:'');if(nm)chipbox.append(el(`<span class="chip">${esc(nm)}</span>`));});
   $('#kindsel').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.addKind=b.dataset.k;paint();});
-  $('#cclear').onclick=()=>{S.addCtx=[];paint();};
+  drawCtx();
+  $('#ctxadd').onclick=()=>{S.addCtx.push('');drawCtx();};
   renderFileArea();
   $('#csave').onclick=submitContent;
 }
 function drawCtx(){
   const l=$('#ctxlist');if(!l)return;l.innerHTML='';
   S.addCtx.forEach((nm,i)=>{
-    const row=el(`<div class="tagrow"><div class="num">${i+1}</div><input type="text" list="people-list" placeholder="Name" value="${esc(typeof nm==='string'?nm:'')}"/><button class="x">remove</button></div>`);
+    const shown=personById(nm)?.display_name||(typeof nm==='string'?nm:'');
+    const row=el(`<div class="tagrow"><div class="num">${i+1}</div><input type="text" list="people-list" placeholder="Name" value="${esc(shown)}"/><button class="x">remove</button></div>`);
     row.querySelector('input').oninput=(e)=>{S.addCtx[i]=e.target.value;};
-    row.querySelector('.x').onclick=()=>{S.addCtx.splice(i,1);if(!S.addCtx.length)S.addCtx=[''];drawCtx();};
+    row.querySelector('.x').onclick=()=>{S.addCtx.splice(i,1);drawCtx();};
     l.append(row);
   });
 }
