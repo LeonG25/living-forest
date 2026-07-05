@@ -235,8 +235,8 @@ async function init(){
 }
 async function afterLogin(){
   await sb.from('profiles').upsert({id:S.user.id,display_name:S.user.email}).select();
-  const {data:prof}=await sb.from('profiles').select('is_keeper').eq('id',S.user.id).single();
-  S.isKeeper=!!prof?.is_keeper;
+  const {data:prof}=await sb.from('profiles').select('is_keeper,preferred_lang').eq('id',S.user.id).single();
+  S.isKeeper=!!prof?.is_keeper; S.lang=(prof&&prof.preferred_lang)||'en';
   loadPlay();
   await loadAll(); render();
 }
@@ -276,6 +276,7 @@ async function loadAll(){
     sb.from('place_geo').select('name,lat,lng,label'),
   ]);
   S.people=pp.data||[]; S.rels=rr.data||[]; S.artefacts=art.data||[];
+  try{ const {data:_nv}=await sb.from('name_variants').select('person_id,lang,given,family').eq('status','published'); S.nameVar={}; (_nv||[]).forEach(v=>{ (S.nameVar[v.person_id]=S.nameVar[v.person_id]||{})[v.lang]=v; }); }catch(e){ S.nameVar={}; }
   S.geo=new Map((geo.data||[]).filter(r=>r.lat!=null).map(r=>[r.name,{lat:r.lat,lng:r.lng,label:r.label}]));
   S.litSet=new Set(); S.faceOf=new Map();
   S.artefacts.forEach(a=>{
@@ -354,6 +355,7 @@ function render(){
   app.append(el(`<header class="top">
     <div class="brand"><span style="font-size:20px">✦</span><h1 class="disp">The Living Forest</h1></div>
     <div style="text-align:right"><div class="who">${esc(S.user.email)}</div>
+      <select id="langsel" class="ghost" style="padding:6px 8px;margin-right:4px">${LANGS.map(l=>`<option value="${l.c}"${S.lang===l.c?' selected':''}>${l.n}</option>`).join('')}</select>
       <button class="ghost" id="play" style="border-color:var(--gold);color:var(--gold-soft)">▶ Play</button>
       <button class="ghost" id="out">Sign out</button></div>
   </header>`));
@@ -369,7 +371,9 @@ function render(){
   tabs.querySelectorAll('button').forEach(b=>b.onclick=()=>{S.addCtx=[];S.tab=b.dataset.t;paint();});
   $('#play').onclick=enterWander;
   $('#out').onclick=()=>sb.auth.signOut();
+  const _ls=$('#langsel'); if(_ls)_ls.onchange=()=>setLang(_ls.value);
   paint();
+  ensureNames();
 }
 function paint(){
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.t===S.tab));
@@ -522,7 +526,7 @@ function drawForest(){
     const showFace=wander?(met&&S.faceOf.has(p.id)):S.faceOf.has(p.id);
     const face=S.faceOf.get(p.id);
     const lit=wander?met:S.litSet.has(p.id);
-    const nm=wander&&!met?'✦':esc(p.called_name||p.display_name);
+    const nm=wander&&!met?'✦':esc((S.lang&&S.lang!=='en')?dispName(p):(p.called_name||p.display_name));
     const dt=wander?(met?ringDots(p.id):'to be met'):([yr(p.birth_date),yr(p.death_date)].filter(Boolean).join('–')||'&nbsp;');
     const node=el(`<div class="pnode${lit?' lit':''}${wander?' play':''}${wander&&!met?' dim':''}${S.selected.has(p.id)?' sel':''}" style="left:${pt.x}px;top:${pt.y}px">
       <div class="card2"><div class="disc${showFace?'':' noimg'}">${showFace?'':(wander&&!met?'✦':esc(initials(p.display_name)))}</div>
@@ -561,12 +565,13 @@ function closeOverlay(){const s=$('#scrim');if(s)s.remove();}
 // ---------- PERSON ----------
 async function openPerson(id){
   const p=personById(id);if(!p)return;
-  const box=el(`<div><h3 class="disp">${esc(p.display_name)}</h3>
+  const box=el(`<div><h3 class="disp">${esc(dispName(p))}</h3>
     <div class="sub">${[p.called_name?'“'+esc(p.called_name)+'”':'',
       p.is_living===true?'living':(p.is_living===false?'remembered':''),
       [yr(p.birth_date),yr(p.death_date)].filter(Boolean).join('–'),
       p.branch?esc(p.branch)+' branch':''].filter(Boolean).join(' · ')}</div>
     ${p.metadata&&p.metadata.note?`<p class="lede">${esc(p.metadata.note)}</p>`:''}
+    <div id="pnames"></div>
     <div class="act">
       <button class="gold" id="pa-content">Add a memory</button>
       <button data-r="parent">+ Parent</button>
@@ -587,6 +592,7 @@ async function openPerson(id){
   box.querySelector('#pa-edit').onclick=()=>openEditPerson(id);
   box.querySelector('#pa-del').onclick=()=>deletePerson(id);
   box.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>openAddPerson(id,b.dataset.r));
+  mountNameVariants(box,id);
   // connections
   const conns=S.rels.filter(r=>r.from_person===id||r.to_person===id);
   const cbox=box.querySelector('#pconn');
@@ -924,7 +930,8 @@ async function submitContent(){
 // ---------- REVIEW ----------
 async function viewReview(root){
   root.append(el(`<div class="card"><div class="eyebrow">Keeper</div><h2 class="disp">Waiting for you</h2>
-    <p class="lede">Nothing reaches the children’s forest until you approve it.</p><div id="queue"><div class="empty">Looking…</div></div></div>`));
+    <p class="lede">Nothing reaches the children’s forest until you approve it.</p><div id="namequeue"></div><div id="queue"><div class="empty">Looking…</div></div></div>`));
+  mountNameReview();
   const {data,error}=await sb.from('artefacts')
     .select('id,kind,body,metadata,certainty,storage_path,contributor_user,created_at, artefact_subjects(people(display_name))')
     .eq('status','in_review').order('created_at',{ascending:false});
@@ -958,7 +965,7 @@ function artPeople(a){return (a.artefact_subjects||[]).map(s=>s.people&&s.people
 function artTitle(a){return a.body?a.body.replace(/\s+/g,' ').slice(0,70)+(a.body.length>70?'…':''):('A '+(a.kind||'memory'));}
 
 function bgThumb(node,path){ signed(path).then(u=>{ if(u){ node.style.backgroundImage=`url(${u})`; node.textContent=''; } }); }
-function peopleChips(ppl){ return ppl.length?'<div class="chips">'+ppl.slice(0,10).map(n=>`<span class="chip" data-n="${esc(n)}">${esc(n)}</span>`).join('')+'</div>':''; }
+function peopleChips(ppl){ return ppl.length?'<div class="chips">'+ppl.slice(0,10).map(n=>{const _p=S.people.find(x=>x.display_name===n);const _s=_p?dispName(_p):n;return `<span class="chip" data-n="${esc(n)}">${esc(_s)}</span>`;}).join('')+'</div>':''; }
 function wireChips(row){ row.querySelectorAll('[data-n]').forEach(c=>{const p=S.people.find(x=>x.display_name===c.dataset.n);if(p)c.onclick=()=>openPerson(p.id);}); }
 
 let PLACEMAP=null;
@@ -1357,6 +1364,119 @@ async function whoIsWho(artId, focusPid){
     else showMsg($('#wmsg'),'info','Not quite yet — the glowing faces still need the right name. Check the clues and try again.');
   };
 }
+// ================= LANGUAGES / NAMES =================
+const LANGS=[{c:'en',n:'English'},{c:'ru',n:'Русский'},{c:'he',n:'עברית'}];
+Object.assign(S,{lang:S.lang||'en',nameVar:S.nameVar||{},autoName:{},_transBusy:false});
+
+function langLabel(c){const x=LANGS.find(l=>l.c===c);return x?x.n:c;}
+
+function dispName(p){
+  if(!p)return'';
+  const orig=p.display_name||'';
+  const lang=S.lang;
+  if(!lang||lang==='en')return orig;
+  const v=S.nameVar[p.id]&&S.nameVar[p.id][lang];
+  if(v){const s=[v.given,v.family].filter(Boolean).join(' ').trim();if(s)return s;}
+  const a=S.autoName[lang]&&S.autoName[lang][p.id];
+  if(a)return a;
+  return orig;
+}
+
+async function callTranslate(items){
+  try{
+    const {data,error}=await sb.functions.invoke('translate',{body:{target_lang:S.lang,items}});
+    if(error||!data||!data.results)return null;
+    return data.results;
+  }catch(e){return null;}
+}
+
+function rerenderNames(){
+  if(S.mode==='wander'){if(typeof drawForest==='function')drawForest();return;}
+  if(S.tab==='forest'){if(typeof drawForest==='function')drawForest();}
+  else paint();
+}
+
+async function setLang(code){
+  S.lang=code||'en';
+  try{await sb.from('profiles').update({preferred_lang:S.lang}).eq('id',S.user.id);}catch(e){}
+  rerenderNames();
+  ensureNames();
+}
+
+async function ensureNames(){
+  const lang=S.lang;
+  if(!lang||lang==='en')return;
+  if(S._transBusy)return;
+  S.autoName[lang]=S.autoName[lang]||{};
+  const need=S.people.filter(p=>{
+    const hasVar=S.nameVar[p.id]&&S.nameVar[p.id][lang];
+    const hasAuto=S.autoName[lang][p.id];
+    return p.display_name&&!hasVar&&!hasAuto;
+  });
+  if(!need.length)return;
+  S._transBusy=true;
+  try{
+    for(let i=0;i<need.length;i+=30){
+      const batch=need.slice(i,i+30);
+      const items=batch.map(p=>({kind:'name_full',ref:p.id,text:p.display_name,gender:p.sex||''}));
+      const res=await callTranslate(items);
+      if(res)res.forEach(r=>{if(r&&r.ref&&r.text)S.autoName[lang][r.ref]=r.text;});
+    }
+  }finally{S._transBusy=false;}
+  rerenderNames();
+}
+
+function mountNameVariants(box, personId){
+  const host=box.querySelector('#pnames');if(!host)return;
+  const p=personById(personId);if(!p)return;
+  const vmap=S.nameVar[personId]||{};
+  const rows=Object.keys(vmap).map(c=>{const v=vmap[c];return `<div class="rel"><span class="k">${esc(langLabel(c))}</span><span class="nm">${esc([v.given,v.family].filter(Boolean).join(' '))}</span></div>`;}).join('');
+  host.innerHTML=`<div class="eyebrow" style="margin-top:14px">Names in other languages</div>
+    ${rows||'<div class="empty" style="padding:6px 0">None yet.</div>'}
+    <div class="row" style="margin-top:8px">
+      <label class="field" style="flex:0 0 34%"><span>Language</span><select id="nv-lang">${LANGS.filter(l=>l.c!=='en').map(l=>`<option value="${l.c}"${S.lang===l.c?' selected':''}>${l.n}</option>`).join('')}</select></label>
+      <label class="field"><span>Given</span><input id="nv-given" type="text" placeholder="first name"/></label>
+      <label class="field"><span>Family</span><input id="nv-family" type="text" placeholder="surname"/></label>
+    </div>
+    <button class="btn sm" id="nv-add">Add this name</button>
+    <div class="msg" id="nv-msg"></div>`;
+  host.querySelector('#nv-add').onclick=async()=>{
+    const m=host.querySelector('#nv-msg');
+    const lang=host.querySelector('#nv-lang').value;
+    const given=host.querySelector('#nv-given').value.trim();
+    const family=host.querySelector('#nv-family').value.trim();
+    if(!given&&!family){showMsg(m,'err','Type a name.');return;}
+    try{
+      const {error}=await sb.from('name_variants').insert({person_id:personId,lang,given:given||null,family:family||null,status:'in_review',created_by:S.user.id});
+      if(error)throw error;
+      showMsg(m,'ok','Sent to the keeper for review.');
+      host.querySelector('#nv-given').value='';host.querySelector('#nv-family').value='';
+    }catch(err){showMsg(m,'err',err.message||'Could not save.');}
+  };
+}
+
+async function mountNameReview(){
+  const host=$('#namequeue');if(!host)return;
+  const {data,error}=await sb.from('name_variants')
+    .select('id,person_id,lang,given,family,created_at, people(display_name)')
+    .eq('status','in_review').order('created_at',{ascending:false});
+  if(error||!data||!data.length){host.innerHTML='';return;}
+  host.innerHTML='<div class="eyebrow" style="margin:4px 0">Name suggestions</div>';
+  data.forEach(v=>{
+    const card=el(`<div class="mem"><div class="th">${esc(langLabel(v.lang))}</div>
+      <div class="mt" style="flex:1"><b>${esc([v.given,v.family].filter(Boolean).join(' '))}</b><br>
+      for ${esc(v.people&&v.people.display_name||'—')}
+      <div class="act"><button class="gold" data-ok="1">Approve ✦</button><button class="danger" data-no="1">Decline</button></div></div></div>`);
+    card.querySelector('[data-ok]').onclick=async(e)=>{e.target.disabled=true;e.target.innerHTML='<span class="spin"></span>';
+      const {error}=await sb.from('name_variants').update({status:'published',reviewed_by:S.user.id,published_at:new Date().toISOString()}).eq('id',v.id);
+      if(error){e.target.textContent=error.message;}
+      else{(S.nameVar[v.person_id]=S.nameVar[v.person_id]||{})[v.lang]={given:v.given,family:v.family};card.style.opacity='0';setTimeout(()=>card.remove(),300);}};
+    card.querySelector('[data-no]').onclick=async()=>{if(!confirm('Decline this name?'))return;
+      await sb.from('name_variants').delete().eq('id',v.id);card.style.opacity='0';setTimeout(()=>card.remove(),300);};
+    host.append(card);
+  });
+}
+
 init();
 initBackGuard();
 </script>
