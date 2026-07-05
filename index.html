@@ -617,6 +617,7 @@ async function openPerson(id){
   const {data:subs}=await sb.from('artefact_subjects')
     .select('artefacts(id,kind,body,storage_path,status,metadata,certainty)').eq('person_id',id);
   const arts=(subs||[]).map(s=>s.artefacts).filter(Boolean);
+  if(S.lang&&S.lang!=='en')await transTexts(arts.map(a=>({ref:a.id,text:a.body})));
   if(!arts.length)mbox.innerHTML='<div class="empty">No memories yet. Add one above to light this star.</div>';
   else{ mbox.innerHTML='';
     for(const a of arts){
@@ -624,7 +625,7 @@ async function openPerson(id){
       const isImg=(a.kind==='photo'||a.kind==='object');
       const th=isImg&&url?`<img class="th" src="${url}"/>`:`<div class="th">${esc(a.kind)}</div>`;
       const st=a.status==='published'?'<span class="status pub">lit</span>':'<span class="status rev">in review</span>';
-      const row=el(`<div class="mem" style="cursor:pointer">${th}<div class="mt">${a.body?'<b>'+esc(a.body.slice(0,90))+(a.body.length>90?'…':'')+'</b><br>':''}${st} ${esc(a.metadata?.when||'')}${a.metadata?.where?' · '+esc(a.metadata.where):''} <span style="color:var(--gold-soft)">· edit ›</span></div></div>`);
+      const row=el(`<div class="mem" style="cursor:pointer">${th}<div class="mt">${(function(){var _b=textFor(a.id,a.body);return _b?'<b>'+esc(_b.slice(0,90))+(_b.length>90?'…':'')+'</b><br>':'';})()}${st} ${esc(a.metadata?.when||'')}${a.metadata?.where?' · '+esc(a.metadata.where):''} <span style="color:var(--gold-soft)">· edit ›</span></div></div>`);
       row.onclick=()=>openEditArtefact(a.id);
       mbox.append(row);
     }
@@ -637,12 +638,14 @@ async function openEditArtefact(id){
   if(error||!a)return alert(error?.message||'Could not load this memory.');
   const isImg=(a.kind==='photo'||a.kind==='object');
   const url=a.storage_path?await signed(a.storage_path):'';
+  const _bt=(S.lang&&S.lang!=='en'&&a.body)?await transOne(a.id,a.body):'';
   const box=el(`<div><h3 class="disp">Edit ${esc(KINDS[a.kind]?.label||a.kind)}</h3>
     ${a.status!=='published'?'<div class="sub"><span class="status rev">in review</span></div>':''}
     ${isImg&&url?`<img id="ea-img" src="${url}" style="width:100%;border-radius:12px;margin:6px 0"/><button class="btn sm secondary" id="ea-rot" type="button" style="margin:0 0 4px">⟳ Rotate 90°</button>`:''}
     ${a.kind==='voice'&&url?`<audio controls src="${url}" style="width:100%;margin:6px 0"></audio>`:''}
     ${a.kind==='video'&&url?`<video controls src="${url}" style="width:100%;border-radius:12px;margin:6px 0"></video>`:''}
-    <label class="field"><span>${esc(KINDS[a.kind]?.story||'The memory')}</span><textarea id="ea-body">${esc(a.body||'')}</textarea></label>
+    ${_bt?`<div class="eyebrow" style="margin-top:6px">In ${esc(langLabel(S.lang))} · translated by the app</div><div class="lede" dir="auto" style="white-space:pre-wrap;margin:0 0 6px">${esc(_bt)}</div>`:''}
+    <label class="field"><span>${esc(KINDS[a.kind]?.story||'The memory')}${(S.lang&&S.lang!=='en')?' (original)':''}</span><textarea id="ea-body" dir="auto">${esc(a.body||'')}</textarea></label>
     <div class="row"><label class="field"><span>Roughly when</span><input id="ea-when" type="text" value="${esc(a.metadata?.when||'')}"/></label>
       <label class="field"><span>Where</span><input id="ea-where" type="text" value="${esc(a.metadata?.where||'')}"/></label></div>
     <label class="field"><span>How sure?</span><select id="ea-cert"><option value="remembered">Remembered</option><option value="documented">Documented</option><option value="uncertain">Uncertain</option></select></label>
@@ -962,7 +965,7 @@ async function viewReview(root){
 // ---------- PLACES ----------
 const parseYear=(t)=>{const m=String(t||'').match(/\d{4}/);return m?parseInt(m[0]):NaN;};
 function artPeople(a){return (a.artefact_subjects||[]).map(s=>s.people&&s.people.display_name).filter(Boolean);}
-function artTitle(a){return a.body?a.body.replace(/\s+/g,' ').slice(0,70)+(a.body.length>70?'…':''):('A '+(a.kind||'memory'));}
+function artTitle(a){const _b=textFor(a.id,a.body);return _b?_b.replace(/\s+/g,' ').slice(0,70)+(_b.length>70?'…':''):('A '+(a.kind||'memory'));}
 
 function bgThumb(node,path){ signed(path).then(u=>{ if(u){ node.style.backgroundImage=`url(${u})`; node.textContent=''; } }); }
 function peopleChips(ppl){ return ppl.length?'<div class="chips">'+ppl.slice(0,10).map(n=>{const _p=S.people.find(x=>x.display_name===n);const _s=_p?dispName(_p):n;return `<span class="chip" data-n="${esc(n)}">${esc(_s)}</span>`;}).join('')+'</div>':''; }
@@ -1035,12 +1038,13 @@ function renderPlaceMap(list){
   } })(); }
 }
 // ---------- TIMELINE ----------
-function viewTimeline(root){
+async function viewTimeline(root){
   const card=el(`<div class="card"><div class="eyebrow">When · the “when” door</div><h2 class="disp">Timeline</h2>
     <p class="lede">Every photo and story with a rough date, in order. Built straight from what you upload.</p><div id="tl"></div></div>`);
   root.append(card);const l=$('#tl',card);
   const items=S.artefacts.filter(a=>a.metadata&&a.metadata.when).map(a=>({a,year:parseYear(a.metadata.when)}));
   items.sort((x,y)=>(isNaN(x.year)?9999:x.year)-(isNaN(y.year)?9999:y.year));
+  if(S.lang&&S.lang!=='en')await transTexts(items.map(x=>({ref:x.a.id,text:x.a.body})));
   if(!items.length){l.innerHTML='<div class="empty">No dated memories yet. Add a photo or story with a rough “when”, and it appears here.</div>';return;}
   items.forEach(({a})=>{
     const isImg=(a.kind==='photo'||a.kind==='object')&&a.storage_path;
@@ -1475,6 +1479,33 @@ async function mountNameReview(){
       await sb.from('name_variants').delete().eq('id',v.id);card.style.opacity='0';setTimeout(()=>card.remove(),300);};
     host.append(card);
   });
+}
+
+// ================= TEXT TRANSLATION =================
+Object.assign(S,{autoText:S.autoText||{}});
+async function transTexts(pairs){
+  if(!S.lang||S.lang==='en')return;
+  const lang=S.lang; S.autoText[lang]=S.autoText[lang]||{};
+  const need=pairs.filter(p=>p&&p.text&&S.autoText[lang][p.ref]===undefined);
+  for(let i=0;i<need.length;i+=20){
+    const batch=need.slice(i,i+20).map(p=>({kind:'artefact_body',ref:p.ref,text:p.text}));
+    const res=await callTranslate(batch);
+    if(res)res.forEach(r=>{if(r&&r.ref)S.autoText[lang][r.ref]=(r.text||'');});
+  }
+}
+async function transOne(ref,text){
+  if(!S.lang||S.lang==='en'||!text)return'';
+  const lang=S.lang; S.autoText[lang]=S.autoText[lang]||{};
+  if(S.autoText[lang][ref]===undefined){
+    const res=await callTranslate([{kind:'artefact_body',ref,text}]);
+    if(res&&res[0])S.autoText[lang][ref]=(res[0].text||'');
+  }
+  return S.autoText[lang][ref]||'';
+}
+function textFor(ref,body){
+  if(!S.lang||S.lang==='en')return body;
+  const t=S.autoText[S.lang]&&S.autoText[S.lang][ref];
+  return (t!==undefined&&t!=='')?t:body;
 }
 
 init();
