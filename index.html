@@ -374,6 +374,7 @@ function render(){
   const _ls=$('#langsel'); if(_ls)_ls.onchange=()=>setLang(_ls.value);
   paint();
   ensureNames();
+  refreshUILang();
 }
 function paint(){
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.t===S.tab));
@@ -1404,6 +1405,7 @@ async function setLang(code){
   S.lang=code||'en';
   try{await sb.from('profiles').update({preferred_lang:S.lang}).eq('id',S.user.id);}catch(e){}
   rerenderNames();
+  refreshUILang();
   ensureNames();
 }
 
@@ -1507,6 +1509,39 @@ function textFor(ref,body){
   const t=S.autoText[S.lang]&&S.autoText[S.lang][ref];
   return (t!==undefined&&t!=='')?t:body;
 }
+
+// ================= UI STRINGS / RTL =================
+const UISTR=["Add", "Age", "Fit", "lit", "Sex", "Back", "Born", "Died", "Edit", "Male", "Name", "Note", "Play", "Save", "Type", "Check", "Clues", "Given", "Where", "A name", "Branch", "Called", "Delete", "Exit ✕", "Family", "Female", "Forest", "Keeper", "Living", "Places", "remove", "Review", "Select", "▶ Play", "+ Child", "Decline", "Journal", "Living?", "Sign in", "surname", "The sky", "Unknown", "+ Friend", "+ Parent", "+ Spouse", "Language", "Looking…", "marriage", "Memories", "Password", "Sign out", "Timeline", "· edit ›", "⟳ Rotate", "＋ Person", "+ Sibling", "Approve ✦", "e.g. 1962", "Full name", "How sure?", "in review", "None yet.", "Uncertain", "Connection", "Documented", "first name", "friendship", "Remembered", "Your email", "Connections", "Give a hint", "Who is who?", "Add a memory", "Add a person", "Done for now", "parent–child", "Roughly when", "⟳ Rotate 90°", "Add stargazer", "Add this name", "Light it up ✦", "no one tagged", "+ add a person", "add a memory ›", "Create account", "Name this face", "People in this", "Who’s playing?", "e.g. Casablanca", "Waiting for you", "you@example.com", "Name suggestions", "Pick a stargazer", "Who is it about?", "Branch (optional)", "Called (optional)", "Delete connection", "Send to the queue", "The Living Forest", "Delete this memory", "No one tagged yet.", "I give up — show me", "The queue is empty.", "The forest is empty.", "at least 6 characters", "Faces (optional names)", "What you’ve discovered", "When · the “when” door", "Who is who? — a puzzle", "Names in other languages", "Where · the “where” door", "Play a game to meet them.", "Replace the file (optional)", "No stargazers yet — add one below.", "No connections yet — add family above.", "Tap “＋ Person” to plant the first one.", "Drag across each face to mark who’s there.", "Match every name to a face using the clues.", "No memories yet. Add one above to light this star.", "No group photo has them yet — more games are coming.", "Your first sign-in makes you the keeper of the forest.", "Nothing reaches the children’s forest until you approve it.", "This only sets how gentle the games are — it isn’t a login.", "Only the keeper or whoever added this connection can change it.", "Type a new name, or an existing one to link them into the tree.", "Nothing yet. Meet someone in the sky and it will be written here.", "Someone is waiting to be remembered… tap a dim star to meet them.", "A place where the family becomes stars — lit, one memory at a time.", "No places yet. Add a photo or story with a “where”, and it appears here.", "For parent, the arrow means the first person is the parent of the second.", "No dated memories yet. Add a photo or story with a rough “when”, and it appears here.", "Every photo and story with a rough date, in order. Built straight from what you upload.", "Every place your photos and stories name, and who was there. Tap a light to jump to it.", "Pick what kind it is and choose the file first — then tag who’s in it and add the story.", "Anyone this memory belongs to. On a photo you can also drag across faces above to name them.", "Optional. Helps translate names correctly where a surname changes form — e.g. Церлин → Церлина.", "Tap anyone to open them — add family, connect people, or attach a memory. Pinch or use ＋/− to zoom, drag to pan."];
+Object.assign(S,{ui:S.ui||{}});
+function setUIDir(){try{document.documentElement.setAttribute('dir',(S.lang==='he')?'rtl':'ltr');document.documentElement.setAttribute('lang',S.lang||'en');}catch(e){}}
+async function ensureUI(){
+  const lang=S.lang; if(!lang||lang==='en')return;
+  S.ui[lang]=S.ui[lang]||{};
+  const need=UISTR.filter(x=>S.ui[lang][x]===undefined);
+  for(let i=0;i<need.length;i+=30){
+    const batch=need.slice(i,i+30).map(x=>({kind:'ui',ref:x,text:x}));
+    const res=await callTranslate(batch);
+    if(res)res.forEach(r=>{if(r&&r.ref!==undefined)S.ui[lang][r.ref]=(r.text||'');});
+  }
+  runUI();
+}
+function applyUI(root){
+  if(!S.lang||S.lang==='en'||!root)return;
+  const m=S.ui[S.lang]; if(!m)return;
+  const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode(n){
+    const p=n.parentNode; if(!p)return NodeFilter.FILTER_REJECT;
+    const tag=p.nodeName; if(tag==='SCRIPT'||tag==='STYLE'||tag==='TEXTAREA')return NodeFilter.FILTER_REJECT;
+    return NodeFilter.FILTER_ACCEPT;
+  }});
+  const nodes=[]; let n; while(n=w.nextNode())nodes.push(n);
+  nodes.forEach(nd=>{const raw=nd.nodeValue; const t=raw.trim(); if(!t)return; const tr=m[t]; if(tr&&tr!==t)nd.nodeValue=raw.replace(t,tr);});
+  if(root.querySelectorAll)root.querySelectorAll('[placeholder]').forEach(elp=>{const t=(elp.getAttribute('placeholder')||'').trim(); const tr=m[t]; if(tr&&tr!==t)elp.setAttribute('placeholder',tr);});
+}
+let _uiObs=null,_uiSched=false;
+function runUI(){applyUI(document.body);}
+function scheduleUI(){if(_uiSched)return; _uiSched=true; setTimeout(()=>{_uiSched=false; if(S.lang&&S.lang!=='en')runUI();},0);}
+function startUIObserver(){if(_uiObs)return; try{_uiObs=new MutationObserver(()=>{if(S.lang&&S.lang!=='en')scheduleUI();}); _uiObs.observe(document.body,{childList:true,subtree:true});}catch(e){}}
+function refreshUILang(){setUIDir(); if(S.lang&&S.lang!=='en'){ensureUI(); startUIObserver();}}
 
 init();
 initBackGuard();
