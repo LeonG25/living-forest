@@ -270,7 +270,7 @@ async function auth(mode){
 // ---------- data ----------
 async function loadAll(){
   const [pp,rr,art,geo]=await Promise.all([
-    sb.from('people').select('id,display_name,called_name,birth_date,death_date,is_living,is_friend,branch,primary_asset,metadata').order('display_name'),
+    sb.from('people').select('id,display_name,called_name,birth_date,death_date,is_living,is_friend,branch,primary_asset,metadata,sex').order('display_name'),
     sb.from('relationships').select('id,from_person,to_person,kind,created_by'),
     sb.from('artefacts').select('id,kind,body,metadata,certainty,storage_path,published_at, artefact_subjects(person_id, detail, people(display_name))').eq('status','published').order('published_at',{ascending:false}),
     sb.from('place_geo').select('name,lat,lng,label'),
@@ -752,12 +752,15 @@ function openEditPerson(id){
       <label class="field"><span>Branch</span><input id="e-branch" type="text" value="${esc(p.branch||'')}"/></label></div>
     <div class="row"><label class="field"><span>Born</span><input id="e-born" type="date" value="${esc(p.birth_date||'')}"/></label>
       <label class="field"><span>Died</span><input id="e-died" type="date" value="${esc(p.death_date||'')}"/></label></div>
-    <label class="field"><span>Living?</span><select id="e-living"><option value="">Unknown</option><option value="yes">Living</option><option value="no">Remembered</option></select></label>
+    <div class="row"><label class="field"><span>Living?</span><select id="e-living"><option value="">Unknown</option><option value="yes">Living</option><option value="no">Remembered</option></select></label>
+      <label class="field"><span>Sex</span><select id="e-sex"><option value="">Unknown</option><option value="female">Female</option><option value="male">Male</option></select></label></div>
+    <p class="footnote" style="text-align:left;margin:2px 0 0">Optional. Helps translate names correctly where a surname changes form — e.g. Церлин → Церлина.</p>
     <label class="field"><span>Note</span><textarea id="e-note">${esc(p.metadata?.note||'')}</textarea></label>
     <button class="btn" id="e-save">Save</button><button class="btn secondary" id="e-cancel">Back</button>
     <div class="msg" id="e-msg"></div></div>`);
   overlay(box);
   $('#e-living').value=p.is_living===true?'yes':(p.is_living===false?'no':'');
+  $('#e-sex').value=p.sex||'';
   $('#e-cancel').onclick=()=>openPerson(id);
   $('#e-save').onclick=async()=>{
     const m=$('#e-msg'),name=$('#e-name').value.trim();if(!name)return showMsg(m,'err','A name is needed.');
@@ -765,7 +768,7 @@ function openEditPerson(id){
     try{
       const {error}=await sb.from('people').update({display_name:name,called_name:$('#e-called').value.trim()||null,
         branch:$('#e-branch').value.trim()||null,birth_date:$('#e-born').value||null,death_date:$('#e-died').value||null,
-        is_living:lv===''?null:(lv==='yes'),metadata:{...(p.metadata||{}),note:$('#e-note').value.trim()||undefined}}).eq('id',id);
+        is_living:lv===''?null:(lv==='yes'),sex:$('#e-sex').value||null,metadata:{...(p.metadata||{}),note:$('#e-note').value.trim()||undefined}}).eq('id',id);
       if(error)throw error; await loadAll(); if(S.tab==='forest')drawForest(); openPerson(id);
     }catch(err){showMsg(m,'err',err.message||'Could not save.');}
   };
