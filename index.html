@@ -183,7 +183,8 @@
 .clue{font-size:13px;color:var(--cream);line-height:1.5;padding:2px 0;}
 .names{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;justify-content:center;}
 .namechip{background:#241a46;border:1px solid var(--panel-line);color:var(--cream);border-radius:999px;padding:8px 13px;font-weight:700;font-size:13px;}
-.namechip.placed{opacity:.4;text-decoration:line-through;}
+.namechip.placed{opacity:.55;}
+.namechip.correct{background:#13301f;border-color:#7fd9a6;color:var(--good);opacity:1;}
 </style>
 </head>
 <body>
@@ -1272,7 +1273,9 @@ async function whoIsWho(artId, focusPid){
   const clueTexts=chosen.map(c=>c.t).concat(rel.slice(0,2));
   const url=await signed(art.storage_path);
   const when=art.metadata&&art.metadata.when, where=art.metadata&&art.metadata.where;
-  const assign=new Array(N).fill(null); let selPos=null;
+  const assign=new Array(N).fill(null);   // position -> person_id (tentative)
+  const locked=new Array(N).fill(false);  // position confirmed correct
+  let selPos=null;
   const namesShuffled=sol.slice().sort(()=>Math.random()-0.5);
   let solved=false;
   const box=el(`<div class="findwrap">
@@ -1282,17 +1285,20 @@ async function whoIsWho(artId, focusPid){
     <div class="names" id="wnames"></div>
     <div class="msg" id="wmsg"></div>
     <div class="row" style="margin-top:6px"><button class="btn secondary" id="whint">Give a hint</button><button class="btn" id="wcheck">Check</button></div>
+    <button class="btn ghostbtn" id="wgiveup" style="margin-top:8px">I give up — show me</button>
     <button class="btn ghostbtn" id="wclose" style="margin-top:8px">Done for now</button>
   </div>`);
   overlay(box);
   $('#wclues').innerHTML='<div class="eyebrow">Clues</div>'+clueTexts.map(t=>`<div class="clue">• ${esc(t)}</div>`).join('');
+  const lockedName=(pid)=>{ for(let i=0;i<N;i++){ if(locked[i]&&sol[i]===pid)return true; } return false; };
   function drawMarks(){
     const m=$('#wmarks'); if(!m)return; m.innerHTML='';
-    order.forEach((s,i)=>{ const b=s.detail; const who=assign[i];
-      if(solved){
+    order.forEach((s,i)=>{ const b=s.detail;
+      if(locked[i]||solved){
         const d=el(`<div class="fmark" style="left:${b.x*100}%;top:${b.y*100}%;width:${b.w*100}%;height:${b.h*100}%;border:2px solid var(--good);background:transparent"><span class="reveal-label">${esc(nm(s.person_id))}</span></div>`);
         m.append(d); return;
       }
+      const who=assign[i];
       const d=el(`<div class="fmark mystery${selPos===i?' sel':''}" style="left:${b.x*100}%;top:${b.y*100}%;width:${b.w*100}%;height:${b.h*100}%"><span>${who?esc(nm(who)):(i+1)}</span></div>`);
       d.onclick=(e)=>{ e.stopPropagation(); selPos=(selPos===i?null:i); drawMarks(); };
       m.append(d);
@@ -1300,36 +1306,52 @@ async function whoIsWho(artId, focusPid){
   }
   function renderNames(){
     const n=$('#wnames'); if(!n)return; n.innerHTML='';
-    namesShuffled.forEach(pid=>{ const placed=assign.indexOf(pid)>=0;
-      const chip=el(`<button class="namechip${placed?' placed':''}">${esc(nm(pid))}</button>`);
-      chip.onclick=()=>{ if(solved)return;
-        if(selPos==null){ showMsg($('#wmsg'),'info','Tap a numbered face first, then a name.'); return; }
+    namesShuffled.forEach(pid=>{
+      const done=lockedName(pid);
+      const placed=!done && assign.indexOf(pid)>=0;
+      const chip=el(`<button class="namechip${done?' correct':(placed?' placed':'')}">${esc(nm(pid))}${done?' ✓':''}</button>`);
+      if(done){ chip.disabled=true; }
+      else chip.onclick=()=>{ if(solved)return;
+        if(selPos==null){ showMsg($('#wmsg'),'info','Tap a face that still needs a name, then tap a name.'); return; }
         const prev=assign.indexOf(pid); if(prev>=0)assign[prev]=null;
         assign[selPos]=pid; selPos=null; $('#wmsg').className='msg'; drawMarks(); renderNames();
       };
       n.append(chip);
     });
   }
+  function win(gaveUp){
+    solved=true;
+    order.forEach((s,i)=>{ locked[i]=true; assign[i]=s.person_id; fillSegment(s.person_id,'face'); fillSegment(s.person_id,'people'); });
+    drawMarks(); renderNames();
+    if(gaveUp){ addJournal('You saw who was who'+(where?' in '+where:'')+(when?', '+when:'')+'.'); showMsg($('#wmsg'),'info','Here’s everyone. Now you’ve met them.'); }
+    else { addJournal('You worked out who was who'+(where?' in '+where:'')+(when?', '+when:'')+'.'); chime(); showMsg($('#wmsg'),'ok','That’s everyone — you knew them all. ✦'); }
+    $('#wcheck').style.display='none'; $('#whint').style.display='none'; $('#wgiveup').style.display='none';
+    $('#wnames').innerHTML=''; $('#wclose').textContent='Back to the sky';
+  }
   drawMarks(); renderNames();
   $('#wclose').onclick=()=>{ closeOverlay(); if(S.mode==='wander')paintWander(); };
+  $('#wgiveup').onclick=()=>{ if(solved)return; win(true); };
   $('#whint').onclick=()=>{ if(solved)return;
-    for(let i=0;i<N;i++){ if(assign[i]!==sol[i]){ const prev=assign.indexOf(sol[i]); if(prev>=0)assign[prev]=null; assign[i]=sol[i]; drawMarks(); renderNames(); showMsg($('#wmsg'),'info','Placed '+nm(sol[i])+' for you.'); return; } }
-    showMsg($('#wmsg'),'ok','Everyone is placed right — tap Check!');
+    for(let i=0;i<N;i++){ if(!locked[i]){
+      const prev=assign.indexOf(sol[i]); if(prev>=0&&prev!==i)assign[prev]=null;
+      assign[i]=sol[i]; locked[i]=true;
+      if(locked.every(Boolean)){ win(false); return; }
+      drawMarks(); renderNames(); showMsg($('#wmsg'),'ok','Placed '+nm(sol[i])+' for you — that one’s lit.');
+      return;
+    } }
   };
   $('#wcheck').onclick=()=>{ if(solved)return;
-    if(assign.indexOf(null)>=0){ showMsg($('#wmsg'),'info','Place every name first.'); return; }
-    const correct=order.every((s,i)=>assign[i]===s.person_id);
-    if(correct){
-      solved=true; drawMarks();
-      order.forEach(s=>{ fillSegment(s.person_id,'face'); fillSegment(s.person_id,'people'); });
-      addJournal('You worked out who was who'+(where?' in '+where:'')+(when?', '+when:'')+'.');
-      chime(); showMsg($('#wmsg'),'ok','That’s everyone — you knew them all. ✦');
-      $('#wcheck').style.display='none'; $('#whint').style.display='none';
-      $('#wnames').innerHTML=''; $('#wclose').textContent='Back to the sky';
-    } else {
-      const bad=chosen.find(c=>!c.f(assign));
-      showMsg($('#wmsg'),'info', bad?('Something doesn’t fit — “'+bad.t+'” Try again.'):'Not quite — check the clues again.');
-    }
+    // every still-open face must have a tentative name before checking
+    for(let i=0;i<N;i++){ if(!locked[i]&&assign[i]==null){ showMsg($('#wmsg'),'info','Put a name on every glowing face first.'); return; } }
+    let right=0, wrong=0;
+    order.forEach((s,i)=>{ if(!locked[i]){
+      if(assign[i]===s.person_id){ locked[i]=true; right++; }
+      else { assign[i]=null; wrong++; }   // clear wrong guesses so they can be redone
+    }});
+    if(locked.every(Boolean)){ win(false); return; }
+    drawMarks(); renderNames();
+    if(right>0) showMsg($('#wmsg'),'ok', right+(right===1?' name is':' names are')+' right and now lit ✦ — the glowing faces still need the right name.');
+    else showMsg($('#wmsg'),'info','Not quite yet — the glowing faces still need the right name. Check the clues and try again.');
   };
 }
 init();
