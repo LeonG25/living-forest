@@ -236,7 +236,7 @@ async function init(){
 async function afterLogin(){
   await sb.from('profiles').upsert({id:S.user.id,display_name:S.user.email}).select();
   const {data:prof}=await sb.from('profiles').select('is_keeper,preferred_lang').eq('id',S.user.id).single();
-  S.isKeeper=!!prof?.is_keeper; S.lang=(prof&&prof.preferred_lang)||'en';
+  S.isKeeper=!!prof?.is_keeper; S.lang=(prof&&prof.preferred_lang)||detectLang()||'en'; try{localStorage.setItem('lf_lang',S.lang);}catch(e){}
   loadPlay();
   await loadAll(); render();
 }
@@ -1403,6 +1403,7 @@ function rerenderNames(){
 
 async function setLang(code){
   S.lang=code||'en';
+  try{localStorage.setItem('lf_lang',S.lang);}catch(e){}
   try{await sb.from('profiles').update({preferred_lang:S.lang}).eq('id',S.user.id);}catch(e){}
   rerenderNames();
   refreshUILang();
@@ -1511,18 +1512,26 @@ function textFor(ref,body){
 }
 
 // ================= UI STRINGS / RTL =================
-const UISTR=["Add", "Age", "Fit", "lit", "Sex", "Back", "Born", "Died", "Edit", "Male", "Name", "Note", "Play", "Save", "Type", "Check", "Clues", "Given", "Where", "A name", "Branch", "Called", "Delete", "Exit ✕", "Family", "Female", "Forest", "Keeper", "Living", "Places", "remove", "Review", "Select", "▶ Play", "+ Child", "Decline", "Journal", "Living?", "Sign in", "surname", "The sky", "Unknown", "+ Friend", "+ Parent", "+ Spouse", "Language", "Looking…", "marriage", "Memories", "Password", "Sign out", "Timeline", "· edit ›", "⟳ Rotate", "＋ Person", "+ Sibling", "Approve ✦", "e.g. 1962", "Full name", "How sure?", "in review", "None yet.", "Uncertain", "Connection", "Documented", "first name", "friendship", "Remembered", "Your email", "Connections", "Give a hint", "Who is who?", "Add a memory", "Add a person", "Done for now", "parent–child", "Roughly when", "⟳ Rotate 90°", "Add stargazer", "Add this name", "Light it up ✦", "no one tagged", "+ add a person", "add a memory ›", "Create account", "Name this face", "People in this", "Who’s playing?", "e.g. Casablanca", "Waiting for you", "you@example.com", "Name suggestions", "Pick a stargazer", "Who is it about?", "Branch (optional)", "Called (optional)", "Delete connection", "Send to the queue", "The Living Forest", "Delete this memory", "No one tagged yet.", "I give up — show me", "The queue is empty.", "The forest is empty.", "at least 6 characters", "Faces (optional names)", "What you’ve discovered", "When · the “when” door", "Who is who? — a puzzle", "Names in other languages", "Where · the “where” door", "Play a game to meet them.", "Replace the file (optional)", "No stargazers yet — add one below.", "No connections yet — add family above.", "Tap “＋ Person” to plant the first one.", "Drag across each face to mark who’s there.", "Match every name to a face using the clues.", "No memories yet. Add one above to light this star.", "No group photo has them yet — more games are coming.", "Your first sign-in makes you the keeper of the forest.", "Nothing reaches the children’s forest until you approve it.", "This only sets how gentle the games are — it isn’t a login.", "Only the keeper or whoever added this connection can change it.", "Type a new name, or an existing one to link them into the tree.", "Nothing yet. Meet someone in the sky and it will be written here.", "Someone is waiting to be remembered… tap a dim star to meet them.", "A place where the family becomes stars — lit, one memory at a time.", "No places yet. Add a photo or story with a “where”, and it appears here.", "For parent, the arrow means the first person is the parent of the second.", "No dated memories yet. Add a photo or story with a rough “when”, and it appears here.", "Every photo and story with a rough date, in order. Built straight from what you upload.", "Every place your photos and stories name, and who was there. Tap a light to jump to it.", "Pick what kind it is and choose the file first — then tag who’s in it and add the story.", "Anyone this memory belongs to. On a photo you can also drag across faces above to name them.", "Optional. Helps translate names correctly where a surname changes form — e.g. Церлин → Церлина.", "Tap anyone to open them — add family, connect people, or attach a memory. Pinch or use ＋/− to zoom, drag to pan."];
+const UISTR=["Add", "Age", "Fit", "lit", "Sex", "Back", "Born", "Died", "Edit", "Male", "Name", "Note", "Play", "Save", "Type", "Check", "Clues", "Given", "Where", "A name", "Branch", "Called", "Delete", "Exit ✕", "Family", "Female", "Forest", "Keeper", "Living", "Places", "remove", "Review", "Select", "▶ Play", "+ Child", "Decline", "Journal", "Living?", "Sign in", "surname", "The sky", "Unknown", "+ Friend", "+ Parent", "+ Spouse", "Language", "Looking…", "marriage", "Memories", "Password", "Sign out", "Timeline", "· edit ›", "⟳ Rotate", "＋ Person", "+ Sibling", "Approve ✦", "e.g. 1962", "Full name", "How sure?", "in review", "None yet.", "Uncertain", "Connection", "Documented", "first name", "friendship", "Remembered", "Your email", "Connections", "Give a hint", "Who is who?", "Add a memory", "Add a person", "Done for now", "parent–child", "Roughly when", "⟳ Rotate 90°", "Add stargazer", "Add this name", "Light it up ✦", "no one tagged", "+ add a person", "add a memory ›", "Create account", "Name this face", "People in this", "Who’s playing?", "e.g. Casablanca", "Waiting for you", "you@example.com", "Name suggestions", "Pick a stargazer", "Who is it about?", "Branch (optional)", "Called (optional)", "Delete connection", "Send to the queue", "The Living Forest", "Delete this memory", "No one tagged yet.", "I give up — show me", "The queue is empty.", "The forest is empty.", "at least 6 characters", "Faces (optional names)", "What you’ve discovered", "When · the “when” door", "Who is who? — a puzzle", "Names in other languages", "Where · the “where” door", "Play a game to meet them.", "Replace the file (optional)", "No stargazers yet — add one below.", "No connections yet — add family above.", "Tap “＋ Person” to plant the first one.", "Drag across each face to mark who’s there.", "Match every name to a face using the clues.", "No memories yet. Add one above to light this star.", "No group photo has them yet — more games are coming.", "Your first sign-in makes you the keeper of the forest.", "Nothing reaches the children’s forest until you approve it.", "This only sets how gentle the games are — it isn’t a login.", "Only the keeper or whoever added this connection can change it.", "Type a new name, or an existing one to link them into the tree.", "Nothing yet. Meet someone in the sky and it will be written here.", "Someone is waiting to be remembered… tap a dim star to meet them.", "A place where the family becomes stars — lit, one memory at a time.", "No places yet. Add a photo or story with a “where”, and it appears here.", "For parent, the arrow means the first person is the parent of the second.", "No dated memories yet. Add a photo or story with a rough “when”, and it appears here.", "Every photo and story with a rough date, in order. Built straight from what you upload.", "Every place your photos and stories name, and who was there. Tap a light to jump to it.", "Pick what kind it is and choose the file first — then tag who’s in it and add the story.", "Anyone this memory belongs to. On a photo you can also drag across faces above to name them.", "Optional. Helps translate names correctly where a surname changes form — e.g. Церлин → Церлина.", "Tap anyone to open them — add family, connect people, or attach a memory. Pinch or use ＋/− to zoom, drag to pan.", "Photo", "Voice", "Story", "Video", "Object", "Its story — in whose words?", "About this recording", "The memory — in their words", "About this video", "What is it, and what does it mean?", "A photo of the object", "The recording", "The video", "The photo"];
+const UIOVERRIDE={"ru": {"Fit": "подогнать вид под экран", "▶ Play": "▶ играть", "Play": "играть", "When · the \"when\" door": "Когда", "Where · the \"where\" door": "Где", "Remembered": "из памяти", "Send to the queue": "Отправить на подтверждение", "The Living Forest": "Живой Лес"}, "he": {"Fit": "התאם לגודל מסך", "▶ Play": "▶ שחק", "Play": "שחק", "＋ Person": "＋ הוסף אדם", "When · the \"when\" door": "מתי", "Where · the \"where\" door": "היכן", "Remembered": "ככה זכור לי", "Send to the queue": "שלח לאישור", "The Living Forest": "היער החי", "Its story — in whose words?": "מה הסיפור שמאחורי התמונה?", "Every place your photos and stories name, and who was there. Tap a light to jump to it.": "כל המקומות בהם קרו הסיפורים והתמונות שלך ומי היה שם. הקש על נקודה מוארת כדי לקפוץ לשם.", "Every photo and story with a rough date, in order. Built straight from what you upload.": "כל תמונה וסיפור עם תאריך משוער, לפי הסדר. בנוי ישירות מהתוכן שהעלית.", "Anyone this memory belongs to. On a photo you can also drag across faces above to name them.": "כל מי שהזיכרון הזה שייך לו. סמן/י אנשים במסגרת מלבנית והוסף/הוסיפי שמות.", "Tap anyone to open them — add family, connect people, or attach a memory. Pinch or use ＋/− to zoom, drag to pan.": "הקש על מישהו כדי לפתוח אותו — הוסף בני משפחה, חבר בין אנשים או צרף זיכרון. הגדל או השתמש ב-＋/− להגדלה, גרור כדי להזיז את כל התצוגה"}};
 Object.assign(S,{ui:S.ui||{}});
+(function(){try{const st=document.createElement('style');st.textContent='#vp,.viewport,.canvas,.stage,#placemap,.leaflet-container{direction:ltr;}';document.head.appendChild(st);}catch(e){}})();
+function detectLang(){try{const l=(navigator.language||'').toLowerCase();if(l.indexOf('ru')===0)return'ru';if(l.indexOf('he')===0||l.indexOf('iw')===0)return'he';if(l.indexOf('en')===0)return'en';}catch(e){}return null;}
 function setUIDir(){try{document.documentElement.setAttribute('dir',(S.lang==='he')?'rtl':'ltr');document.documentElement.setAttribute('lang',S.lang||'en');}catch(e){}}
+function loadUICache(lang){try{const j=localStorage.getItem('lf_ui_'+lang);if(j)return JSON.parse(j)||{};}catch(e){}return{};}
+function saveUICache(lang){try{localStorage.setItem('lf_ui_'+lang,JSON.stringify(S.ui[lang]||{}));}catch(e){}}
 async function ensureUI(){
   const lang=S.lang; if(!lang||lang==='en')return;
   S.ui[lang]=S.ui[lang]||{};
-  const need=UISTR.filter(x=>S.ui[lang][x]===undefined);
+  const ov=UIOVERRIDE[lang]||{};
+  const need=UISTR.filter(x=>S.ui[lang][x]===undefined && ov[x]===undefined);
   for(let i=0;i<need.length;i+=30){
     const batch=need.slice(i,i+30).map(x=>({kind:'ui',ref:x,text:x}));
     const res=await callTranslate(batch);
     if(res)res.forEach(r=>{if(r&&r.ref!==undefined)S.ui[lang][r.ref]=(r.text||'');});
   }
+  Object.assign(S.ui[lang], ov);
+  saveUICache(lang);
   runUI();
 }
 function applyUI(root){
@@ -1541,7 +1550,13 @@ let _uiObs=null,_uiSched=false;
 function runUI(){applyUI(document.body);}
 function scheduleUI(){if(_uiSched)return; _uiSched=true; setTimeout(()=>{_uiSched=false; if(S.lang&&S.lang!=='en')runUI();},0);}
 function startUIObserver(){if(_uiObs)return; try{_uiObs=new MutationObserver(()=>{if(S.lang&&S.lang!=='en')scheduleUI();}); _uiObs.observe(document.body,{childList:true,subtree:true});}catch(e){}}
-function refreshUILang(){setUIDir(); if(S.lang&&S.lang!=='en'){ensureUI(); startUIObserver();}}
+function refreshUILang(){
+  setUIDir();
+  if(S.lang&&S.lang!=='en'){
+    S.ui[S.lang]=Object.assign({}, loadUICache(S.lang), S.ui[S.lang]||{}, UIOVERRIDE[S.lang]||{});
+    runUI(); startUIObserver(); ensureUI();
+  }
+}
 
 init();
 initBackGuard();
