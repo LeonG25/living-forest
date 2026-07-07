@@ -1155,8 +1155,7 @@ function photosWith(pid){
 function wiwPhotoFor(pid){
   const cand=(S.artefacts||[]).filter(a=>(a.kind==='photo'||a.kind==='object')&&a.storage_path
     && (a.artefact_subjects||[]).some(s=>s.person_id===pid&&s.detail&&s.detail.w)
-    && (a.artefact_subjects||[]).filter(s=>s.detail&&s.detail.w).length>=3
-    && (a.artefact_subjects||[]).filter(s=>s.detail&&s.detail.w).length<=6);
+    && (a.artefact_subjects||[]).filter(s=>s.detail&&s.detail.w).length>=3);
   if(!cand.length)return null;
   const target=(S.player&&S.player.age&&S.player.age<11)?3:5;
   cand.sort((x,y)=>Math.abs((x.artefact_subjects||[]).filter(s=>s.detail&&s.detail.w).length-target)
@@ -1167,7 +1166,7 @@ function openMeet(pid){
   const person=personById(pid); if(!person)return;
   const met=isMet(pid), rc=ringCount(pid);
   const photos=photosWith(pid);
-  const wiw=wiwPhotoFor(pid);
+  const wiw=wiwPhotoFor(pid); const ordp=orderPhotosFor(pid); const mems=memoriesAbout(pid);
   const box=el(`<div style="text-align:center">
     <div class="meetface${met&&S.faceOf.has(pid)?'':' noimg'}" id="mf">${met&&S.faceOf.has(pid)?'':(met?esc(initials(person.display_name)):'✦')}</div>
     <h3 class="disp">${met?esc(person.display_name):'A dim star'}</h3>
@@ -1177,11 +1176,15 @@ function openMeet(pid){
     ${photos.length?`<button class="btn" id="startfind">${met?'Find them again':'Find them in a photo'}</button>`
                    :`<p class="sub">No group photo has them yet — more games are coming.</p>`}
     ${wiw?`<button class="btn secondary" id="startwiw" style="margin-top:10px">Who is who? — a puzzle</button>`:''}
+    ${ordp.length>=3?`<button class="btn secondary" id="startorder" style="margin-top:10px">Put their life in order — a puzzle</button>`:''}
+    ${(mems.length&&(S.people||[]).length>=3)?`<button class="btn secondary" id="startmem" style="margin-top:10px">Whose memory is this? — a game</button>`:''}
   </div>`);
   overlay(box);
   if(met&&S.faceOf.has(pid)){ const f=S.faceOf.get(pid); mountFace($('#mf'),f.path,f.box,initials(person.display_name)); }
   const sf=$('#startfind'); if(sf)sf.onclick=()=>{ closeOverlay(); findThemPhoto(photos[0].id,pid); };
   const sw=$('#startwiw'); if(sw)sw.onclick=()=>{ closeOverlay(); whoIsWho(wiw.id,pid); };
+  const so=$('#startorder'); if(so)so.onclick=()=>{ closeOverlay(); orderGame(pid); };
+  const sm=$('#startmem'); if(sm)sm.onclick=()=>{ closeOverlay(); whoseMemory(pid); };
 }
 const inBox=(x,y,b)=> b&&x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h;
 function chime(){ try{ const A=window.AudioContext||window.webkitAudioContext; if(!A)return; const a=new A(); const o=a.createOscillator(),g=a.createGain(); o.frequency.value=880; o.type='sine'; o.connect(g); g.connect(a.destination); g.gain.setValueAtTime(0.0001,a.currentTime); g.gain.exponentialRampToValueAtTime(0.12,a.currentTime+0.02); g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+0.5); o.start(); o.stop(a.currentTime+0.55);}catch(e){} }
@@ -1262,7 +1265,9 @@ function permsOf(a){ if(a.length<=1)return [a]; const out=[]; a.forEach((x,i)=>{
 function whoName(pid){ return (personById(pid)||{}).display_name||'someone'; }
 async function whoIsWho(artId, focusPid){
   const art=(S.artefacts||[]).find(a=>a.id===artId); if(!art)return;
-  const order=ltr((art.artefact_subjects||[]).filter(s=>s.detail&&s.detail.w&&s.person_id));
+  let _sel=(art.artefact_subjects||[]).filter(s=>s.detail&&s.detail.w&&s.person_id);
+  if(_sel.length>7){ const _f=_sel.filter(s=>s.person_id===focusPid); const _o=_sel.filter(s=>s.person_id!==focusPid).sort(()=>Math.random()-0.5).slice(0,Math.max(0,6-_f.length)); _sel=_f.concat(_o); }
+  const order=ltr(_sel);
   const N=order.length; if(N<3)return;
   const sol=order.map(o=>o.person_id);
   const nm=(pid)=>whoName(pid);
@@ -1563,6 +1568,103 @@ function refreshUILang(){
     S.ui[S.lang]=Object.assign({}, loadUICache(S.lang), S.ui[S.lang]||{}, UIOVERRIDE[S.lang]||{});
     runUI(); startUIObserver(); ensureUI();
   }
+}
+
+// ================= MORE GAMES =================
+function yearOf(a){ const w=(a&&a.metadata&&a.metadata.when)||''; const m=String(w).match(/\d{4}/); return m?parseInt(m[0],10):null; }
+function orderPhotosFor(pid){
+  return (S.artefacts||[]).filter(a=>(a.kind==='photo'||a.kind==='object')&&a.storage_path
+    && (a.artefact_subjects||[]).some(s=>s.person_id===pid) && yearOf(a)!==null)
+    .sort((x,y)=>yearOf(x)-yearOf(y));
+}
+function memoriesAbout(pid){
+  return (S.artefacts||[]).filter(a=>a.body&&a.body.trim()&&(a.artefact_subjects||[]).some(s=>s.person_id===pid));
+}
+
+async function orderGame(pid){
+  const person=personById(pid); if(!person)return;
+  const items=orderPhotosFor(pid); if(items.length<3)return;
+  const use=items.slice(0,6);
+  const sol=use.map(a=>a.id);
+  const yof={}; use.forEach(a=>yof[a.id]=yearOf(a));
+  const urls={}; for(const a of use){ urls[a.id]=await signed(a.storage_path); }
+  const sorted=arr=>arr.every((id,i)=>i===0||(yof[arr[i-1]]||0)<=(yof[arr[i]]||0));
+  let cur=sol.slice();
+  do{ cur.sort(()=>Math.random()-0.5); }while(sorted(cur)&&sol.length>1);
+  let fixed=0, solved=false;
+  const box=el(`<div>
+    <div class="findtop"><b>Put their life in order</b><div class="sub">Earliest at the top. Use the arrows to reorder, then Check. The dates are hidden.</div></div>
+    <div id="ord-list" style="margin-top:10px"></div>
+    <div class="msg" id="ord-msg"></div>
+    <div class="row" style="margin-top:6px"><button class="btn secondary" id="ord-hint">Give a hint</button><button class="btn" id="ord-check">Check</button></div>
+    <button class="btn secondary" id="ord-close" style="margin-top:8px">Done for now</button></div>`);
+  overlay(box);
+  const listEl=$('#ord-list');
+  function render(){
+    listEl.innerHTML='';
+    cur.forEach((id,i)=>{
+      const lock=i<fixed;
+      const row=el(`<div class="mem" style="align-items:center${lock?';opacity:.85':''}">
+        <img class="th" style="width:66px;height:66px" src="${urls[id]||''}"/>
+        <div style="flex:1" class="mt">${solved||lock?`<b>${yof[id]||''}</b>`:'<span class="sub">hidden date</span>'}</div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <button class="btn sm secondary up" ${(i<=fixed)?'disabled':''} style="margin:0;padding:4px 10px">▲</button>
+          <button class="btn sm secondary dn" ${(lock||i>=cur.length-1)?'disabled':''} style="margin:0;padding:4px 10px">▼</button>
+        </div></div>`);
+      const up=row.querySelector('.up'), dn=row.querySelector('.dn');
+      if(up)up.onclick=()=>{ if(i<=fixed)return; const t=cur[i-1]; cur[i-1]=cur[i]; cur[i]=t; render(); };
+      if(dn)dn.onclick=()=>{ if(lock||i>=cur.length-1)return; const t=cur[i+1]; cur[i+1]=cur[i]; cur[i]=t; render(); };
+      listEl.append(row);
+    });
+  }
+  render();
+  $('#ord-close').onclick=()=>{ closeOverlay(); if(S.mode==='wander')paintWander(); };
+  $('#ord-hint').onclick=()=>{ if(solved)return;
+    const want=sol[fixed]; const at=cur.indexOf(want); if(at>fixed){ cur.splice(at,1); cur.splice(fixed,0,want); }
+    fixed++; render();
+    if(sorted(cur)) finish(); else showMsg($('#ord-msg'),'info','Locked the earliest one in place. Keep going.');
+  };
+  $('#ord-check').onclick=()=>{ if(solved)return;
+    if(sorted(cur)){ finish(); return; }
+    let bad=-1; for(let i=0;i<cur.length-1;i++){ if((yof[cur[i]]||0)>(yof[cur[i+1]]||0)){ bad=i; break; } }
+    if(bad>=0){ const rows=listEl.querySelectorAll('.mem'); [rows[bad],rows[bad+1]].forEach(r=>{ if(r){ r.style.boxShadow='0 0 0 2px var(--bad)'; setTimeout(()=>{r.style.boxShadow='';},1200); } }); showMsg($('#ord-msg'),'info','These two are the wrong way round.'); }
+    else showMsg($('#ord-msg'),'info','Almost — keep going.');
+  };
+  function finish(){ solved=true; fixed=cur.length; render();
+    fillSegment(pid,'story','You put '+person.display_name+'’s life in order.');
+    chime(); showMsg($('#ord-msg'),'ok','That’s the order of a life. ✦');
+    $('#ord-check').style.display='none'; $('#ord-hint').style.display='none'; $('#ord-close').textContent='Back to the sky';
+  }
+}
+
+async function whoseMemory(pid){
+  const person=personById(pid); if(!person)return;
+  const mems=memoriesAbout(pid); if(!mems.length)return;
+  const mem=mems[Math.floor(Math.random()*mems.length)];
+  const body=(S.lang&&S.lang!=='en')?(textFor(mem.id,mem.body)||mem.body):mem.body;
+  const decoys=(S.people||[]).filter(p=>p.id!==pid).sort(()=>Math.random()-0.5).slice(0,3);
+  const opts=decoys.concat([person]).sort(()=>Math.random()-0.5);
+  let done=false;
+  const box=el(`<div>
+    <div class="findtop"><b>Whose memory is this?</b><div class="sub">Read it, then choose who it’s about.</div></div>
+    <div class="lede" dir="auto" style="white-space:pre-wrap;margin:10px 0">${esc(body||'')}</div>
+    <div id="wm-opts"></div>
+    <div class="msg" id="wm-msg"></div>
+    <button class="btn secondary" id="wm-close" style="margin-top:8px">Done for now</button></div>`);
+  overlay(box);
+  const optsEl=$('#wm-opts');
+  opts.forEach(p=>{
+    const b=el(`<button class="btn secondary" style="margin-top:8px">${esc(dispName(p))}</button>`);
+    b.onclick=()=>{ if(done)return;
+      if(p.id===pid){ done=true; b.style.background='var(--good)'; b.style.color='#06351f';
+        fillSegment(pid,'story','You knew this memory was about '+person.display_name+'.');
+        chime(); showMsg($('#wm-msg'),'ok','Yes — this is about '+dispName(person)+'.');
+        $('#wm-close').textContent='Back to the sky';
+      } else { b.disabled=true; b.style.opacity='.5'; showMsg($('#wm-msg'),'info','That’s '+dispName(p)+' — someone else in the family. Try again.'); }
+    };
+    optsEl.append(b);
+  });
+  $('#wm-close').onclick=()=>{ closeOverlay(); if(S.mode==='wander')paintWander(); };
 }
 
 init();
