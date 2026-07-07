@@ -642,7 +642,9 @@ async function openEditArtefact(id){
   const _bt=(S.lang&&S.lang!=='en'&&a.body)?await transOne(a.id,a.body):'';
   const box=el(`<div><h3 class="disp">Edit ${esc(KINDS[a.kind]?.label||a.kind)}</h3>
     ${a.status!=='published'?'<div class="sub"><span class="status rev">in review</span></div>':''}
-    ${isImg&&url?`<img id="ea-img" src="${url}" style="width:100%;border-radius:12px;margin:6px 0"/><button class="btn sm secondary" id="ea-rot" type="button" style="margin:0 0 4px">⟳ Rotate 90°</button>`:''}
+    ${isImg&&url?`<div class="stage" id="stage"><img id="ea-img" src="${url}" draggable="false"/></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin:4px 0"><span class="footnote" style="text-align:left;margin:0">Drag across a face to tag someone; tap × to remove.</span><button class="btn sm secondary" id="ea-rot" type="button" style="margin:0;white-space:nowrap">⟳ Rotate 90°</button></div>
+      <div id="taglist"></div>`:''}
     ${a.kind==='voice'&&url?`<audio controls src="${url}" style="width:100%;margin:6px 0"></audio>`:''}
     ${a.kind==='video'&&url?`<video controls src="${url}" style="width:100%;border-radius:12px;margin:6px 0"></video>`:''}
     ${_bt?`<div class="eyebrow" style="margin-top:6px">In ${esc(langLabel(S.lang))} · translated by the app</div><div class="lede" dir="auto" style="white-space:pre-wrap;margin:0 0 6px">${esc(_bt)}</div>`:''}
@@ -650,9 +652,9 @@ async function openEditArtefact(id){
     <div class="row"><label class="field"><span>Roughly when</span><input id="ea-when" type="text" value="${esc(a.metadata?.when||'')}"/></label>
       <label class="field"><span>Where</span><input id="ea-where" type="text" value="${esc(a.metadata?.where||'')}"/></label></div>
     <label class="field"><span>How sure?</span><select id="ea-cert"><option value="remembered">Remembered</option><option value="documented">Documented</option><option value="uncertain">Uncertain</option></select></label>
-    <div class="eyebrow" style="margin-top:14px">People in this</div>
+    ${isImg?'':`<div class="eyebrow" style="margin-top:14px">People in this</div>
     <div id="ea-subs"></div>
-    <div class="tagrow" style="margin-top:8px"><input id="ea-add" type="text" list="people-list" placeholder="Add a person"/><button class="btn sm" id="ea-addbtn">Add</button></div>
+    <div class="tagrow" style="margin-top:8px"><input id="ea-add" type="text" list="people-list" placeholder="Add a person"/><button class="btn sm" id="ea-addbtn">Add</button></div>`}
     ${a.storage_path?'<label class="field"><span>Replace the file (optional)</span><input id="ea-file" type="file"/></label>':''}
     <button class="btn" id="ea-save">${S.isKeeper?'Save':'Submit changes for review'}</button>
     <button class="btn danger" id="ea-del">Delete this memory</button>
@@ -673,6 +675,7 @@ async function openEditArtefact(id){
       const oldPath=a.storage_path; a.storage_path=newPath;
       try{await sb.storage.from('family').remove([oldPath]);}catch(e){}
       const nu=await signed(newPath); const im=$('#ea-img'); if(im&&nu)im.src=nu;
+      TAGS=(a.artefact_subjects||[]).map(s=>({box:(s.detail&&s.detail.w)?s.detail:null,name:s.people?.display_name||''})).filter(t=>t.name||t.box); renderTags();
       await loadAll(); if(S.tab==='forest')drawForest();
       rotBtn.disabled=false; rotBtn.textContent=lbl;
     }catch(e){ rotBtn.disabled=false; rotBtn.textContent=lbl; showMsg($('#ea-msg'),'err',(e&&e.message)||'Could not rotate.'); }
@@ -687,8 +690,11 @@ async function openEditArtefact(id){
       c.append(row);
     });
   };
-  renderSubs();
-  $('#ea-addbtn').onclick=async()=>{ const nm=$('#ea-add').value.trim(); if(!nm)return;
+  if(isImg){
+    TAGS=(a.artefact_subjects||[]).map(s=>({box:(s.detail&&s.detail.w)?s.detail:null,name:s.people?.display_name||''})).filter(t=>t.name||t.box);
+    const _stg=$('#stage'); if(_stg){enableTagging(_stg);renderTags();}
+  } else renderSubs();
+  const _addb=$('#ea-addbtn'); if(_addb)_addb.onclick=async()=>{ const nm=$('#ea-add').value.trim(); if(!nm)return;
     try{ const pid=await ensurePerson(nm);
       if((a.artefact_subjects||[]).some(s=>s.person_id===pid)){ $('#ea-add').value=''; return; }
       const {data:ns,error:e2}=await sb.from('artefact_subjects').insert({artefact_id:a.id,person_id:pid,detail:null}).select('person_id,detail,people(display_name)').single();
@@ -701,6 +707,7 @@ async function openEditArtefact(id){
     if(!S.isKeeper && a.status==='published') patch.status='in_review';
     try{ const f=$('#ea-file')?.files?.[0]; if(f){patch.storage_path=await uploadFile(f);}
       const {error:e3}=await sb.from('artefacts').update(patch).eq('id',a.id); if(e3)throw e3;
+      if(isImg){ await sb.from('artefact_subjects').delete().eq('artefact_id',a.id); const subj=new Map(); for(const t of TAGS){ const nm=(t.name||'').trim(); if(!nm)continue; const pid=await ensurePerson(nm); subj.set(pid,{artefact_id:a.id,person_id:pid,detail:t.box||null}); } if(subj.size){ const {error:se}=await sb.from('artefact_subjects').insert([...subj.values()]); if(se)throw se; } }
       await loadAll(); closeOverlay(); if(S.tab==='forest')drawForest(); else paint();
     }catch(err){btn.disabled=false;btn.textContent=old;showMsg(m,'err',err.message||'Could not save.');} };
   $('#ea-del').onclick=async()=>{ if(!confirm('Delete this memory? This cannot be undone.'))return;
@@ -901,7 +908,7 @@ function enableTagging(stage){
 function renderTags(){
   const stage=$('#stage');
   if(stage){stage.querySelectorAll('.box').forEach(b=>b.remove());
-    TAGS.forEach((t,i)=>{const b=el(`<div class="box"><b>${i+1}</b><span class="del">×</span></div>`);
+    TAGS.forEach((t,i)=>{if(!t.box)return;const b=el(`<div class="box"><b>${i+1}</b><span class="del">×</span></div>`);
       Object.assign(b.style,{left:t.box.x*100+'%',top:t.box.y*100+'%',width:t.box.w*100+'%',height:t.box.h*100+'%'});
       b.querySelector('.del').onclick=(e)=>{e.stopPropagation();TAGS.splice(i,1);renderTags();};stage.append(b);});}
   const list=$('#taglist');if(!list)return;
