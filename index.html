@@ -1166,7 +1166,7 @@ function openMeet(pid){
   const person=personById(pid); if(!person)return;
   const met=isMet(pid), rc=ringCount(pid);
   const photos=photosWith(pid);
-  const wiw=wiwPhotoFor(pid); const ordp=orderPhotosFor(pid); const mems=memoriesAbout(pid);
+  const wiw=wiwPhotoFor(pid); const ordp=orderPhotosFor(pid); const mems=memoriesAbout(pid); const whp=wherePhotosFor(pid);
   const box=el(`<div style="text-align:center">
     <div class="meetface${met&&S.faceOf.has(pid)?'':' noimg'}" id="mf">${met&&S.faceOf.has(pid)?'':(met?esc(initials(person.display_name)):'✦')}</div>
     <h3 class="disp">${met?esc(person.display_name):'A dim star'}</h3>
@@ -1178,6 +1178,7 @@ function openMeet(pid){
     ${wiw?`<button class="btn secondary" id="startwiw" style="margin-top:10px">Who is who? — a puzzle</button>`:''}
     ${ordp.length>=3?`<button class="btn secondary" id="startorder" style="margin-top:10px">Put their life in order — a puzzle</button>`:''}
     ${(mems.length&&(S.people||[]).length>=3)?`<button class="btn secondary" id="startmem" style="margin-top:10px">Whose memory is this? — a game</button>`:''}
+    ${whp.length?`<button class="btn secondary" id="startwhere" style="margin-top:10px">Where was this? — a map puzzle</button>`:''}
   </div>`);
   overlay(box);
   if(met&&S.faceOf.has(pid)){ const f=S.faceOf.get(pid); mountFace($('#mf'),f.path,f.box,initials(person.display_name)); }
@@ -1185,6 +1186,7 @@ function openMeet(pid){
   const sw=$('#startwiw'); if(sw)sw.onclick=()=>{ closeOverlay(); whoIsWho(wiw.id,pid); };
   const so=$('#startorder'); if(so)so.onclick=()=>{ closeOverlay(); orderGame(pid); };
   const sm=$('#startmem'); if(sm)sm.onclick=()=>{ closeOverlay(); whoseMemory(pid); };
+  const swh=$('#startwhere'); if(swh)swh.onclick=()=>{ closeOverlay(); whereWasGame(pid); };
 }
 const inBox=(x,y,b)=> b&&x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h;
 function chime(){ try{ const A=window.AudioContext||window.webkitAudioContext; if(!A)return; const a=new A(); const o=a.createOscillator(),g=a.createGain(); o.frequency.value=880; o.type='sine'; o.connect(g); g.connect(a.destination); g.gain.setValueAtTime(0.0001,a.currentTime); g.gain.exponentialRampToValueAtTime(0.12,a.currentTime+0.02); g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+0.5); o.start(); o.stop(a.currentTime+0.55);}catch(e){} }
@@ -1665,6 +1667,72 @@ async function whoseMemory(pid){
     optsEl.append(b);
   });
   $('#wm-close').onclick=()=>{ closeOverlay(); if(S.mode==='wander')paintWander(); };
+}
+
+// ================= WHERE WAS THIS? (geography) =================
+function kmBetween(a,b){ const R=6371,dr=Math.PI/180;
+  const dLat=(b.lat-a.lat)*dr, dLng=(b.lng-a.lng)*dr;
+  const s=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a.lat*dr)*Math.cos(b.lat*dr)*Math.sin(dLng/2)*Math.sin(dLng/2);
+  return 2*R*Math.asin(Math.min(1,Math.sqrt(s)));
+}
+function wherePhotosFor(pid){
+  return (S.artefacts||[]).filter(a=>(a.kind==='photo'||a.kind==='object')&&a.storage_path
+    && (a.artefact_subjects||[]).some(s=>s.person_id===pid)
+    && a.metadata && String(a.metadata.where||'').trim());
+}
+async function whereCoords(name){
+  name=String(name||'').trim(); if(!name)return null;
+  let g=S.geo.get(name); if(g&&g.lat!=null)return g;
+  g=await geocode(name);
+  if(g){ S.geo.set(name,g); try{await sb.from('place_geo').upsert({name,lat:g.lat,lng:g.lng,label:g.label});}catch(e){} return g; }
+  return null;
+}
+async function whereWasGame(pid){
+  const person=personById(pid); if(!person)return;
+  const cands=wherePhotosFor(pid); if(!cands.length)return;
+  let art=null, truth=null;
+  const shuffled=cands.slice().sort(()=>Math.random()-0.5);
+  for(const c of shuffled){ const g=await whereCoords(c.metadata.where); if(g){ art=c; truth={lat:g.lat,lng:g.lng,label:g.label}; break; } }
+  if(!art){ return; }
+  const where=art.metadata.where;
+  const country=String(truth.label||'').split(',').pop().trim();
+  const url=await signed(art.storage_path);
+  const when=art.metadata&&art.metadata.when;
+  let solved=false, hint=0, map=null, guessMarker=null;
+  const box=el(`<div>
+    <div class="findtop"><b>Where was this?</b><div class="sub">Look at the photo, then tap the map where you think it was${when?' — around '+esc(when):''}.</div></div>
+    <img src="${url}" style="width:100%;max-height:200px;object-fit:cover;border-radius:12px;margin:8px 0" draggable="false"/>
+    <div id="ww-map" style="height:300px;border-radius:14px;overflow:hidden;border:1px solid var(--panel-line)"></div>
+    <div class="msg" id="ww-msg"></div>
+    <div class="row" style="margin-top:6px"><button class="btn secondary" id="ww-hint">Give a hint</button><button class="btn secondary" id="ww-show">Just show me</button></div>
+    <button class="btn secondary" id="ww-close" style="margin-top:8px">Done for now</button></div>`);
+  overlay(box);
+  map=L.map($('#ww-map'),{zoomControl:true,attributionControl:true,scrollWheelZoom:false}).setView([20,10],1);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',{subdomains:'abcd',maxZoom:19,attribution:'&copy; OpenStreetMap, &copy; CARTO'}).addTo(map);
+  setTimeout(()=>{try{map.invalidateSize();}catch(e){}},60);
+  function reveal(earned){ if(solved)return; solved=true;
+    L.circleMarker([truth.lat,truth.lng],{radius:9,color:'#ffe6ad',fillColor:'#ffce72',fillOpacity:1,weight:2}).addTo(map)
+      .bindTooltip(esc(where),{permanent:true,direction:'top'}).openTooltip();
+    try{map.setView([truth.lat,truth.lng],6);}catch(e){}
+    if(earned){ fillSegment(pid,'place','You found where '+person.display_name+'\u2019s photo was taken'+(when?', '+when:'')+': '+where+'.'); chime(); showMsg($('#ww-msg'),'ok','It was '+where+'. ✦'); }
+    else { addJournal('You saw where '+person.display_name+'\u2019s photo was taken: '+where+'.',pid); showMsg($('#ww-msg'),'ok','It was '+where+'.'); }
+    $('#ww-hint').style.display='none'; $('#ww-show').style.display='none'; $('#ww-close').textContent='Back to the sky';
+  }
+  map.on('click',(e)=>{ if(solved)return;
+    const guess={lat:e.latlng.lat,lng:e.latlng.lng};
+    if(guessMarker){try{guessMarker.remove();}catch(x){}}
+    guessMarker=L.circleMarker([guess.lat,guess.lng],{radius:7,color:'#8fb6d8',fillColor:'#8fb6d8',fillOpacity:.7,weight:2}).addTo(map);
+    const d=kmBetween(guess,truth);
+    if(d<200){ reveal(true); return; }
+    const word=d<600?'very warm':d<1800?'warm':d<4500?'cold':'very cold';
+    showMsg($('#ww-msg'),'info','That spot is '+word+'. Tap again to get closer.');
+  });
+  $('#ww-hint').onclick=()=>{ if(solved)return; hint++;
+    if(hint===1) showMsg($('#ww-msg'),'info','It\u2019s in '+(country||'another country')+'.');
+    else { try{map.setView([truth.lat,truth.lng],4);}catch(e){} showMsg($('#ww-msg'),'info','Somewhere around here — tap to place it.'); }
+  };
+  $('#ww-show').onclick=()=>reveal(false);
+  $('#ww-close').onclick=()=>{ try{map.remove();}catch(e){} closeOverlay(); if(S.mode==='wander')paintWander(); };
 }
 
 init();
