@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+<meta name="theme-color" content="#04070e" />
+<title>The Living Forest — the Living Globe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300&family=Hanken+Grotesk:wght@400;500;600&family=Azeret+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/three@0.149.0/build/three.min.js"></script>
+<script src="https://unpkg.com/topojson-client@3/dist/topojson-client.min.js"></script>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;overflow:hidden;background:#04070e;
+    font-family:'Hanken Grotesk',system-ui,sans-serif;color:#e8eef8;
+    user-select:none;-webkit-user-select:none;touch-action:none;}
+  #stage{position:fixed;inset:0;
+    background:radial-gradient(120% 120% at 62% 30%, #0d1a2f 0%, #081120 46%, #04070e 100%);}
+  #mount{position:absolute;inset:0;z-index:1;}
+  .mono{font-family:'Azeret Mono',ui-monospace,monospace;}
+  .serif{font-family:'Newsreader',serif;}
+  a{color:#f3cd84;text-decoration:none;}
+
+  /* floating name label on hover */
+  #label{position:absolute;z-index:3;left:0;top:0;transform:translate(-50%,-140%);
+    pointer-events:none;opacity:0;transition:opacity .18s ease;white-space:nowrap;display:flex;flex-direction:column;gap:1px;align-items:center;}
+  #label .n{font-family:'Newsreader',serif;font-size:15px;color:#fbf1dc;text-shadow:0 1px 8px rgba(0,0,0,.85);}
+  #label .m{font-size:10px;letter-spacing:.08em;color:rgba(190,210,235,.8);text-shadow:0 1px 6px rgba(0,0,0,.9);}
+
+  /* top-left title */
+  #title{position:absolute;z-index:4;left:26px;top:calc(26px + env(safe-area-inset-top));max-width:280px;pointer-events:none;}
+  #title .k{font-family:'Azeret Mono',monospace;font-size:10.5px;letter-spacing:.34em;text-transform:uppercase;color:rgba(150,180,214,.6);margin-bottom:14px;}
+  #title h1{font-family:'Newsreader',serif;font-weight:300;font-size:40px;line-height:1.02;margin:0;color:#f3f6fc;letter-spacing:-.01em;}
+  #title h1 em{font-style:italic;color:#f3cd84;}
+  #title p{font-size:13px;line-height:1.55;color:rgba(206,221,240,.6);margin:14px 0 0;max-width:250px;}
+  #title .sample{margin-top:14px;font-family:'Azeret Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:rgba(150,180,214,.5);border:1px solid rgba(150,180,214,.22);border-radius:999px;padding:4px 10px;display:inline-block;}
+
+  /* stats */
+  #stats{position:absolute;z-index:4;left:26px;bottom:calc(150px + env(safe-area-inset-bottom));display:flex;gap:26px;pointer-events:none;}
+  #stats .s{display:flex;flex-direction:column;gap:2px;}
+  #stats .v{font-family:'Newsreader',serif;font-weight:300;font-size:30px;line-height:1;color:#f3f6fc;}
+  #stats .l{font-family:'Azeret Mono',monospace;font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(150,180,214,.62);}
+
+  /* year readout top-right */
+  #yr{position:absolute;z-index:4;right:26px;top:calc(24px + env(safe-area-inset-top));text-align:right;pointer-events:none;}
+  #yr .k{font-family:'Azeret Mono',monospace;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:rgba(150,180,214,.6);}
+  #yr .v{font-family:'Newsreader',serif;font-weight:300;font-size:52px;line-height:.9;color:#f6efe0;margin-top:4px;}
+  #yr .note{font-size:12px;color:rgba(206,221,240,.55);margin-top:6px;}
+
+  /* legend */
+  #legend{position:absolute;z-index:4;right:26px;bottom:calc(150px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px;align-items:flex-end;pointer-events:none;}
+  #legend .cap{font-family:'Azeret Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(150,180,214,.5);margin-bottom:2px;}
+  #legend .row{display:flex;align-items:center;gap:9px;}
+  #legend .row span.t{font-family:'Azeret Mono',monospace;font-size:9.5px;color:rgba(190,210,235,.6);}
+  .dot{width:8px;height:8px;border-radius:50%;}
+
+  /* year slider */
+  #timebar{position:absolute;z-index:5;left:50%;transform:translateX(-50%);
+    bottom:calc(84px + env(safe-area-inset-bottom));width:min(560px,86vw);}
+  #timebar input{width:100%;-webkit-appearance:none;appearance:none;height:2px;border-radius:2px;
+    background:linear-gradient(90deg, rgba(243,205,132,.7), rgba(150,180,214,.25));outline:none;}
+  #timebar input::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+    background:radial-gradient(circle at 45% 40%,#fff3d6,#f3cd84 60%,#b8863a);box-shadow:0 0 12px 3px rgba(255,206,120,.5);cursor:pointer;}
+  #timebar input::-moz-range-thumb{width:18px;height:18px;border:none;border-radius:50%;background:#f3cd84;box-shadow:0 0 12px 3px rgba(255,206,120,.5);cursor:pointer;}
+  #timebar .ends{display:flex;justify-content:space-between;margin-top:7px;font-family:'Azeret Mono',monospace;font-size:9.5px;letter-spacing:.1em;color:rgba(150,180,214,.5);}
+
+  /* hint */
+  #hint{position:absolute;z-index:4;left:50%;bottom:calc(140px + env(safe-area-inset-bottom));transform:translateX(-50%);
+    font-family:'Azeret Mono',monospace;font-size:10px;letter-spacing:.14em;color:rgba(190,210,235,.5);opacity:1;transition:opacity .6s;pointer-events:none;white-space:nowrap;}
+
+  /* selected card */
+  #card{position:absolute;z-index:6;left:50%;bottom:5%;transform:translateX(-50%) translateY(12px);
+    width:min(420px,90vw);opacity:0;pointer-events:none;transition:opacity .32s ease,transform .32s ease;}
+  #card.show{opacity:1;transform:translateX(-50%);pointer-events:auto;}
+  #card .panel{position:relative;background:rgba(10,18,34,.82);border:1px solid rgba(180,205,235,.16);
+    border-radius:20px;backdrop-filter:blur(18px);box-shadow:0 30px 70px -24px rgba(0,0,0,.8);padding:22px 24px;}
+  #card .x{position:absolute;top:14px;right:16px;width:26px;height:26px;border-radius:50%;
+    border:1px solid rgba(210,222,244,.2);display:flex;align-items:center;justify-content:center;color:rgba(210,222,244,.7);font-size:14px;cursor:pointer;}
+  #card .top{display:flex;gap:16px;align-items:center;}
+  #card .disc{position:relative;width:60px;height:60px;flex:none;border-radius:50%;
+    background:radial-gradient(circle at 50% 42%, rgba(255,231,180,.4) 0%, rgba(210,150,60,.2) 55%, rgba(16,24,42,.8) 100%);
+    box-shadow:0 0 22px 4px rgba(255,206,120,.3), inset 0 0 0 1px rgba(255,220,150,.4);
+    display:flex;align-items:center;justify-content:center;font-family:'Newsreader',serif;font-style:italic;font-size:11px;color:rgba(255,238,205,.7);text-align:center;line-height:1.15;}
+  #card .nm{font-family:'Newsreader',serif;font-size:22px;color:#f4ecdb;line-height:1.1;}
+  #card .line{font-family:'Azeret Mono',monospace;font-size:10.5px;letter-spacing:.06em;color:rgba(190,210,235,.7);margin-top:3px;}
+  #card .rel{font-size:12px;color:rgba(206,221,240,.6);margin-top:2px;}
+  #card .grid{display:flex;gap:22px;margin-top:16px;padding-top:14px;border-top:1px solid rgba(180,205,235,.12);}
+  #card .grid .k{font-family:'Azeret Mono',monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:rgba(150,180,214,.6);}
+  #card .grid .val{font-size:13px;color:#e6eefb;margin-top:3px;}
+  #card .grid .val.mono{font-family:'Azeret Mono',monospace;font-size:12px;}
+  #card .rarity{margin-top:14px;font-size:12.5px;color:rgba(240,230,210,.85);line-height:1.5;}
+
+  @media (prefers-reduced-motion: reduce){ #hint{display:none;} }
+  @media (max-width:520px){ #title h1{font-size:32px;} #title p{display:none;} #yr .v{font-size:42px;} }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="mount"></div>
+
+  <div id="label"><span class="n"></span><span class="m mono"></span></div>
+
+  <div id="title">
+    <div class="k">The Living Forest</div>
+    <h1 class="serif">Every life<br>has a <em>light.</em></h1>
+    <p>The family, seen from above — across every place they lived and every year they lived it. Turn the globe. Turn the years.</p>
+    <div class="sample">sample family · your real one fills in</div>
+  </div>
+
+  <div id="yr">
+    <div class="k">the year</div>
+    <div class="v serif" id="yrVal">2025</div>
+    <div class="note" id="yrNote">today</div>
+  </div>
+
+  <div id="stats">
+    <div class="s"><span class="v serif" id="stPeople">0</span><span class="l">people</span></div>
+    <div class="s"><span class="v serif" id="stTies">0</span><span class="l">ties</span></div>
+    <div class="s"><span class="v serif" id="stPlaces">0</span><span class="l">places</span></div>
+  </div>
+
+  <div id="legend">
+    <div class="cap">the older the light, the rarer</div>
+    <div class="row"><span class="t">you</span><span class="dot" style="width:5px;height:5px;background:#ffe9c2;box-shadow:0 0 5px 1px rgba(255,210,135,.7)"></span></div>
+    <div class="row"><span class="t">elders</span><span class="dot" style="background:#ffe4a6;box-shadow:0 0 9px 2px rgba(255,205,120,.8)"></span></div>
+    <div class="row"><span class="t">the eldest</span><span class="dot" style="width:10px;height:10px;background:#fff3d6;box-shadow:0 0 12px 3px rgba(255,215,140,.95)"></span></div>
+    <div class="row"><span class="t">waiting</span><span class="dot" style="width:7px;height:7px;background:#7fb4d8;box-shadow:0 0 6px 1px rgba(127,180,216,.6)"></span></div>
+  </div>
+
+  <div id="hint">drag to turn · tap a light · slide to travel the years</div>
+
+  <div id="timebar">
+    <input id="year" type="range" min="1903" max="2025" step="1" value="2025" />
+    <div class="ends"><span>1903</span><span>2025</span></div>
+  </div>
+
+  <div id="card"><div class="panel">
+    <div class="x" id="cardX">&times;</div>
+    <div class="top">
+      <div class="disc" id="cDisc">photo<br>here</div>
+      <div>
+        <div class="nm" id="cName"></div>
+        <div class="line" id="cLine"></div>
+        <div class="rel" id="cRel"></div>
+      </div>
+    </div>
+    <div class="grid">
+      <div><div class="k">place</div><div class="val" id="cPlace"></div></div>
+      <div><div class="k">coordinates</div><div class="val mono" id="cCoords"></div></div>
+    </div>
+    <div class="rarity" id="cRarity"></div>
+  </div></div>
+</div>
+
+<script>
+/* =========================================================================
+   THE LIVING GLOBE — standalone, vanilla Three.js.
+   Ported from the Claude Design concept (same look, same sample family),
+   de-coupled from its editor runtime so it runs anywhere and folds into
+   the app later. Sample data per the gameplay supplement; real Supabase
+   people/places slot into the same shape once they carry coords + years.
+   ========================================================================= */
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = s => document.querySelector(s);
+
+/* ---- sample cast (name, place, lat,lng, born, gen, rel, [path], waiting, friend) ---- */
+const PEOPLE = [
+  {id:'you',  name:'You',             place:'Boston, USA',        lat:42.36, lng:-71.06, born:2014, gen:0, rel:'the one remembering'},
+  {id:'sib',  name:'Your brother',    place:'Boston, USA',        lat:42.34, lng:-71.10, born:2011, gen:0, rel:'your brother'},
+  {id:'mom',  name:'Mom',             place:'Boston, USA',        lat:42.30, lng:-71.12, born:1985, gen:1, rel:'your mother'},
+  {id:'dad',  name:'Dad',             place:'Boston, USA',        lat:42.41, lng:-71.02, born:1983, gen:1, rel:'your father'},
+  {id:'sal',  name:'Grandpa Sal',     place:'Boston, USA',        lat:42.45, lng:-71.20, born:1955, gen:2, rel:'Lucia’s son'},
+  {id:'marie',name:'Aunt Marie',      place:'New York, USA',      lat:40.71, lng:-74.00, born:1958, gen:2, rel:'Sal’s sister'},
+  {id:'lucia',name:'Lucia Marchetti', place:'Puglia → Boston',    lat:42.36, lng:-71.06, born:1931, gen:3, rel:'your great-grandmother',
+     path:[{y:1931,lat:41.12,lng:16.87},{y:1951,lat:41.12,lng:16.87},{y:1952,lat:42.36,lng:-71.06}]},
+  {id:'elio', name:'Nonno Elio',      place:'Puglia, Italy',      lat:40.83, lng:16.55, born:1903, gen:4, rel:'Lucia’s father'},
+  {id:'rosa', name:'Rosa',            place:'Puglia, Italy',      lat:41.05, lng:16.62, born:1928, gen:3, rel:'Lucia’s sister', waiting:true},
+  {id:'wir',  name:'Wiremu',          place:'Wellington, NZ',     lat:-41.28,lng:174.77, born:1949, gen:2, rel:'Lucia’s pen-friend of 50 years', friend:true},
+  {id:'sof',  name:'Sofía',           place:'Buenos Aires, AR',   lat:-34.60,lng:-58.38, born:1952, gen:2, rel:'family friend', friend:true},
+  {id:'grace',name:'Grace',           place:'Salt Lake City, USA',lat:40.76, lng:-111.89,born:1978, gen:2, rel:'a friend of Sal', friend:true, waiting:true},
+];
+const TIES = [
+  ['you','mom',2014],['you','dad',2014],['sib','mom',2011],['mom','dad',2009],
+  ['mom','sal',1985],['sal','marie',1958],['sal','lucia',1955],['marie','lucia',1958],
+  ['lucia','elio',1931],['lucia','rosa',1931],['lucia','wir',1955],['lucia','sof',1961],['sal','grace',2001],
+];
+const byId = Object.fromEntries(PEOPLE.map(p=>[p.id,p]));
+const Y_MIN=1903, Y_MAX=2025;
+
+/* ---- stats ---- */
+$('#stPeople').textContent = PEOPLE.length;
+$('#stTies').textContent = TIES.length;
+$('#stPlaces').textContent = new Set(PEOPLE.map(p=>p.place)).size;
+
+/* ---- three basics ---- */
+const R=100, mount=$('#mount');
+let W=mount.clientWidth, H=mount.clientHeight;
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(32, W/H, 1, 4000); camera.position.set(0,0,320);
+const renderer=new THREE.WebGLRenderer({antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(2, devicePixelRatio||1)); renderer.setSize(W,H);
+mount.appendChild(renderer.domElement);
+
+const globe=new THREE.Group(); scene.add(globe); globe.rotation.set(0.35,-1.2,0);
+
+/* ll2v: lat/lng -> vector on sphere radius r */
+function ll2v(lat,lng,r){ const phi=(90-lat)*Math.PI/180, th=(lng+180)*Math.PI/180;
+  return new THREE.Vector3(-r*Math.sin(phi)*Math.cos(th), r*Math.cos(phi), r*Math.sin(phi)*Math.sin(th)); }
+function smooth(a,b,x){ const t=Math.min(1,Math.max(0,(x-a)/(b-a))); return t*t*(3-2*t); }
+
+/* ocean */
+globe.add(new THREE.Mesh(new THREE.SphereGeometry(R*0.997,64,64), new THREE.MeshBasicMaterial({color:0x0a1526})));
+/* atmosphere */
+scene.add(new THREE.Mesh(new THREE.SphereGeometry(R*1.16,64,64), new THREE.ShaderMaterial({
+  transparent:true, side:THREE.BackSide, blending:THREE.AdditiveBlending, depthWrite:false,
+  uniforms:{c:{value:new THREE.Color(0x2f77b0)}},
+  vertexShader:'varying vec3 vN; void main(){ vN=normalize(normalMatrix*normal); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);} ',
+  fragmentShader:'varying vec3 vN; uniform vec3 c; void main(){ float i=pow(0.62-dot(vN,vec3(0.0,0.0,1.0)),3.0); gl_FragColor=vec4(c,1.0)*clamp(i,0.0,1.0)*0.9; }'
+})));
+/* graticule */
+const gmat=new THREE.LineBasicMaterial({color:0x2a5470, transparent:true, opacity:0.32});
+for(let lat=-60;lat<=60;lat+=30){ const p=[]; for(let l=-180;l<=180;l+=4) p.push(ll2v(lat,l,R*1.001)); globe.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p), gmat)); }
+for(let lng=-180;lng<180;lng+=30){ const p=[]; for(let a=-88;a<=88;a+=4) p.push(ll2v(a,lng,R*1.001)); globe.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p), gmat)); }
+
+/* ---- textures for star sprites ---- */
+function glowTex(){ const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');
+  const rg=g.createRadialGradient(64,64,0,64,64,64);
+  rg.addColorStop(0,'rgba(255,255,255,1)');rg.addColorStop(.25,'rgba(255,255,255,.85)');
+  rg.addColorStop(.5,'rgba(255,255,255,.28)');rg.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle=rg;g.fillRect(0,0,128,128);return new THREE.CanvasTexture(c); }
+function spikeTex(){ const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');g.translate(64,64);
+  for(let k=0;k<2;k++){ const grd=g.createLinearGradient(-64,0,64,0);
+    grd.addColorStop(0,'rgba(255,255,255,0)');grd.addColorStop(.5,'rgba(255,255,255,.9)');grd.addColorStop(1,'rgba(255,255,255,0)');
+    g.fillStyle=grd;g.fillRect(-64,-1,128,2);g.rotate(Math.PI/2);} return new THREE.CanvasTexture(c); }
+function ringTex(){ const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');
+  g.strokeStyle='rgba(255,255,255,.9)';g.lineWidth=2.5;g.beginPath();g.arc(64,64,52,0,Math.PI*2);g.stroke();return new THREE.CanvasTexture(c); }
+const glow=glowTex(), spike=spikeTex(), ringT=ringTex();
+const GOLD=0xffcf7e, CORE=0xfff2d0, COOL=0x7fb4d8;
+
+function rarity(p){ if(p.waiting) return {core:1.7,halo:5.5,spikes:false,ring:false,cool:true};
+  const g=typeof p.gen==='number'?p.gen:2;
+  return {core:2.0+g*0.8, halo:3.4+g*0.5, spikes:g>=3, ring:g>=4, cool:false}; }
+
+/* ---- build star points ---- */
+const pointsGroup=new THREE.Group(); globe.add(pointsGroup);
+const pickables=[];
+function spr(tex,size,col,op){ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,color:col,transparent:true,opacity:op,blending:THREE.AdditiveBlending,depthWrite:false,depthTest:false})); s.scale.set(size,size,1); return s; }
+PEOPLE.forEach(p=>{
+  const r=rarity(p); const grp=new THREE.Group();
+  const halo=spr(glow, r.halo*2.2, r.cool?COOL:GOLD, r.cool?0.5:0.6); grp.add(halo);
+  const core=spr(glow, r.core*1.5, r.cool?0xbfe0f4:CORE, 0.95); grp.add(core);
+  let spikeS=null, ringS=null;
+  if(r.spikes){ spikeS=spr(spike, r.halo*3.0, 0xffe6b0, 0.55); grp.add(spikeS); }
+  if(r.ring){ ringS=spr(ringT, r.halo*2.4, 0xffdd9a, 0.5); grp.add(ringS); }
+  const hit=new THREE.Mesh(new THREE.SphereGeometry(6,8,8), new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
+  grp.add(hit); hit.userData={p}; pickables.push(hit);
+  grp.userData={p,r,halo,core,spikeS,ringS};
+  pointsGroup.add(grp); p._grp=grp;
+});
+
+/* ---- ties (great-circle arcs) ---- */
+function arcCurve(a,b,r){ const va=a.clone().normalize(), vb=b.clone().normalize();
+  const ang=Math.max(1e-4, va.angleTo(vb)); const lift=r*(0.06+0.22*Math.min(1,ang/Math.PI)); const pts=[];
+  for(let i=0;i<=64;i++){ const t=i/64; const s=Math.sin((1-t)*ang)/Math.sin(ang), e=Math.sin(t*ang)/Math.sin(ang);
+    const pp=va.clone().multiplyScalar(s).add(vb.clone().multiplyScalar(e)).normalize(); pp.multiplyScalar(r+Math.sin(Math.PI*t)*lift); pts.push(pp); }
+  return new THREE.CatmullRomCurve3(pts); }
+const tiesGroup=new THREE.Group(); globe.add(tiesGroup);
+const flows=[];
+TIES.forEach(([f,t,fy])=>{ const A=byId[f], B=byId[t]; if(!A||!B) return;
+  const va=ll2v(A.lat,A.lng,R), vb=ll2v(B.lat,B.lng,R);
+  const curve=arcCurve(va,vb,R); const pts=curve.getPoints(64);
+  const long=va.angleTo(vb)>0.9;
+  const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
+    new THREE.LineBasicMaterial({color:0x67c7d8, transparent:true, opacity:0, blending:THREE.AdditiveBlending, depthWrite:false}));
+  line.userData={fy, base: long?0.5:0.32}; tiesGroup.add(line);
+  if(long){ const fs=spr(glow,6,0x9fe6f0,0.9); tiesGroup.add(fs); flows.push({s:fs,curve,fy,t:Math.random()}); }
+});
+
+/* ---- coastlines (real world outline) ---- */
+fetch('https://unpkg.com/world-atlas@2/countries-110m.json').then(r=>r.json()).then(topo=>{
+  const geo=topojson.feature(topo, topo.objects.countries); const seg=[];
+  const addRing=ring=>{ for(let i=0;i<ring.length-1;i++){ const a=ll2v(ring[i][1],ring[i][0],R*1.002), b=ll2v(ring[i+1][1],ring[i+1][0],R*1.002); seg.push(a.x,a.y,a.z,b.x,b.y,b.z);} };
+  geo.features.forEach(f=>{ const g=f.geometry; if(!g)return;
+    if(g.type==='Polygon') g.coordinates.forEach(addRing);
+    else if(g.type==='MultiPolygon') g.coordinates.forEach(poly=>poly.forEach(addRing)); });
+  const bg=new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(seg,3));
+  globe.add(new THREE.LineSegments(bg, new THREE.LineBasicMaterial({color:0x4d86a0, transparent:true, opacity:0.55})));
+}).catch(e=>console.warn('coastlines unavailable', e));
+
+/* ---- year: position + presence ---- */
+function posAtYear(p, yr){
+  if(p.path && p.path.length){
+    const pa=p.path;
+    if(yr<=pa[0].y) return ll2v(pa[0].lat,pa[0].lng,R);
+    if(yr>=pa[pa.length-1].y) return ll2v(pa[pa.length-1].lat,pa[pa.length-1].lng,R);
+    for(let i=0;i<pa.length-1;i++){ if(yr>=pa[i].y && yr<=pa[i+1].y){
+      const t=(yr-pa[i].y)/Math.max(1,(pa[i+1].y-pa[i].y));
+      const lat=pa[i].lat+(pa[i+1].lat-pa[i].lat)*t, lng=pa[i].lng+(pa[i+1].lng-pa[i].lng)*t;
+      return ll2v(lat,lng,R);
+    }}
+  }
+  return ll2v(p.lat,p.lng,R);
+}
+let YEAR=Y_MAX;
+function applyYear(yr){
+  YEAR=yr; $('#yrVal').textContent=yr; $('#yrNote').textContent = yr>=Y_MAX?'today':(yr<=Y_MIN?'the earliest light':'');
+  let alive=0;
+  PEOPLE.forEach(p=>{ const grp=p._grp;
+    grp.position.copy(posAtYear(p,yr));
+    const present = smooth(p.born-1, p.born+3, yr);   // light kindles at birth
+    if(present>0.02) alive++;
+    const base = p.waiting?0.6:1;
+    grp.userData.halo.material.opacity = (grp.userData.r.cool?0.5:0.6)*present*base;
+    grp.userData.core.material.opacity = 0.95*present*base;
+    if(grp.userData.spikeS) grp.userData.spikeS.material.opacity=0.55*present;
+    if(grp.userData.ringS) grp.userData.ringS.material.opacity=0.5*present;
+    grp.visible = present>0.01;
+  });
+  tiesGroup.children.forEach(o=>{ if(o.userData && o.userData.fy!==undefined){
+    o.material.opacity = o.userData.base * smooth(o.userData.fy-1, o.userData.fy+4, yr); } });
+  $('#stPeople').textContent = alive;
+}
+$('#year').addEventListener('input', e=>{ applyYear(+e.target.value); hideHintSoon(); });
+
+/* ---- interaction: drag rotate, pinch/wheel zoom, tap select ---- */
+let spin = !RM, vx=0, vy=0, dragging=false;
+const dom=renderer.domElement, ptrs=new Map();
+let px=0,py=0,moved=0,downT=0,pinchD=0;
+const MINZ=150, MAXZ=520;
+function stopSpin(){ spin=false; vx=0; vy=0; }
+dom.addEventListener('pointerdown', e=>{
+  try{dom.setPointerCapture(e.pointerId);}catch(_){}
+  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===1){ stopSpin(); dragging=true; px=e.clientX; py=e.clientY; moved=0; downT=Date.now(); }
+  else if(ptrs.size===2){ dragging=false; const p=[...ptrs.values()]; pinchD=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y); }
+});
+dom.addEventListener('pointermove', e=>{
+  if(ptrs.has(e.pointerId)) ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===2){ const p=[...ptrs.values()]; const d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);
+    if(pinchD){ camera.position.z=Math.max(MINZ,Math.min(MAXZ, camera.position.z*(pinchD/d))); } pinchD=d; return; }
+  if(dragging){ const dx=e.clientX-px, dy=e.clientY-py; px=e.clientX; py=e.clientY; moved+=Math.abs(dx)+Math.abs(dy);
+    globe.rotation.y += dx*0.005; globe.rotation.x += dy*0.005;
+    globe.rotation.x=Math.max(-1.2,Math.min(1.2,globe.rotation.x)); vx=dx*0.005; vy=dy*0.005; }
+  else hover(e);
+});
+function endPtr(e){ ptrs.delete(e.pointerId);
+  if(dragging && moved<6 && Date.now()-downT<400) pick(e.clientX,e.clientY);
+  if(ptrs.size===0){ dragging=false; } if(ptrs.size<2) pinchD=0; }
+dom.addEventListener('pointerup', endPtr);
+dom.addEventListener('pointercancel', endPtr);
+dom.addEventListener('wheel', e=>{ e.preventDefault(); stopSpin(); camera.position.z=Math.max(MINZ,Math.min(MAXZ,camera.position.z+e.deltaY*0.3)); }, {passive:false});
+
+const ray=new THREE.Raycaster(), ndc=new THREE.Vector2();
+function pickAt(cx,cy){ const rect=dom.getBoundingClientRect();
+  ndc.x=((cx-rect.left)/rect.width)*2-1; ndc.y=-((cy-rect.top)/rect.height)*2+1;
+  ray.setFromCamera(ndc,camera); ray.params.Mesh={}; 
+  const hits=ray.intersectObjects(pickables,false).filter(h=>h.object.parent.visible);
+  return hits.length?hits[0].object.userData.p:null; }
+function pick(cx,cy){ const p=pickAt(cx,cy); if(p) openCard(p); else closeCard(); }
+
+/* hover label (desktop) */
+const label=$('#label');
+function hover(e){ const p=pickAt(e.clientX,e.clientY);
+  if(p){ label.querySelector('.n').textContent=p.name; label.querySelector('.m').textContent=p.place;
+    label.style.left=e.clientX+'px'; label.style.top=e.clientY+'px'; label.style.opacity=1; dom.style.cursor='pointer'; }
+  else { label.style.opacity=0; dom.style.cursor=spin?'grab':'grab'; } }
+
+/* ---- card ---- */
+function fmtCoord(lat,lng){ const a=Math.abs(lat).toFixed(2)+'°'+(lat>=0?'N':'S'); const b=Math.abs(lng).toFixed(2)+'°'+(lng>=0?'E':'W'); return a+' · '+b; }
+function rarityNote(p){ if(p.friend) return 'A friend’s light — far across the world, but bound to the family.';
+  if(p.waiting) return 'Still waiting to be remembered. No one has told their story yet.';
+  if(p.gen>=4) return 'A rare star — one of the eldest. Perhaps a single photograph remains.';
+  if(p.gen>=3) return 'An elder. The light is older here, and quieter.';
+  return 'A near light — close to you in time and blood.'; }
+function openCard(p){
+  $('#cName').textContent=p.name;
+  $('#cLine').textContent=(p.born? p.born+' · ':'')+p.place;
+  $('#cRel').textContent=p.rel||'';
+  $('#cPlace').textContent=p.place;
+  $('#cCoords').textContent=fmtCoord(p.lat,p.lng);
+  $('#cRarity').textContent=rarityNote(p);
+  $('#cDisc').innerHTML = p.waiting?'not yet<br>lit':'photo<br>here';
+  $('#card').classList.add('show');
+  chime();
+}
+function closeCard(){ $('#card').classList.remove('show'); }
+$('#cardX').onclick=closeCard;
+
+let hintTimer=null;
+function hideHintSoon(){ const h=$('#hint'); if(hintTimer)return; hintTimer=setTimeout(()=>h.style.opacity=0, 400); }
+dom.addEventListener('pointerdown', hideHintSoon, {once:true});
+
+function chime(){ if(RM)return; try{ const A=window.AudioContext||window.webkitAudioContext; if(!A)return;
+  const a=new A(); const o=a.createOscillator(),g=a.createGain(); o.type='sine'; o.frequency.value=920;
+  o.connect(g); g.connect(a.destination); g.gain.setValueAtTime(0.0001,a.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.06,a.currentTime+0.02); g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+0.5);
+  o.start(); o.stop(a.currentTime+0.55);}catch(_){} }
+
+/* ---- resize ---- */
+addEventListener('resize', ()=>{ W=mount.clientWidth; H=mount.clientHeight;
+  camera.aspect=W/H; camera.updateProjectionMatrix(); renderer.setSize(W,H); });
+
+/* ---- animate ---- */
+let t0=performance.now();
+function frame(now){
+  const dt=Math.min(50, now-t0); t0=now;
+  if(spin) globe.rotation.y += 0.0016*dt*0.06;
+  else if(!dragging){ globe.rotation.y += vx; globe.rotation.x += vy; vx*=0.94; vy*=0.94;
+    globe.rotation.x=Math.max(-1.2,Math.min(1.2,globe.rotation.x)); }
+  // twinkle cores
+  const tw=0.9+0.1*Math.sin(now*0.002);
+  PEOPLE.forEach(p=>{ if(p._grp.visible && !p.waiting) p._grp.userData.core.material.opacity = Math.min(1, p._grp.userData.core.material.opacity)*1; });
+  // flowing lights along long ties
+  flows.forEach(f=>{ if(YEAR>=f.fy){ f.s.visible=true; f.t=(f.t+0.0012*dt)%1; f.s.position.copy(f.curve.getPoint(f.t)); }
+    else f.s.visible=false; });
+  renderer.render(scene,camera);
+  requestAnimationFrame(frame);
+}
+applyYear(Y_MAX);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
