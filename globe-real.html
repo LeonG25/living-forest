@@ -101,6 +101,7 @@
       <circle cx="500" cy="500" r="430" fill="none" stroke="rgba(140,182,214,.16)" stroke-width="1"/>
       <circle cx="500" cy="500" r="430" fill="none" stroke="rgba(140,182,214,.5)" stroke-width="9" stroke-dasharray="1 14.05" stroke-linecap="round"/>
       <circle cx="500" cy="500" r="452" fill="none" stroke="rgba(120,160,196,.08)" stroke-width="1"/>
+      <circle id="lgProg" cx="500" cy="500" r="430" fill="none" stroke="rgba(243,205,132,.85)" stroke-width="4" stroke-linecap="round" stroke-dasharray="0 2702" transform="rotate(-90 500 500)"/>
       <g id="ticks"></g>
       <circle id="hitring" cx="500" cy="500" r="430" fill="none" stroke="rgba(0,0,0,0)" stroke-width="64" style="pointer-events:stroke;cursor:grab;"/>
       <g id="handle" style="pointer-events:none;">
@@ -139,7 +140,7 @@
     </div>
   </div>
 
-  <div class="hud" id="br"><div class="readout">drag to turn · scroll to zoom<br>spin the outer ring through time</div></div>
+  <div class="hud" id="br"><div class="readout">drag to turn · scroll to zoom<br>spin the ring — several turns span the years</div></div>
 
   <div id="card"><div class="panel">
     <div class="x" id="cardX">&times;</div>
@@ -344,23 +345,27 @@ function buildScene(){
   buildTicks(); setYear(Y_MAX, true);
 }
 
-/* ---- year wheel ---- */
-function buildTicks(){ ticksEl.innerHTML=''; const NS='http://www.w3.org/2000/svg'; const span=Y_MAX-Y_MIN||1;
-  const yrs=[]; for(let i=0;i<5;i++){ yrs.push(Math.round(Y_MIN+span*i/4)); }
-  [...new Set(yrs)].forEach(y=>{ const frac=(y-Y_MIN)/span, ang=frac*Math.PI*2-Math.PI/2, rr=468;
-    const x=500+Math.cos(ang)*rr, yy=500+Math.sin(ang)*rr; const t=document.createElementNS(NS,'text');
-    t.setAttribute('x',x); t.setAttribute('y',yy); t.setAttribute('fill','rgba(150,180,214,.5)'); t.setAttribute('font-size','15');
-    t.setAttribute('font-family','Azeret Mono, monospace'); t.setAttribute('text-anchor','middle'); t.setAttribute('dominant-baseline','middle');
-    t.textContent=y; ticksEl.appendChild(t); }); }
-function updateHandle(){ const frac=(YEAR-Y_MIN)/((Y_MAX-Y_MIN)||1); handleEl.setAttribute('transform',`rotate(${frac*360} 500 500)`); }
-function setYear(y, force){ y=Math.max(Y_MIN,Math.min(Y_MAX,Math.round(y))); if(!force && y===YEAR){ updateHandle(); return; }
-  YEAR=y; $('#yr').textContent=y; $('#yrNote').textContent = y>=Y_MAX?'the latest we have':(y<=Y_MIN?'the earliest photograph':'');
+/* ---- year wheel: a free jog wheel — several turns from earliest to latest ---- */
+const progEl=$('#lgProg'), PROG_C=2*Math.PI*430;
+let YPR=6, accAngle=0, maxAcc=0, dialing=false, lastPA=0, wheelVel=0;
+function setupWheel(){ const span=Math.max(1,Y_MAX-Y_MIN);
+  YPR=Math.max(3,Math.min(15,Math.round(span/6)));
+  maxAcc=(span/YPR)*2*Math.PI; accAngle=((YEAR-Y_MIN)/YPR)*2*Math.PI; }
+function buildTicks(){ ticksEl.innerHTML=''; }
+function updateHandle(){ handleEl.setAttribute('transform',`rotate(${accAngle*180/Math.PI} 500 500)`);
+  const frac=maxAcc?accAngle/maxAcc:0; progEl.setAttribute('stroke-dasharray',(frac*PROG_C)+' '+PROG_C); }
+function setYear(y, force){ y=Math.max(Y_MIN,Math.min(Y_MAX,Math.round(y)));
+  if(!force && y===YEAR){ updateHandle(); return; }
+  YEAR=y; if(force) setupWheel();
+  $('#yr').textContent=y; $('#yrNote').textContent = y>=Y_MAX?'the latest we have':(y<=Y_MIN?'the earliest photograph':'');
   updateHandle(); updateTime(y); }
-function dialTo(cx,cy){ const r=dialSvg.getBoundingClientRect(); const ang=Math.atan2(cy-(r.top+r.height/2), cx-(r.left+r.width/2));
-  let deg=ang*180/Math.PI+90; deg=((deg%360)+360)%360; setYear(Y_MIN+(deg/360)*(Y_MAX-Y_MIN)); }
-let dialing=false; const hitEl=$('#hitring');
-hitEl.addEventListener('pointerdown', e=>{ dialing=true; hitEl.style.cursor='grabbing'; dialTo(e.clientX,e.clientY); e.stopPropagation(); });
-window.addEventListener('pointermove', e=>{ if(dialing) dialTo(e.clientX,e.clientY); });
+function pAng(cx,cy){ const r=dialSvg.getBoundingClientRect(); return Math.atan2(cy-(r.top+r.height/2), cx-(r.left+r.width/2)); }
+function angDiff(a,b){ let d=a-b; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; return d; }
+function spinBy(d){ accAngle=Math.max(0,Math.min(maxAcc,accAngle+d)); if(accAngle<=0||accAngle>=maxAcc) wheelVel=0;
+  setYear(Y_MIN+(accAngle/(2*Math.PI))*YPR); }
+const hitEl=$('#hitring');
+hitEl.addEventListener('pointerdown', e=>{ dialing=true; wheelVel=0; lastPA=pAng(e.clientX,e.clientY); hitEl.style.cursor='grabbing'; e.stopPropagation(); });
+window.addEventListener('pointermove', e=>{ if(!dialing) return; const a=pAng(e.clientX,e.clientY); const d=angDiff(a,lastPA); lastPA=a; wheelVel=d; spinBy(d); });
 window.addEventListener('pointerup', ()=>{ if(dialing){ dialing=false; hitEl.style.cursor='grab'; } });
 
 function posAtYear(p,y){ if(p.path){ const pa=p.path;
@@ -460,6 +465,7 @@ function tick(){ requestAnimationFrame(tick);
   else if(spin&&!dragging){ globe.rotation.y+=idle; globe.rotation.x+=(homeX-globe.rotation.x)*0.02; }
   if(motion>0){ flow.forEach(f=>{ if(f.on){ f.t=(f.t+0.0016*(0.4+motion))%1; f.curve.getPoint(f.t,tmp); f.s.position.copy(tmp);} f.s.visible=!!f.on; }); }
   else flow.forEach(f=>f.s.visible=false);
+  if(!dialing && Math.abs(wheelVel)>0.0004){ spinBy(wheelVel); wheelVel*=0.90; }
   const zf=zoomF(); PEOPLE.forEach(p=>{ if(p._grp&&p._grp.visible){ const vs=(p._grp.userData._vs!=null?p._grp.userData._vs:1); p._grp.scale.setScalar(vs*zf); } });
   renderer.render(scene,camera); }
 function zoomF(){ return camera.position.z/320; }
