@@ -157,9 +157,14 @@
     .subtitle{ font-size:14px; }
   }
 
-  /* stage sizes itself to the real photo's aspect */
   .stage svg{ width:100%; height:auto; display:block; }
   .masthead a.kicker{ color:rgba(150,180,214,.7); }
+  /* the challenge prompt — a named person to find */
+  .quest{ margin-top:16px; display:flex; flex-direction:column; gap:5px; min-height:34px; transition:opacity .5s ease; }
+  .quest.done{ opacity:0; height:0; min-height:0; margin:0; overflow:hidden; }
+  .quest .q-find{ font-family:'Newsreader',serif; font-weight:300; font-size:clamp(21px,6vw,28px); line-height:1.05; color:#f6efe0; }
+  .quest .q-find b{ font-weight:400; font-style:italic; color:#f3cd84; }
+  .quest .q-clue{ font-family:'Azeret Mono',monospace; font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:rgba(150,180,214,.72); }
   #gate{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(4,7,14,.82);backdrop-filter:blur(6px);padding:24px;}
   #gate .box{width:min(380px,92vw);background:rgba(10,18,34,.92);border:1px solid rgba(180,205,235,.16);border-radius:20px;padding:26px;text-align:center;}
   #gate h2{font-family:'Newsreader',serif;font-weight:300;font-size:24px;margin:6px 0;color:#f4ecdb;}
@@ -180,10 +185,15 @@
         <div class="appvoice kicker" style="opacity:.8;">a remembering</div>
       </div>
       <div class="title-line"><h1>Find them in the <em>crowd.</em></h1></div>
-      <p class="subtitle" id="subtitle">One real gathering, everyone in a single frame. The people here are waiting in the dark — search, and each one you know returns to the light.</p>
+      <p class="subtitle" id="subtitle">One real gathering, everyone in a single frame. We&rsquo;ll ask for one person at a time &mdash; find each in the dark. You grow warmer as you near them, and a hint is always here.</p>
     </header>
 
-    <div class="stage" id="stage" aria-label="A family gathering. Tap the faces you recognise.">
+    <div class="quest" id="quest">
+      <div class="q-find">Find <b id="qName">someone</b></div>
+      <div class="q-clue" id="qClue"></div>
+    </div>
+
+    <div class="stage" id="stage" aria-label="A family gathering. Find the person you are asked for.">
       <svg id="scene" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
     </div>
 
@@ -203,9 +213,9 @@
 
     <div class="footer">
       <div class="controls">
-        <button class="btn" id="hintBtn"><span class="dot"></span>Show me one</button>
+        <button class="btn" id="hintBtn"><span class="dot"></span>Show me where</button>
         <button class="btn ghost" id="nextBtn" style="display:none;">Another gathering &rarr;</button>
-        <div class="hint-note appvoice" id="hintNote" style="letter-spacing:.04em; text-transform:none; font-family:'Hanken Grotesk',sans-serif; color:rgba(206,221,240,.5);">Tap a face you know. No wrong moves &mdash; only light.</div>
+        <div class="hint-note appvoice" id="hintNote" style="letter-spacing:.04em; text-transform:none; font-family:'Hanken Grotesk',sans-serif; color:rgba(206,221,240,.5);">Tap where you think they are. No wrong moves &mdash; only warmer or cooler.</div>
       </div>
       <div class="allhere" id="allHere"><div class="line">Everyone is <em>home.</em></div></div>
       <figure class="caption" id="caption" style="margin:0;">
@@ -226,7 +236,8 @@ const SUPABASE_URL='https://oabcdrktuikifbormjip.supabase.co';
 const SUPABASE_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let W=1200, H=800, ROUNDS=[], ri=0, PEOPLE=[], foundOrder=[];
+let W=1200, H=800, ROUNDS=[], ri=0, PEOPLE=[], TARGETS=[], ti=0, foundOrder=[];
+let REL=[], NAME={}, GEN={};
 const scene=$('#scene'); let overlay, tieLayer, pools, hintNode=null;
 
 function el(tag, attrs, kids){ const n=document.createElementNS(SVGNS,tag);
@@ -234,26 +245,32 @@ function el(tag, attrs, kids){ const n=document.createElementNS(SVGNS,tag);
   if(kids)(Array.isArray(kids)?kids:[kids]).forEach(c=>c&&n.appendChild(c)); return n; }
 function fade(node, from, to, dur){ if(reduce){ node.setAttribute('opacity',to); return; }
   const t0=performance.now(); (function f(t){ const k=Math.min(1,(t-t0)/dur); node.setAttribute('opacity',from+(to-from)*k); if(k<1) requestAnimationFrame(f); })(t0); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.random()*(i+1)|0; [a[i],a[j]]=[a[j],a[i]]; } return a; }
 
 async function load(){
   const { data:{ session } } = await sb.auth.getSession();
   if(!session){ showSignIn(); return; }
   try{
-    const [arts, subs, ppl, profs] = await Promise.all([
+    const [arts, subs, ppl, profs, rels] = await Promise.all([
       sb.from('artefacts').select('id,body,contributor_user,storage_path,metadata').eq('status','published').eq('kind','photo'),
       sb.from('artefact_subjects').select('artefact_id,person_id,detail'),
       sb.from('people').select('id,display_name,called_name'),
       sb.from('profiles').select('id,display_name'),
+      sb.from('relationships').select('from_person,to_person,kind'),
     ]);
     if(arts.error) throw arts.error;
-    const nameById={}; (ppl.data||[]).forEach(p=> nameById[p.id]=p.called_name||p.display_name||'Someone');
-    const prov={}; (profs.data||[]).forEach(p=> prov[p.id]=p.display_name);
+    (ppl.data||[]).forEach(p=> NAME[p.id]=p.called_name||p.display_name||'Someone');
+    window.__prov={}; (profs.data||[]).forEach(p=> window.__prov[p.id]=p.display_name);
+    REL=rels.data||[];
+    // generations from the parent graph (parent -> child)
+    const kids={}; REL.forEach(r=>{ if(r.kind==='parent')(kids[r.from_person]=kids[r.from_person]||[]).push(r.to_person); });
+    const gm={}; function gen(id,seen){ if(gm[id]!==undefined) return gm[id]; seen=seen||{}; if(seen[id]) return 0; seen[id]=1; let g=0; (kids[id]||[]).forEach(c=>g=Math.max(g,1+gen(c,seen))); return gm[id]=g; }
+    (ppl.data||[]).forEach(p=>GEN[p.id]=gen(p.id));
     const byArt={}; (subs.data||[]).forEach(s=>{ if(!s.detail) return; const d=s.detail;
       if(typeof d.x!=='number'||typeof d.w!=='number') return;
-      (byArt[s.artefact_id]=byArt[s.artefact_id]||[]).push({ name:nameById[s.person_id]||'Someone', x:d.x, y:d.y, w:d.w, h:d.h }); });
-    ROUNDS=(arts.data||[]).map(a=>({ art:a, people:byArt[a.id]||[] }))
-      .filter(r=>r.people.length>=2)
-      .sort((a,b)=>b.people.length-a.people.length);
+      (byArt[s.artefact_id]=byArt[s.artefact_id]||[]).push({ id:s.person_id, name:NAME[s.person_id]||'Someone', x:d.x, y:d.y, w:d.w, h:d.h }); });
+    ROUNDS=(arts.data||[]).map(a=>({ art:a, people:byArt[a.id]||[] })).filter(r=>r.people.length>=2).sort((a,b)=>b.people.length-a.people.length);
     if(!ROUNDS.length){ gateError('No group photographs with tagged faces yet. Tag a few faces on a photo and this fills with light.'); return; }
     $('#gate').style.display='none';
     if(ROUNDS.length>1) $('#nextBtn').style.display='';
@@ -261,18 +278,29 @@ async function load(){
   }catch(err){ gateError(err.message||'Could not gather the family.'); }
 }
 
+function clueFor(pid, inIds){
+  for(const r of REL){ if(r.kind==='spouse'){ if(r.from_person===pid&&NAME[r.to_person]) return 'married to '+NAME[r.to_person];
+    if(r.to_person===pid&&NAME[r.from_person]) return 'married to '+NAME[r.from_person]; } }
+  for(const r of REL){
+    if(r.kind==='parent'&&r.to_person===pid&&NAME[r.from_person]) return NAME[r.from_person]+'\u2019s child';
+    if(r.kind==='parent'&&r.from_person===pid&&NAME[r.to_person]) return 'parent of '+NAME[r.to_person];
+    if(r.kind==='sibling'&&(r.from_person===pid||r.to_person===pid)){ const o=r.from_person===pid?r.to_person:r.from_person; if(NAME[o]) return NAME[o]+'\u2019s sibling'; } }
+  const gens=inIds.map(id=>GEN[id]||0), g=GEN[pid]||0, mx=Math.max.apply(null,gens), mn=Math.min.apply(null,gens);
+  if(g===mx && gens.filter(x=>x===mx).length===1) return 'the eldest in the frame';
+  if(g===mn && gens.filter(x=>x===mn).length===1) return 'one of the youngest here';
+  return 'somewhere in the gathering';
+}
+
 async function loadRound(i){
-  ri=i; const round=ROUNDS[i]; foundOrder=[]; hintNode=null;
-  // reset chrome
-  $('#caption').classList.remove('lit'); $('#allHere').classList.remove('show');
-  $('#hintBtn').style.display=''; $('#hintNote').textContent='Tap a face you know. No wrong moves \u2014 only light.';
-  const who=prov_name(round.art.contributor_user);
+  ri=i; const round=ROUNDS[i]; foundOrder=[]; hintNode=null; ti=0;
+  $('#caption').classList.remove('lit'); $('#allHere').classList.remove('show'); $('#quest').classList.remove('done');
+  $('#hintBtn').style.display=''; $('#hintNote').textContent='Tap where you think they are. No wrong moves \u2014 only warmer or cooler.';
+  const who=(window.__prov&&window.__prov[round.art.contributor_user])||null;
   const body=round.art.body||''; const where=round.art.metadata&&round.art.metadata.where; const when=round.art.metadata&&round.art.metadata.when;
   $('#captionWords').textContent = body? '\u201C'+body+'\u201D' : '';
   $('#capWho').textContent = body? ('in '+(who||'the family')+'\u2019s words') : (where||'');
   $('#capAttrib').innerHTML = who? ('\u2014 <b>'+esc(who)+'</b>, who kept this photograph') : ((where||'')+(when?(' \u00b7 '+when):''));
   $('#caption').style.display = (body||who)? '' : 'none';
-  // sign the photo and read its true aspect
   let url='';
   try{ const s=await sb.storage.from('family').createSignedUrl(round.art.storage_path,3600); url=s.data&&s.data.signedUrl||''; }catch(e){}
   const img=new Image();
@@ -280,15 +308,13 @@ async function loadRound(i){
   img.onerror=()=>{ W=1200; H=800; buildScene(url, round); };
   if(url) img.src=url; else { W=1200;H=800; buildScene('', round); }
 }
-function prov_name(id){ return (window.__prov&&window.__prov[id])||null; }
 
 function buildScene(url, round){
   scene.setAttribute('viewBox', '0 0 '+W+' '+H);
   $('#stage').style.aspectRatio = W+' / '+H;
   scene.innerHTML='';
   const defs=el('defs'); defs.innerHTML =
-    '<radialGradient id="pool" cx="50%" cy="50%" r="50%">'
-     +'<stop offset="0%" stop-color="rgba(255,240,210,.55)"/><stop offset="55%" stop-color="rgba(255,210,140,.14)"/><stop offset="100%" stop-color="rgba(255,210,140,0)"/></radialGradient>'
+    '<radialGradient id="pool" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="rgba(255,240,210,.55)"/><stop offset="55%" stop-color="rgba(255,210,140,.14)"/><stop offset="100%" stop-color="rgba(255,210,140,0)"/></radialGradient>'
     +'<radialGradient id="vign" cx="50%" cy="42%" r="72%"><stop offset="55%" stop-color="rgba(4,7,14,0)"/><stop offset="100%" stop-color="rgba(4,7,14,.9)"/></radialGradient>'
     +'<filter id="veil" x="0" y="0" width="100%" height="100%"><feColorMatrix type="saturate" values="0.2"/>'
      +'<feComponentTransfer><feFuncR type="linear" slope="0.42"/><feFuncG type="linear" slope="0.46"/><feFuncB type="linear" slope="0.6"/></feComponentTransfer>'
@@ -296,21 +322,24 @@ function buildScene(url, round){
     +'<filter id="poolblur"><feGaussianBlur stdDeviation="22"/></filter>'
     +'<mask id="reveal"><rect x="0" y="0" width="'+W+'" height="'+H+'" fill="black"/><g id="revealPools" filter="url(#poolblur)"></g></mask>';
   scene.appendChild(defs);
-  // 1) the concealed veil: the real photo, cooled + dimmed + softened
   if(url) scene.appendChild(el('image',{ href:url, 'xlink:href':url, x:0,y:0,width:W,height:H, preserveAspectRatio:'xMidYMid slice', filter:'url(#veil)' }));
   else scene.appendChild(el('rect',{x:0,y:0,width:W,height:H,fill:'#0a1422'}));
-  scene.appendChild(el('rect',{x:0,y:0,width:W,height:H,fill:'rgba(12,22,42,.4)'})); // cool wash
+  scene.appendChild(el('rect',{x:0,y:0,width:W,height:H,fill:'rgba(12,22,42,.4)'}));
   scene.appendChild(el('rect',{x:0,y:0,width:W,height:H,fill:'url(#vign)'}));
-  // 2) the warm truth: the real photo in full colour, shown only through reveal pools
   if(url) scene.appendChild(el('image',{ href:url, 'xlink:href':url, x:0,y:0,width:W,height:H, preserveAspectRatio:'xMidYMid slice', mask:'url(#reveal)' }));
-  // 3) overlay layers
   tieLayer=el('g',{}); overlay=el('g',{}); scene.appendChild(tieLayer); scene.appendChild(overlay);
   pools=defs.querySelector('#revealPools');
-  // people for this round
-  PEOPLE = round.people.map(p=>({ name:p.name, x:p.x, y:p.y, w:p.w, h:p.h, found:false }));
-  $('#totalCount').textContent=PEOPLE.length; updateStats();
+  PEOPLE = round.people.map(p=>({ id:p.id, name:p.name, x:p.x, y:p.y, w:p.w, h:p.h, found:false }));
+  const inIds=PEOPLE.map(p=>p.id);
+  TARGETS = shuffle(PEOPLE.slice()); TARGETS.forEach(p=> p.clue=clueFor(p.id, inIds));
+  ti=0; $('#totalCount').textContent=PEOPLE.length; updateStats(); setQuest();
 }
 
+function setQuest(){
+  if(ti>=TARGETS.length){ return; }
+  const p=TARGETS[ti];
+  $('#qName').textContent=p.name; $('#qClue').textContent=p.clue||'';
+}
 function faceGeom(p){ const cx=(p.x+p.w/2)*W, cy=(p.y+p.h/2)*H, bw=p.w*W, bh=p.h*H, R=Math.max(bw,bh); return {cx,cy,bw,bh,R}; }
 
 function reveal(p){
@@ -335,59 +364,64 @@ function reveal(p){
     if(!reduce){ const t0=performance.now(); (function d(t){ const k=Math.min(1,(t-t0)/900); l.setAttribute('stroke-dashoffset',600*(1-k)); if(k<1) requestAnimationFrame(d); })(t0); }
   });
   updateStats();
-  if(PEOPLE.every(x=>x.found)) allHere();
 }
 
-/* tapping */
+/* found the asked-for person → advance; wrong tap → warmer/cooler */
 function toNorm(clientX,clientY){ const b=scene.getBoundingClientRect(); return { nx:(clientX-b.left)/b.width, ny:(clientY-b.top)/b.height }; }
-function hitHidden(nx,ny){ for(let i=PEOPLE.length-1;i>=0;i--){ const p=PEOPLE[i]; if(!p.found && nx>=p.x && nx<=p.x+p.w && ny>=p.y && ny<=p.y+p.h) return p; } return null; }
-const WHISPERS=['not there','look again','someone else','keep looking','a little further'];
-function whisper(clientX,clientY){ const n=toNorm(clientX,clientY); const sx=n.nx*W, sy=n.ny*H; const b=$('#stage').getBoundingClientRect();
-  const ripple=el('circle',{cx:sx,cy:sy,r:6,fill:'none',stroke:'rgba(190,214,244,.55)','stroke-width':2,opacity:.7}); overlay.appendChild(ripple);
-  if(reduce){ setTimeout(()=>ripple.remove(),300); } else { const t0=performance.now(); (function r(t){ const k=Math.min(1,(t-t0)/700);
-    ripple.setAttribute('r',6+70*k); ripple.setAttribute('opacity',.7*(1-k)); if(k<1) requestAnimationFrame(r); else ripple.remove(); })(t0); }
-  const w=document.createElement('div'); w.className='whisper'; w.textContent=WHISPERS[Math.random()*WHISPERS.length|0];
-  w.style.left=(clientX-b.left)+'px'; w.style.top=(clientY-b.top-8)+'px'; $('#stage').appendChild(w);
+function onTap(e){ if(ti>=TARGETS.length || !PEOPLE.length) return;
+  const cx=e.clientX!=null?e.clientX:(e.touches&&e.touches[0]&&e.touches[0].clientX);
+  const cy=e.clientY!=null?e.clientY:(e.touches&&e.touches[0]&&e.touches[0].clientY); if(cx==null) return;
+  const n=toNorm(cx,cy); const p=TARGETS[ti];
+  if(n.nx>=p.x && n.nx<=p.x+p.w && n.ny>=p.y && n.ny<=p.y+p.h){
+    reveal(p); if(hintNode){ hintNode.remove(); hintNode=null; }
+    $('#hintNote').textContent='Yes \u2014 that\u2019s '+p.name+'.';
+    ti++; if(ti>=TARGETS.length) allHere(); else setTimeout(setQuest, 350);
+  } else { feedback(cx,cy,n,p); }
+}
+function feedback(clientX,clientY,n,p){
+  const tcx=p.x+p.w/2, tcy=p.y+p.h/2; const d=Math.hypot(n.nx-tcx, n.ny-tcy);
+  let word, warm; if(d<0.10){ word='so close'; warm=1; } else if(d<0.20){ word='warmer'; warm=1; } else if(d<0.34){ word='cooler'; warm=0; } else { word='cold'; warm=0; }
+  const col = warm? 'rgba(255,214,150,.6)' : 'rgba(150,185,225,.55)';
+  const sx=n.nx*W, sy=n.ny*H;
+  const ripple=el('circle',{cx:sx,cy:sy,r:6,fill:'none',stroke:col,'stroke-width':2,opacity:.75}); overlay.appendChild(ripple);
+  if(reduce){ setTimeout(()=>ripple.remove(),300); } else { const t0=performance.now(); (function r(t){ const k=Math.min(1,(t-t0)/720);
+    ripple.setAttribute('r',6+72*k); ripple.setAttribute('opacity',.75*(1-k)); if(k<1) requestAnimationFrame(r); else ripple.remove(); })(t0); }
+  const b=$('#stage').getBoundingClientRect(); const w=document.createElement('div'); w.className='whisper'; w.textContent=word;
+  w.style.left=(clientX-b.left)+'px'; w.style.top=(clientY-b.top-8)+'px'; if(warm) w.style.color='#ffe6ad';
+  $('#stage').appendChild(w);
   requestAnimationFrame(()=>{ w.style.transition='opacity .5s ease, transform .9s ease'; w.style.opacity='1'; w.style.transform='translate(-50%,-140%)'; });
   setTimeout(()=>{ w.style.opacity='0'; },900); setTimeout(()=>w.remove(),1500);
+  $('#hintNote').textContent = warm? ('You\u2019re near '+p.name+'\u2026') : ('Not there \u2014 try elsewhere for '+p.name+'.');
 }
-function onTap(e){ const cx=e.clientX!=null?e.clientX:(e.touches&&e.touches[0]&&e.touches[0].clientX);
-  const cy=e.clientY!=null?e.clientY:(e.touches&&e.touches[0]&&e.touches[0].clientY); if(cx==null||!PEOPLE.length) return;
-  const n=toNorm(cx,cy); const hit=hitHidden(n.nx,n.ny); if(hit){ reveal(hit); return; } whisper(cx,cy); }
 $('#stage').addEventListener('click', onTap);
 
-/* hint */
+/* hint: glow near the person currently asked for */
 $('#hintBtn').addEventListener('click', ()=>{
-  if(hintNode){ hintNode.remove(); hintNode=null; }
-  const hidden=PEOPLE.filter(p=>!p.found); if(!hidden.length) return;
-  const p=hidden[Math.random()*hidden.length|0]; const {cx,cy,R}=faceGeom(p);
-  const g=el('g',{}); const glow=el('circle',{cx,cy,r:R*0.9,fill:'url(#pool)'}); const ping=el('circle',{cx,cy,r:R*0.9,fill:'none',stroke:'rgba(255,225,160,.9)','stroke-width':Math.max(2,W*0.0018)});
+  if(ti>=TARGETS.length) return; if(hintNode){ hintNode.remove(); hintNode=null; }
+  const p=TARGETS[ti]; const {cx,cy,R}=faceGeom(p);
+  const g=el('g',{}); const glow=el('circle',{cx,cy,r:R*0.95,fill:'url(#pool)'}); const ping=el('circle',{cx,cy,r:R*0.95,fill:'none',stroke:'rgba(255,225,160,.9)','stroke-width':Math.max(2,W*0.0018)});
   g.appendChild(glow); g.appendChild(ping); overlay.appendChild(g); hintNode=g;
-  $('#hintNote').textContent='Someone is waiting there. Look closely.';
+  $('#hintNote').textContent=p.name+' is here. Look closely.';
   if(reduce){ setTimeout(()=>{ g.remove(); if(hintNode===g) hintNode=null; },2600); return; }
   const t0=performance.now(),dur=2600; (function b(t){ const k=(t-t0)/dur; if(k>=1){ g.remove(); if(hintNode===g) hintNode=null; return; }
-    const breathe=Math.sin(k*Math.PI*4); ping.setAttribute('r',R*0.9+breathe*R*0.35);
+    const breathe=Math.sin(k*Math.PI*4); ping.setAttribute('r',R*0.95+breathe*R*0.35);
     const o=.35+Math.abs(breathe)*.55; ping.setAttribute('opacity',o); glow.setAttribute('opacity',o*.8); requestAnimationFrame(b); })(t0);
 });
 
-/* stats */
 function updateStats(){ const f=PEOPLE.filter(p=>p.found).length;
   $('#foundCount').textContent=f; $('#hiddenCount').textContent=PEOPLE.length-f;
   $('#meterFill').style.width=(PEOPLE.length?f/PEOPLE.length*100:0)+'%'; }
 
-/* everyone found */
 function allHere(){
   const full=el('rect',{x:0,y:0,width:W,height:H,fill:'white',opacity:0}); pools.appendChild(full); fade(full,0,1,1400);
-  $('#caption').classList.add('lit');
+  $('#caption').classList.add('lit'); $('#quest').classList.add('done');
   setTimeout(()=>$('#allHere').classList.add('show'), reduce?0:600);
   $('#hintNote').textContent = ROUNDS.length>1? 'Every face is home. Try another gathering when you\u2019re ready.' : 'Every face is home.';
   $('#hintBtn').style.display='none';
 }
 
-/* another gathering */
 $('#nextBtn').addEventListener('click', ()=>{ if(ROUNDS.length<2) return; loadRound((ri+1)%ROUNDS.length); window.scrollTo({top:0,behavior:'smooth'}); });
 
-/* gate */
 function showSignIn(){ const box=$('#gateBox');
   box.innerHTML='<h2 class="serif">Your forest</h2><p>Sign in with your keeper account to gather the family.</p>'+
     '<input id="gEmail" type="email" placeholder="you@example.com" autocomplete="email"/>'+
@@ -397,16 +431,10 @@ function showSignIn(){ const box=$('#gateBox');
     if(!email||!password){ m.textContent='Enter your email and password.'; return; }
     m.style.color='rgba(206,221,240,.65)'; m.textContent='Signing in\u2026';
     const { error }=await sb.auth.signInWithPassword({email,password});
-    if(error){ m.style.color='#ff9a8f'; m.textContent=error.message; } else { box.innerHTML='<div class="spin"></div><p style="margin-top:16px">Gathering the family\u2026</p>'; boot(); } }; }
+    if(error){ m.style.color='#ff9a8f'; m.textContent=error.message; } else { box.innerHTML='<div class="spin"></div><p style="margin-top:16px">Gathering the family\u2026</p>'; load(); } }; }
 function gateError(msg){ $('#gate').style.display='flex'; $('#gateBox').innerHTML='<h2 class="serif">Hmm</h2><p>'+esc(msg)+'</p><a href="home-real.html" style="color:#f3cd84">\u2190 back to the sky</a>'; }
-function esc(s){ return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
 
-/* keep a provenance map for captions */
-async function boot(){
-  const p=await sb.from('profiles').select('id,display_name'); window.__prov={}; (p.data||[]).forEach(x=>window.__prov[x.id]=x.display_name);
-  load();
-}
-boot();
+load();
 </script>
 </body>
 </html>
