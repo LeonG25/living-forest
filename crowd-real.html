@@ -159,6 +159,11 @@
 
   .stage svg{ width:100%; height:auto; display:block; }
   .masthead a.kicker{ color:rgba(150,180,214,.7); }
+  #stage{ touch-action:none; position:relative; }
+  .hint-note{ width:100%; flex:none; margin-top:2px; font-family:'Hanken Grotesk',sans-serif; letter-spacing:.02em; text-transform:none; font-size:12.5px; line-height:1.5; color:rgba(206,221,240,.55); }
+  .zoombar{ position:absolute; top:10px; right:10px; display:flex; flex-direction:column; gap:8px; z-index:4; }
+  .zoombar button{ width:40px; height:40px; border-radius:50%; border:1px solid rgba(210,222,244,.28); background:rgba(10,18,34,.62); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); color:#f4ecdb; font-size:22px; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer; -webkit-appearance:none; }
+  .zoombar button:active{ border-color:rgba(243,205,132,.6); color:#f3cd84; }
   /* the challenge prompt — a named person to find */
   .quest{ margin-top:16px; display:flex; flex-direction:column; gap:5px; min-height:34px; transition:opacity .5s ease; }
   .quest.done{ opacity:0; height:0; min-height:0; margin:0; overflow:hidden; }
@@ -195,6 +200,7 @@
 
     <div class="stage" id="stage" aria-label="A family gathering. Find the person you are asked for.">
       <svg id="scene" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
+      <div class="zoombar"><button id="zIn" aria-label="zoom in">+</button><button id="zOut" aria-label="zoom out">&minus;</button></div>
     </div>
 
     <div class="hud">
@@ -215,8 +221,8 @@
       <div class="controls">
         <button class="btn" id="hintBtn"><span class="dot"></span>Show me where</button>
         <button class="btn ghost" id="nextBtn" style="display:none;">Another gathering &rarr;</button>
-        <div class="hint-note appvoice" id="hintNote" style="letter-spacing:.04em; text-transform:none; font-family:'Hanken Grotesk',sans-serif; color:rgba(206,221,240,.5);">Tap where you think they are. No wrong moves &mdash; only warmer or cooler.</div>
       </div>
+      <div class="hint-note" id="hintNote">Tap where you think they are. No wrong moves &mdash; only warmer or cooler.</div>
       <div class="allhere" id="allHere"><div class="line">Everyone is <em>home.</em></div></div>
       <figure class="caption" id="caption" style="margin:0;">
         <div class="who appvoice" id="capWho" style="text-transform:uppercase;">in their words</div>
@@ -237,6 +243,7 @@ const SUPABASE_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let W=1200, H=800, ROUNDS=[], ri=0, PEOPLE=[], TARGETS=[], ti=0, foundOrder=[];
+let scaleZ=1, vbX=0, vbY=0; const MAXZ=5;
 let REL=[], NAME={}, GEN={};
 const scene=$('#scene'); let overlay, tieLayer, pools, hintNode=null;
 
@@ -310,6 +317,7 @@ async function loadRound(i){
 }
 
 function buildScene(url, round){
+  scaleZ=1; vbX=0; vbY=0;
   scene.setAttribute('viewBox', '0 0 '+W+' '+H);
   $('#stage').style.aspectRatio = W+' / '+H;
   scene.innerHTML='';
@@ -366,11 +374,16 @@ function reveal(p){
   updateStats();
 }
 
+/* ---- zoom & pan the photograph ---- */
+function applyVB(){ const vw=W/scaleZ, vh=H/scaleZ; vbX=Math.max(0,Math.min(W-vw,vbX)); vbY=Math.max(0,Math.min(H-vh,vbY)); scene.setAttribute('viewBox', vbX+' '+vbY+' '+vw+' '+vh); }
+function zoomAround(clientX,clientY,factor){ const b=scene.getBoundingClientRect(); const fx=(clientX-b.left)/b.width, fy=(clientY-b.top)/b.height;
+  const vw=W/scaleZ, vh=H/scaleZ; const ix=vbX+fx*vw, iy=vbY+fy*vh; scaleZ=Math.max(1,Math.min(MAXZ,scaleZ*factor));
+  const nvw=W/scaleZ, nvh=H/scaleZ; vbX=ix-fx*nvw; vbY=iy-fy*nvh; applyVB(); }
+function toNorm(clientX,clientY){ const b=scene.getBoundingClientRect(); const fx=(clientX-b.left)/b.width, fy=(clientY-b.top)/b.height;
+  const vw=W/scaleZ, vh=H/scaleZ; return { nx:(vbX+fx*vw)/W, ny:(vbY+fy*vh)/H }; }
+
 /* found the asked-for person → advance; wrong tap → warmer/cooler */
-function toNorm(clientX,clientY){ const b=scene.getBoundingClientRect(); return { nx:(clientX-b.left)/b.width, ny:(clientY-b.top)/b.height }; }
-function onTap(e){ if(ti>=TARGETS.length || !PEOPLE.length) return;
-  const cx=e.clientX!=null?e.clientX:(e.touches&&e.touches[0]&&e.touches[0].clientX);
-  const cy=e.clientY!=null?e.clientY:(e.touches&&e.touches[0]&&e.touches[0].clientY); if(cx==null) return;
+function doFind(cx,cy){ if(ti>=TARGETS.length || !PEOPLE.length) return;
   const n=toNorm(cx,cy); const p=TARGETS[ti];
   if(n.nx>=p.x && n.nx<=p.x+p.w && n.ny>=p.y && n.ny<=p.y+p.h){
     reveal(p); if(hintNode){ hintNode.remove(); hintNode=null; }
@@ -393,12 +406,32 @@ function feedback(clientX,clientY,n,p){
   setTimeout(()=>{ w.style.opacity='0'; },900); setTimeout(()=>w.remove(),1500);
   $('#hintNote').textContent = warm? ('You\u2019re near '+p.name+'\u2026') : ('Not there \u2014 try elsewhere for '+p.name+'.');
 }
-$('#stage').addEventListener('click', onTap);
+/* one finger: tap = find, drag = pan (when zoomed) · two fingers: pinch-zoom */
+const stageEl=$('#stage'); const ptrs=new Map();
+let mode=null, sx0=0, sy0=0, downT0=0, pinchD0=0, midX0=0, midY0=0, panX0=0, panY0=0;
+stageEl.addEventListener('pointerdown', e=>{ if(e.target.closest && e.target.closest('.zoombar')) return;
+  try{stageEl.setPointerCapture(e.pointerId);}catch(_){}
+  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===1){ mode='press'; sx0=e.clientX; sy0=e.clientY; downT0=Date.now(); panX0=vbX; panY0=vbY; }
+  else if(ptrs.size===2){ mode='pinch'; const p=[...ptrs.values()]; pinchD0=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y); midX0=(p[0].x+p[1].x)/2; midY0=(p[0].y+p[1].y)/2; } });
+stageEl.addEventListener('pointermove', e=>{ if(!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(mode==='pinch' && ptrs.size>=2){ const p=[...ptrs.values()]; const d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y); const mx=(p[0].x+p[1].x)/2,my=(p[0].y+p[1].y)/2;
+    if(pinchD0>0) zoomAround(mx,my,d/pinchD0); const b=scene.getBoundingClientRect(); vbX-=((mx-midX0)/b.width)*(W/scaleZ); vbY-=((my-midY0)/b.height)*(H/scaleZ); midX0=mx; midY0=my; pinchD0=d; applyVB(); return; }
+  if(mode==='press'){ if(Math.abs(e.clientX-sx0)+Math.abs(e.clientY-sy0)>8) mode='pan'; }
+  if(mode==='pan' && scaleZ>1){ const b=scene.getBoundingClientRect(); vbX=panX0-((e.clientX-sx0)/b.width)*(W/scaleZ); vbY=panY0-((e.clientY-sy0)/b.height)*(H/scaleZ); applyVB(); } });
+function endPtr(e){ ptrs.delete(e.pointerId);
+  if(mode==='press' && Math.abs(e.clientX-sx0)+Math.abs(e.clientY-sy0)<8 && Date.now()-downT0<450){ doFind(e.clientX,e.clientY); }
+  if(ptrs.size===0){ mode=null; } else if(ptrs.size===1){ const q=[...ptrs.values()][0]; mode='pan'; sx0=q.x; sy0=q.y; panX0=vbX; panY0=vbY; } }
+stageEl.addEventListener('pointerup', endPtr); stageEl.addEventListener('pointercancel', endPtr);
+stageEl.addEventListener('wheel', e=>{ e.preventDefault(); zoomAround(e.clientX,e.clientY, e.deltaY<0?1.12:0.9); }, {passive:false});
+$('#zIn').addEventListener('click', e=>{ e.stopPropagation(); const b=scene.getBoundingClientRect(); zoomAround(b.left+b.width/2,b.top+b.height/2,1.5); });
+$('#zOut').addEventListener('click', e=>{ e.stopPropagation(); const b=scene.getBoundingClientRect(); zoomAround(b.left+b.width/2,b.top+b.height/2,1/1.5); });
 
 /* hint: glow near the person currently asked for */
 $('#hintBtn').addEventListener('click', ()=>{
   if(ti>=TARGETS.length) return; if(hintNode){ hintNode.remove(); hintNode=null; }
   const p=TARGETS[ti]; const {cx,cy,R}=faceGeom(p);
+  if(scaleZ>1){ const vw=W/scaleZ, vh=H/scaleZ; vbX=(p.x+p.w/2)*W-vw/2; vbY=(p.y+p.h/2)*H-vh/2; applyVB(); }
   const g=el('g',{}); const glow=el('circle',{cx,cy,r:R*0.95,fill:'url(#pool)'}); const ping=el('circle',{cx,cy,r:R*0.95,fill:'none',stroke:'rgba(255,225,160,.9)','stroke-width':Math.max(2,W*0.0018)});
   g.appendChild(glow); g.appendChild(ping); overlay.appendChild(g); hintNode=g;
   $('#hintNote').textContent=p.name+' is here. Look closely.';
