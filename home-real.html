@@ -182,9 +182,9 @@ async function load(){
 function layout(){
   const n=NODES.length; if(!n) return;
   NODES.forEach((nd,i)=>{ const h=hash(nd.id); const a=i/n*6.2832;
-    nd.x=Math.cos(a)*(220+(h%90)) + ((h>>5)%60-30); nd.y=Math.sin(a)*(220+((h>>9)%90)) + ((h>>3)%60-30); });
-  const k=Math.sqrt((1100*1100)/n)*0.92; let temp=260;
-  for(let it=0; it<440; it++){
+    nd.x=Math.cos(a)*(70+(h%50)) + ((h>>5)%40-20); nd.y=Math.sin(a)*(70+((h>>9)%50)) + ((h>>3)%40-20); });
+  const k=Math.sqrt((520*520)/n)*0.9; const grav=0.05; let temp=130;
+  for(let it=0; it<480; it++){
     for(let i=0;i<n;i++){ NODES[i].dx=0; NODES[i].dy=0; }
     for(let i=0;i<n;i++){ for(let j=i+1;j<n;j++){
       let ddx=NODES[i].x-NODES[j].x, ddy=NODES[i].y-NODES[j].y, d=Math.hypot(ddx,ddy)||0.01;
@@ -192,15 +192,16 @@ function layout(){
       NODES[i].dx+=ux*f; NODES[i].dy+=uy*f; NODES[j].dx-=ux*f; NODES[j].dy-=uy*f; } }
     EDGES.forEach(e=>{ let ddx=e.na.x-e.nb.x, ddy=e.na.y-e.nb.y, d=Math.hypot(ddx,ddy)||0.01;
       const f=d*d/k, ux=ddx/d, uy=ddy/d; e.na.dx-=ux*f; e.na.dy-=uy*f; e.nb.dx+=ux*f; e.nb.dy+=uy*f; });
+    for(let i=0;i<n;i++){ NODES[i].dx-=NODES[i].x*grav; NODES[i].dy-=NODES[i].y*grav; }
     for(let i=0;i<n;i++){ let dd=Math.hypot(NODES[i].dx,NODES[i].dy)||0.01, lim=Math.min(dd,temp); NODES[i].x+=NODES[i].dx/dd*lim; NODES[i].y+=NODES[i].dy/dd*lim; }
-    temp*=0.986;
+    temp*=0.985;
   }
   let minx=1e9,miny=1e9,maxx=-1e9,maxy=-1e9;
   NODES.forEach(nd=>{ minx=Math.min(minx,nd.x); miny=Math.min(miny,nd.y); maxx=Math.max(maxx,nd.x); maxy=Math.max(maxy,nd.y); });
   const cx=(minx+maxx)/2, cy=(miny+maxy)/2; NODES.forEach(nd=>{ nd.x-=cx; nd.y-=cy; });
   const bw=(maxx-minx)||1, bh=(maxy-miny)||1;
-  scale=Math.min((W*0.86)/bw, (H*0.72)/bh); scale=Math.max(0.25,Math.min(2.2,scale));
-  panX=W/2; panY=H*0.53;
+  scale=Math.min((W*0.80)/bw, (H*0.60)/bh); scale=Math.max(0.5,Math.min(2.6,scale));
+  panX=W/2; panY=H*0.52;
 }
 function sx(nd){ return nd.x*scale+panX; }
 function sy(nd){ return nd.y*scale+panY; }
