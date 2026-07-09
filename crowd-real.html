@@ -164,6 +164,9 @@
   .zoombar{ position:absolute; top:10px; right:10px; display:flex; flex-direction:column; gap:8px; z-index:4; }
   .zoombar button{ width:40px; height:40px; border-radius:50%; border:1px solid rgba(210,222,244,.28); background:rgba(10,18,34,.62); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); color:#f4ecdb; font-size:22px; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer; -webkit-appearance:none; }
   .zoombar button:active{ border-color:rgba(243,205,132,.6); color:#f3cd84; }
+  #celebrate{ position:fixed; inset:0; z-index:50; pointer-events:none; opacity:0; mix-blend-mode:screen;
+    background:radial-gradient(85% 65% at 50% 46%, rgba(255,220,160,.55), rgba(255,206,120,.14) 46%, rgba(255,206,120,0) 76%); }
+  #celebrate.grand{ background:radial-gradient(125% 95% at 50% 46%, rgba(255,228,176,.72), rgba(255,208,128,.22) 55%, rgba(255,206,120,0) 86%); }
   /* the challenge prompt — a named person to find */
   .quest{ margin-top:16px; display:flex; flex-direction:column; gap:5px; min-height:34px; transition:opacity .5s ease; }
   .quest.done{ opacity:0; height:0; min-height:0; margin:0; overflow:hidden; }
@@ -232,6 +235,7 @@
     </div>
   </div>
 
+  <div id="celebrate"></div>
   <div id="gate"><div class="box" id="gateBox"><div class="spin"></div><p style="margin-top:16px">Gathering the family&hellip;</p></div></div>
 
 <script>
@@ -356,14 +360,15 @@ function reveal(p){
   const pool=el('circle',{cx,cy,r:reduce?finalR:R*0.34,fill:'white'}); pools.appendChild(pool);
   if(!reduce){ const t0=performance.now(),dur=1100; (function g(t){ const k=Math.min(1,(t-t0)/dur); const e=1-Math.pow(1-k,3);
     pool.setAttribute('r', R*0.34+(finalR-R*0.34)*e); if(k<1) requestAnimationFrame(g); })(t0); }
-  const spill=el('circle',{cx,cy,r:finalR*1.2,fill:'url(#pool)',opacity:0}); overlay.appendChild(spill); fade(spill,0,1,900);
-  const ring=el('circle',{cx,cy,r:R*0.72,fill:'none',stroke:'rgba(255,225,160,.9)','stroke-width':Math.max(2,W*0.0018),opacity:0}); overlay.appendChild(ring); fade(ring,0,.85,700);
+  const spill=el('circle',{cx,cy,r:finalR*1.2,fill:'url(#pool)',opacity:0}); overlay.appendChild(spill); fade(spill,0,.8,900);
+  const ring=el('circle',{cx,cy,r:R*0.72,fill:'none',stroke:'rgba(255,225,160,.9)','stroke-width':Math.max(2,W*0.0018),opacity:0}); overlay.appendChild(ring); fade(ring,0,.6,700);
   if(!reduce){ ring.setAttribute('r',R*1.0); const t0=performance.now(); (function s(t){ const k=Math.min(1,(t-t0)/700); const e=1-Math.pow(1-k,3);
     ring.setAttribute('r', R*1.0-(R*0.28)*e); if(k<1) requestAnimationFrame(s); })(t0); }
   const ly=(p.y+p.h)*H + R*0.5;
   const label=el('text',{ x:cx, y:ly, 'text-anchor':'middle', 'font-family':"'Newsreader', serif",
     'font-size':Math.max(24,R*0.5), 'font-style':'italic', fill:'#f6efe0', stroke:'rgba(6,10,20,.82)',
     'stroke-width':6, 'paint-order':'stroke', opacity:0 }); label.textContent=p.name; overlay.appendChild(label); fade(label,0,1,600);
+  setTimeout(()=>{ fade(label,1,0,900); setTimeout(()=>{ if(label.parentNode) label.remove(); },1000); }, 2200);
   foundOrder.filter(q=>q!==p).map(q=>({q,d:Math.hypot(q.x-p.x,q.y-p.y)})).sort((a,b)=>a.d-b.d).slice(0,2).forEach(({q})=>{
     const qx=(q.x+q.w/2)*W, qy=(q.y+q.h/2)*H;
     const l=el('path',{ d:'M '+qx+' '+qy+' Q '+((qx+cx)/2)+' '+(((qy+cy)/2)-H*0.04)+' '+cx+' '+cy, fill:'none',
@@ -386,9 +391,9 @@ function toNorm(clientX,clientY){ const b=scene.getBoundingClientRect(); const f
 function doFind(cx,cy){ if(ti>=TARGETS.length || !PEOPLE.length) return;
   const n=toNorm(cx,cy); const p=TARGETS[ti];
   if(n.nx>=p.x && n.nx<=p.x+p.w && n.ny>=p.y && n.ny<=p.y+p.h){
-    reveal(p); if(hintNode){ hintNode.remove(); hintNode=null; }
-    $('#hintNote').textContent='Yes \u2014 that\u2019s '+p.name+'.';
-    ti++; if(ti>=TARGETS.length) allHere(); else setTimeout(setQuest, 350);
+    reveal(p); celebrateOne(); if(hintNode){ hintNode.remove(); hintNode=null; }
+    ti++; const f=PEOPLE.filter(x=>x.found).length;
+    if(ti>=TARGETS.length){ allHere(); } else { $('#hintNote').textContent=praise(p.name,f,PEOPLE.length); setTimeout(setQuest, 1000); }
   } else { feedback(cx,cy,n,p); }
 }
 function feedback(clientX,clientY,n,p){
@@ -445,11 +450,33 @@ function updateStats(){ const f=PEOPLE.filter(p=>p.found).length;
   $('#foundCount').textContent=f; $('#hiddenCount').textContent=PEOPLE.length-f;
   $('#meterFill').style.width=(PEOPLE.length?f/PEOPLE.length*100:0)+'%'; }
 
+/* a comfortable full-screen glow — a slow rise and fall, never a blink */
+function glow(peak,dur,breaths){ const c=$('#celebrate'); if(!c) return;
+  if(reduce){ c.style.transition='opacity .45s ease'; c.style.opacity=String(peak*0.5); setTimeout(()=>{ c.style.opacity='0'; },500); return; }
+  c.style.transition='none'; const t0=performance.now();
+  (function f(t){ const k=(t-t0)/dur; if(k>=1){ c.style.opacity='0'; return; }
+    const env=Math.sin(k*Math.PI); const puls=breaths>1?(0.55+0.45*Math.sin(k*Math.PI*2*breaths-Math.PI/2)):1;
+    c.style.opacity=String(peak*env*puls); requestAnimationFrame(f); })(t0); }
+function celebrateOne(){ glow(0.4,1150,1); }
+function celebrateAll(){ const c=$('#celebrate'); if(c) c.classList.add('grand'); glow(0.64,3600,3); setTimeout(()=>{ if(c) c.classList.remove('grand'); },3800); }
+
+/* warm, non-competitive encouragement */
+function praise(name,f,n){ const left=n-f;
+  const yes=['Yes','Lovely','Beautiful','Wonderful','There they are','That\u2019s the one'];
+  const y=yes[Math.floor(Math.random()*yes.length)];
+  if(f===1) return y+' \u2014 that\u2019s '+name+'. The first light returns; '+left+' still waiting in the dark.';
+  if(left===1) return y+' \u2014 '+name+' is home. Just one soul left to find \u2014 you\u2019re nearly there.';
+  if(left===0) return y+' \u2014 '+name+' is home.';
+  return y+' \u2014 that\u2019s '+name+'! '+f+' of '+n+' found, '+left+' still to come. Keep going.';
+}
+
 function allHere(){
   const full=el('rect',{x:0,y:0,width:W,height:H,fill:'white',opacity:0}); pools.appendChild(full); fade(full,0,1,1400);
   $('#caption').classList.add('lit'); $('#quest').classList.add('done');
+  celebrateAll();
   setTimeout(()=>$('#allHere').classList.add('show'), reduce?0:600);
-  $('#hintNote').textContent = ROUNDS.length>1? 'Every face is home. Try another gathering when you\u2019re ready.' : 'Every face is home.';
+  const n=PEOPLE.length;
+  $('#hintNote').textContent = 'You found every last one \u2014 all '+n+' faces are home. The whole gathering is lit, and it will remember you. Beautifully done.'+(ROUNDS.length>1?' Try another gathering whenever you like.':'');
   $('#hintBtn').style.display='none';
 }
 
