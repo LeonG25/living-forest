@@ -399,7 +399,7 @@ function doFind(cx,cy){ if(ti>=TARGETS.length || !PEOPLE.length) return;
   if(n.nx>=p.x && n.nx<=p.x+p.w && n.ny>=p.y && n.ny<=p.y+p.h){
     reveal(p); if(hintNode){ hintNode.remove(); hintNode=null; }
     ti++; const f=PEOPLE.filter(x=>x.found).length;
-    if(ti>=TARGETS.length){ allHere(); } else { celebrateOne(praise(p.name,f,PEOPLE.length)); setTimeout(setQuest, 1400); }
+    if(ti>=TARGETS.length){ allHere(); } else { celebrateOne(praise(p.name,f,PEOPLE.length)); setTimeout(setQuest, 2500); }
   } else { feedback(cx,cy,n,p); }
 }
 function feedback(clientX,clientY,n,p){
@@ -467,8 +467,8 @@ function showBig(text,dur){ const b=$('#bigmsg'); if(!b) return; b.textContent=t
   if(reduce){ b.style.transition='opacity .3s ease'; b.style.opacity='1'; setTimeout(()=>{ b.style.opacity='0'; }, Math.max(500,dur-300)); return; }
   b.style.transition='opacity .4s ease'; b.style.opacity='0'; requestAnimationFrame(()=>{ b.style.opacity='1'; });
   setTimeout(()=>{ b.style.transition='opacity .55s ease'; b.style.opacity='0'; }, Math.max(400,dur-550)); }
-function celebrateOne(msg){ glow(0.72,1350,1); if(msg) showBig(msg,1350); }
-function celebrateAll(msg){ const c=$('#celebrate'); if(c) c.classList.add('grand'); glow(0.92,3600,3); if(msg) showBig(msg,3600); setTimeout(()=>{ if(c) c.classList.remove('grand'); },3800); }
+function celebrateOne(msg){ glow(0.72,2500,1); if(msg) showBig(msg,2500); }
+function celebrateAll(msg){ const c=$('#celebrate'); if(c) c.classList.add('grand'); glow(0.92,4400,3); if(msg) showBig(msg,4400); setTimeout(()=>{ if(c) c.classList.remove('grand'); },4600); }
 
 /* warm, non-competitive encouragement */
 function praise(name,f,n){ const left=n-f;
