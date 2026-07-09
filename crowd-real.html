@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#04070e" />
+<title>Find Them in the Crowd — The Living Forest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600&family=Azeret+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100%;
+    background: #04070e;
+    font-family: 'Hanken Grotesk', system-ui, sans-serif;
+    color: #e8eef8;
+    -webkit-user-select: none; user-select: none;
+    overscroll-behavior: none;
+  }
+  body {
+    /* the whole game sits in a luminous well, echoing the globe screen */
+    background: radial-gradient(120% 110% at 60% 22%, #0d1a2f 0%, #081120 46%, #04070e 100%);
+    min-height: 100dvh;
+  }
+  .mono { font-family: 'Azeret Mono', ui-monospace, monospace; }
+  .serif { font-family: 'Newsreader', Georgia, serif; }
+  /* --- APP VOICE: cool, spaced mono. FAMILY VOICE: warm serif. never confuse the two. --- */
+  .appvoice { font-family:'Azeret Mono',monospace; letter-spacing:.24em; text-transform:uppercase; color:rgba(150,180,214,.6); }
+
+  .wrap {
+    max-width: 720px; margin: 0 auto; min-height: 100dvh;
+    display: flex; flex-direction: column;
+    padding: max(18px, env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom));
+  }
+
+  /* ---------- header ---------- */
+  .masthead { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .masthead .kicker { font-size:10px; letter-spacing:.34em; }
+  .title-line { display:flex; align-items:baseline; gap:10px; margin-top:12px; }
+  .title-line h1 {
+    font-family:'Newsreader',serif; font-weight:300; font-size:clamp(26px,7.5vw,38px);
+    line-height:1; margin:0; letter-spacing:-.01em; color:#f3f6fc;
+  }
+  .title-line h1 em { font-style:italic; color:#f3cd84; }
+  .subtitle { font-size:13px; line-height:1.5; color:rgba(206,221,240,.6); margin-top:10px; max-width:52ch; }
+
+  /* ---------- stage ---------- */
+  .stage {
+    position:relative; margin-top:18px; border-radius:16px; overflow:hidden;
+    background:#060b16;
+    box-shadow: 0 30px 80px -30px rgba(0,0,0,.9), inset 0 0 0 1px rgba(150,180,214,.14);
+    touch-action: manipulation;
+  }
+  .stage svg { display:block; width:100%; height:auto; }
+  /* a hairline frame like a mounted photograph */
+  .stage::after {
+    content:""; position:absolute; inset:0; border-radius:16px; pointer-events:none;
+    box-shadow: inset 0 0 0 1px rgba(255,235,200,.08), inset 0 0 60px 8px rgba(4,7,14,.6);
+  }
+
+  /* soft whisper shown on an empty guess — never harsh, never red */
+  .whisper {
+    position:absolute; z-index:5; transform:translate(-50%,-50%);
+    font-family:'Newsreader',serif; font-style:italic; font-size:15px;
+    color:rgba(235,240,250,.9); text-shadow:0 2px 12px rgba(0,0,0,.9);
+    pointer-events:none; opacity:0; white-space:nowrap;
+  }
+
+  /* ---------- meter + stats ---------- */
+  .hud { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-top:20px; }
+  .meter-block { flex:1; min-width:0; }
+  .meter-label { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:9px; }
+  .meter-label .cap { font-size:9.5px; letter-spacing:.24em; }
+  .meter-label .count { font-family:'Newsreader',serif; font-weight:300; color:#f6efe0; }
+  .meter-label .count b { font-weight:400; font-size:22px; color:#ffe9c2; }
+  .meter-label .count span { font-size:13px; color:rgba(206,221,240,.5); }
+  .meter {
+    position:relative; height:5px; border-radius:99px;
+    background:rgba(140,182,214,.14); overflow:hidden;
+  }
+  .meter > i {
+    position:absolute; left:0; top:0; bottom:0; width:0%;
+    background:linear-gradient(90deg, rgba(245,197,104,.6), #ffe9c2);
+    box-shadow:0 0 12px 1px rgba(255,206,120,.7);
+    border-radius:99px; transition:width .9s cubic-bezier(.22,1,.36,1);
+  }
+  .stat-hidden { text-align:right; flex-shrink:0; }
+  .stat-hidden b { font-family:'Newsreader',serif; font-weight:300; font-size:22px; color:#8fb6da; display:block; line-height:1; }
+  .stat-hidden .cap { font-size:9px; letter-spacing:.22em; margin-top:5px; }
+
+  /* ---------- controls / caption ---------- */
+  .footer { margin-top:20px; display:flex; flex-direction:column; gap:16px; }
+  .controls { display:flex; align-items:center; gap:12px; }
+  .btn {
+    -webkit-appearance:none; appearance:none; border:none; cursor:pointer;
+    font-family:'Azeret Mono',monospace; letter-spacing:.14em; text-transform:uppercase;
+    font-size:11px; color:#0c1220; background:linear-gradient(180deg,#ffe9c2,#f3cd84);
+    padding:14px 20px; border-radius:99px; min-height:48px;
+    box-shadow:0 8px 26px -8px rgba(245,197,104,.6), inset 0 1px 0 rgba(255,255,255,.5);
+    display:inline-flex; align-items:center; gap:9px; transition:transform .15s ease, box-shadow .3s ease;
+  }
+  .btn:active { transform:translateY(1px) scale(.99); }
+  .btn.ghost {
+    background:transparent; color:rgba(206,221,240,.72);
+    box-shadow:inset 0 0 0 1px rgba(180,205,235,.22);
+  }
+  .btn .dot { width:6px; height:6px; border-radius:50%; background:currentColor; box-shadow:0 0 8px 1px currentColor; }
+  .hint-note { font-size:12px; color:rgba(206,221,240,.5); line-height:1.5; flex:1; min-width:0; }
+
+  /* the photograph's caption — FAMILY VOICE. framed as belonging to a person. */
+  .caption {
+    position:relative; border-radius:14px; padding:18px 20px 18px 22px;
+    background:rgba(10,18,34,.55); box-shadow:inset 0 0 0 1px rgba(180,205,235,.12);
+    opacity:.5; transition:opacity .8s ease, box-shadow .8s ease;
+  }
+  .caption.lit { opacity:1; box-shadow:inset 0 0 0 1px rgba(255,225,160,.28), 0 20px 50px -30px rgba(255,200,120,.4); }
+  .caption::before {
+    content:""; position:absolute; left:0; top:16px; bottom:16px; width:2px; border-radius:2px;
+    background:linear-gradient(180deg, rgba(245,197,104,.9), rgba(245,197,104,.1));
+  }
+  .caption .who { font-size:9.5px; letter-spacing:.22em; margin-bottom:8px; color:rgba(245,197,104,.7); }
+  .caption .words { font-family:'Newsreader',serif; font-style:italic; font-weight:300; font-size:16px; line-height:1.5; color:#f3ecdd; }
+  .caption .attrib { font-family:'Newsreader',serif; font-size:13px; color:rgba(206,221,240,.6); margin-top:10px; }
+  .caption .attrib b { font-style:normal; font-weight:400; color:rgba(230,220,200,.85); }
+
+  /* toast that a found person's own words belong to them */
+  .memory {
+    position:fixed; left:50%; bottom:24px; transform:translate(-50%,20px);
+    z-index:40; width:min(440px,92vw); pointer-events:none; opacity:0;
+    transition:opacity .4s ease, transform .4s cubic-bezier(.22,1,.36,1);
+  }
+  .memory.show { opacity:1; transform:translate(-50%,0); }
+  .memory .card {
+    background:rgba(12,20,36,.9); backdrop-filter:blur(16px);
+    border-radius:16px; padding:18px 22px; box-shadow:0 30px 70px -24px rgba(0,0,0,.85), inset 0 0 0 1px rgba(255,225,160,.2);
+    position:relative;
+  }
+  .memory .who { font-size:9.5px; letter-spacing:.22em; color:rgba(245,197,104,.75); margin-bottom:7px; }
+  .memory .words { font-family:'Newsreader',serif; font-style:italic; font-weight:300; font-size:17px; line-height:1.45; color:#f6efe0; }
+
+  /* the "all here" moment */
+  .allhere {
+    text-align:center; margin-top:16px; opacity:0; height:0; overflow:hidden;
+    transition:opacity .9s ease;
+  }
+  .allhere.show { opacity:1; height:auto; }
+  .allhere .line { font-family:'Newsreader',serif; font-weight:300; font-size:20px; color:#ffe9c2; }
+  .allhere .line em { font-style:italic; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration:.001ms !important; transition-duration:.12s !important; }
+  }
+  @media (min-width:640px){
+    .subtitle{ font-size:14px; }
+  }
+
+  /* stage sizes itself to the real photo's aspect */
+  .stage svg{ width:100%; height:auto; display:block; }
+  .masthead a.kicker{ color:rgba(150,180,214,.7); }
+  #gate{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(4,7,14,.82);backdrop-filter:blur(6px);padding:24px;}
+  #gate .box{width:min(380px,92vw);background:rgba(10,18,34,.92);border:1px solid rgba(180,205,235,.16);border-radius:20px;padding:26px;text-align:center;}
+  #gate h2{font-family:'Newsreader',serif;font-weight:300;font-size:24px;margin:6px 0;color:#f4ecdb;}
+  #gate p{font-size:13px;color:rgba(206,221,240,.65);line-height:1.5;margin:0 0 16px;}
+  #gate input{width:100%;background:#0a1220;border:1px solid rgba(180,205,235,.2);border-radius:12px;color:#eef2fb;padding:12px 13px;font-size:15px;font-family:inherit;margin-top:8px;outline:none;}
+  #gate input:focus{border-color:#f3cd84;}
+  #gate .go{width:100%;margin-top:14px;background:linear-gradient(180deg,#ffe6ad,#f3cd84);color:#3a2a05;font-weight:700;font-family:inherit;font-size:15px;padding:13px;border:none;border-radius:13px;cursor:pointer;}
+  #gate .msg{margin-top:12px;font-size:12.5px;color:#ff9a8f;min-height:16px;}
+  #gate .spin{display:inline-block;width:34px;height:34px;border:3px solid rgba(243,205,132,.25);border-top-color:#f3cd84;border-radius:50%;animation:sp 1s linear infinite;}
+  @keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="masthead">
+        <a class="appvoice kicker" id="back" href="home-real.html" style="text-decoration:none">&lsaquo; the sky</a>
+        <div class="appvoice kicker" style="opacity:.8;">a remembering</div>
+      </div>
+      <div class="title-line"><h1>Find them in the <em>crowd.</em></h1></div>
+      <p class="subtitle" id="subtitle">One real gathering, everyone in a single frame. The people here are waiting in the dark — search, and each one you know returns to the light.</p>
+    </header>
+
+    <div class="stage" id="stage" aria-label="A family gathering. Tap the faces you recognise.">
+      <svg id="scene" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
+    </div>
+
+    <div class="hud">
+      <div class="meter-block">
+        <div class="meter-label">
+          <span class="appvoice cap">light gathered</span>
+          <span class="count"><b id="foundCount">0</b><span> / <span id="totalCount">0</span></span></span>
+        </div>
+        <div class="meter"><i id="meterFill"></i></div>
+      </div>
+      <div class="stat-hidden">
+        <b id="hiddenCount">0</b>
+        <div class="appvoice cap">still hidden</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="controls">
+        <button class="btn" id="hintBtn"><span class="dot"></span>Show me one</button>
+        <button class="btn ghost" id="nextBtn" style="display:none;">Another gathering &rarr;</button>
+        <div class="hint-note appvoice" id="hintNote" style="letter-spacing:.04em; text-transform:none; font-family:'Hanken Grotesk',sans-serif; color:rgba(206,221,240,.5);">Tap a face you know. No wrong moves &mdash; only light.</div>
+      </div>
+      <div class="allhere" id="allHere"><div class="line">Everyone is <em>home.</em></div></div>
+      <figure class="caption" id="caption" style="margin:0;">
+        <div class="who appvoice" id="capWho" style="text-transform:uppercase;">in their words</div>
+        <blockquote class="words" id="captionWords" style="margin:0;"></blockquote>
+        <figcaption class="attrib" id="capAttrib"></figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <div id="gate"><div class="box" id="gateBox"><div class="spin"></div><p style="margin-top:16px">Gathering the family&hellip;</p></div></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const SVGNS="http://www.w3.org/2000/svg";
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const SUPABASE_URL='https://oabcdrktuikifbormjip.supabase.co';
+const SUPABASE_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let W=1200, H=800, ROUNDS=[], ri=0, PEOPLE=[], foundOrder=[];
+const scene=$('#scene'); let overlay, tieLayer, pools, hintNode=null;
+
+function el(tag, attrs, kids){ const n=document.createElementNS(SVGNS,tag);
+  for(const k in attrs) n.setAttribute(k, attrs[k]);
+  if(kids)(Array.isArray(kids)?kids:[kids]).forEach(c=>c&&n.appendChild(c)); return n; }
+function fade(node, from, to, dur){ if(reduce){ node.setAttribute('opacity',to); return; }
+  const t0=performance.now(); (function f(t){ const k=Math.min(1,(t-t0)/dur); node.setAttribute('opacity',from+(to-from)*k); if(k<1) requestAnimationFrame(f); })(t0); }
+
+async function load(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session){ showSignIn(); return; }
+  try{
+    const [arts, subs, ppl, profs] = await Promise.all([
+      sb.from('artefacts').select('id,body,contributor_user,storage_path,metadata').eq('status','published').eq('kind','photo'),
+      sb.from('artefact_subjects').select('artefact_id,person_id,detail'),
+      sb.from('people').select('id,display_name,called_name'),
+      sb.from('profiles').select('id,display_name'),
+    ]);
+    if(arts.error) throw arts.error;
+    const nameById={}; (ppl.data||[]).forEach(p=> nameById[p.id]=p.called_name||p.display_name||'Someone');
+    const prov={}; (profs.data||[]).forEach(p=> prov[p.id]=p.display_name);
+    const byArt={}; (subs.data||[]).forEach(s=>{ if(!s.detail) return; const d=s.detail;
+      if(typeof d.x!=='number'||typeof d.w!=='number') return;
+      (byArt[s.artefact_id]=byArt[s.artefact_id]||[]).push({ name:nameById[s.person_id]||'Someone', x:d.x, y:d.y, w:d.w, h:d.h }); });
+    ROUNDS=(arts.data||[]).map(a=>({ art:a, people:byArt[a.id]||[] }))
+      .filter(r=>r.people.length>=2)
+      .sort((a,b)=>b.people.length-a.people.length);
+    if(!ROUNDS.length){ gateError('No group photographs with tagged faces yet. Tag a few faces on a photo and this fills with light.'); return; }
+    $('#gate').style.display='none';
+    if(ROUNDS.length>1) $('#nextBtn').style.display='';
+    loadRound(0);
+  }catch(err){ gateError(err.message||'Could not gather the family.'); }
+}
+
+async function loadRound(i){
+  ri=i; const round=ROUNDS[i]; foundOrder=[]; hintNode=null;
+  // reset chrome
+  $('#caption').classList.remove('lit'); $('#allHere').classList.remove('show');
+  $('#hintBtn').style.display=''; $('#hintNote').textContent='Tap a face you know. No wrong moves \u2014 only light.';
+  const who=prov_name(round.art.contributor_user);
+  const body=round.art.body||''; const where=round.art.metadata&&round.art.metadata.where; const when=round.art.metadata&&round.art.metadata.when;
+  $('#captionWords').textContent = body? '\u201C'+body+'\u201D' : '';
+  $('#capWho').textContent = body? ('in '+(who||'the family')+'\u2019s words') : (where||'');
+  $('#capAttrib').innerHTML = who? ('\u2014 <b>'+esc(who)+'</b>, who kept this photograph') : ((where||'')+(when?(' \u00b7 '+when):''));
+  $('#caption').style.display = (body||who)? '' : 'none';
+  // sign the photo and read its true aspect
+  let url='';
+  try{ const s=await sb.storage.from('family').createSignedUrl(round.art.storage_path,3600); url=s.data&&s.data.signedUrl||''; }catch(e){}
+  const img=new Image();
+  img.onload=()=>{ W=1200; H=Math.max(400,Math.round(1200*(img.naturalHeight/img.naturalWidth||0.7))); buildScene(url, round); };
+  img.onerror=()=>{ W=1200; H=800; buildScene(url, round); };
+  if(url) img.src=url; else { W=1200;H=800; buildScene('', round); }
+}
+function prov_name(id){ return (window.__prov&&window.__prov[id])||null; }
+
+function buildScene(url, round){
+  scene.setAttribute('viewBox', '0 0 '+W+' '+H);
+  $('#stage').style.aspectRatio = W+' / '+H;
+  scene.innerHTML='';
+  const defs=el('defs'); defs.innerHTML =
+    '<radialGradient id="pool" cx="50%" cy="50%" r="50%">'
+     +'<stop offset="0%" stop-color="rgba(255,240,210,.55)"/><stop offset="55%" stop-color="rgba(255,210,140,.14)"/><stop offset="100%" stop-color="rgba(255,210,140,0)"/></radialGradient>'
+    +'<radialGradient id="vign" cx="50%" cy="42%" r="72%"><stop offset="55%" stop-color="rgba(4,7,14,0)"/><stop offset="100%" stop-color="rgba(4,7,14,.9)"/></radialGradient>'
+    +'<filter id="veil" x="0" y="0" width="100%" height="100%"><feColorMatrix type="saturate" values="0.2"/>'
+     +'<feComponentTransfer><feFuncR type="linear" slope="0.42"/><feFuncG type="linear" slope="0.46"/><feFuncB type="linear" slope="0.6"/></feComponentTransfer>'
+     +'<feGaussianBlur stdDeviation="2.4"/></filter>'
+    +'<filter id="poolblur"><feGaussianBlur stdDeviation="22"/></filter>'
+    +'<mask id="reveal"><rect x="0" y="0" width="'+W+'" height="'+H+'" fill="black"/><g id="revealPools" filter="url(#poolblur)"></g></mask>';
+  scene.appendChild(defs);
+  // 1) the concealed veil: the real photo, cooled + dimmed + softened
+  if(url) scene.appendChild(el('image',{ href:url, 'xlink:href':url, x:0,y:0,width:W,height:H, preserveAspectRatio:'xMidYMid slice', filter:'url(#veil)' }));
+  else scene.appendChild(el('rect',{x:0,y:0,width:W,height:H,fill:'#0a1422'}));
+  scene.appendChild(el('rect',{x:0,y:0,width:W,height:H,fill:'rgba(12,22,42,.4)'})); // cool wash
+  scene.appendChild(el('rect',{x:0,y:0,width:W,height:H,fill:'url(#vign)'}));
+  // 2) the warm truth: the real photo in full colour, shown only through reveal pools
+  if(url) scene.appendChild(el('image',{ href:url, 'xlink:href':url, x:0,y:0,width:W,height:H, preserveAspectRatio:'xMidYMid slice', mask:'url(#reveal)' }));
+  // 3) overlay layers
+  tieLayer=el('g',{}); overlay=el('g',{}); scene.appendChild(tieLayer); scene.appendChild(overlay);
+  pools=defs.querySelector('#revealPools');
+  // people for this round
+  PEOPLE = round.people.map(p=>({ name:p.name, x:p.x, y:p.y, w:p.w, h:p.h, found:false }));
+  $('#totalCount').textContent=PEOPLE.length; updateStats();
+}
+
+function faceGeom(p){ const cx=(p.x+p.w/2)*W, cy=(p.y+p.h/2)*H, bw=p.w*W, bh=p.h*H, R=Math.max(bw,bh); return {cx,cy,bw,bh,R}; }
+
+function reveal(p){
+  if(p.found) return; p.found=true; foundOrder.push(p);
+  const {cx,cy,R}=faceGeom(p); const finalR=R*0.82;
+  const pool=el('circle',{cx,cy,r:reduce?finalR:R*0.34,fill:'white'}); pools.appendChild(pool);
+  if(!reduce){ const t0=performance.now(),dur=1100; (function g(t){ const k=Math.min(1,(t-t0)/dur); const e=1-Math.pow(1-k,3);
+    pool.setAttribute('r', R*0.34+(finalR-R*0.34)*e); if(k<1) requestAnimationFrame(g); })(t0); }
+  const spill=el('circle',{cx,cy,r:finalR*1.2,fill:'url(#pool)',opacity:0}); overlay.appendChild(spill); fade(spill,0,1,900);
+  const ring=el('circle',{cx,cy,r:R*0.72,fill:'none',stroke:'rgba(255,225,160,.9)','stroke-width':Math.max(2,W*0.0018),opacity:0}); overlay.appendChild(ring); fade(ring,0,.85,700);
+  if(!reduce){ ring.setAttribute('r',R*1.0); const t0=performance.now(); (function s(t){ const k=Math.min(1,(t-t0)/700); const e=1-Math.pow(1-k,3);
+    ring.setAttribute('r', R*1.0-(R*0.28)*e); if(k<1) requestAnimationFrame(s); })(t0); }
+  const ly=(p.y+p.h)*H + R*0.5;
+  const label=el('text',{ x:cx, y:ly, 'text-anchor':'middle', 'font-family':"'Newsreader', serif",
+    'font-size':Math.max(24,R*0.5), 'font-style':'italic', fill:'#f6efe0', stroke:'rgba(6,10,20,.82)',
+    'stroke-width':6, 'paint-order':'stroke', opacity:0 }); label.textContent=p.name; overlay.appendChild(label); fade(label,0,1,600);
+  foundOrder.filter(q=>q!==p).map(q=>({q,d:Math.hypot(q.x-p.x,q.y-p.y)})).sort((a,b)=>a.d-b.d).slice(0,2).forEach(({q})=>{
+    const qx=(q.x+q.w/2)*W, qy=(q.y+q.h/2)*H;
+    const l=el('path',{ d:'M '+qx+' '+qy+' Q '+((qx+cx)/2)+' '+(((qy+cy)/2)-H*0.04)+' '+cx+' '+cy, fill:'none',
+      stroke:'rgba(255,214,150,.5)','stroke-width':Math.max(1.2,W*0.0011),'stroke-dasharray':600,'stroke-dashoffset':reduce?0:600 });
+    tieLayer.appendChild(l);
+    if(!reduce){ const t0=performance.now(); (function d(t){ const k=Math.min(1,(t-t0)/900); l.setAttribute('stroke-dashoffset',600*(1-k)); if(k<1) requestAnimationFrame(d); })(t0); }
+  });
+  updateStats();
+  if(PEOPLE.every(x=>x.found)) allHere();
+}
+
+/* tapping */
+function toNorm(clientX,clientY){ const b=scene.getBoundingClientRect(); return { nx:(clientX-b.left)/b.width, ny:(clientY-b.top)/b.height }; }
+function hitHidden(nx,ny){ for(let i=PEOPLE.length-1;i>=0;i--){ const p=PEOPLE[i]; if(!p.found && nx>=p.x && nx<=p.x+p.w && ny>=p.y && ny<=p.y+p.h) return p; } return null; }
+const WHISPERS=['not there','look again','someone else','keep looking','a little further'];
+function whisper(clientX,clientY){ const n=toNorm(clientX,clientY); const sx=n.nx*W, sy=n.ny*H; const b=$('#stage').getBoundingClientRect();
+  const ripple=el('circle',{cx:sx,cy:sy,r:6,fill:'none',stroke:'rgba(190,214,244,.55)','stroke-width':2,opacity:.7}); overlay.appendChild(ripple);
+  if(reduce){ setTimeout(()=>ripple.remove(),300); } else { const t0=performance.now(); (function r(t){ const k=Math.min(1,(t-t0)/700);
+    ripple.setAttribute('r',6+70*k); ripple.setAttribute('opacity',.7*(1-k)); if(k<1) requestAnimationFrame(r); else ripple.remove(); })(t0); }
+  const w=document.createElement('div'); w.className='whisper'; w.textContent=WHISPERS[Math.random()*WHISPERS.length|0];
+  w.style.left=(clientX-b.left)+'px'; w.style.top=(clientY-b.top-8)+'px'; $('#stage').appendChild(w);
+  requestAnimationFrame(()=>{ w.style.transition='opacity .5s ease, transform .9s ease'; w.style.opacity='1'; w.style.transform='translate(-50%,-140%)'; });
+  setTimeout(()=>{ w.style.opacity='0'; },900); setTimeout(()=>w.remove(),1500);
+}
+function onTap(e){ const cx=e.clientX!=null?e.clientX:(e.touches&&e.touches[0]&&e.touches[0].clientX);
+  const cy=e.clientY!=null?e.clientY:(e.touches&&e.touches[0]&&e.touches[0].clientY); if(cx==null||!PEOPLE.length) return;
+  const n=toNorm(cx,cy); const hit=hitHidden(n.nx,n.ny); if(hit){ reveal(hit); return; } whisper(cx,cy); }
+$('#stage').addEventListener('click', onTap);
+
+/* hint */
+$('#hintBtn').addEventListener('click', ()=>{
+  if(hintNode){ hintNode.remove(); hintNode=null; }
+  const hidden=PEOPLE.filter(p=>!p.found); if(!hidden.length) return;
+  const p=hidden[Math.random()*hidden.length|0]; const {cx,cy,R}=faceGeom(p);
+  const g=el('g',{}); const glow=el('circle',{cx,cy,r:R*0.9,fill:'url(#pool)'}); const ping=el('circle',{cx,cy,r:R*0.9,fill:'none',stroke:'rgba(255,225,160,.9)','stroke-width':Math.max(2,W*0.0018)});
+  g.appendChild(glow); g.appendChild(ping); overlay.appendChild(g); hintNode=g;
+  $('#hintNote').textContent='Someone is waiting there. Look closely.';
+  if(reduce){ setTimeout(()=>{ g.remove(); if(hintNode===g) hintNode=null; },2600); return; }
+  const t0=performance.now(),dur=2600; (function b(t){ const k=(t-t0)/dur; if(k>=1){ g.remove(); if(hintNode===g) hintNode=null; return; }
+    const breathe=Math.sin(k*Math.PI*4); ping.setAttribute('r',R*0.9+breathe*R*0.35);
+    const o=.35+Math.abs(breathe)*.55; ping.setAttribute('opacity',o); glow.setAttribute('opacity',o*.8); requestAnimationFrame(b); })(t0);
+});
+
+/* stats */
+function updateStats(){ const f=PEOPLE.filter(p=>p.found).length;
+  $('#foundCount').textContent=f; $('#hiddenCount').textContent=PEOPLE.length-f;
+  $('#meterFill').style.width=(PEOPLE.length?f/PEOPLE.length*100:0)+'%'; }
+
+/* everyone found */
+function allHere(){
+  const full=el('rect',{x:0,y:0,width:W,height:H,fill:'white',opacity:0}); pools.appendChild(full); fade(full,0,1,1400);
+  $('#caption').classList.add('lit');
+  setTimeout(()=>$('#allHere').classList.add('show'), reduce?0:600);
+  $('#hintNote').textContent = ROUNDS.length>1? 'Every face is home. Try another gathering when you\u2019re ready.' : 'Every face is home.';
+  $('#hintBtn').style.display='none';
+}
+
+/* another gathering */
+$('#nextBtn').addEventListener('click', ()=>{ if(ROUNDS.length<2) return; loadRound((ri+1)%ROUNDS.length); window.scrollTo({top:0,behavior:'smooth'}); });
+
+/* gate */
+function showSignIn(){ const box=$('#gateBox');
+  box.innerHTML='<h2 class="serif">Your forest</h2><p>Sign in with your keeper account to gather the family.</p>'+
+    '<input id="gEmail" type="email" placeholder="you@example.com" autocomplete="email"/>'+
+    '<input id="gPw" type="password" placeholder="password" autocomplete="current-password"/>'+
+    '<button class="go" id="gGo">Sign in</button><div class="msg" id="gMsg"></div>';
+  $('#gGo').onclick=async()=>{ const email=$('#gEmail').value.trim(), password=$('#gPw').value; const m=$('#gMsg');
+    if(!email||!password){ m.textContent='Enter your email and password.'; return; }
+    m.style.color='rgba(206,221,240,.65)'; m.textContent='Signing in\u2026';
+    const { error }=await sb.auth.signInWithPassword({email,password});
+    if(error){ m.style.color='#ff9a8f'; m.textContent=error.message; } else { box.innerHTML='<div class="spin"></div><p style="margin-top:16px">Gathering the family\u2026</p>'; boot(); } }; }
+function gateError(msg){ $('#gate').style.display='flex'; $('#gateBox').innerHTML='<h2 class="serif">Hmm</h2><p>'+esc(msg)+'</p><a href="home-real.html" style="color:#f3cd84">\u2190 back to the sky</a>'; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+/* keep a provenance map for captions */
+async function boot(){
+  const p=await sb.from('profiles').select('id,display_name'); window.__prov={}; (p.data||[]).forEach(x=>window.__prov[x.id]=x.display_name);
+  load();
+}
+boot();
+</script>
+</body>
+</html>
