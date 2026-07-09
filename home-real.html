@@ -159,7 +159,7 @@ resize(); addEventListener('resize', resize);
 /* look-around state */
 let yaw=0, pitch=0, fov=62, vyaw=0, vpitch=0, homeYaw=0, homePitch=0;
 let recentering=false;
-const PITCH_LIMIT=1.36;
+const PITCH_LIMIT=1.13;
 
 let NODES=[], prov={};
 const glowTex=makeGlow();
@@ -219,7 +219,7 @@ async function load(){
 function sphereLayout(nodes, edges){
   const n=nodes.length; if(!n) return;
   const off=2/n, inc=Math.PI*(3-Math.sqrt(5));
-  nodes.forEach((nd,i)=>{ const y=i*off-1+off/2; const r=Math.sqrt(Math.max(0,1-y*y)); const phi=i*inc;
+  nodes.forEach((nd,i)=>{ const y=(i*off-1+off/2)*0.82; const r=Math.sqrt(Math.max(0,1-y*y)); const phi=i*inc;
     nd.v.set(Math.cos(phi)*r, y, Math.sin(phi)*r).normalize(); });
   const tmp=new THREE.Vector3(), mid=new THREE.Vector3();
   for(let it=0; it<150; it++){
@@ -234,6 +234,7 @@ function sphereLayout(nodes, edges){
         tmp.normalize().multiplyScalar((0.22-d)*0.5); nodes[i]._d.add(tmp); nodes[j]._d.sub(tmp); } } }
     nodes.forEach(nd=>{ nd.v.addScaledVector(nd._d,1).normalize(); });
   }
+  const YB=0.82; nodes.forEach(nd=>{ if(Math.abs(nd.v.y)>YB){ const sgn=nd.v.y<0?-1:1; nd.v.y=YB*sgn; const sc=Math.sqrt(Math.max(0,(1-YB*YB))/(nd.v.x*nd.v.x+nd.v.z*nd.v.z||1e-6)); nd.v.x*=sc; nd.v.z*=sc; nd.v.normalize(); } });
   nodes.forEach(nd=>{ nd.pos=nd.v.clone().multiplyScalar(R); });
 }
 
@@ -275,7 +276,7 @@ function setHome(nodes, edges, byId, children){
 
 /* ---- look-around interaction ---- */
 const ptrs=new Map(); let dragging=false, px=0,py=0,moved=0,downT=0,pinchD=0,lastTap=0;
-function sens(){ return 0.0021*(fov/62); }
+function sens(){ return 0.0060*(fov/62); }
 cv.addEventListener('pointerdown', e=>{ try{cv.setPointerCapture(e.pointerId);}catch(_){}
   ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(ptrs.size===1){ dragging=true; px=e.clientX; py=e.clientY; moved=0; downT=Date.now(); vyaw=0; vpitch=0; recentering=false; }
@@ -283,7 +284,7 @@ cv.addEventListener('pointerdown', e=>{ try{cv.setPointerCapture(e.pointerId);}c
 cv.addEventListener('pointermove', e=>{ if(ptrs.has(e.pointerId)) ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(ptrs.size>=2){ const p=[...ptrs.values()], d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y); if(pinchD){ setFov(fov*(pinchD/d)); } pinchD=d; return; }
   if(dragging){ const dx=e.clientX-px, dy=e.clientY-py; px=e.clientX; py=e.clientY; moved+=Math.abs(dx)+Math.abs(dy);
-    const s=sens(); vyaw=-dx*s; vpitch=dy*s; yaw+=vyaw; pitch=clampPitch(pitch+vpitch); } });
+    const s=sens(); vyaw=-dx*s; vpitch=dy*s*0.8; yaw+=vyaw; pitch=clampPitch(pitch+vpitch); if(pitch<=-PITCH_LIMIT||pitch>=PITCH_LIMIT) vpitch=0; } });
 function up(e){ const wasTwo=ptrs.size>=2; ptrs.delete(e.pointerId);
   if(ptrs.size>=2){ const p=[...ptrs.values()]; pinchD=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y); return; }
   if(ptrs.size===1){ const p=[...ptrs.values()][0]; px=p.x; py=p.y; dragging=true; moved=999; pinchD=0; return; }
@@ -308,11 +309,11 @@ let t0=performance.now();
 function tick(now){
   requestAnimationFrame(tick);
   const t=(now-t0)/1000;
-  if(!dragging && !recentering){ yaw+=vyaw; pitch=clampPitch(pitch+vpitch); vyaw*=0.93; vpitch*=0.93; if(Math.abs(vyaw)<1e-5)vyaw=0; if(Math.abs(vpitch)<1e-5)vpitch=0; }
+  if(!dragging && !recentering){ vyaw=Math.max(-0.14,Math.min(0.14,vyaw)); yaw+=vyaw; const np=clampPitch(pitch+vpitch); if(np===PITCH_LIMIT||np===-PITCH_LIMIT) vpitch=0; pitch=np; vyaw*=0.95; vpitch*=0.95; if(Math.abs(vyaw)<1e-5)vyaw=0; if(Math.abs(vpitch)<1e-5)vpitch=0; }
   if(recentering){ yaw+=shortAngle(homeYaw-yaw)*0.1; pitch+=(homePitch-pitch)*0.1; fov+=(62-fov)*0.1;
     if(Math.abs(shortAngle(homeYaw-yaw))<0.003 && Math.abs(homePitch-pitch)<0.003 && Math.abs(62-fov)<0.4){ yaw=homeYaw; pitch=homePitch; fov=62; recentering=false; } }
   camera.fov=fov; camera.updateProjectionMatrix();
-  const cyp=Math.cos(pitch); fwd.set(Math.sin(yaw)*cyp, Math.sin(pitch), Math.cos(yaw)*cyp); camera.lookAt(fwd);
+  const cyp=Math.cos(pitch); fwd.set(Math.sin(yaw)*cyp, Math.sin(pitch), Math.cos(yaw)*cyp); camera.up.set(0,1,0); camera.lookAt(fwd);
   // twinkle
   NODES.forEach(nd=>{ if(!nd.sprite) return; const tw=RM?1:(0.8+0.2*Math.sin(t*1.4+nd.tw)); nd.sprite.material.opacity=tw; if(nd.core) nd.core.material.opacity=Math.min(1,tw*1.1); });
   renderer.render(scene,camera);
