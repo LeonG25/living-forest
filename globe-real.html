@@ -283,15 +283,18 @@ async function load(){
       const usable = pts.length?pts:recs.map(r=>({y:null,place:r.art._where,lat:coords[r.art._where][0],lng:coords[r.art._where][1],art:r.art,box:r.box}));
       const born = pts.length? pts[0].y : (ymax||2000);
       const last = usable[usable.length-1];
-      // jitter so co-located people don't fully overlap (deterministic from id)
-      let h=0; for(let i=0;i<p.id.length;i++) h=(h*31+p.id.charCodeAt(i))>>>0;
-      const jl=((h%1000)/1000-0.5)*1.1, jo=(((h>>10)%1000)/1000-0.5)*1.1;
-      const path=usable.map(x=>({y:x.y, lat:x.lat+jl, lng:x.lng+jo}));
+      const path=usable.map(x=>({y:x.y, lat:x.lat, lng:x.lng}));
       if(pts.length) { ymin=Math.min(ymin,pts[0].y); ymax=Math.max(ymax,pts[pts.length-1].y); }
       built.push({ id:p.id, name, gen:gen(p.id), memoryCount, waiting:false,
-        born, lat:last.lat+jl, lng:last.lng+jo, place:last.place,
+        born, lat:last.lat, lng:last.lng, place:last.place, _pk:last.lat.toFixed(3)+','+last.lng.toFixed(3),
         path: path.length>1?path:null, records:usable });
     });
+    // fan co-located people apart (phyllotaxis) so a crowded city separates when you zoom
+    const _fg={}; built.forEach(q=>{ if(q.waiting) return; (_fg[q._pk]=_fg[q._pk]||[]).push(q); });
+    Object.values(_fg).forEach(g=>{ if(g.length<2) return; const spread=0.7;
+      g.forEach((q,i)=>{ const a=i*2.399963, rad=spread*Math.sqrt(i+0.5);
+        const dlat=rad*Math.cos(a), dlng=rad*Math.sin(a)/Math.max(0.2,Math.cos(q.lat*Math.PI/180));
+        q.lat+=dlat; q.lng+=dlng; if(q.path) q.path.forEach(pt=>{ pt.lat+=dlat; pt.lng+=dlng; }); }); });
     if(ymin>ymax){ ymin=2000; ymax=2025; }
     Y_MIN=ymin; Y_MAX=ymax;
     PEOPLE = built;
@@ -370,7 +373,7 @@ function updateTime(y){ let people=0; const places=new Set();
   PEOPLE.forEach(p=>{ if(p.waiting||!p._grp) return; const vis=smooth((p.born||Y_MIN)-1,(p.born||Y_MIN)+1,y); const ud=p._grp.userData;
     ud.core.material.opacity=0.95*vis; ud.halo.material.opacity=(ud.r.cool?0.5:0.6)*vis;
     if(ud.spikeS) ud.spikeS.material.opacity=0.55*vis; if(ud.ringS) ud.ringS.material.opacity=0.5*vis;
-    p._grp.scale.setScalar(0.55+0.45*vis); p._grp.position.copy(posAtYear(p,y)); p._grp.visible=vis>0.01;
+    ud._vs=0.55+0.45*vis; p._grp.scale.setScalar(ud._vs*zoomF()); p._grp.position.copy(posAtYear(p,y)); p._grp.visible=vis>0.01;
     if(vis>0.5){ people++; if(p.place) places.add(p.place); } });
   tiesGroup.children.forEach(o=>{ const ud=o.userData; if(!ud||ud.base===undefined) return; o.material.opacity=ud.base*smooth(ud.fy-0.5,ud.fy+1.5,y); });
   flow.forEach(f=>{ f.on=y>=f.fy; });
@@ -379,7 +382,7 @@ function updateTime(y){ let people=0; const places=new Set();
 /* ---- interaction (design defaults) ---- */
 const idle=RM?0:0.0016, motion=RM?0:0.3;
 let spin=!RM, dragging=false, returning=false, vx=0, vy=0;
-const dom=renderer.domElement, ptrs=new Map(); let px=0,py=0,moved=0,downT=0,lastVX=0,lastVY=0,pinchD=0; const MINZ=150,MAXZ=520;
+const dom=renderer.domElement, ptrs=new Map(); let px=0,py=0,moved=0,downT=0,lastVX=0,lastVY=0,pinchD=0; const MINZ=108,MAXZ=560;
 function stopSpin(){ spin=false; returning=false; vx=0; vy=0; }
 function zoom(dz){ stopSpin(); camera.position.z=Math.max(MINZ,Math.min(MAXZ,camera.position.z+dz)); }
 dom.addEventListener('pointerdown', e=>{ try{dom.setPointerCapture(e.pointerId);}catch(_){}
@@ -457,7 +460,9 @@ function tick(){ requestAnimationFrame(tick);
   else if(spin&&!dragging){ globe.rotation.y+=idle; globe.rotation.x+=(homeX-globe.rotation.x)*0.02; }
   if(motion>0){ flow.forEach(f=>{ if(f.on){ f.t=(f.t+0.0016*(0.4+motion))%1; f.curve.getPoint(f.t,tmp); f.s.position.copy(tmp);} f.s.visible=!!f.on; }); }
   else flow.forEach(f=>f.s.visible=false);
+  const zf=zoomF(); PEOPLE.forEach(p=>{ if(p._grp&&p._grp.visible){ const vs=(p._grp.userData._vs!=null?p._grp.userData._vs:1); p._grp.scale.setScalar(vs*zf); } });
   renderer.render(scene,camera); }
+function zoomF(){ return camera.position.z/320; }
 tick();
 
 /* ---- sign-in gate (shares the app's session; same origin) ---- */
