@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+<meta name="theme-color" content="#060b14" />
+<title>The Living Forest — meeting someone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300&family=Hanken+Grotesk:wght@400;500;600&family=Azeret+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;min-height:100%;background:#060b14;color:#dde6f2;font-family:'Hanken Grotesk',system-ui,sans-serif;-webkit-text-size-adjust:100%;}
+  body{background:radial-gradient(120% 80% at 50% -8%, #0c1626 0%, #081120 42%, #050a12 100%);}
+  .serif{font-family:'Newsreader',serif;} .mono{font-family:'Azeret Mono',ui-monospace,monospace;}
+  #wrap{max-width:640px;margin:0 auto;padding:0 22px 80px;}
+
+  /* top bar */
+  .bar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;padding:16px 0 14px;background:linear-gradient(#060b14 68%, rgba(6,11,20,0));}
+  .back{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;border:1px solid rgba(150,180,214,.28);color:#cfe0f2;text-decoration:none;font-size:20px;line-height:1;}
+  .bar .where{font-family:'Azeret Mono',monospace;font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:rgba(150,180,214,.6);}
+
+  /* hero */
+  .hero{display:flex;gap:18px;align-items:center;margin-top:8px;}
+  .disc{position:relative;width:96px;height:96px;flex:none;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 50% 40%, rgba(255,231,180,.4) 0%, rgba(210,150,60,.2) 55%, rgba(14,22,40,.9) 100%);box-shadow:0 0 34px 6px rgba(255,206,120,.28), inset 0 0 0 1px rgba(255,220,150,.45);display:flex;align-items:center;justify-content:center;font-family:'Newsreader',serif;font-style:italic;font-size:11px;color:rgba(255,238,205,.6);}
+  .disc canvas,.disc img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .hero h1{font-family:'Newsreader',serif;font-weight:300;font-size:clamp(28px,7vw,38px);line-height:1.05;margin:0;color:#f5eede;}
+  .hero .place{font-family:'Azeret Mono',monospace;font-size:11px;letter-spacing:.06em;color:rgba(190,210,235,.72);margin-top:7px;}
+  .hero .rel{font-size:13.5px;color:rgba(206,221,240,.7);margin-top:5px;}
+
+  .section-label{font-family:'Azeret Mono',monospace;font-size:10px;letter-spacing:.28em;text-transform:uppercase;margin:34px 0 14px;}
+  .human-label{color:#f3cd84;}
+  .app-label{color:rgba(140,180,216,.85);}
+
+  /* a real person's words — gold */
+  .memory{position:relative;border-left:2px solid rgba(243,205,132,.5);padding:2px 0 2px 18px;margin:0 0 22px;}
+  .memory .q{font-family:'Newsreader',serif;font-size:17px;line-height:1.5;color:#f7ecd6;}
+  .memory .q em{font-style:italic;}
+  .memory .by{margin-top:9px;font-family:'Azeret Mono',monospace;font-size:11px;letter-spacing:.04em;color:#f3cd84;}
+  .memory .by .cert{color:rgba(243,205,132,.6);}
+  .both{font-size:12.5px;color:rgba(206,221,240,.55);margin:-6px 0 18px;}
+
+  /* the app's voice — cool, counts only */
+  .appstrip{margin-top:20px;border:1px solid rgba(127,180,216,.22);background:rgba(127,180,216,.06);border-radius:16px;padding:18px 18px 16px;}
+  .appstrip .k{font-family:'Azeret Mono',monospace;font-size:9.5px;letter-spacing:.26em;text-transform:uppercase;color:rgba(140,180,216,.75);margin-bottom:10px;}
+  .appstrip .counts{display:flex;gap:22px;flex-wrap:wrap;margin-bottom:12px;}
+  .appstrip .c .v{font-family:'Newsreader',serif;font-weight:300;font-size:26px;color:#cfe4f7;}
+  .appstrip .c .l{font-family:'Azeret Mono',monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:rgba(140,180,216,.7);margin-left:7px;}
+  .appstrip p{font-size:13px;line-height:1.55;color:rgba(190,214,236,.82);margin:0;}
+  .appstrip p .em{color:#cfe4f7;}
+
+  .footer{margin-top:36px;text-align:center;font-family:'Newsreader',serif;font-style:italic;font-size:15px;color:rgba(243,205,132,.7);}
+
+  #gate{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(6,11,20,.9);backdrop-filter:blur(6px);padding:24px;}
+  #gate .box{width:min(380px,92vw);background:rgba(10,18,34,.92);border:1px solid rgba(180,205,235,.16);border-radius:20px;padding:26px;text-align:center;}
+  #gate h2{font-family:'Newsreader',serif;font-weight:300;font-size:24px;margin:6px 0;color:#f4ecdb;}
+  #gate p{font-size:13px;color:rgba(206,221,240,.65);line-height:1.5;margin:0 0 16px;}
+  #gate input{width:100%;background:#0a1220;border:1px solid rgba(180,205,235,.2);border-radius:12px;color:#eef2fb;padding:12px 13px;font-size:15px;font-family:inherit;margin-top:8px;outline:none;}
+  #gate input:focus{border-color:#f3cd84;}
+  #gate button{width:100%;margin-top:14px;background:linear-gradient(180deg,#ffe6ad,#f3cd84);color:#3a2a05;font-weight:700;font-family:inherit;font-size:15px;padding:13px;border:none;border-radius:13px;cursor:pointer;}
+  #gate .msg{margin-top:12px;font-size:12.5px;color:#ff9a8f;min-height:16px;}
+  #gate .spin{display:inline-block;width:34px;height:34px;border:3px solid rgba(243,205,132,.25);border-top-color:#f3cd84;border-radius:50%;animation:sp 1s linear infinite;}
+  @keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div class="bar">
+    <a class="back" id="back" href="home-real.html">‹</a>
+    <span class="where">meeting someone</span>
+  </div>
+  <div id="content" style="opacity:0;transition:opacity .4s ease;"></div>
+</div>
+
+<div id="gate"><div class="box" id="gateBox"><div class="spin"></div><p style="margin-top:16px">Opening…</p></div></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const SUPABASE_URL='https://oabcdrktuikifbormjip.supabase.co';
+const SUPABASE_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const PID = new URLSearchParams(location.search).get('id');
+function esc(s){ return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+async function faceInto(disc, path, box){
+  try{ const s=await sb.storage.from('family').createSignedUrl(path,3600); const url=s.data&&s.data.signedUrl; if(!url) return;
+    const img=new Image(); img.crossOrigin='anonymous';
+    img.onload=()=>{ const c=document.createElement('canvas'); c.width=c.height=192; const g=c.getContext('2d');
+      if(box&&box.w>0&&box.h>0){ const pad=0.35; let bx=box.x-box.w*pad, by=box.y-box.h*pad, bw=box.w*(1+2*pad), bh=box.h*(1+2*pad); const side=Math.max(bw,bh);
+        let sx=(bx+bw/2-side/2)*img.naturalWidth, sy=(by+bh/2-side/2)*img.naturalHeight, ss=side*Math.max(img.naturalWidth,img.naturalHeight);
+        sx=Math.max(0,Math.min(img.naturalWidth-ss,sx)); sy=Math.max(0,Math.min(img.naturalHeight-ss,sy)); g.drawImage(img,sx,sy,ss,ss,0,0,192,192);
+      } else { const side=Math.min(img.naturalWidth,img.naturalHeight); g.drawImage(img,(img.naturalWidth-side)/2,(img.naturalHeight-side)/2,side,side,0,0,192,192); }
+      disc.innerHTML=''; disc.appendChild(c); };
+    img.src=url;
+  }catch(e){}
+}
+
+function relationLines(pid, rels, nameOf){
+  const parents=[], children=[], spouses=[], siblings=[];
+  rels.forEach(r=>{
+    if(r.kind==='parent' && r.to_person===pid) parents.push(nameOf(r.from_person));
+    else if(r.kind==='parent' && r.from_person===pid) children.push(nameOf(r.to_person));
+    else if(r.kind==='spouse' && (r.from_person===pid||r.to_person===pid)) spouses.push(nameOf(r.from_person===pid?r.to_person:r.from_person));
+    else if(r.kind==='sibling' && (r.from_person===pid||r.to_person===pid)) siblings.push(nameOf(r.from_person===pid?r.to_person:r.from_person));
+  });
+  const bits=[];
+  const list=a=>a.filter(Boolean).join(' & ');
+  if(parents.length) bits.push(list(parents)+'\u2019s child');
+  if(spouses.length) bits.push('married to '+list(spouses));
+  if(children.length) bits.push('parent of '+list(children));
+  if(siblings.length) bits.push(list(siblings)+'\u2019s sibling');
+  return bits.join(' \u00b7 ');
+}
+
+async function load(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session){ showSignIn(); return; }
+  if(!PID){ gateError('No one was chosen. Go back to the sky and tap a light.'); return; }
+  try{
+    const [people, rels, subs] = await Promise.all([
+      sb.from('people').select('id,display_name,called_name'),
+      sb.from('relationships').select('from_person,to_person,kind'),
+      sb.from('artefact_subjects').select('artefact_id,person_id,detail').eq('person_id',PID),
+    ]);
+    if(people.error) throw people.error;
+    const nameById={}; (people.data||[]).forEach(p=> nameById[p.id]=p.called_name||p.display_name);
+    const me=(people.data||[]).find(p=>p.id===PID); if(!me) throw new Error('That person is not in your forest.');
+    const artIds=[...new Set((subs.data||[]).map(s=>s.artefact_id))];
+    let arts=[]; if(artIds.length){ const a=await sb.from('artefacts').select('id,body,certainty,metadata,storage_path,contributor_user').eq('status','published').in('id',artIds); arts=a.data||[]; }
+    const boxByArt={}; (subs.data||[]).forEach(s=>{ if(s.detail) boxByArt[s.artefact_id]=s.detail; });
+    const profs=await sb.from('profiles').select('id,display_name'); const prov={}; (profs.data||[]).forEach(p=>prov[p.id]=p.display_name);
+
+    const name=me.called_name||me.display_name||'Someone';
+    const places=[...new Set(arts.map(a=>a.metadata&&a.metadata.where).filter(Boolean))];
+    const stories=arts.filter(a=>a.body);
+    const contributors=[...new Set(arts.map(a=>a.contributor_user).filter(Boolean))];
+    const photo=arts.find(a=>boxByArt[a.id])||arts[0];
+    const relLine=relationLines(PID, rels.data||[], id=>nameById[id]);
+
+    let html='<div class="hero"><div class="disc" id="disc">photo</div><div>'+
+      '<h1 class="serif">'+esc(name)+'</h1>'+
+      (places.length?'<div class="place">'+esc(places.join(' \u00b7 '))+'</div>':'')+
+      (relLine?'<div class="rel">'+esc(relLine)+'</div>':'')+
+      '</div></div>';
+
+    if(stories.length){
+      html+='<div class="section-label human-label">in their family\u2019s own words</div>';
+      stories.forEach(a=>{ const who=prov[a.contributor_user]||'family'; const cert=a.certainty?' \u00b7 <span class="cert">'+esc(a.certainty)+'</span>':'';
+        html+='<div class="memory"><div class="q">\u201c'+esc(a.body)+'\u201d</div><div class="by">told by '+esc(who)+cert+'</div></div>'; });
+      if(new Set(stories.map(a=>a.contributor_user)).size>1) html+='<div class="both">Remembered differently by different people. Every version is kept.</div>';
+    }
+
+    const nMem=stories.length, nPhoto=arts.length, nPeople=contributors.length;
+    html+='<div class="section-label app-label">assembled by the app</div>'+
+      '<div class="appstrip"><div class="k">what has been gathered</div><div class="counts">'+
+      '<div class="c"><span class="v serif">'+nMem+'</span><span class="l">'+(nMem===1?'memory':'memories')+'</span></div>'+
+      '<div class="c"><span class="v serif">'+nPhoto+'</span><span class="l">'+(nPhoto===1?'photograph':'photographs')+'</span></div>'+
+      '<div class="c"><span class="v serif">'+nPeople+'</span><span class="l">'+(nPeople===1?'teller':'tellers')+'</span></div>'+
+      '</div><p>The app has gathered these about <span class="em">'+esc(name)+'</span>. It has <span class="em">written none of them</span> \u2014 every word above belongs to a real person.</p></div>';
+
+    html+='<div class="footer">You met '+esc(name)+' today.</div>';
+
+    $('#content').innerHTML=html;
+    if(photo) faceInto($('#disc'), photo.storage_path, boxByArt[photo.id]);
+    $('#content').style.opacity=1;
+    $('#gate').style.display='none';
+  }catch(err){ gateError(err.message||'Could not open this person.'); }
+}
+
+/* back button → sky */
+$('#back').addEventListener('click', e=>{ if(history.length>1){ e.preventDefault(); history.back(); } });
+
+function showSignIn(){ const box=$('#gateBox');
+  box.innerHTML='<h2 class="serif">Your forest</h2><p>Sign in with your keeper account to meet your family.</p>'+
+    '<input id="gEmail" type="email" placeholder="you@example.com" autocomplete="email"/>'+
+    '<input id="gPw" type="password" placeholder="password" autocomplete="current-password"/>'+
+    '<button id="gGo">Sign in</button><div class="msg" id="gMsg"></div>';
+  $('#gGo').onclick=async()=>{ const email=$('#gEmail').value.trim(), password=$('#gPw').value; const m=$('#gMsg');
+    if(!email||!password){ m.textContent='Enter your email and password.'; return; }
+    m.style.color='rgba(206,221,240,.65)'; m.textContent='Signing in…';
+    const { error }=await sb.auth.signInWithPassword({email,password});
+    if(error){ m.style.color='#ff9a8f'; m.textContent=error.message; } else { box.innerHTML='<div class="spin"></div><p style="margin-top:16px">Opening…</p>'; load(); } }; }
+function gateError(msg){ $('#gate').style.display='flex'; $('#gateBox').innerHTML='<h2 class="serif">Hmm</h2><p>'+esc(msg)+'</p><a href="home-real.html" style="color:#f3cd84">← back to the sky</a>'; }
+
+load();
+</script>
+</body>
+</html>
