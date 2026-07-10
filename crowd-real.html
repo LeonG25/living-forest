@@ -7,7 +7,7 @@
 <title>Find Them in the Crowd — The Living Forest</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600&family=Azeret+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 
@@ -168,8 +168,8 @@
     background:radial-gradient(90% 70% at 50% 46%, rgba(255,224,168,.78), rgba(255,206,120,.24) 48%, rgba(255,206,120,0) 78%); }
   #celebrate.grand{ background:radial-gradient(130% 100% at 50% 46%, rgba(255,230,182,.9), rgba(255,210,132,.32) 55%, rgba(255,206,120,0) 88%); }
   #bigmsg{ position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index:52; pointer-events:none; opacity:0;
-    width:min(88vw,760px); text-align:center; font-family:'Newsreader',serif; font-weight:300; font-style:italic;
-    font-size:clamp(30px,8vw,54px); line-height:1.16; color:#fff8e6;
+    width:min(90vw,780px); text-align:center; font-family:'Hanken Grotesk',system-ui,sans-serif; font-weight:700; font-style:normal;
+    font-size:clamp(24px,6.6vw,44px); line-height:1.2; letter-spacing:.01em; color:#fff8e6;
     text-shadow:0 2px 22px rgba(0,0,0,.9), 0 0 46px rgba(255,206,120,.55); }
   /* the challenge prompt — a named person to find */
   .quest{ margin-top:16px; display:flex; flex-direction:column; gap:5px; min-height:34px; transition:opacity .5s ease; }
@@ -472,12 +472,10 @@ function celebrateAll(msg){ const c=$('#celebrate'); if(c) c.classList.add('gran
 
 /* warm, non-competitive encouragement */
 function praise(name,f,n){ const left=n-f;
-  const yes=['Yes','Lovely','Beautiful','Wonderful','There they are','That\u2019s the one'];
-  const y=yes[Math.floor(Math.random()*yes.length)];
-  if(f===1) return y+' \u2014 that\u2019s '+name+'. The first light returns; '+left+' still waiting in the dark.';
-  if(left===1) return y+' \u2014 '+name+' is home. Just one soul left to find \u2014 you\u2019re nearly there.';
-  if(left===0) return y+' \u2014 '+name+' is home.';
-  return y+' \u2014 that\u2019s '+name+'! '+f+' of '+n+' found, '+left+' still to come. Keep going.';
+  if(f===1) return 'The first light returns. '+left+' still waiting in the dark.';
+  if(left===1) return 'Just one soul left to find \u2014 you\u2019re nearly there.';
+  if(left<=0) return 'Every face is home.';
+  return f+' of '+n+' found, '+left+' still to come. Keep going.';
 }
 
 function allHere(){
