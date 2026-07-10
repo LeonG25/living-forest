@@ -147,7 +147,7 @@
     <div class="x" id="cardX">&times;</div>
     <div class="top">
       <div class="disc" id="cDisc">photo</div>
-      <div><div class="nm" id="cName"></div><div class="line" id="cLine"></div><div class="rel" id="cRel"></div></div>
+      <div><div class="nm" id="cName"></div><div class="line" id="cLine"></div><div class="rel" id="cRel"></div><a id="cMeet" href="#" style="color:#f3cd84;text-decoration:none;font-size:13px;display:inline-block;margin-top:8px">meet them →</a></div>
     </div>
     <div class="cbody">
     <div class="story" id="cStory" style="display:none"></div>
@@ -440,6 +440,7 @@ async function faceInto(disc, art, box){
 }
 function openCard(p){
   $('#cName').textContent=p.name;
+  { const mt=document.getElementById('cMeet'); if(mt) mt.href='person-real.html?id='+encodeURIComponent(p.id); }
   $('#cLine').textContent=[p.born, p.place].filter(Boolean).join(' \u00b7 ');
   const rels={parent:'parent',spouse:'married',sibling:'sibling'};
   $('#cRel').textContent = p.waiting?'waiting to be placed':'';
@@ -456,12 +457,12 @@ function openCard(p){
   if(rec) faceInto(disc, rec.art, rec.box);
   $('#card').classList.add('show');
   const cb=document.querySelector('#card .cbody'); if(cb) cb.scrollTop=0;
-  if(!cardOpen){ cardOpen=true; try{ history.pushState({lgCard:1},''); }catch(e){} }
+  cardOpen=true;
 }
 let cardOpen=false;
 function closeVisual(){ $('#card').classList.remove('show'); cardOpen=false; }
+window.__lfClose=function(){ if(cardOpen){ closeVisual(); return true; } return false; };
 function closeCard(){ if(cardOpen){ try{ history.back(); }catch(e){ closeVisual(); } } else closeVisual(); }
-window.addEventListener('popstate', ()=>{ if(cardOpen) closeVisual(); });
 $('#cardX').onclick=closeCard;
 
 /* ---- animate ---- */
@@ -497,5 +498,6 @@ function gateError(msg){ $('#gate').style.display='flex'; $('#gateBox').innerHTM
 
 load();
 </script>
+  <script src="lf-nav.js" data-here="map" data-parent="home-real.html"></script>
 </body>
 </html>

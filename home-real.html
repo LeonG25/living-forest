@@ -363,12 +363,12 @@ function openCard(p){
   const disc=$('#cDisc'); disc.textContent='photo'; if(rec&&rec.art) faceInto(disc, rec.art, rec.box);
   $('#card').classList.add('show');
   const cb=document.querySelector('#card .cbody'); if(cb) cb.scrollTop=0;
-  if(!cardOpen){ cardOpen=true; try{ history.pushState({lgCard:1},''); }catch(e){} }
+  cardOpen=true;
 }
 let cardOpen=false;
 function closeVisual(){ $('#card').classList.remove('show'); cardOpen=false; }
+window.__lfClose=function(){ if(cardOpen){ closeVisual(); return true; } return false; };
 function closeCard(){ if(cardOpen){ try{ history.back(); }catch(e){ closeVisual(); } } else closeVisual(); }
-window.addEventListener('popstate', ()=>{ if(cardOpen) closeVisual(); });
 $('#cardX').onclick=closeCard;
 
 /* ---- sign-in gate (same origin shares the app session) ---- */
@@ -387,5 +387,6 @@ function gateError(msg){ $('#gate').style.display='flex'; $('#gateBox').innerHTM
 
 load();
 </script>
+  <script src="lf-nav.js" data-here="sky"></script>
 </body>
 </html>
