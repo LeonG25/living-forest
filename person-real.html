@@ -2,57 +2,169 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
-<meta name="theme-color" content="#060b14" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#04070e" />
 <title>The Living Forest — meeting someone</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300&family=Hanken+Grotesk:wght@400;500;600&family=Azeret+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  html,body{margin:0;min-height:100%;background:#060b14;color:#dde6f2;font-family:'Hanken Grotesk',system-ui,sans-serif;-webkit-text-size-adjust:100%;}
-  body{background:radial-gradient(120% 80% at 50% -8%, #0c1626 0%, #081120 42%, #050a12 100%);}
-  .serif{font-family:'Newsreader',serif;} .mono{font-family:'Azeret Mono',ui-monospace,monospace;}
-  #wrap{max-width:640px;margin:0 auto;padding:0 22px 80px;}
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; }
+  :root{
+    --cream:#f4ecdb; --muted:#9db0cc; --panel:#ffffff0d; --hair:#ffffff1f;
+    --gold:#f3cd84; --gold-hi:#ffe6ad; --cool:#7fb4d8;
+  }
+  body{
+    background:radial-gradient(125% 100% at 50% 0%, #0d1a2f 0%, #081120 48%, #04070e 100%);
+    color:var(--cream); font-family:'Hanken Grotesk',system-ui,sans-serif;
+    min-height:100dvh; -webkit-user-select:none; user-select:none; overflow-x:hidden;
+  }
+  .serif{ font-family:'Newsreader',Georgia,serif; }
+  .appvoice{ font-family:'Hanken Grotesk',sans-serif; letter-spacing:.22em; text-transform:uppercase; font-size:10px; color:var(--muted); }
 
-  /* top bar */
-  .bar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;padding:16px 0 14px;background:linear-gradient(#060b14 68%, rgba(6,11,20,0));}
-  .back{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;border:1px solid rgba(150,180,214,.28);color:#cfe0f2;text-decoration:none;font-size:20px;line-height:1;}
-  .bar .where{font-family:'Azeret Mono',monospace;font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:rgba(150,180,214,.6);}
+  /* twinkling star field */
+  .sky{ position:fixed; inset:0; z-index:0; pointer-events:none; }
+  .sky i{ position:absolute; width:2px; height:2px; border-radius:50%; background:#cfe0f5;
+    opacity:.5; animation:tw 4s ease-in-out infinite; }
+  @keyframes tw{ 0%,100%{opacity:.15;} 50%{opacity:.7;} }
 
-  /* hero */
-  .hero{display:flex;gap:18px;align-items:center;margin-top:8px;}
-  .disc{position:relative;width:96px;height:96px;flex:none;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 50% 40%, rgba(255,231,180,.4) 0%, rgba(210,150,60,.2) 55%, rgba(14,22,40,.9) 100%);box-shadow:0 0 34px 6px rgba(255,206,120,.28), inset 0 0 0 1px rgba(255,220,150,.45);display:flex;align-items:center;justify-content:center;font-family:'Newsreader',serif;font-style:italic;font-size:11px;color:rgba(255,238,205,.6);}
-  .disc canvas,.disc img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
-  .hero h1{font-family:'Newsreader',serif;font-weight:300;font-size:clamp(28px,7vw,38px);line-height:1.05;margin:0;color:#f5eede;}
-  .hero .place{font-family:'Azeret Mono',monospace;font-size:11px;letter-spacing:.06em;color:rgba(190,210,235,.72);margin-top:7px;}
-  .hero .rel{font-size:13.5px;color:rgba(206,221,240,.7);margin-top:5px;}
+  .phone{ position:relative; z-index:1; width:100%; max-width:430px; margin:0 auto;
+    padding:0 20px calc(56px + env(safe-area-inset-bottom));
+    padding-top:max(16px, env(safe-area-inset-top)); }
 
-  .section-label{font-family:'Azeret Mono',monospace;font-size:10px;letter-spacing:.28em;text-transform:uppercase;margin:34px 0 14px;}
-  .human-label{color:#f3cd84;}
-  .app-label{color:rgba(140,180,216,.85);}
+  /* ---- top bar ---- */
+  .topbar{ display:flex; align-items:center; justify-content:space-between; height:44px; }
+  .icon-btn{ width:40px; height:40px; border-radius:50%; border:1px solid var(--hair);
+    background:var(--panel); color:var(--cream); display:grid; place-items:center; cursor:pointer; }
+  .icon-btn svg{ width:18px; height:18px; }
+  .breadcrumb{ display:flex; align-items:center; gap:7px; }
+  .breadcrumb .dot{ width:5px; height:5px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px 1px var(--gold); }
 
-  /* a real person's words — gold */
-  .memory{position:relative;border-left:2px solid rgba(243,205,132,.5);padding:2px 0 2px 18px;margin:0 0 22px;}
-  .memory .q{font-family:'Newsreader',serif;font-size:17px;line-height:1.5;color:#f7ecd6;}
-  .memory .q em{font-style:italic;}
-  .memory .by{margin-top:9px;font-family:'Azeret Mono',monospace;font-size:11px;letter-spacing:.04em;color:#f3cd84;}
-  .memory .by .cert{color:rgba(243,205,132,.6);}
-  .both{font-size:12.5px;color:rgba(206,221,240,.55);margin:-6px 0 18px;}
+  /* ---- portrait + ring ---- */
+  .hero{ display:flex; flex-direction:column; align-items:center; text-align:center; margin-top:14px; }
+  .ringwrap{ position:relative; width:220px; height:220px; }
+  .ringwrap svg.ring{ position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg); }
+  .portrait{ position:absolute; inset:26px; border-radius:50%; overflow:hidden;
+    box-shadow:0 0 40px -6px rgba(243,205,132,.4), inset 0 0 0 1px rgba(255,255,255,.14); }
+  .portrait svg{ width:100%; height:100%; display:block; }
+  .ring-legend{ position:absolute; font-size:9px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--muted); white-space:nowrap; }
 
-  /* the app's voice — cool, counts only */
-  .appstrip{margin-top:20px;border:1px solid rgba(127,180,216,.22);background:rgba(127,180,216,.06);border-radius:16px;padding:18px 18px 16px;}
-  .appstrip .k{font-family:'Azeret Mono',monospace;font-size:9.5px;letter-spacing:.26em;text-transform:uppercase;color:rgba(140,180,216,.75);margin-bottom:10px;}
-  .appstrip .counts{display:flex;gap:22px;flex-wrap:wrap;margin-bottom:12px;}
-  .appstrip .c .v{font-family:'Newsreader',serif;font-weight:300;font-size:26px;color:#cfe4f7;}
-  .appstrip .c .l{font-family:'Azeret Mono',monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:rgba(140,180,216,.7);margin-left:7px;}
-  .appstrip p{font-size:13px;line-height:1.55;color:rgba(190,214,236,.82);margin:0;}
-  .appstrip p .em{color:#cfe4f7;}
+  .name{ font-weight:300; font-size:34px; line-height:1.05; margin:20px 0 0; letter-spacing:-.01em; color:#fbf5e8; }
+  .name em{ font-style:italic; }
+  .known-line{ margin-top:9px; font-size:13px; color:var(--muted); display:flex; align-items:center; gap:8px; justify-content:center; }
+  .known-line b{ color:var(--gold); font-weight:600; }
 
-  .footer{margin-top:36px;text-align:center;font-family:'Newsreader',serif;font-style:italic;font-size:15px;color:rgba(243,205,132,.7);}
+  /* how related */
+  .relate{ margin-top:16px; display:inline-flex; align-items:center; gap:9px; align-self:center;
+    padding:9px 15px; border-radius:99px; border:1px solid var(--hair); background:var(--panel);
+    color:var(--cream); font-size:12.5px; cursor:pointer; }
+  .relate .thread{ width:26px; height:1px; background:linear-gradient(90deg,transparent,var(--gold)); position:relative; }
+  .relate .thread::after{ content:""; position:absolute; right:0; top:-2px; width:5px; height:5px; border-radius:50%; background:var(--gold); box-shadow:0 0 7px 1px var(--gold); }
 
-  #gate{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(6,11,20,.9);backdrop-filter:blur(6px);padding:24px;}
+  /* section heading */
+  .sec{ margin-top:34px; }
+  .sec-h{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .sec-h .t{ font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:9px; }
+  .sec-h .t .lp{ width:7px; height:7px; border-radius:50%; }
+  .sec-h .meta{ font-size:11px; color:var(--muted); }
+
+  /* light-point doorways */
+  .doorways{ display:flex; flex-direction:column; gap:10px; margin-top:8px; }
+  .door{ display:flex; align-items:center; gap:14px; padding:15px 16px; border-radius:16px;
+    background:var(--panel); border:1px solid var(--hair); cursor:pointer; position:relative; overflow:hidden;
+    transition:border-color .3s ease, background .3s ease; }
+  .door:active{ background:#ffffff14; }
+  .door .lp-icon{ width:38px; height:38px; border-radius:50%; display:grid; place-items:center; flex-shrink:0; position:relative; }
+  .door .lp-icon svg{ width:18px; height:18px; }
+  .door .txt{ flex:1; min-width:0; }
+  .door .txt .lab{ font-family:'Newsreader',serif; font-size:17px; color:var(--cream); }
+  .door .txt .sub{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .door .chev{ color:var(--muted); flex-shrink:0; }
+  .door .chev svg{ width:16px; height:16px; }
+  .door.locked{ opacity:.7; }
+  .door.locked .txt .sub{ color:#7f8fa8; }
+  /* the little facet meter inside each doorway icon */
+  .lp-icon .fill-ring{ position:absolute; inset:0; }
+
+  /* ---- photographs ---- */
+  .photostrip{ display:flex; gap:14px; overflow-x:auto; scroll-snap-type:x mandatory;
+    margin:0 -20px; padding:2px 20px 8px; -webkit-overflow-scrolling:touch; }
+  .photostrip::-webkit-scrollbar{ display:none; }
+  .photo{ scroll-snap-align:start; flex:0 0 82%; border-radius:18px; overflow:hidden;
+    background:#0a1422; border:1px solid var(--hair); box-shadow:0 20px 50px -28px #000; }
+  .photo .img{ position:relative; aspect-ratio:4/3; }
+  .photo .img svg{ width:100%; height:100%; display:block; }
+  .photo .img .whenwhere{ position:absolute; left:12px; bottom:10px; display:flex; gap:8px; align-items:center;
+    font-size:11px; z-index:2; }
+  .photo .img .whenwhere .yr{ font-family:'Newsreader',serif; font-style:italic; color:var(--gold-hi); }
+  .photo .img .whenwhere .wh{ color:#dbe6f5; }
+  .photo .img::after{ content:""; position:absolute; inset:0; background:linear-gradient(to top, rgba(4,7,14,.85), transparent 45%); }
+  .photo .story{ padding:14px 16px 16px; }
+  /* GOLD — human memory, always attributed */
+  .photo .story .words{ font-family:'Newsreader',serif; font-style:italic; font-weight:300; font-size:15px; line-height:1.5; color:#f6ecd7; }
+  .photo .story .told{ margin-top:11px; display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--gold); }
+  .photo .story .told .flame{ width:6px; height:6px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px 1px var(--gold); }
+  .photo .story .told b{ font-weight:600; }
+  /* gold invitation when no story exists */
+  .invite{ padding:15px 16px; border-radius:16px; border:1px dashed rgba(243,205,132,.35);
+    background:rgba(243,205,132,.05); }
+  .invite .words{ font-family:'Newsreader',serif; font-style:italic; font-size:14.5px; line-height:1.5; color:#efe0c2; }
+  .invite .cta{ margin-top:10px; font-size:12px; color:var(--gold); font-weight:600; display:inline-flex; align-items:center; gap:6px; }
+
+  /* COOL BLUE — app-assembled facts. separated by a visible line. neutral counts only. */
+  .appfacts{ margin-top:16px; border-top:1px solid var(--hair); padding-top:14px;
+    display:flex; align-items:flex-start; gap:11px; }
+  .appfacts .mark{ width:22px; height:22px; border-radius:6px; flex-shrink:0; display:grid; place-items:center;
+    background:rgba(127,180,216,.12); border:1px solid rgba(127,180,216,.3); }
+  .appfacts .mark svg{ width:12px; height:12px; color:var(--cool); }
+  .appfacts .body{ font-size:12.5px; line-height:1.5; color:var(--cool); }
+  .appfacts .body .src{ display:block; margin-top:4px; font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:rgba(127,180,216,.55); }
+
+  /* ---- relatives (linked stars) ---- */
+  .kin{ display:flex; gap:16px; overflow-x:auto; margin:0 -20px; padding:2px 20px 6px; }
+  .kin::-webkit-scrollbar{ display:none; }
+  .kinperson{ flex:0 0 auto; width:78px; text-align:center; cursor:pointer; }
+  .kinstar{ position:relative; width:70px; height:70px; margin:0 auto; }
+  .kinstar .crop{ position:absolute; inset:6px; border-radius:50%; overflow:hidden; border:1px solid rgba(243,205,132,.5); }
+  .kinstar .crop svg{ width:100%; height:100%; }
+  .kinstar .glow{ position:absolute; inset:0; border-radius:50%; box-shadow:0 0 18px -2px rgba(243,205,132,.55); }
+  .kinperson .kn{ font-family:'Newsreader',serif; font-size:14px; margin-top:8px; color:var(--cream); line-height:1.15; }
+  .kinperson .kr{ font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-top:2px; }
+
+  /* ---- places ---- */
+  .places{ display:flex; flex-wrap:wrap; gap:9px; }
+  .place{ display:inline-flex; align-items:center; gap:8px; padding:9px 14px; border-radius:99px;
+    background:var(--panel); border:1px solid var(--hair); font-size:13px; color:var(--cream); cursor:pointer; }
+  .place .pin{ width:5px; height:5px; border-radius:50%; background:var(--cool); box-shadow:0 0 7px 1px rgba(127,180,216,.7); }
+
+  /* ---- challenges / reel ---- */
+  .challenge{ display:flex; align-items:center; gap:15px; padding:16px; border-radius:18px;
+    background:linear-gradient(120deg, rgba(243,205,132,.1), rgba(127,180,216,.06));
+    border:1px solid rgba(243,205,132,.28); cursor:pointer; }
+  .challenge .cimg{ width:56px; height:56px; border-radius:14px; overflow:hidden; flex-shrink:0; border:1px solid var(--hair); }
+  .challenge .cimg svg{ width:100%; height:100%; }
+  .challenge .c-txt{ flex:1; }
+  .challenge .c-txt .ct{ font-family:'Newsreader',serif; font-size:18px; color:#fbf5e8; }
+  .challenge .c-txt .cs{ font-size:12px; color:var(--muted); margin-top:3px; }
+  .challenge .go{ font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:#0c1220;
+    background:linear-gradient(180deg,var(--gold-hi),var(--gold)); padding:9px 13px; border-radius:99px; font-weight:600; }
+  .soon{ display:flex; gap:10px; margin-top:10px; }
+  .soon .s{ flex:1; padding:13px; border-radius:14px; background:var(--panel); border:1px solid var(--hair); text-align:center; opacity:.6; }
+  .soon .s .sn{ font-family:'Newsreader',serif; font-size:14px; color:var(--cream); }
+  .soon .s .sl{ font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin-top:4px; }
+
+  .foot{ margin-top:40px; text-align:center; }
+  .foot .leaf{ font-family:'Newsreader',serif; font-style:italic; font-size:14px; color:var(--muted); }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; }
+  }
+
+  /* gate */
+  #gate{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(4,7,14,.92);backdrop-filter:blur(6px);padding:24px;}
   #gate .box{width:min(380px,92vw);background:rgba(10,18,34,.92);border:1px solid rgba(180,205,235,.16);border-radius:20px;padding:26px;text-align:center;}
   #gate h2{font-family:'Newsreader',serif;font-weight:300;font-size:24px;margin:6px 0;color:#f4ecdb;}
   #gate p{font-size:13px;color:rgba(206,221,240,.65);line-height:1.5;margin:0 0 16px;}
@@ -62,18 +174,32 @@
   #gate .msg{margin-top:12px;font-size:12.5px;color:#ff9a8f;min-height:16px;}
   #gate .spin{display:inline-block;width:34px;height:34px;border:3px solid rgba(243,205,132,.25);border-top-color:#f3cd84;border-radius:50%;animation:sp 1s linear infinite;}
   @keyframes sp{to{transform:rotate(360deg)}}
+  /* how-related revealed line */
+  .pathline{margin-top:12px;font-size:13px;line-height:1.55;color:var(--cream);max-width:340px;text-align:center;}
+  .pathline .hop{color:var(--gold);}
+  .relate.open .thread{opacity:.4;}
+  /* empty / invite blocks reused */
+  .softinvite{padding:15px 16px;border-radius:16px;border:1px dashed rgba(243,205,132,.35);background:rgba(243,205,132,.05);font-family:'Newsreader',serif;font-style:italic;font-size:14.5px;line-height:1.5;color:#efe0c2;}
 </style>
 </head>
 <body>
-<div id="wrap">
-  <div class="bar">
-    <a class="back" id="back" href="home-real.html">‹</a>
-    <span class="where">meeting someone</span>
-  </div>
-  <div id="content" style="opacity:0;transition:opacity .4s ease;"></div>
-</div>
+  <div class="sky" id="sky" aria-hidden="true"></div>
+  <main class="phone">
+    <div class="topbar">
+      <a class="icon-btn" id="back" href="home-real.html" aria-label="Back to the sky">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+      </a>
+      <div class="breadcrumb">
+        <span class="appvoice">The Living Forest</span>
+        <span class="dot"></span>
+        <span class="appvoice" id="crumb">meeting someone</span>
+      </div>
+      <span class="icon-btn" style="visibility:hidden"></span>
+    </div>
+    <div id="content" style="opacity:0;transition:opacity .45s ease;"></div>
+  </main>
 
-<div id="gate"><div class="box" id="gateBox"><div class="spin"></div><p style="margin-top:16px">Opening…</p></div></div>
+  <div id="gate"><div class="box" id="gateBox"><div class="spin"></div><p style="margin-top:16px">Opening&hellip;</p></div></div>
 
 <script>
 const $ = s => document.querySelector(s);
@@ -81,36 +207,178 @@ const SUPABASE_URL='https://oabcdrktuikifbormjip.supabase.co';
 const SUPABASE_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const PID = new URLSearchParams(location.search).get('id');
-function esc(s){ return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+const NS='http://www.w3.org/2000/svg';
+const reduceMo = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+const NUMW=['none','one','two','three','four','five','six','seven','eight','nine'];
+function worded(n){ return n>=0 && n<NUMW.length ? NUMW[n] : String(n); }
+function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
+function firstName(n){ return String(n||'').trim().split(/\s+/)[0] || 'them'; }
+function poss(n){ const f=firstName(n); return f + (f.slice(-1).toLowerCase()==='s' ? '\u2019' : '\u2019s'); }
+function sexKey(s){ const c=String(s||'').trim().toLowerCase().charAt(0); return c==='m'?'m':(c==='f'?'f':'n'); }
+function pronoun(sex){ return {m:'his',f:'her',n:'their'}[sexKey(sex)]; }
 
-async function faceInto(disc, path, box){
-  try{ const s=await sb.storage.from('family').createSignedUrl(path,3600); const url=s.data&&s.data.signedUrl; if(!url) return;
+/* twinkling star field */
+(function(){
+  const sky = $('#sky'); if(!sky) return;
+  let html='';
+  for(let i=0;i<60;i++){
+    const x=(Math.random()*100).toFixed(2), y=(Math.random()*100).toFixed(2);
+    const d=(Math.random()*4+2).toFixed(1), delay=(Math.random()*4).toFixed(1), s=(Math.random()*1.4+1).toFixed(1);
+    html += '<i style="left:'+x+'%;top:'+y+'%;width:'+s+'px;height:'+s+'px;animation-duration:'+d+'s;animation-delay:'+delay+'s;'+(reduceMo?'animation:none;opacity:.4;':'')+'"></i>';
+  }
+  sky.innerHTML=html;
+})();
+
+/* draw a face crop onto a canvas inside el (uses normalized box {x,y,w,h} if given) */
+async function faceInto(el, path, box){
+  if(!el || !path) return;
+  try{
+    const s=await sb.storage.from('family').createSignedUrl(path,3600);
+    const url=s.data&&s.data.signedUrl; if(!url) return;
     const img=new Image(); img.crossOrigin='anonymous';
-    img.onload=()=>{ const c=document.createElement('canvas'); c.width=c.height=192; const g=c.getContext('2d');
-      if(box&&box.w>0&&box.h>0){ const pad=0.35; let bx=box.x-box.w*pad, by=box.y-box.h*pad, bw=box.w*(1+2*pad), bh=box.h*(1+2*pad); const side=Math.max(bw,bh);
-        let sx=(bx+bw/2-side/2)*img.naturalWidth, sy=(by+bh/2-side/2)*img.naturalHeight, ss=side*Math.max(img.naturalWidth,img.naturalHeight);
-        sx=Math.max(0,Math.min(img.naturalWidth-ss,sx)); sy=Math.max(0,Math.min(img.naturalHeight-ss,sy)); g.drawImage(img,sx,sy,ss,ss,0,0,192,192);
-      } else { const side=Math.min(img.naturalWidth,img.naturalHeight); g.drawImage(img,(img.naturalWidth-side)/2,(img.naturalHeight-side)/2,side,side,0,0,192,192); }
-      disc.innerHTML=''; disc.appendChild(c); };
+    img.onload=()=>{
+      const c=document.createElement('canvas'); c.width=c.height=220; const g=c.getContext('2d');
+      if(box&&box.w>0&&box.h>0){
+        const pad=0.35; let bw=box.w*(1+2*pad), bh=box.h*(1+2*pad); const side=Math.max(bw,bh);
+        let sx=(box.x+box.w/2-side/2)*img.naturalWidth, sy=(box.y+box.h/2-side/2)*img.naturalHeight, ss=side*Math.max(img.naturalWidth,img.naturalHeight);
+        sx=Math.max(0,Math.min(img.naturalWidth-ss,sx)); sy=Math.max(0,Math.min(img.naturalHeight-ss,sy));
+        g.drawImage(img,sx,sy,ss,ss,0,0,220,220);
+      } else {
+        const side=Math.min(img.naturalWidth,img.naturalHeight);
+        g.drawImage(img,(img.naturalWidth-side)/2,(img.naturalHeight-side)/2,side,side,0,0,220,220);
+      }
+      c.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
+      el.innerHTML=''; el.appendChild(c);
+    };
     img.src=url;
   }catch(e){}
 }
 
-function relationLines(pid, rels, nameOf){
-  const parents=[], children=[], spouses=[], siblings=[];
-  rels.forEach(r=>{
-    if(r.kind==='parent' && r.to_person===pid) parents.push(nameOf(r.from_person));
-    else if(r.kind==='parent' && r.from_person===pid) children.push(nameOf(r.to_person));
-    else if(r.kind==='spouse' && (r.from_person===pid||r.to_person===pid)) spouses.push(nameOf(r.from_person===pid?r.to_person:r.from_person));
-    else if(r.kind==='sibling' && (r.from_person===pid||r.to_person===pid)) siblings.push(nameOf(r.from_person===pid?r.to_person:r.from_person));
+/* set a full photo as a cover image inside el */
+async function imgInto(el, path){
+  if(!el || !path) return;
+  try{
+    const s=await sb.storage.from('family').createSignedUrl(path,3600);
+    const url=s.data&&s.data.signedUrl; if(!url) return;
+    const im=document.createElement('img');
+    im.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;';
+    im.src=url; el.insertBefore(im, el.firstChild);
+  }catch(e){}
+}
+
+/* ---- the five-point light ring, fed by computed facets ---- */
+function drawRing(facets){
+  const ring=$('#lightRing'); if(!ring) return;
+  ring.innerHTML='';
+  const cx=110, cy=110, r=92, gap=0.09, seg=(Math.PI*2)/facets.length;
+  function arc(a0,a1,stroke,w){
+    const large=(a1-a0)>Math.PI?1:0;
+    const x0=cx+r*Math.cos(a0), y0=cy+r*Math.sin(a0), x1=cx+r*Math.cos(a1), y1=cy+r*Math.sin(a1);
+    const p=document.createElementNS(NS,'path');
+    p.setAttribute('d','M '+x0+' '+y0+' A '+r+' '+r+' 0 '+large+' 1 '+x1+' '+y1);
+    p.setAttribute('stroke',stroke); p.setAttribute('stroke-width',w);
+    p.setAttribute('fill','none'); p.setAttribute('stroke-linecap','round');
+    return p;
+  }
+  facets.forEach((f,i)=>{
+    const a0=i*seg+gap/2, a1=(i+1)*seg-gap/2;
+    ring.appendChild(arc(a0,a1,'rgba(255,255,255,.10)',5));
+    const lvl=Math.max(0,Math.min(1,f.lvl));
+    if(lvl<=0) return;
+    const aFill=a0+(a1-a0)*lvl;
+    const col=f.lit?'#f3cd84':'#7fb4d8';
+    const p=arc(a0,aFill,col,5);
+    p.style.filter=f.lit?'drop-shadow(0 0 4px rgba(243,205,132,.9))':'drop-shadow(0 0 3px rgba(127,180,216,.6))';
+    if(!f.lit) p.setAttribute('opacity','.7');
+    ring.appendChild(p);
+    const bx=cx+r*Math.cos(aFill), by=cy+r*Math.sin(aFill);
+    const bead=document.createElementNS(NS,'circle');
+    bead.setAttribute('cx',bx); bead.setAttribute('cy',by); bead.setAttribute('r',f.lit?3.4:2.6);
+    bead.setAttribute('fill',f.lit?'#ffe6ad':'#aed4ee');
+    bead.style.filter='drop-shadow(0 0 6px '+(f.lit?'#f3cd84':'#7fb4d8')+')';
+    ring.appendChild(bead);
   });
-  const bits=[];
-  const list=a=>a.filter(Boolean).join(' & ');
-  if(parents.length) bits.push(list(parents)+'\u2019s child');
-  if(spouses.length) bits.push('married to '+list(spouses));
-  if(children.length) bits.push('parent of '+list(children));
-  if(siblings.length) bits.push(list(siblings)+'\u2019s sibling');
-  return bits.join(' \u00b7 ');
+}
+
+/* ---- build the five doorways ---- */
+const DOOR_IC={
+  Face:'<circle cx="12" cy="9" r="4"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7"/>',
+  Story:'<path d="M4 5h16v11H8l-4 4z"/>',
+  Place:'<path d="M12 21s-6-5.7-6-10a6 6 0 1112 0c0 4.3-6 10-6 10z"/><circle cx="12" cy="11" r="2"/>',
+  People:'<circle cx="9" cy="9" r="3"/><path d="M3 20c0-3 2.7-5 6-5s6 2 6 5"/><path d="M16 6a3 3 0 010 6M21 20c0-2.4-1.6-4.2-4-4.8"/>',
+  Reel:'<circle cx="12" cy="12" r="9"/><path d="M10 8l6 4-6 4z"/>'
+};
+function buildDoorways(doors){
+  const wrap=$('#doorways'); if(!wrap) return; wrap.innerHTML='';
+  doors.forEach(d=>{
+    const el=document.createElement('div');
+    el.className='door'+(d.locked?' locked':'');
+    const col=d.cool?'#7fb4d8':(d.lit?'#f3cd84':'#7fb4d8');
+    const bg=d.cool?'rgba(127,180,216,.12)':(d.lit?'rgba(243,205,132,.12)':'rgba(127,180,216,.08)');
+    const rr=17, circ=2*Math.PI*rr, off=circ*(1-Math.max(0,Math.min(1,d.lvl)));
+    el.innerHTML=
+      '<div class="lp-icon" style="background:'+bg+';">'+
+        '<svg class="fill-ring" viewBox="0 0 38 38">'+
+          '<circle cx="19" cy="19" r="17" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="2"/>'+
+          '<circle cx="19" cy="19" r="17" fill="none" stroke="'+col+'" stroke-width="2" stroke-linecap="round" stroke-dasharray="'+circ.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" transform="rotate(-90 19 19)" style="filter:drop-shadow(0 0 3px '+col+');"/>'+
+        '</svg>'+
+        '<svg viewBox="0 0 24 24" fill="none" stroke="'+col+'" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+DOOR_IC[d.key]+'</svg>'+
+      '</div>'+
+      '<div class="txt"><div class="lab">'+d.lab+'</div><div class="sub">'+d.sub+'</div></div>'+
+      '<div class="chev">'+(d.locked
+        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>')+'</div>';
+    el.addEventListener('click',()=>{
+      if(d.locked) return;
+      const t=d.target && document.getElementById(d.target);
+      if(t) t.scrollIntoView({behavior:reduceMo?'auto':'smooth', block:'start'});
+    });
+    wrap.appendChild(el);
+  });
+}
+
+/* ---- shortest relationship path from the viewing player to this person ---- */
+function relWord(edge, fromId, toId, sexOf){
+  const sx=sexOf(toId);
+  if(edge.kind==='parent'){
+    if(edge.to_person===fromId && edge.from_person===toId) return {m:'father',f:'mother',n:'parent'}[sexKey(sx)];
+    if(edge.from_person===fromId && edge.to_person===toId) return {m:'son',f:'daughter',n:'child'}[sexKey(sx)];
+  }
+  if(edge.kind==='spouse') return {m:'husband',f:'wife',n:'spouse'}[sexKey(sx)];
+  if(edge.kind==='sibling') return {m:'brother',f:'sister',n:'sibling'}[sexKey(sx)];
+  return 'relative';
+}
+function shortestPath(rels, startId, endId){
+  if(!startId || !endId) return null;
+  if(startId===endId) return {nodes:[startId], edges:[]};
+  const adj={};
+  rels.forEach(r=>{
+    (adj[r.from_person]=adj[r.from_person]||[]).push({other:r.to_person, edge:r});
+    (adj[r.to_person]=adj[r.to_person]||[]).push({other:r.from_person, edge:r});
+  });
+  const prev={}, prevEdge={}, seen={}; seen[startId]=1; const q=[startId];
+  while(q.length){
+    const cur=q.shift();
+    if(cur===endId) break;
+    (adj[cur]||[]).forEach(n=>{ if(!seen[n.other]){ seen[n.other]=1; prev[n.other]=cur; prevEdge[n.other]=n.edge; q.push(n.other); } });
+  }
+  if(!seen[endId]) return null;
+  const nodes=[endId], edges=[]; let c=endId;
+  while(c!==startId){ edges.unshift(prevEdge[c]); c=prev[c]; nodes.unshift(c); }
+  return {nodes, edges};
+}
+function renderPath(path, nameOf, sexOf){
+  if(!path) return 'A path not yet traced &mdash; but you share this forest.';
+  if(path.nodes.length===1) return 'This is you.';
+  let out='You';
+  for(let i=0;i<path.edges.length;i++){
+    const fromId=path.nodes[i], toId=path.nodes[i+1];
+    const w=relWord(path.edges[i], fromId, toId, sexOf);
+    const lead = i===0 ? 'your' : pronoun(sexOf(fromId));
+    out += ' &rarr; <span class="hop">'+esc(lead+' '+w)+'</span> '+esc(nameOf(toId));
+  }
+  return out;
 }
 
 async function load(){
@@ -118,51 +386,196 @@ async function load(){
   if(!session){ showSignIn(); return; }
   if(!PID){ gateError('No one was chosen. Go back to the sky and tap a light.'); return; }
   try{
-    const [people, rels, subs] = await Promise.all([
-      sb.from('people').select('id,display_name,called_name'),
+    const [people, rels, subsMine, profs] = await Promise.all([
+      sb.from('people').select('id,display_name,called_name,primary_asset,sex'),
       sb.from('relationships').select('from_person,to_person,kind'),
       sb.from('artefact_subjects').select('artefact_id,person_id,detail').eq('person_id',PID),
+      sb.from('profiles').select('id,display_name,person_id')
     ]);
     if(people.error) throw people.error;
-    const nameById={}; (people.data||[]).forEach(p=> nameById[p.id]=p.called_name||p.display_name);
-    const me=(people.data||[]).find(p=>p.id===PID); if(!me) throw new Error('That person is not in your forest.');
-    const artIds=[...new Set((subs.data||[]).map(s=>s.artefact_id))];
-    let arts=[]; if(artIds.length){ const a=await sb.from('artefacts').select('id,body,certainty,metadata,storage_path,contributor_user').eq('status','published').in('id',artIds); arts=a.data||[]; }
-    const boxByArt={}; (subs.data||[]).forEach(s=>{ if(s.detail) boxByArt[s.artefact_id]=s.detail; });
-    const profs=await sb.from('profiles').select('id,display_name'); const prov={}; (profs.data||[]).forEach(p=>prov[p.id]=p.display_name);
-
+    const peopleById={}; (people.data||[]).forEach(p=> peopleById[p.id]=p);
+    const nameOf=id=>{ const p=peopleById[id]; return p ? (p.called_name||p.display_name||'Someone') : 'Someone'; };
+    const sexOf=id=>{ const p=peopleById[id]; return p?p.sex:null; };
+    const me=peopleById[PID]; if(!me) throw new Error('That person is not in your forest.');
     const name=me.called_name||me.display_name||'Someone';
-    const places=[...new Set(arts.map(a=>a.metadata&&a.metadata.where).filter(Boolean))];
-    const stories=arts.filter(a=>a.body);
-    const contributors=[...new Set(arts.map(a=>a.contributor_user).filter(Boolean))];
-    const photo=arts.find(a=>boxByArt[a.id])||arts[0];
-    const relLine=relationLines(PID, rels.data||[], id=>nameById[id]);
+    const first=firstName(name);
 
-    let html='<div class="hero"><div class="disc" id="disc">photo</div><div>'+
-      '<h1 class="serif">'+esc(name)+'</h1>'+
-      (places.length?'<div class="place">'+esc(places.join(' \u00b7 '))+'</div>':'')+
-      (relLine?'<div class="rel">'+esc(relLine)+'</div>':'')+
-      '</div></div>';
+    const artIds=[...new Set((subsMine.data||[]).map(s=>s.artefact_id))];
+    let arts=[];
+    if(artIds.length){ const a=await sb.from('artefacts').select('id,body,certainty,metadata,storage_path,contributor_user').eq('status','published').in('id',artIds); arts=a.data||[]; }
+    const boxByArt={}; (subsMine.data||[]).forEach(s=>{ if(s.detail) boxByArt[s.artefact_id]=s.detail; });
+    const provName={}; (profs.data||[]).forEach(p=> provName[p.id]=p.display_name);
+    const myProfile=(profs.data||[]).find(p=>p.id===session.user.id);
+    const myPid=myProfile ? myProfile.person_id : null;
 
-    if(stories.length){
-      html+='<div class="section-label human-label">in their family\u2019s own words</div>';
-      stories.forEach(a=>{ const who=prov[a.contributor_user]||'family'; const cert=a.certainty?' \u00b7 <span class="cert">'+esc(a.certainty)+'</span>':'';
-        html+='<div class="memory"><div class="q">\u201c'+esc(a.body)+'\u201d</div><div class="by">told by '+esc(who)+cert+'</div></div>'; });
-      if(new Set(stories.map(a=>a.contributor_user)).size>1) html+='<div class="both">Remembered differently by different people. Every version is kept.</div>';
+    /* co-appearance: distinct other people across this person's photos */
+    let coCount=0;
+    if(artIds.length){
+      const all=await sb.from('artefact_subjects').select('person_id,artefact_id').in('artefact_id',artIds);
+      coCount=new Set((all.data||[]).map(s=>s.person_id).filter(id=>id&&id!==PID)).size;
     }
 
-    const nMem=stories.length, nPhoto=arts.length, nPeople=contributors.length;
-    html+='<div class="section-label app-label">assembled by the app</div>'+
-      '<div class="appstrip"><div class="k">what has been gathered</div><div class="counts">'+
-      '<div class="c"><span class="v serif">'+nMem+'</span><span class="l">'+(nMem===1?'memory':'memories')+'</span></div>'+
-      '<div class="c"><span class="v serif">'+nPhoto+'</span><span class="l">'+(nPhoto===1?'photograph':'photographs')+'</span></div>'+
-      '<div class="c"><span class="v serif">'+nPeople+'</span><span class="l">'+(nPeople===1?'teller':'tellers')+'</span></div>'+
-      '</div><p>The app has gathered these about <span class="em">'+esc(name)+'</span>. It has <span class="em">written none of them</span> \u2014 every word above belongs to a real person.</p></div>';
+    const places=[...new Set(arts.map(a=>a.metadata&&a.metadata.where).filter(Boolean))];
+    const stories=arts.filter(a=>a.body);
+    const nMem=stories.length, nPhoto=arts.length;
 
-    html+='<div class="footer">You met '+esc(name)+' today.</div>';
+    /* relationships grouped for this person */
+    const kin=[];
+    (rels.data||[]).forEach(r=>{
+      if(r.kind==='parent' && r.to_person===PID) kin.push({id:r.from_person, role:'Parent'});
+      else if(r.kind==='parent' && r.from_person===PID) kin.push({id:r.to_person, role:'Child'});
+      else if(r.kind==='spouse' && (r.from_person===PID||r.to_person===PID)) kin.push({id:(r.from_person===PID?r.to_person:r.from_person), role:'Spouse'});
+      else if(r.kind==='sibling' && (r.from_person===PID||r.to_person===PID)) kin.push({id:(r.from_person===PID?r.to_person:r.from_person), role:'Sibling'});
+    });
+    const relCount=kin.length;
 
-    $('#content').innerHTML=html;
-    if(photo) faceInto($('#disc'), photo.storage_path, boxByArt[photo.id]);
+    /* ---- facet levels ---- */
+    const hasFace=(subsMine.data||[]).some(s=>s.detail) || !!me.primary_asset;
+    const fFace = { key:'Face',   lvl: hasFace?1:(nPhoto?0.5:0),                lit: nPhoto>0 || hasFace };
+    const fStory= { key:'Story',  lvl: nPhoto? nMem/nPhoto : 0,                  lit: nMem>0 };
+    const fPlace= { key:'Place',  lvl: Math.min(1, places.length/3),            lit: places.length>0 };
+    const fPeople={ key:'People', lvl: relCount? Math.min(1, relCount/3) : 0,    lit: relCount>0 };
+    const base=[fFace,fStory,fPlace,fPeople];
+    const avg=base.reduce((s,f)=>s+Math.max(0,Math.min(1,f.lvl)),0)/base.length;
+    const fReel = { key:'Reel', lvl: Math.max(avg,0.05), lit: avg>=0.9 };
+    const facets=[fFace,fStory,fPlace,fPeople,fReel];
+    const litCount=facets.filter(f=>f.lit).length;
+
+    /* ---- portrait photo (prefer one with a face box) ---- */
+    const portraitArt = arts.find(a=>boxByArt[a.id]) || arts[0];
+
+    /* ============ build markup ============ */
+    let h='';
+    /* hero */
+    h+='<div class="hero">'+
+      '<div class="ringwrap">'+
+        '<svg class="ring" viewBox="0 0 220 220" id="lightRing" aria-hidden="true"></svg>'+
+        '<div class="portrait" id="portrait"></div>'+
+      '</div>'+
+      '<h1 class="name serif">'+esc(name)+'</h1>'+
+      '<div class="known-line"><b>'+cap(worded(litCount))+' of five</b> lights kindled</div>'+
+      '<button class="relate" id="relateBtn"><span class="thread"></span>How you\u2019re related</button>'+
+      '<div class="pathline" id="pathline" style="display:none"></div>'+
+    '</div>';
+
+    /* doorways */
+    const doors=[
+      { key:'Face',  lab:'Face',  target:'sec-photos', lvl:fFace.lvl, lit:fFace.lit,
+        sub: fFace.lit ? ('You\u2019d know '+esc(first)+' across a room.') : 'No face placed yet.' },
+      { key:'Story', lab:'Story', target:'sec-photos', lvl:fStory.lvl, lit:fStory.lit,
+        sub: nMem>0 ? (cap(worded(nMem))+' '+(nMem===1?'memory':'memories')+' told, more waiting.') : 'No story told yet \u2014 be the first.' },
+      { key:'Place', lab:'Place', target:'sec-places', lvl:fPlace.lvl, lit:fPlace.lit,
+        sub: places.length ? ('Where '+esc(first)+' sits in the family \u2014 and beside you.') : 'Not yet placed on the tree.' },
+      { key:'People',lab:'People',target:'sec-kin', lvl:fPeople.lvl, lit:fPeople.lit, cool:true,
+        sub: coCount>0 ? ('Appears with '+coCount+' the app can recognise.') : (relCount>0 ? (cap(worded(relCount))+' close '+(relCount===1?'relative':'relatives')+'.') : 'No people linked yet.') },
+      { key:'Reel',  lab:'Reel',  target:'sec-reel', lvl:fReel.lvl, lit:fReel.lit, locked:!fReel.lit,
+        sub: fReel.lit ? ('Every light kindled \u2014 watch '+esc(first)+'\u2019s life assemble.') : ('Kindle every light to assemble '+esc(first)+'\u2019s life.') }
+    ];
+    h+='<div class="sec"><div class="sec-h"><div class="t">Ways to know '+esc(first)+'</div><div class="meta">'+litCount+' of 5 lit</div></div><div class="doorways" id="doorways"></div></div>';
+
+    /* photographs */
+    h+='<div class="sec" id="sec-photos"><div class="sec-h"><div class="t"><span class="lp" style="background:var(--gold);box-shadow:0 0 8px 1px var(--gold);"></span>Photographs</div><div class="meta">'+nPhoto+(nPhoto===1?' kept':' kept')+'</div></div>';
+    if(nPhoto){
+      h+='<div class="photostrip">';
+      arts.forEach((a,idx)=>{
+        const md=a.metadata||{}; const yr=md.when||'\u2014'; const wh=md.where||'';
+        h+='<div class="photo"><div class="img" data-path="'+esc(a.storage_path)+'">'+
+             '<div class="whenwhere"><span class="yr">'+esc(yr)+'</span>'+(wh?'<span class="wh">'+esc(wh)+'</span>':'')+'</div>'+
+           '</div><div class="story">';
+        if(a.body){
+          const who=provName[a.contributor_user]||'family';
+          h+='<div class="words">\u201c'+esc(a.body)+'\u201d</div>'+
+             '<div class="told"><span class="flame"></span>told by <b>'+esc(who)+'</b></div>';
+        } else {
+          h+='<div class="invite"><div class="words">No one has told the story of this one yet.</div><div class="cta">Ask someone who might remember \u2192</div></div>';
+        }
+        h+='</div></div>';
+      });
+      h+='</div>';
+      /* app-assembled facts: visible line, counts only */
+      h+='<div class="appfacts"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><path d="M3 15l4-4 4 4 5-5 5 5"></path></svg></span>'+
+         '<div class="body">'+esc(name)+' appears in '+nPhoto+(nPhoto===1?' photograph':' photographs')+(coCount>0?(', alongside '+coCount+' '+(coCount===1?'person':'people')+' the app can recognise'):'')+'.'+
+         '<span class="src">Assembled by The Living Forest</span></div></div>';
+    } else {
+      h+='<div class="softinvite">No photographs of '+esc(first)+' have been gathered yet. If you have one, it would light this star.</div>';
+    }
+    h+='</div>';
+
+    /* who they knew */
+    h+='<div class="sec" id="sec-kin"><div class="sec-h"><div class="t"><span class="lp" style="background:var(--gold);box-shadow:0 0 8px 1px var(--gold);"></span>Who '+esc(first)+' knew</div><div class="meta">'+relCount+' close</div></div>';
+    if(relCount){
+      h+='<div class="kin">';
+      kin.forEach(k=>{
+        h+='<div class="kinperson" data-id="'+esc(k.id)+'">'+
+             '<div class="kinstar"><span class="glow"></span><div class="crop" data-asset="'+esc(peopleById[k.id]&&peopleById[k.id].primary_asset||'')+'">'+
+               '<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#243449"></rect><ellipse cx="50" cy="46" rx="24" ry="27" fill="#c9a06f"></ellipse><path d="M50 96 Q50 68 26 64 Q30 40 50 40 Q70 40 74 64 Q50 68 50 96Z" fill="#33465e"></path></svg>'+
+             '</div></div>'+
+             '<div class="kn">'+esc(nameOf(k.id))+'</div><div class="kr">'+esc(k.role)+'</div>'+
+           '</div>';
+      });
+      h+='</div>';
+    } else {
+      h+='<div class="softinvite">No relatives have been placed beside '+esc(first)+' yet.</div>';
+    }
+    h+='</div>';
+
+    /* places */
+    if(places.length){
+      h+='<div class="sec" id="sec-places"><div class="sec-h"><div class="t"><span class="lp" style="background:var(--cool);box-shadow:0 0 8px 1px var(--cool);"></span>Places</div><div class="meta">'+places.length+' tied to '+esc(first)+'</div></div><div class="places">';
+      places.forEach(pl=>{ h+='<span class="place" data-place="'+esc(pl)+'"><span class="pin"></span>'+esc(pl)+'</span>'; });
+      h+='</div></div>';
+    }
+
+    /* bring them to light — challenges */
+    h+='<div class="sec"><div class="sec-h"><div class="t">Bring '+esc(first)+' to light</div></div>'+
+       '<a class="challenge" href="crowd-real.html" style="text-decoration:none;">'+
+         '<div class="cimg"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#0a1422"></rect><circle cx="35" cy="42" r="10" fill="#1b2e46"></circle><circle cx="65" cy="42" r="10" fill="#20344e"></circle><circle cx="50" cy="60" r="16" fill="none" stroke="#f3cd84" stroke-width="3"></circle><circle cx="50" cy="60" r="11" fill="#e6c197"></circle></svg></div>'+
+         '<div class="c-txt"><div class="ct">Find Them in the Crowd</div><div class="cs">Uncover '+esc(first)+' among the gathering.</div></div>'+
+         '<span class="go">Play</span>'+
+       '</a>'+
+       '<div class="soon"><div class="s"><div class="sn serif">Who Is Who?</div><div class="sl">Coming soon</div></div><div class="s"><div class="sn serif">Where Was This?</div><div class="sl">Coming soon</div></div></div></div>';
+
+    /* story reel doorway (not built yet — gentle coming-soon) */
+    h+='<div class="sec" id="sec-reel"><div class="challenge" style="background:linear-gradient(120deg, rgba(127,180,216,.1), rgba(243,205,132,.05)); border-color:rgba(127,180,216,.3); cursor:default;">'+
+         '<div class="cimg"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#0a1422"></rect><path d="M35 38 L62 50 L35 62 Z" fill="#ffe6ad"></path><circle cx="50" cy="50" r="30" fill="none" stroke="#7fb4d8" stroke-width="2" opacity=".5"></circle></svg></div>'+
+         '<div class="c-txt"><div class="ct">'+esc(poss(name))+' Story Reel</div><div class="cs">'+(nPhoto?(cap(worded(nPhoto))+' photograph'+(nPhoto===1?'':'s')+', one day assembling into a life.'):'A life, once the photographs are gathered.')+'</div></div>'+
+         '<span class="go" style="background:linear-gradient(180deg,#a9d0ec,#7fb4d8);">Soon</span>'+
+       '</div></div>';
+
+    /* foot */
+    h+='<div class="foot"><span class="leaf serif">One star, a little brighter than before.</span></div>';
+
+    $('#content').innerHTML=h;
+
+    /* ---- post-render wiring ---- */
+    drawRing(facets);
+    buildDoorways(doors);
+
+    /* portrait + photo images + kin crops */
+    if(portraitArt) faceInto($('#portrait'), portraitArt.storage_path, boxByArt[portraitArt.id]);
+    else if(me.primary_asset) faceInto($('#portrait'), me.primary_asset, null);
+    document.querySelectorAll('.photo .img').forEach(el=>{ const p=el.getAttribute('data-path'); if(p) imgInto(el,p); });
+    document.querySelectorAll('.kinstar .crop').forEach(el=>{ const p=el.getAttribute('data-asset'); if(p) faceInto(el,p,null); });
+
+    /* kin navigation */
+    document.querySelectorAll('.kinperson').forEach(el=>{ el.addEventListener('click',()=>{ const id=el.getAttribute('data-id'); if(id) location.href='person-real.html?id='+encodeURIComponent(id); }); });
+    /* place navigation → globe */
+    document.querySelectorAll('.place').forEach(el=>{ el.addEventListener('click',()=>{ const pl=el.getAttribute('data-place'); location.href='globe-real.html'+(pl?('?place='+encodeURIComponent(pl)):''); }); });
+
+    /* how-you're-related */
+    const pathObj=shortestPath(rels.data||[], myPid, PID);
+    const pathHtml=renderPath(pathObj, nameOf, sexOf);
+    const btn=$('#relateBtn'), line=$('#pathline');
+    btn.addEventListener('click',()=>{
+      const open=line.style.display!=='none';
+      line.style.display=open?'none':'block';
+      btn.classList.toggle('open',!open);
+      if(!open && !line.innerHTML) line.innerHTML=pathHtml;
+    });
+
+    /* crumb = first place, if any */
+    if(places.length) $('#crumb').textContent=places[0];
+
     $('#content').style.opacity=1;
     $('#gate').style.display='none';
   }catch(err){ gateError(err.message||'Could not open this person.'); }
@@ -172,16 +585,16 @@ async function load(){
 $('#back').addEventListener('click', e=>{ if(history.length>1){ e.preventDefault(); history.back(); } });
 
 function showSignIn(){ const box=$('#gateBox');
-  box.innerHTML='<h2 class="serif">Your forest</h2><p>Sign in with your keeper account to meet your family.</p>'+
+  box.innerHTML='<h2 class="serif">Your forest</h2><p>Sign in with your family account to meet your people.</p>'+
     '<input id="gEmail" type="email" placeholder="you@example.com" autocomplete="email"/>'+
     '<input id="gPw" type="password" placeholder="password" autocomplete="current-password"/>'+
     '<button id="gGo">Sign in</button><div class="msg" id="gMsg"></div>';
   $('#gGo').onclick=async()=>{ const email=$('#gEmail').value.trim(), password=$('#gPw').value; const m=$('#gMsg');
     if(!email||!password){ m.textContent='Enter your email and password.'; return; }
-    m.style.color='rgba(206,221,240,.65)'; m.textContent='Signing in…';
+    m.style.color='rgba(206,221,240,.65)'; m.textContent='Signing in\u2026';
     const { error }=await sb.auth.signInWithPassword({email,password});
-    if(error){ m.style.color='#ff9a8f'; m.textContent=error.message; } else { box.innerHTML='<div class="spin"></div><p style="margin-top:16px">Opening…</p>'; load(); } }; }
-function gateError(msg){ $('#gate').style.display='flex'; $('#gateBox').innerHTML='<h2 class="serif">Hmm</h2><p>'+esc(msg)+'</p><a href="home-real.html" style="color:#f3cd84">← back to the sky</a>'; }
+    if(error){ m.style.color='#ff9a8f'; m.textContent=error.message; } else { box.innerHTML='<div class="spin"></div><p style="margin-top:16px">Opening\u2026</p>'; load(); } }; }
+function gateError(msg){ $('#gate').style.display='flex'; $('#gateBox').innerHTML='<h2 class="serif">Hmm</h2><p>'+esc(msg)+'</p><a href="home-real.html" style="color:#f3cd84;text-decoration:none">\u2190 back to the sky</a>'; }
 
 load();
 </script>
