@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#0b0a0d" />
+<title>The Living Forest — a place we stood</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; margin:0; padding:0; }
+  html,body{ background:#0b0a0d; }
+  :root{
+    --cream:#f4ecdb; --muted:#9db0cc; --panel:#ffffff0d; --hair:#ffffff1f;
+    --gold:#f3cd84; --gold-hi:#ffe6ad; --cool:#7fb4d8;
+    --clay:#c67a4a; --amber:#e59b52; --terra:#a0492e;
+    /* time-of-day light, driven by scroll (morning -> golden hour -> dusk) */
+    --sky-top:#3a5570; --sky-bot:#c98a52; --sun:#ffe6ad; --sun-x:22%; --sun-y:30%; --haze:.32;
+    --ground:#2a1d16; --hill-far:#5a4433; --hill-mid:#3e2c20; --hill-near:#241812;
+  }
+  body{
+    font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--cream);
+    min-height:100dvh; -webkit-user-select:none; user-select:none; overflow-x:hidden;
+  }
+  .serif{ font-family:'Newsreader',Georgia,serif; }
+  .appvoice{ font-family:'Hanken Grotesk',sans-serif; letter-spacing:.22em; text-transform:uppercase; font-size:10px; color:var(--muted); }
+
+  /* ============ LIVING PLACE-SCAPE (fixed, behind everything) ============ */
+  .scape{ position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none;
+    background:linear-gradient(to bottom, var(--sky-top) 0%, var(--sky-bot) 62%, var(--ground) 100%);
+    transition:background .4s linear; }
+  /* the sun / light source — colour and position shift with the hour */
+  .sun{ position:absolute; left:var(--sun-x); top:var(--sun-y); width:280px; height:280px;
+    transform:translate(-50%,-50%);
+    background:radial-gradient(circle, var(--sun) 0%, rgba(255,230,173,.35) 22%, transparent 62%);
+    transition:left .5s linear, top .5s linear, background .4s linear; }
+  /* atmospheric haze band on the horizon */
+  .haze{ position:absolute; left:0; right:0; top:46%; height:34%;
+    background:linear-gradient(to bottom, transparent, var(--sun) 55%, transparent);
+    opacity:var(--haze); mix-blend-mode:screen; transition:opacity .4s linear; filter:blur(12px); }
+  /* parallax horizon layers */
+  .layer{ position:absolute; left:-8%; right:-8%; will-change:transform; }
+  .hill-far{ bottom:30%; }
+  .hill-mid{ bottom:16%; }
+  .hill-near{ bottom:0; }
+  .layer svg{ display:block; width:100%; height:auto; }
+  /* faint stylised contour map beneath, drifting slowly */
+  .contours{ position:absolute; inset:-10%; opacity:.22; mix-blend-mode:soft-light; }
+  .contours svg{ width:100%; height:100%; }
+  /* drifting warm motes — dust in afternoon sun */
+  .motes{ position:absolute; inset:0; }
+  .mote{ position:absolute; border-radius:50%; background:var(--gold-hi);
+    box-shadow:0 0 6px 1px rgba(255,230,173,.7); opacity:0; animation:drift linear infinite; }
+  @keyframes drift{
+    0%{ transform:translate(0,20px); opacity:0; }
+    12%{ opacity:.8; }
+    88%{ opacity:.7; }
+    100%{ transform:translate(24px,-120px); opacity:0; }
+  }
+  /* vignette to seat content */
+  .scape::after{ content:""; position:absolute; inset:0;
+    background:radial-gradient(120% 80% at 50% 18%, transparent 40%, rgba(11,10,13,.55) 100%); }
+
+  @media (prefers-reduced-motion: reduce){
+    .mote{ animation:none !important; opacity:.5 !important; }
+    .scape,.sun,.haze{ transition:none !important; }
+  }
+
+  /* ============ CONTENT ============ */
+  .phone{ position:relative; z-index:1; width:100%; max-width:430px; margin:0 auto;
+    padding:0 20px calc(60px + env(safe-area-inset-bottom));
+    padding-top:max(16px, env(safe-area-inset-top)); }
+
+  .topbar{ display:flex; align-items:center; justify-content:space-between; height:44px; }
+  .icon-btn{ width:40px; height:40px; border-radius:50%; border:1px solid var(--hair);
+    background:rgba(20,14,10,.4); backdrop-filter:blur(6px); color:var(--cream); display:grid; place-items:center; cursor:pointer; }
+  .icon-btn svg{ width:18px; height:18px; }
+  .crumb{ display:flex; align-items:center; gap:7px; }
+  .crumb .pin{ width:5px; height:5px; border-radius:50%; background:var(--amber); box-shadow:0 0 8px 1px var(--amber); }
+
+  /* place title block — sits high, like a horizon */
+  .placehead{ margin-top:34vh; }
+  .kicker{ display:flex; align-items:center; gap:9px; }
+  .kicker .ln{ height:1px; flex:1; background:linear-gradient(90deg,transparent,rgba(230,155,82,.6)); }
+  .placename{ font-family:'Newsreader',serif; font-weight:300; font-size:44px; line-height:.98;
+    letter-spacing:-.015em; color:#fbf2e2; margin-top:12px; text-shadow:0 2px 30px rgba(0,0,0,.5); }
+  .placename em{ font-style:italic; }
+  .yearspan{ font-family:'Newsreader',serif; font-style:italic; font-size:17px; color:var(--gold-hi); margin-top:12px; }
+
+  /* COOL-BLUE cartographic strip — neutral facts only, visibly its own voice */
+  .cartostrip{ margin-top:18px; display:flex; align-items:center; gap:14px;
+    padding:14px 16px; border-radius:16px; background:rgba(10,20,30,.5); backdrop-filter:blur(8px);
+    border:1px solid rgba(127,180,216,.28); }
+  .minimap{ width:56px; height:56px; flex-shrink:0; position:relative; }
+  .minimap svg{ width:100%; height:100%; }
+  .carto-body{ flex:1; min-width:0; }
+  .carto-body .coord{ font-family:'Hanken Grotesk',sans-serif; font-size:12px; letter-spacing:.06em; color:var(--cool); display:flex; gap:8px; flex-wrap:wrap; }
+  .carto-body .coord b{ font-weight:600; }
+  .carto-body .counts{ font-size:12.5px; color:rgba(127,180,216,.85); margin-top:6px; }
+  .carto-body .src{ display:block; margin-top:6px; font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:rgba(127,180,216,.5); }
+
+  /* section heading */
+  .sec{ margin-top:36px; }
+  .sec-h{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:14px; }
+  .sec-h .t{ font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:9px; }
+  .sec-h .t .lp{ width:7px; height:7px; border-radius:50%; }
+  .sec-h .meta{ font-size:11px; color:var(--muted); }
+
+  /* MOMENTS — photographs taken here */
+  .moment{ border-radius:18px; overflow:hidden; background:rgba(24,16,11,.55); backdrop-filter:blur(8px);
+    border:1px solid var(--hair); box-shadow:0 24px 60px -34px #000; margin-bottom:16px; }
+  .moment .img{ position:relative; aspect-ratio:4/3; }
+  .moment .img svg{ width:100%; height:100%; display:block; }
+  .moment .img::after{ content:""; position:absolute; inset:0; background:linear-gradient(to top, rgba(20,12,8,.9), transparent 46%); }
+  .moment .stamp{ position:absolute; left:13px; bottom:11px; z-index:2; display:flex; align-items:center; gap:9px; }
+  .moment .stamp .yr{ font-family:'Newsreader',serif; font-style:italic; font-size:15px; color:var(--gold-hi); }
+  .moment .stamp .ppl{ font-size:11px; color:#e7d6c2; opacity:.85; }
+  .moment .body{ padding:15px 17px 17px; }
+  /* GOLD story, always attributed */
+  .moment .words{ font-family:'Newsreader',serif; font-style:italic; font-weight:300; font-size:15.5px; line-height:1.5; color:#f6ecd7; }
+  .moment .told{ margin-top:11px; display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--gold); }
+  .moment .told .flame{ width:6px; height:6px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px 1px var(--gold); }
+  .moment .told b{ font-weight:600; }
+  /* gold invitation when no story */
+  .invite{ padding:15px 16px; border-radius:14px; border:1px dashed rgba(243,205,132,.35); background:rgba(243,205,132,.05); }
+  .invite .words{ font-family:'Newsreader',serif; font-style:italic; font-size:14.5px; line-height:1.5; color:#efe0c2; }
+  .invite .cta{ margin-top:10px; font-size:12px; color:var(--gold); font-weight:600; }
+
+  /* SEEN HERE — linked faces */
+  .faces{ display:flex; gap:15px; overflow-x:auto; margin:0 -20px; padding:2px 20px 6px; }
+  .faces::-webkit-scrollbar{ display:none; }
+  .face{ flex:0 0 auto; width:72px; text-align:center; cursor:pointer; }
+  .face .crop{ width:64px; height:64px; margin:0 auto; border-radius:50%; overflow:hidden;
+    border:1px solid rgba(243,205,132,.5); box-shadow:0 0 16px -3px rgba(243,205,132,.5); }
+  .face .crop svg{ width:100%; height:100%; }
+  .face .fn{ font-family:'Newsreader',serif; font-size:13px; margin-top:8px; color:var(--cream); line-height:1.12; }
+  .face.more .crop{ display:grid; place-items:center; background:rgba(127,180,216,.1); border-color:rgba(127,180,216,.4); box-shadow:none; }
+  .face.more .cnt{ font-family:'Newsreader',serif; font-size:18px; color:var(--cool); }
+
+  /* DOORWAYS */
+  .doors{ display:flex; flex-direction:column; gap:10px; }
+  .door{ display:flex; align-items:center; gap:14px; padding:15px 16px; border-radius:16px;
+    background:rgba(24,16,11,.5); backdrop-filter:blur(8px); border:1px solid var(--hair); cursor:pointer; }
+  .door:active{ background:rgba(40,26,18,.6); }
+  .door .di{ width:38px; height:38px; border-radius:12px; display:grid; place-items:center; flex-shrink:0;
+    background:rgba(230,155,82,.14); }
+  .door .di svg{ width:18px; height:18px; }
+  .door .dt{ flex:1; min-width:0; }
+  .door .dt .l{ font-family:'Newsreader',serif; font-size:17px; color:var(--cream); }
+  .door .dt .s{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .door .chev{ color:var(--muted); }
+  .door .chev svg{ width:16px; height:16px; }
+
+  .foot{ margin-top:40px; text-align:center; }
+  .foot .leaf{ font-family:'Newsreader',serif; font-style:italic; font-size:14px; color:rgba(230,155,82,.75); }
+
+  /* gate */
+  #gate{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(11,10,13,.92);backdrop-filter:blur(6px);padding:24px;}
+  #gate .box{width:min(380px,92vw);background:rgba(20,14,10,.92);border:1px solid rgba(230,155,82,.22);border-radius:20px;padding:26px;text-align:center;}
+  #gate h2{font-family:'Newsreader',serif;font-weight:300;font-size:24px;margin:6px 0;color:#f4ecdb;}
+  #gate p{font-size:13px;color:rgba(206,221,240,.65);line-height:1.5;margin:0 0 16px;}
+  #gate input{width:100%;background:#140e0a;border:1px solid rgba(230,155,82,.25);border-radius:12px;color:#eef2fb;padding:12px 13px;font-size:15px;font-family:inherit;margin-top:8px;outline:none;}
+  #gate input:focus{border-color:#f3cd84;}
+  #gate button{width:100%;margin-top:14px;background:linear-gradient(180deg,#ffe6ad,#f3cd84);color:#3a2a05;font-weight:700;font-family:inherit;font-size:15px;padding:13px;border:none;border-radius:13px;cursor:pointer;}
+  #gate .msg{margin-top:12px;font-size:12.5px;color:#ff9a8f;min-height:16px;}
+  #gate .spin{display:inline-block;width:34px;height:34px;border:3px solid rgba(243,205,132,.25);border-top-color:#f3cd84;border-radius:50%;animation:sp 1s linear infinite;}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .softinvite{padding:15px 16px;border-radius:14px;border:1px dashed rgba(243,205,132,.35);background:rgba(243,205,132,.05);font-family:'Newsreader',serif;font-style:italic;font-size:14.5px;line-height:1.5;color:#efe0c2;}
+</style>
+</head>
+<body>
+  <div class="scape" id="scape" aria-hidden="true">
+    <div class="sun" id="sun"></div>
+    <div class="haze"></div>
+    <div class="contours" id="contours"></div>
+    <div class="layer hill-far" id="hillFar"></div>
+    <div class="layer hill-mid" id="hillMid"></div>
+    <div class="layer hill-near" id="hillNear"></div>
+    <div class="motes" id="motes"></div>
+  </div>
+  <main class="phone">
+    <div class="topbar">
+      <button class="icon-btn" id="back" aria-label="Back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <div class="crumb"><span class="appvoice">A place we stood</span><span class="pin"></span></div>
+      <button class="icon-btn" id="toGlobe" aria-label="See on the globe">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>
+      </button>
+    </div>
+
+    <div id="reveal" style="opacity:0;transition:opacity .5s ease;">
+      <div class="placehead">
+        <div class="kicker"><span class="appvoice" id="pKicker"></span><span class="ln"></span></div>
+        <h1 class="placename serif" id="pName">&hellip;</h1>
+        <div class="yearspan" id="pYears"></div>
+      </div>
+
+      <div class="cartostrip">
+        <div class="minimap">
+          <svg viewBox="0 0 56 56">
+            <circle cx="28" cy="28" r="26" fill="none" stroke="rgba(127,180,216,.3)" stroke-width="1"/>
+            <circle cx="28" cy="28" r="17" fill="none" stroke="rgba(127,180,216,.22)" stroke-width="1"/>
+            <path d="M4 28h48M28 4v48" stroke="rgba(127,180,216,.18)" stroke-width="1"/>
+            <circle class="pulse" cx="28" cy="28" r="4" fill="#7fb4d8"></circle>
+            <circle cx="28" cy="28" r="2.5" fill="#aed4ee"></circle>
+          </svg>
+        </div>
+        <div class="carto-body">
+          <div class="coord" id="pCoord"></div>
+          <div class="counts" id="pCounts"></div>
+          <span class="src">Located by The Living Forest</span>
+        </div>
+      </div>
+
+      <div id="content"></div>
+    </div>
+  </main>
+
+  <div id="gate"><div class="box" id="gateBox"><div class="spin"></div><p style="margin-top:16px">Arriving&hellip;</p></div></div>
+
+<script>
+  (function(){
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // ---- build the horizon layers (rolling hill silhouettes) ----
+    function hill(pts, fill){
+      let d = 'M-100 400 ';
+      pts.forEach(p=> d += `L ${p[0]} ${p[1]} `);
+      d += 'L 1200 400 Z';
+      return `<svg viewBox="0 0 1000 400" preserveAspectRatio="none" style="height:${Math.max(...pts.map(p=>400-p[1]))+40}px"><path d="${d}" fill="${fill}"/></svg>`;
+    }
+    document.getElementById('hillFar').innerHTML  = hill([[0,180],[180,120],[360,160],[560,90],[760,150],[1000,110]], 'var(--hill-far)');
+    document.getElementById('hillMid').innerHTML  = hill([[0,240],[220,170],[440,220],[680,150],[1000,200]], 'var(--hill-mid)');
+    document.getElementById('hillNear').innerHTML = hill([[0,300],[260,250],[520,300],[800,240],[1000,290]], 'var(--hill-near)');
+
+    // ---- faint contour field ----
+    let c = '<svg viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice">';
+    for(let i=0;i<9;i++){ const y=40+i*62;
+      c += `<path d="M-20 ${y} Q 100 ${y-30} 200 ${y} T 420 ${y+10}" fill="none" stroke="rgba(230,155,82,.5)" stroke-width="1"/>`; }
+    c += '<circle cx="210" cy="300" r="6" fill="rgba(230,155,82,.7)"/></svg>';
+    document.getElementById('contours').innerHTML = c;
+
+    // ---- drifting motes ----
+    if(!reduce){
+      const motes = document.getElementById('motes'); let html='';
+      for(let i=0;i<22;i++){ const x=Math.random()*100, s=(Math.random()*3+1.5).toFixed(1),
+        d=(Math.random()*12+10).toFixed(1), delay=(-Math.random()*20).toFixed(1), top=(40+Math.random()*60).toFixed(0);
+        html += `<span class="mote" style="left:${x}%;top:${top}%;width:${s}px;height:${s}px;animation-duration:${d}s;animation-delay:${delay}s;"></span>`; }
+      motes.innerHTML = html;
+    } else {
+      // reduced-motion: scatter a few still motes so the frame stays beautiful
+      const motes = document.getElementById('motes'); let html='';
+      for(let i=0;i<10;i++){ html += `<span class="mote" style="left:${(Math.random()*100).toFixed(0)}%;top:${(40+Math.random()*50).toFixed(0)}%;width:2.5px;height:2.5px;"></span>`; }
+      motes.innerHTML = html;
+    }
+
+    // ---- pulse for the "you are here" point ----
+    if(!reduce){
+      const pulse = document.querySelector('.pulse');
+      let t0 = performance.now();
+      (function beat(t){ const k=((t-t0)/2200)%1; const e=1-Math.pow(1-Math.min(k*1.6,1),2);
+        pulse.setAttribute('r', 4 + e*7); pulse.setAttribute('opacity', (1-e*0.9).toFixed(2));
+        requestAnimationFrame(beat); })(t0);
+    }
+
+    // ---- THE SIGNATURE: scroll through the years => the light changes ----
+    // morning (cool, high sun) -> golden hour (warm, low sun) -> dusk (violet, set)
+    const scape = document.getElementById('scape'), sun = document.getElementById('sun');
+    const hills = [ ['hillFar',0.10], ['hillMid',0.22], ['hillNear',0.40] ];
+    const contours = document.getElementById('contours');
+    // keyframes of the day, interpolated by scroll progress 0..1
+    const DAY = [
+      { at:0,   skyT:[58,84,112],  skyB:[201,138,82],  sun:[255,240,200], sx:20, sy:26, haze:.28, gN:[36,26,20] },
+      { at:.5,  skyT:[74,60,66],   skyB:[230,150,78],  sun:[255,205,120], sx:60, sy:40, haze:.42, gN:[32,20,16] },
+      { at:1,   skyT:[38,32,58],   skyB:[120,64,72],   sun:[150,90,120],  sx:88, sy:66, haze:.30, gN:[22,16,22] },
+    ];
+    const lerp=(a,b,k)=>a+(b-a)*k;
+    const rgb=(a,b,k)=>`rgb(${Math.round(lerp(a[0],b[0],k))},${Math.round(lerp(a[1],b[1],k))},${Math.round(lerp(a[2],b[2],k))})`;
+    function applyDay(p){
+      let i=0; while(i<DAY.length-2 && p>DAY[i+1].at) i++;
+      const A=DAY[i], B=DAY[i+1], k=Math.max(0,Math.min(1,(p-A.at)/(B.at-A.at)));
+      const S=scape.style;
+      S.setProperty('--sky-top', rgb(A.skyT,B.skyT,k));
+      S.setProperty('--sky-bot', rgb(A.skyB,B.skyB,k));
+      S.setProperty('--sun', rgb(A.sun,B.sun,k));
+      S.setProperty('--sun-x', lerp(A.sx,B.sx,k).toFixed(1)+'%');
+      S.setProperty('--sun-y', lerp(A.sy,B.sy,k).toFixed(1)+'%');
+      S.setProperty('--haze', lerp(A.haze,B.haze,k).toFixed(2));
+      S.setProperty('--hill-near', rgb(A.gN,B.gN,k));
+    }
+
+    let ticking=false;
+    function onScroll(){
+      if(ticking) return; ticking=true;
+      requestAnimationFrame(()=>{
+        const y = window.scrollY || window.pageYOffset;
+        const max = Math.max(1, document.body.scrollHeight - window.innerHeight);
+        const p = Math.max(0, Math.min(1, y/max));
+        applyDay(p);
+        if(!reduce){
+          // parallax: layers rise at different speeds
+          hills.forEach(([id,sp])=>{ document.getElementById(id).style.transform = `translateY(${(-y*sp).toFixed(1)}px)`; });
+          contours.style.transform = `translateY(${(-y*0.06).toFixed(1)}px)`;
+          sun.style.transform = `translate(-50%,-50%) translateY(${(y*0.05).toFixed(1)}px)`;
+        }
+      });
+      ticking=false;
+    }
+    window.addEventListener('scroll', onScroll, {passive:true});
+    applyDay(0);
+  })();
+
+</script>
+
+<script>
+const $ = s => document.querySelector(s);
+const SUPABASE_URL='https://oabcdrktuikifbormjip.supabase.co';
+const SUPABASE_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const PLACE = new URLSearchParams(location.search).get('place');
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function firstName(n){ return String(n||'').trim().split(/\s+/)[0]||'someone'; }
+function parseYear(t){ const m=String(t||'').match(/\d{4}/); return m?+m[0]:NaN; }
+function fmtLat(v){ return Math.abs(v).toFixed(2)+'\u00b0'+(v>=0?'N':'S'); }
+function fmtLng(v){ return Math.abs(v).toFixed(2)+'\u00b0'+(v>=0?'E':'W'); }
+function joinNames(arr){ const a=arr.filter(Boolean); if(!a.length) return ''; if(a.length===1) return a[0]; if(a.length===2) return a[0]+' & '+a[1]; return a.slice(0,2).join(', ')+' & '+(a.length-2)+' more'; }
+
+async function faceInto(el, path, box){
+  if(!el || !path) return;
+  try{ const s=await sb.storage.from('family').createSignedUrl(path,3600); const url=s.data&&s.data.signedUrl; if(!url) return;
+    const img=new Image(); img.crossOrigin='anonymous';
+    img.onload=()=>{ const c=document.createElement('canvas'); c.width=c.height=200; const g=c.getContext('2d');
+      if(box&&box.w>0&&box.h>0){ const pad=0.35; const side=Math.max(box.w,box.h)*(1+2*pad);
+        let sx=(box.x+box.w/2-side/2)*img.naturalWidth, sy=(box.y+box.h/2-side/2)*img.naturalHeight, ss=side*Math.max(img.naturalWidth,img.naturalHeight);
+        sx=Math.max(0,Math.min(img.naturalWidth-ss,sx)); sy=Math.max(0,Math.min(img.naturalHeight-ss,sy)); g.drawImage(img,sx,sy,ss,ss,0,0,200,200);
+      } else { const side=Math.min(img.naturalWidth,img.naturalHeight); g.drawImage(img,(img.naturalWidth-side)/2,(img.naturalHeight-side)/2,side,side,0,0,200,200); }
+      c.style.cssText='width:100%;height:100%;object-fit:cover;'; el.innerHTML=''; el.appendChild(c);
+    }; img.src=url;
+  }catch(e){}
+}
+async function imgInto(el, path){
+  if(!el || !path) return;
+  try{ const s=await sb.storage.from('family').createSignedUrl(path,3600); const url=s.data&&s.data.signedUrl; if(!url) return;
+    const im=document.createElement('img'); im.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;'; im.src=url; el.insertBefore(im, el.firstChild);
+  }catch(e){}
+}
+
+async function load(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session){ showSignIn(); return; }
+  if(!PLACE){ gateError('No place was chosen. Go back to the globe and tap a place.'); return; }
+  try{
+    const [geoR, artsR, peopleR, profsR] = await Promise.all([
+      sb.from('place_geo').select('name,lat,lng,label').eq('name',PLACE).maybeSingle(),
+      sb.from('artefacts').select('id,kind,body,metadata,storage_path,contributor_user').eq('status','published').eq('metadata->>where',PLACE),
+      sb.from('people').select('id,display_name,called_name,primary_asset'),
+      sb.from('profiles').select('id,display_name')
+    ]);
+    const geo=geoR.data||null;
+    const arts=artsR.data||[];
+    const peopleById={}; (peopleR.data||[]).forEach(p=> peopleById[p.id]=p);
+    const nameOf=id=>{ const p=peopleById[id]; return p?(p.called_name||p.display_name||'Someone'):'Someone'; };
+    const provName={}; (profsR.data||[]).forEach(p=> provName[p.id]=p.display_name);
+
+    /* people per artefact + everyone seen here */
+    const peopleByArt={}; const seenOrder=[]; const seenSet={};
+    if(arts.length){
+      const subs=await sb.from('artefact_subjects').select('artefact_id,person_id,detail').in('artefact_id', arts.map(a=>a.id));
+      (subs.data||[]).forEach(s=>{ (peopleByArt[s.artefact_id]=peopleByArt[s.artefact_id]||[]).push({id:s.person_id, box:s.detail});
+        if(s.person_id && !seenSet[s.person_id]){ seenSet[s.person_id]=1; seenOrder.push(s.person_id); } });
+    }
+
+    /* name + region */
+    const rawLabel = (PLACE.indexOf(',')>=0) ? PLACE : (geo && geo.label ? geo.label : PLACE);
+    const parts = rawLabel.split(',').map(s=>s.trim()).filter(Boolean);
+    const head = (PLACE.split(',')[0]||PLACE).trim();
+    const region = parts.length>1 ? parts[parts.length-1] : '';
+    const words = head.split(/\s+/);
+    const nameHtml = words.length>1 ? esc(words.slice(0,-1).join(' '))+' <em>'+esc(words[words.length-1])+'</em>' : '<em>'+esc(head)+'</em>';
+
+    /* years */
+    const years=arts.map(a=>parseYear(a.metadata&&a.metadata.when)).filter(y=>!isNaN(y));
+    const yMin=years.length?Math.min(...years):null, yMax=years.length?Math.max(...years):null;
+    let yearText='';
+    if(yMin!=null) yearText = (yMin===yMax) ? ('a moment in '+yMin) : ('held between '+yMin+' & '+yMax);
+
+    /* fill the head + carto */
+    $('#pKicker').textContent = region || 'a place';
+    $('#pName').innerHTML = nameHtml;
+    $('#pYears').textContent = yearText;
+    if(geo && geo.lat!=null && geo.lng!=null){
+      $('#pCoord').innerHTML = '<span><b>'+fmtLat(geo.lat).replace(/([NS])$/,'</b>$1')+'</span><span><b>'+fmtLng(geo.lng).replace(/([EW])$/,'</b>$1')+'</span>';
+    } else { $('#pCoord').innerHTML=''; }
+    const nP=arts.length, nPeople=seenOrder.length;
+    $('#pCounts').textContent = 'Seen in '+nP+' '+(nP===1?'photograph':'photographs')+' \u00b7 '+nPeople+' '+(nPeople===1?'person':'people')+' recognised here.';
+
+    /* ===== moments ===== */
+    let h='';
+    h+='<div class="sec" id="sec-moments"><div class="sec-h"><div class="t"><span class="lp" style="background:var(--gold);box-shadow:0 0 8px 1px var(--gold);"></span>Moments here</div><div class="meta">'+nP+' '+(nP===1?'photograph':'photographs')+'</div></div>';
+    if(nP){
+      arts.forEach(a=>{
+        const md=a.metadata||{}; const yr=parseYear(md.when); const yrTxt=isNaN(yr)?esc(md.when||''):yr;
+        const ppl=(peopleByArt[a.id]||[]).map(x=>firstName(nameOf(x.id)));
+        const isImg=(a.kind==='photo'||a.kind==='object')&&a.storage_path;
+        h+='<div class="moment"><div class="img" '+(isImg?'data-path="'+esc(a.storage_path)+'"':'')+'>'+
+             (isImg?'':'<svg viewBox="0 0 100 75"><rect width="100" height="75" fill="#1a110b"/></svg>')+
+             '<div class="stamp"><span class="yr">'+yrTxt+'</span>'+(ppl.length?'<span class="ppl">'+esc(joinNames(ppl))+'</span>':'')+'</div>'+
+           '</div><div class="body">';
+        if(a.body){ const who=provName[a.contributor_user]||'family';
+          h+='<div class="words">\u201c'+esc(a.body)+'\u201d</div><div class="told"><span class="flame"></span>told by <b>'+esc(who)+'</b></div>';
+        } else {
+          h+='<div class="invite"><div class="words">No one has told the story of this afternoon yet.</div><div class="cta">Ask someone who remembers it \u2192</div></div>';
+        }
+        h+='</div></div>';
+      });
+    } else {
+      h+='<div class="softinvite">No photographs from here have been gathered yet. If you have one, it would place the family in this spot.</div>';
+    }
+    h+='</div>';
+
+    /* ===== seen here ===== */
+    h+='<div class="sec" id="sec-faces"><div class="sec-h"><div class="t"><span class="lp" style="background:var(--gold);box-shadow:0 0 8px 1px var(--gold);"></span>Seen here</div><div class="meta">'+nPeople+' recognised</div></div>';
+    if(nPeople){
+      const show=seenOrder.slice(0,6), extra=nPeople-show.length;
+      h+='<div class="faces">';
+      show.forEach(id=>{ const asset=peopleById[id]&&peopleById[id].primary_asset||'';
+        h+='<div class="face" data-id="'+esc(id)+'"><div class="crop" data-asset="'+esc(asset)+'">'+
+             '<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#2a1d16"/><ellipse cx="50" cy="46" rx="24" ry="27" fill="#e0b98d"/><path d="M50 96 Q50 68 26 64 Q30 40 50 40 Q70 40 74 64 Q50 68 50 96Z" fill="#5a4030"/></svg>'+
+           '</div><div class="fn">'+esc(firstName(nameOf(id)))+'</div></div>';
+      });
+      if(extra>0) h+='<div class="face more"><div class="crop"><span class="cnt">+'+extra+'</span></div><div class="fn">more</div></div>';
+      h+='</div>';
+    } else {
+      h+='<div class="softinvite">No one has been recognised here yet.</div>';
+    }
+    h+='</div>';
+
+    /* ===== ways in ===== */
+    h+='<div class="sec"><div class="sec-h"><div class="t">Ways in</div></div><div class="doors">'+
+       '<div class="door" data-go="globe"><div class="di"><svg viewBox="0 0 24 24" fill="none" stroke="#e59b52" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></div><div class="dt"><div class="l">See it on the globe</div><div class="s">Find '+esc(head)+' among the family\u2019s places.</div></div><div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div></div>'+
+       '<div class="door" data-go="faces"><div class="di"><svg viewBox="0 0 24 24" fill="none" stroke="#e59b52" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="3"/><path d="M3 20c0-3 2.7-5 6-5s6 2 6 5"/><path d="M16 6a3 3 0 010 6M21 20c0-2.4-1.6-4.2-4-4.8"/></svg></div><div class="dt"><div class="l">Everyone seen here</div><div class="s">The '+nPeople+' '+(nPeople===1?'person':'people')+' recognised in this place.</div></div><div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div></div>'+
+       '<div class="door" data-go="moments"><div class="di"><svg viewBox="0 0 24 24" fill="none" stroke="#e59b52" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4z"/></svg></div><div class="dt"><div class="l">Moments &amp; stories</div><div class="s">All '+nP+' '+(nP===1?'photograph':'photographs')+' kept from here.</div></div><div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div></div>'+
+       '</div></div>';
+
+    h+='<div class="foot"><span class="leaf serif">The light here has gone to dusk. The place remembers.</span></div>';
+
+    $('#content').innerHTML=h;
+
+    /* wire images */
+    document.querySelectorAll('.moment .img[data-path]').forEach(el=>{ imgInto(el, el.getAttribute('data-path')); });
+    document.querySelectorAll('.face .crop[data-asset]').forEach(el=>{ const p=el.getAttribute('data-asset'); if(p) faceInto(el,p,null); });
+    /* wire faces → person */
+    document.querySelectorAll('.face[data-id]').forEach(el=>{ el.addEventListener('click',()=>{ const id=el.getAttribute('data-id'); if(id) location.href='person-real.html?id='+encodeURIComponent(id); }); });
+    /* wire doors */
+    document.querySelectorAll('.door[data-go]').forEach(el=>{ el.addEventListener('click',()=>{ const g=el.getAttribute('data-go');
+      if(g==='globe') location.href='globe-real.html'+(PLACE?('?place='+encodeURIComponent(PLACE)):'');
+      else { const t=document.getElementById(g==='faces'?'sec-faces':'sec-moments'); if(t) t.scrollIntoView({behavior:'smooth',block:'start'}); } }); });
+
+    $('#reveal').style.opacity=1;
+    $('#gate').style.display='none';
+  }catch(err){ gateError((err&&err.message)||'Could not open this place.'); }
+}
+
+$('#back').addEventListener('click', ()=>{ if(history.length>1) history.back(); else location.href='globe-real.html'; });
+$('#toGlobe').addEventListener('click', ()=>{ location.href='globe-real.html'+(PLACE?('?place='+encodeURIComponent(PLACE)):''); });
+
+function showSignIn(){ const box=$('#gateBox');
+  box.innerHTML='<h2 class="serif">Your forest</h2><p>Sign in with your family account to return to this place.</p>'+
+    '<input id="gEmail" type="email" placeholder="you@example.com" autocomplete="email"/>'+
+    '<input id="gPw" type="password" placeholder="password" autocomplete="current-password"/>'+
+    '<button id="gGo">Sign in</button><div class="msg" id="gMsg"></div>';
+  $('#gGo').onclick=async()=>{ const email=$('#gEmail').value.trim(), password=$('#gPw').value; const m=$('#gMsg');
+    if(!email||!password){ m.textContent='Enter your email and password.'; return; }
+    m.style.color='rgba(206,221,240,.65)'; m.textContent='Signing in\u2026';
+    const { error }=await sb.auth.signInWithPassword({email,password});
+    if(error){ m.style.color='#ff9a8f'; m.textContent=error.message; } else { box.innerHTML='<div class="spin"></div><p style="margin-top:16px">Arriving\u2026</p>'; load(); } }; }
+function gateError(msg){ $('#gate').style.display='flex'; $('#gateBox').innerHTML='<h2 class="serif">Hmm</h2><p>'+esc(msg)+'</p><a href="globe-real.html" style="color:#f3cd84;text-decoration:none">\u2190 back to the globe</a>'; }
+
+load();
+</script>
+  <script src="lf-nav.js" data-here="" data-parent="globe-real.html"></script>
+</body>
+</html>

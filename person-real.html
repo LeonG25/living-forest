@@ -560,7 +560,7 @@ async function load(){
     /* kin navigation */
     document.querySelectorAll('.kinperson').forEach(el=>{ el.addEventListener('click',()=>{ const id=el.getAttribute('data-id'); if(id) location.href='person-real.html?id='+encodeURIComponent(id); }); });
     /* place navigation → globe */
-    document.querySelectorAll('.place').forEach(el=>{ el.addEventListener('click',()=>{ const pl=el.getAttribute('data-place'); location.href='globe-real.html'+(pl?('?place='+encodeURIComponent(pl)):''); }); });
+    document.querySelectorAll('.place').forEach(el=>{ el.addEventListener('click',()=>{ const pl=el.getAttribute('data-place'); location.href=pl?('place-real.html?place='+encodeURIComponent(pl)):'globe-real.html'; }); });
 
     /* how-you're-related */
     const pathObj=shortestPath(rels.data||[], myPid, PID);
