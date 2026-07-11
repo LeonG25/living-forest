@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Living Forest — Page Map v2 & Roadmap</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=Nunito:wght@400;600;700;800&display=swap');
+  :root{--night-1:#140f2b;--night-2:#241a46;--gold:#ffce72;--gold-soft:#ffe6ad;--cream:#f4ecdd;--muted:#a59ccb;--good:#7fd9a6;--violet:#b58fd8;--sky:#8fb6d8;--ember:#ff9d4d;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Nunito',system-ui,sans-serif;color:var(--cream);
+    background:radial-gradient(120% 80% at 50% 0%,#2c2152 0%,var(--night-2) 38%,var(--night-1) 80%);min-height:100vh;}
+  .wrap{max-width:1120px;margin:0 auto;padding:26px 18px 70px;}
+  .disp{font-family:'Fraunces',Georgia,serif;}
+  h1{font-weight:900;font-size:clamp(26px,5vw,40px);margin:0 0 4px;}
+  .kick{color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-size:13px;}
+  .sub{color:var(--muted);font-size:15px;line-height:1.55;max-width:820px;margin:10px 0 22px;}
+  .panel{background:#ffffff0a;border:1px solid #ffffff1c;border-radius:18px;padding:14px;margin:18px 0;overflow:auto;}
+  .mermaid{min-width:820px;}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;margin:8px 2px 0;font-size:13px;color:var(--muted);}
+  .legend span{display:inline-flex;align-items:center;gap:7px;}
+  .dot{width:13px;height:13px;border-radius:4px;display:inline-block;}
+  h2{font-family:'Fraunces';font-size:23px;margin:34px 0 10px;}
+  h3{font-family:'Fraunces';font-size:18px;margin:22px 0 6px;color:var(--gold-soft);}
+  .note{background:#ffce7212;border:1px solid #ffce7240;border-radius:14px;padding:13px 16px;font-size:14px;line-height:1.55;margin:16px 0;}
+  .note b{color:var(--gold-soft);}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid #ffffff16;vertical-align:top;}
+  th{color:var(--gold-soft);font-size:12px;text-transform:uppercase;letter-spacing:.4px;position:sticky;top:0;}
+  td b{color:var(--cream);}
+  tr.sec td{background:#ffffff08;color:var(--gold);font-weight:800;font-family:'Fraunces';font-size:14px;letter-spacing:.3px;}
+  .b{display:inline-block;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;white-space:nowrap;}
+  .b.live{background:#ffce7218;border:1px solid #ffce7255;color:var(--gold-soft);}
+  .b.des{background:#b58fd81f;border:1px solid #b58fd83a;color:#d9c3ef;}
+  .b.no{background:#8fb6d815;border:1px solid #8fb6d833;color:var(--sky);}
+  .b.part{background:#7fd9a614;border:1px solid #7fd9a63a;color:var(--good);}
+  .ord{font-weight:800;color:var(--gold-soft);white-space:nowrap;}
+  .ord.done{color:var(--good);}
+  .ord.na{color:var(--muted);}
+  .chk{list-style:none;padding:0;margin:0;}
+  .chk li{padding:7px 0 7px 26px;position:relative;font-size:14px;line-height:1.45;border-bottom:1px solid #ffffff10;}
+  .chk li:before{content:"✓";position:absolute;left:0;top:7px;color:var(--good);font-weight:800;}
+  .fallback{display:none;color:var(--muted);font-size:13px;}
+  .phase{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0 0;}
+  .phase .p{flex:1 1 300px;background:#ffffff0a;border:1px solid #ffffff1c;border-radius:14px;padding:12px 14px;}
+  .phase .p h4{margin:0 0 6px;font-family:'Fraunces';color:var(--gold-soft);font-size:15px;}
+  .phase .p p{margin:0;font-size:13px;color:var(--muted);line-height:1.5;}
+  code{background:#ffffff12;padding:1px 6px;border-radius:6px;font-size:12.5px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kick">navigation scheme · v2 · 2026-07-10</div>
+  <h1 class="disp">The Living Forest — how the pages connect, and what's next</h1>
+  <p class="sub">This updates the original page-map to match what's actually live, and reconciles the two deviations we chose to keep: <b style="color:var(--gold-soft)">Home is now “the Sky”</b> (the heavens seen from <em>within</em>) and <b style="color:var(--gold-soft)">the Map is “the Globe”</b> (the earth seen from <em>outside</em>, with a year wheel); and the always-present top bar is, for now, a compact <b style="color:var(--gold-soft)">⊕ “lenses” menu</b> on every screen. Two rules still keep anything from hanging inaccessible: the menu is everywhere, and the three node types — Person, Place, Moment — all cross-link. Colour shows status: what's live, what Claude Design has drawn but isn't built, and what still needs design.</p>
+
+  <div class="panel">
+    <pre class="mermaid">
+flowchart LR
+  classDef live fill:#3a2a14,stroke:#ffce72,stroke-width:2px,color:#ffe6ad;
+  classDef des fill:#241a46,stroke:#b58fd8,stroke-width:1.5px,color:#f4ecdd;
+  classDef plan fill:#181143,stroke:#8fb6d8,stroke-width:1px,color:#a7b6d8,stroke-dasharray:4 3;
+  classDef menu fill:#13301f,stroke:#7fd9a6,stroke-width:1.5px,color:#eafff4;
+
+  MENU["⊕ Lenses menu — on every screen"]:::menu
+
+  subgraph LENS["WANDER · lenses (one web, many doors)"]
+    SKY["The Sky · Home"]:::live
+    GLOBE["The Globe · Map + year wheel"]:::live
+    TIME["Timeline · When"]:::des
+    TREE["Tree · kinship"]:::plan
+  end
+
+  subgraph WEB["The nodes you open"]
+    CARD["Person card — tap a star"]:::live
+    PERSON["Person — the hub"]:::live
+    PLACE["Place"]:::plan
+    MOMENT["Moment / Event"]:::plan
+    STORY["Memory / Story"]:::plan
+    WHO["Who they knew"]:::plan
+    REEL["Story Reel / Reveal"]:::plan
+    YOU["Thread back to You"]:::plan
+  end
+
+  subgraph PLAY["ACTIVE · challenges"]
+    CROWD["Find Them in the Crowd"]:::live
+    WHERE["Where Was This?"]:::des
+    WIW["Who Is Who?"]:::des
+    ORDER["The Order of Things"]:::des
+    WHOSE["Whose Memory / Missing Voice"]:::des
+    THREAD["The Tangled Thread"]:::plan
+    NEXT["What Happened Next?"]:::plan
+  end
+
+  subgraph TEND["TEND · contribute (curated)"]
+    CONTRIB["Contribute"]:::des
+    ADD["Add a memory"]:::des
+    PROPOSE["Propose a person"]:::plan
+    RECORD["Record a voice"]:::plan
+    GAPS["Gaps · who to ask"]:::plan
+    REVIEW["Review queue · curator"]:::des
+    CURATORS["Manage curators"]:::plan
+  end
+
+  subgraph GLOB["GLOBAL"]
+    JOURNAL["My Journal"]:::des
+    PROFILE["Who's playing"]:::des
+    SEARCH["Search"]:::plan
+  end
+
+  MENU --> SKY
+  MENU --> GLOBE
+  MENU --> TIME
+  MENU --> TREE
+  MENU --> JOURNAL
+  MENU --> CONTRIB
+  MENU --> PROFILE
+  MENU --> CROWD
+
+  SKY <--> GLOBE
+  GLOBE <--> TIME
+  TIME <--> TREE
+  SKY <--> TREE
+
+  SKY -->|tap a star| CARD
+  GLOBE -->|tap a person| CARD
+  CARD -->|meet →| PERSON
+  GLOBE -->|tap a place| PLACE
+  TIME -->|tap a year| MOMENT
+
+  PERSON --> STORY
+  PERSON --> WHO
+  PERSON --> PLACE
+  PERSON --> MOMENT
+  PERSON --> YOU
+  PERSON --> REEL
+  PERSON -->|play| CROWD
+  PERSON -->|play| WHERE
+  PERSON -->|play| WIW
+  PERSON -->|play| ORDER
+  PERSON -->|play| WHOSE
+  PERSON -->|play| THREAD
+  PERSON -->|play| NEXT
+
+  PLACE --> PERSON
+  PLACE --> MOMENT
+  MOMENT --> PERSON
+  MOMENT --> PLACE
+  STORY --> PERSON
+  WHO --> PERSON
+  YOU --> PERSON
+
+  CROWD --> REEL
+  WHERE --> REEL
+  WIW --> REEL
+  ORDER --> REEL
+  WHOSE --> REEL
+  REEL --> PERSON
+  CROWD -->|writes| JOURNAL
+  NEXT -->|ask a relative| RECORD
+
+  CONTRIB --> ADD
+  CONTRIB --> PROPOSE
+  CONTRIB --> RECORD
+  CONTRIB --> GAPS
+  ADD --> REVIEW
+  PROPOSE --> REVIEW
+  RECORD --> REVIEW
+  CURATORS --> REVIEW
+  REVIEW -->|published| SKY
+
+  SEARCH --> PERSON
+  SEARCH --> PLACE
+  PROFILE --> CURATORS
+    </pre>
+    <div class="fallback" id="fb">If the diagram doesn't render, the tables below describe every screen, its status, and its links.</div>
+    <div class="legend">
+      <span><i class="dot" style="background:#3a2a14;border:2px solid #ffce72"></i> Live on real data</span>
+      <span><i class="dot" style="background:#241a46;border:1.5px solid #b58fd8"></i> Designed in Claude Design (not built as a live page)</span>
+      <span><i class="dot" style="background:#181143;border:1px dashed #8fb6d8"></i> Planned — needs new design</span>
+      <span><i class="dot" style="background:#13301f;border:1.5px solid #7fd9a6"></i> The menu (connective)</span>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>The one rule that prevents orphans:</b> the hub is the <b>Person</b> page, and the three node types — Person, Place, Moment — all point at each other. Add the always-present <b>⊕ menu</b> and every screen has a way in and a way out. Hardware <b>Back</b> closes an open card first, else steps one real screen back, and only the Sky (root) exits — after a confirm.
+  </div>
+
+  <h2 class="disp">Status &amp; roadmap — every page, card, menu</h2>
+  <p class="sub">“Designed” = a Claude-Design visual exists (reskin <code>preview.html</code>, the globe preview, or the <em>Find Them</em> bundle). “Built” = live on real data. <b>Design #</b> and <b>Build #</b> give the logical order of the work still to do; <span class="ord done">✓</span> = done, <span class="ord na">—</span> = not needed.</p>
+  <div class="panel" style="padding:0">
+  <table>
+    <thead><tr><th>Page / card / menu</th><th>Claude Design</th><th>Built (live)</th><th>Design #</th><th>Build #</th></tr></thead>
+    <tbody>
+      <tr class="sec"><td colspan="5">Global &amp; navigation</td></tr>
+      <tr><td><b>⊕ Lenses menu</b> (top-bar stand-in)</td><td><span class="b no">ad hoc</span></td><td><span class="b live">live</span> all -real pages</td><td class="ord na">—</td><td class="ord done">✓</td></tr>
+      <tr><td><b>Hardware back-guard</b> (one step back / confirm-exit)</td><td><span class="b no">n/a</span></td><td><span class="b live">live</span></td><td class="ord na">—</td><td class="ord done">✓</td></tr>
+      <tr><td><b>Search</b> (semantic, top bar)</td><td><span class="b no">no</span></td><td><span class="b no">no</span></td><td class="ord">6</td><td class="ord">10</td></tr>
+      <tr><td><b>My Journal</b></td><td><span class="b des">yes</span> reskin</td><td><span class="b part">old skin</span></td><td class="ord done">✓</td><td class="ord">2</td></tr>
+      <tr><td><b>Who's playing / Profile</b></td><td><span class="b des">yes</span> reskin</td><td><span class="b part">old skin</span></td><td class="ord done">✓</td><td class="ord">3*</td></tr>
+      <tr><td><b>Thread back to You</b></td><td><span class="b no">no</span></td><td><span class="b no">no</span></td><td class="ord">5</td><td class="ord">9</td></tr>
+
+      <tr class="sec"><td colspan="5">The lenses</td></tr>
+      <tr><td><b>The Sky · Home</b> (inside-out sphere)</td><td><span class="b des">yes</span> reskin Forest + built</td><td><span class="b live">live</span> home-real</td><td class="ord done">✓</td><td class="ord done">✓</td></tr>
+      <tr><td><b>The Globe · Map</b> (+ year wheel)</td><td><span class="b des">yes</span> globe preview</td><td><span class="b live">live</span> globe-real</td><td class="ord done">✓</td><td class="ord done">✓</td></tr>
+      <tr><td><b>Timeline · When</b></td><td><span class="b des">yes</span> reskin</td><td><span class="b part">old skin</span></td><td class="ord done">✓</td><td class="ord">1</td></tr>
+      <tr><td><b>Tree · kinship</b></td><td><span class="b no">no</span></td><td><span class="b no">no</span></td><td class="ord">7</td><td class="ord">11</td></tr>
+
+      <tr class="sec"><td colspan="5">Nodes &amp; cards (the web)</td></tr>
+      <tr><td><b>Person card</b> (tap a star)</td><td><span class="b des">yes</span> reskin + built</td><td><span class="b live">live</span> sky &amp; globe</td><td class="ord done">✓</td><td class="ord done">✓</td></tr>
+      <tr><td><b>Person · hub</b> (deepen: “light points”)</td><td><span class="b part">v1 built; v2 no</span></td><td><span class="b live">v1 live</span> person-real</td><td class="ord">1</td><td class="ord">5</td></tr>
+      <tr><td><b>Place</b> page</td><td><span class="b no">no</span></td><td><span class="b no">no</span></td><td class="ord">2</td><td class="ord">6</td></tr>
+      <tr><td><b>Moment / Event</b> page</td><td><span class="b no">no</span></td><td><span class="b no">no</span></td><td class="ord">3</td><td class="ord">7</td></tr>
+      <tr><td><b>Memory / Story</b> page</td><td><span class="b no">no</span></td><td><span class="b no">no</span></td><td class="ord">4</td><td class="ord">8</td></tr>
+      <tr><td><b>Who they knew</b> (mini-tree)</td><td><span class="b no">no</span></td><td><span class="b no">no</span></td><td class="ord">7</td><td class="ord">11</td></tr>
+      <tr><td><b>Story Reel / Reveal</b> &amp; Memory Lane</td><td><span class="b no">no</span></td><td><span class="b no">no</span></td><td class="ord">9</td><td class="ord">16</td></tr>
+      <tr><td><b>Connection found</b> · <b>Themed thread</b></td><td><span class="b no">no</span></td><td><span class="b no">no</span></td><td class="ord">11</td><td class="ord">18</td></tr>
+
+      <tr class="sec"><td colspan="5">Challenges (the seven)</td></tr>
+      <tr><td>5 · <b>Find Them in the Crowd</b></td><td><span class="b des">yes</span> bundle</td><td><span class="b live">live</span> crowd-real</td><td class="ord done">✓</td><td class="ord done">✓</td></tr>
+      <tr><td>6 · <b>Where Was This?</b></td><td><span class="b des">yes</span> reskin</td><td><span class="b part">old skin</span></td><td class="ord done">✓</td><td class="ord">4</td></tr>
+      <tr><td>1 · <b>Who Is Who?</b> (real clue-generator)</td><td><span class="b des">yes</span> reskin/proto</td><td><span class="b part">old skin</span></td><td class="ord na">~</td><td class="ord">13</td></tr>
+      <tr><td>3 · <b>The Order of Things</b></td><td><span class="b part">partial</span></td><td><span class="b part">old skin</span></td><td class="ord na">~</td><td class="ord">14*</td></tr>
+      <tr><td>4 · <b>The Missing Voice</b> (needs narrator field)</td><td><span class="b part">as “Whose memory”</span></td><td><span class="b part">variant, old</span></td><td class="ord na">~</td><td class="ord">15</td></tr>
+      <tr><td>2 · <b>The Tangled Thread</b> (needs places-lived)</td><td><span class="b no">no</span></td><td><span class="b no">no</span></td><td class="ord na">~</td><td class="ord">14</td></tr>
+      <tr><td>7 · <b>What Happened Next?</b> (bridge to Tend)</td><td><span class="b no">no</span></td><td><span class="b no">no</span></td><td class="ord">12</td><td class="ord">19</td></tr>
+
+      <tr class="sec"><td colspan="5">Tend · contribution &amp; curation</td></tr>
+      <tr><td><b>Add a memory</b></td><td><span class="b des">yes</span> reskin</td><td><span class="b part">old skin</span></td><td class="ord done">✓</td><td class="ord">3*</td></tr>
+      <tr><td><b>Review queue · curator</b></td><td><span class="b des">yes</span> reskin</td><td><span class="b part">old skin</span></td><td class="ord done">✓</td><td class="ord">3*</td></tr>
+      <tr><td><b>Contribute hub</b></td><td><span class="b part">partial</span></td><td><span class="b part">partial</span></td><td class="ord">8</td><td class="ord">12</td></tr>
+      <tr><td><b>Propose a person</b></td><td><span class="b no">no</span></td><td><span class="b part">via tagging</span></td><td class="ord">8</td><td class="ord">12</td></tr>
+      <tr><td><b>Record a voice</b> (audio + transcribe)</td><td><span class="b no">no</span></td><td><span class="b no">no</span></td><td class="ord">8</td><td class="ord">12</td></tr>
+      <tr><td><b>Gaps · who to ask</b></td><td><span class="b no">no</span></td><td><span class="b no">no</span></td><td class="ord">8</td><td class="ord">12</td></tr>
+      <tr><td><b>Manage curators · keeper</b></td><td><span class="b no">no</span></td><td><span class="b no">no</span></td><td class="ord">10</td><td class="ord">17</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="sub" style="margin-top:10px">* Items marked <span class="ord">3*</span> land together in the <b>“unify the skin”</b> step (Build #3): promote the reskin so Add, Review, Places, Profile, and the old games wear the new look instead of the old one. “~” on a Design # means a design exists or only a data/engine change is needed, not a fresh Claude-Design pass.</p>
+
+  <h2 class="disp">The logical order, in phases</h2>
+  <div class="phase">
+    <div class="p"><h4>Phase 1 · Light up what's already designed</h4><p>No new Claude Design needed — port existing reskin designs onto real data. <b>Build 1–4:</b> Timeline → Journal → unify the skin (Add/Review/Places/Profile + old games in the new look) → Where&nbsp;Was&nbsp;This? on the globe.</p></div>
+    <div class="p"><h4>Phase 2 · The node web (needs design)</h4><p><b>Design 1–4 → Build 5–8:</b> Person page v2 (“light points”), then the Place, Moment, and Memory/Story pages — the cross-linking that makes the forest feel whole.</p></div>
+    <div class="p"><h4>Phase 3 · Connective &amp; global (needs design)</h4><p><b>Design 5–7 → Build 9–11:</b> Thread-back-to-You, Search, and the Tree lens (with “Who they knew”).</p></div>
+    <div class="p"><h4>Phase 4 · Deepen Tend + harder games</h4><p><b>Design 8 → Build 12–15:</b> Contribute hub, Propose, Record-a-voice, Gaps; then the games that need a data/engine change — Who&nbsp;Is&nbsp;Who? (clue generator), Tangled Thread (places-lived), Missing Voice (narrator field).</p></div>
+    <div class="p"><h4>Phase 5 · Payoffs &amp; curation</h4><p><b>Design 9–12 → Build 16–19:</b> Story Reel / Memory Lane, Manage curators, Themed threads / Connection-found, and What&nbsp;Happened&nbsp;Next? (the one bridge from Wander into Tend).</p></div>
+    <div class="p"><h4>Phase 6 · Parked big ideas (later)</h4><p>The globe <b>placement game</b> (a year + names → drop them on the map), the <b>world &amp; family events</b> layer on the globe, and the <b>escape-room quest</b> chain. Each needs its own design pass when we get there.</p></div>
+  </div>
+
+  <h2 class="disp">Page inventory — arrive from / go to</h2>
+  <div class="panel" style="padding:0">
+  <table>
+    <thead><tr><th>Page</th><th>Status</th><th>You arrive from</th><th>You can go to</th></tr></thead>
+    <tbody>
+      <tr><td><b>The Sky · Home</b></td><td><span class="b live">live</span></td><td>app launch; ⊕ menu; a published contribution lands here</td><td>Person card (tap a star); any lens; ⊕ menu</td></tr>
+      <tr><td><b>The Globe · Map</b></td><td><span class="b live">live</span></td><td>⊕ menu; Sky; a person's journey</td><td>Person card, Place, Moment; the year wheel scrubs time</td></tr>
+      <tr><td><b>Timeline</b></td><td><span class="b des">designed</span></td><td>⊕ menu; lenses</td><td>Moment; lenses</td></tr>
+      <tr><td><b>Tree</b></td><td><span class="b no">planned</span></td><td>⊕ menu; lenses</td><td>Person; other lenses</td></tr>
+      <tr><td><b>Person card</b></td><td><span class="b live">live</span></td><td>tap a star on Sky or Globe</td><td>meet → Person; close</td></tr>
+      <tr><td><b>Person · hub</b></td><td><span class="b live">live</span></td><td>Person card; any lens; Place/Moment/Story; You; Search</td><td>Reel, Story, Who-they-knew, Place, Moment, a challenge, You</td></tr>
+      <tr><td><b>Place</b></td><td><span class="b no">planned</span></td><td>Globe; Person; Moment</td><td>Person, Moment</td></tr>
+      <tr><td><b>Moment / Event</b></td><td><span class="b no">planned</span></td><td>Globe; Timeline; Person; Place</td><td>Person, Place</td></tr>
+      <tr><td><b>Memory / Story</b></td><td><span class="b no">planned</span></td><td>Person</td><td>Person (subject &amp; teller)</td></tr>
+      <tr><td><b>Challenge</b> (7 types)</td><td><span class="b part">1 live · rest old/planned</span></td><td>Person (“play”); ⊕ menu (Find Them)</td><td>Reveal/Reel, Journal (writes), Record (the #7 quest)</td></tr>
+      <tr><td><b>Story Reel / Reveal</b></td><td><span class="b no">planned</span></td><td>Person; a solved challenge</td><td>Person; Memory Lane</td></tr>
+      <tr><td><b>My Journal</b></td><td><span class="b part">old skin</span></td><td>⊕ menu; a challenge writes to it</td><td>revisit a discovery → Person / Moment</td></tr>
+      <tr><td><b>Thread back to You</b></td><td><span class="b no">planned</span></td><td>⊕ menu; Person</td><td>Person (along the path); Tree</td></tr>
+      <tr><td><b>Contribute → Add / Propose / Record / Gaps</b></td><td><span class="b part">Add/Review old skin</span></td><td>⊕ menu</td><td>Review queue</td></tr>
+      <tr><td><b>Review queue · curator</b></td><td><span class="b part">old skin</span></td><td>Add/Propose/Record/Curators feed it</td><td>publishes into the web → Sky</td></tr>
+      <tr><td><b>Manage curators · keeper</b></td><td><span class="b no">planned</span></td><td>Profile / settings</td><td>Review queue</td></tr>
+      <tr><td><b>Who's playing · Profile</b></td><td><span class="b part">old skin</span></td><td>⊕ menu</td><td>Manage curators</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 class="disp">No-orphan checklist (still holds)</h2>
+  <ul class="chk">
+    <li>Every node page (Person, Place, Moment) links to the other two — no dead-end nodes.</li>
+    <li>The ⊕ menu is on every screen, so lenses, Journal, Contribute and Profile are always one tap away.</li>
+    <li>Hardware Back closes an open card first; otherwise steps one real screen back; only the Sky exits, after a confirm.</li>
+    <li>Challenges return somewhere (Reveal → Person) and write to the Journal.</li>
+    <li>Contribute flows to the Review queue; approved items publish back into the web.</li>
+    <li>“What Happened Next?” is the one bridge from Wander into Tend (a gap → Record).</li>
+    <li>Every lens reaches the others, and all open the same nodes — one web, several doors.</li>
+  </ul>
+
+  <div class="note" style="margin-top:22px">
+    <b>Deviations from the original plan (kept on purpose):</b> Home became <b>the Sky</b> (heavens from within) and the Map became <b>the Globe</b> (earth from outside) — a cleaner split of the two lenses; the <b>year wheel</b> lives on the globe (time-on-map, not a replacement for the Timeline lens); the fixed top bar is, for now, the <b>⊕ menu</b>. Superseded and due for retirement on consolidation: <code>preview-globe.html</code>, the old Leaflet Places map, and the old 2-D “Forest” home tab.
+  </div>
+
+  <p class="sub" style="margin-top:22px">Next step: with this map and roadmap fixed, we write the <b>Claude Design prompts</b> in Design # order — starting with the <b>Person page v2</b> (Design #1), then <b>Place</b>, <b>Moment</b>, and <b>Memory/Story</b> — while Phase 1 (Timeline, Journal, skin unification, Where&nbsp;Was&nbsp;This?) proceeds in parallel since it needs no new design.</p>
+</div>
+
+<script>
+  try {
+    mermaid.initialize({
+      startOnLoad: true, theme: 'base',
+      themeVariables: {
+        fontFamily: 'Nunito, sans-serif', lineColor: '#a59ccb',
+        primaryColor: '#241a46', primaryTextColor: '#f4ecdd', primaryBorderColor: '#b58fd8',
+        tertiaryColor: '#1a1338', clusterBkg: '#ffffff08', clusterBorder: '#ffffff22',
+        edgeLabelBackground: '#1a1338'
+      },
+      flowchart: { curve: 'basis', nodeSpacing: 42, rankSpacing: 74 }
+    });
+  } catch (e) { document.getElementById('fb').style.display = 'block'; }
+</script>
+</body>
+</html>
