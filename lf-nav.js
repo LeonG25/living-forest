@@ -11,7 +11,7 @@
   function inAppRef(){
     try{ if(!document.referrer) return false;
       var u=new URL(document.referrer);
-      return u.origin===location.origin && /(home-real|globe-real|person-real|crowd-real|index|preview|preview-globe)\.html?$/.test(u.pathname);
+      return u.origin===location.origin && /(home-real|globe-real|person-real|crowd-real|timeline-real|index|preview|preview-globe)\.html?$/.test(u.pathname);
     }catch(e){ return false; }
   }
   function goBack(){
@@ -38,6 +38,7 @@
   var items=[['sky','✦','The sky','home-real.html'],
              ['map','◍','The globe','globe-real.html'],
              ['play','❂','Find them in a crowd','crowd-real.html'],
+             ['when','◷','The timeline','timeline-real.html'],
              ['add','✎','Add a memory','index.html']];
   var wrap=document.createElement('div'); wrap.id='lfnav';
   var panel=document.createElement('div'); panel.id='lfnavPanel';

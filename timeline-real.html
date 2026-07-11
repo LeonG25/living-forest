@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#04070e" />
+<title>The Living Forest — the timeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; }
+  :root{
+    --cream:#f4ecdb; --muted:#9db0cc; --panel:#ffffff0d; --hair:#ffffff1f;
+    --gold:#f3cd84; --gold-hi:#ffe6ad; --cool:#7fb4d8;
+  }
+  body{
+    background:radial-gradient(125% 100% at 50% 0%, #0d1a2f 0%, #081120 48%, #04070e 100%);
+    color:var(--cream); font-family:'Hanken Grotesk',system-ui,sans-serif;
+    min-height:100dvh; -webkit-user-select:none; user-select:none; overflow-x:hidden;
+  }
+  .serif{ font-family:'Newsreader',Georgia,serif; }
+  .appvoice{ font-family:'Hanken Grotesk',sans-serif; letter-spacing:.22em; text-transform:uppercase; font-size:10px; color:var(--muted); }
+
+  /* twinkling star field */
+  .sky{ position:fixed; inset:0; z-index:0; pointer-events:none; }
+  .sky i{ position:absolute; width:2px; height:2px; border-radius:50%; background:#cfe0f5; opacity:.5; animation:tw 4s ease-in-out infinite; }
+  @keyframes tw{ 0%,100%{opacity:.15;} 50%{opacity:.7;} }
+
+  .phone{ position:relative; z-index:1; width:100%; max-width:480px; margin:0 auto;
+    padding:0 20px calc(64px + env(safe-area-inset-bottom)); padding-top:max(16px, env(safe-area-inset-top)); }
+
+  /* top bar */
+  .topbar{ display:flex; align-items:center; justify-content:space-between; height:44px; }
+  .icon-btn{ width:40px; height:40px; border-radius:50%; border:1px solid var(--hair); background:var(--panel); color:var(--cream); display:grid; place-items:center; cursor:pointer; text-decoration:none; }
+  .icon-btn svg{ width:18px; height:18px; }
+  .breadcrumb{ display:flex; align-items:center; gap:7px; }
+  .breadcrumb .dot{ width:5px; height:5px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px 1px var(--gold); }
+
+  /* hero */
+  .hero{ margin-top:16px; }
+  .hero .eyebrow{ font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); }
+  .hero h1{ font-family:'Newsreader',serif; font-weight:300; font-size:36px; line-height:1.04; margin:8px 0 0; color:#fbf5e8; letter-spacing:-.01em; }
+  .hero .lede{ font-size:13.5px; line-height:1.55; color:var(--muted); margin:10px 0 0; max-width:360px; }
+
+  /* the time spine */
+  .tl{ position:relative; margin-top:30px; padding-left:30px; }
+  .tl::before{ content:""; position:absolute; left:9px; top:6px; bottom:6px; width:1px;
+    background:linear-gradient(to bottom, transparent, rgba(243,205,132,.5) 8%, rgba(243,205,132,.5) 92%, transparent); }
+
+  .yr{ position:relative; margin:26px 0 14px; font-family:'Newsreader',serif; font-style:italic; font-size:22px; color:var(--gold-hi); }
+  .yr:first-child{ margin-top:0; }
+  .yr::before{ content:""; position:absolute; left:-25px; top:50%; transform:translateY(-50%); width:11px; height:11px; border-radius:50%;
+    background:var(--gold); box-shadow:0 0 12px 2px rgba(243,205,132,.7); }
+
+  .mem{ position:relative; display:flex; gap:13px; align-items:flex-start; padding:12px 14px; margin:0 0 11px;
+    border-radius:16px; background:var(--panel); border:1px solid var(--hair); cursor:pointer; transition:background .25s ease; }
+  .mem:active{ background:#ffffff14; }
+  .mem::before{ content:""; position:absolute; left:-21.5px; top:22px; width:7px; height:7px; border-radius:50%;
+    background:#0d1a2f; border:1.5px solid rgba(243,205,132,.6); }
+  .thumb{ width:54px; height:54px; flex:none; border-radius:11px; overflow:hidden; background:#0a1422 center/cover no-repeat;
+    border:1px solid var(--hair); display:grid; place-items:center; font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+  .mem .mt{ flex:1; min-width:0; }
+  .mem .ww{ font-size:12px; color:var(--muted); }
+  .mem .ww b{ font-family:'Newsreader',serif; font-style:italic; font-weight:400; color:var(--gold-hi); font-size:14px; }
+  .mem .ttl{ font-family:'Newsreader',serif; font-size:15.5px; line-height:1.45; color:#f6ecd7; margin-top:3px; }
+  .chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .chip{ font-size:11px; color:var(--cream); background:rgba(243,205,132,.10); border:1px solid rgba(243,205,132,.28); border-radius:99px; padding:4px 9px; cursor:pointer; }
+  .chip:active{ background:rgba(243,205,132,.2); }
+
+  .appnote{ margin-top:26px; display:flex; align-items:flex-start; gap:11px; border-top:1px solid var(--hair); padding-top:16px; }
+  .appnote .mark{ width:22px; height:22px; border-radius:6px; flex:none; display:grid; place-items:center; background:rgba(127,180,216,.12); border:1px solid rgba(127,180,216,.3); }
+  .appnote .mark svg{ width:12px; height:12px; color:var(--cool); }
+  .appnote .body{ font-size:12.5px; line-height:1.5; color:var(--cool); }
+  .appnote .body .src{ display:block; margin-top:4px; font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:rgba(127,180,216,.55); }
+
+  .empty{ margin-top:24px; padding:18px 16px; border-radius:16px; border:1px dashed rgba(243,205,132,.35); background:rgba(243,205,132,.05);
+    font-family:'Newsreader',serif; font-style:italic; font-size:15px; line-height:1.5; color:#efe0c2; }
+
+  .foot{ margin-top:38px; text-align:center; }
+  .foot .leaf{ font-family:'Newsreader',serif; font-style:italic; font-size:14px; color:var(--muted); }
+
+  /* gate */
+  #gate{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(4,7,14,.92);backdrop-filter:blur(6px);padding:24px;}
+  #gate .box{width:min(380px,92vw);background:rgba(10,18,34,.92);border:1px solid rgba(180,205,235,.16);border-radius:20px;padding:26px;text-align:center;}
+  #gate h2{font-family:'Newsreader',serif;font-weight:300;font-size:24px;margin:6px 0;color:#f4ecdb;}
+  #gate p{font-size:13px;color:rgba(206,221,240,.65);line-height:1.5;margin:0 0 16px;}
+  #gate input{width:100%;background:#0a1220;border:1px solid rgba(180,205,235,.2);border-radius:12px;color:#eef2fb;padding:12px 13px;font-size:15px;font-family:inherit;margin-top:8px;outline:none;}
+  #gate input:focus{border-color:#f3cd84;}
+  #gate button{width:100%;margin-top:14px;background:linear-gradient(180deg,#ffe6ad,#f3cd84);color:#3a2a05;font-weight:700;font-family:inherit;font-size:15px;padding:13px;border:none;border-radius:13px;cursor:pointer;}
+  #gate .msg{margin-top:12px;font-size:12.5px;color:#ff9a8f;min-height:16px;}
+  #gate .spin{display:inline-block;width:34px;height:34px;border:3px solid rgba(243,205,132,.25);border-top-color:#f3cd84;border-radius:50%;animation:sp 1s linear infinite;}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; } }
+</style>
+</head>
+<body>
+  <div class="sky" id="sky" aria-hidden="true"></div>
+  <main class="phone">
+    <div class="topbar">
+      <a class="icon-btn" id="back" href="home-real.html" aria-label="Back to the sky">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+      </a>
+      <div class="breadcrumb"><span class="appvoice">The Living Forest</span><span class="dot"></span><span class="appvoice">the timeline</span></div>
+      <span class="icon-btn" style="visibility:hidden"></span>
+    </div>
+    <div class="hero">
+      <div class="eyebrow">When &middot; the &ldquo;when&rdquo; door</div>
+      <h1 class="serif">Timeline</h1>
+      <p class="lede">Every photograph and story with a rough date, in order &mdash; built straight from what the family has gathered.</p>
+    </div>
+    <div id="content" style="opacity:0;transition:opacity .45s ease;"></div>
+  </main>
+
+  <div id="gate"><div class="box" id="gateBox"><div class="spin"></div><p style="margin-top:16px">Opening&hellip;</p></div></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const SUPABASE_URL='https://oabcdrktuikifbormjip.supabase.co';
+const SUPABASE_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const reduceMo = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* year for sorting: 4-digit wins; a "70s"/"the 60s" decade counts as 19x0; else far future */
+function sortYear(t){
+  const s=String(t||'');
+  let m=s.match(/\d{4}/); if(m) return +m[0];
+  m=s.match(/(\d)0\s*s/i); if(m) return 1900 + (+m[1])*10;
+  return 9999;
+}
+
+/* twinkling stars */
+(function(){
+  const sky=$('#sky'); if(!sky) return; let html='';
+  for(let i=0;i<60;i++){ const x=(Math.random()*100).toFixed(2), y=(Math.random()*100).toFixed(2), d=(Math.random()*4+2).toFixed(1), delay=(Math.random()*4).toFixed(1), s=(Math.random()*1.4+1).toFixed(1);
+    html+='<i style="left:'+x+'%;top:'+y+'%;width:'+s+'px;height:'+s+'px;animation-duration:'+d+'s;animation-delay:'+delay+'s;'+(reduceMo?'animation:none;opacity:.4;':'')+'"></i>'; }
+  sky.innerHTML=html;
+})();
+
+async function bgThumb(node, path){
+  if(!node || !path) return;
+  try{ const s=await sb.storage.from('family').createSignedUrl(path,3600); const url=s.data&&s.data.signedUrl;
+    if(url){ node.style.backgroundImage='url('+url+')'; node.textContent=''; } }catch(e){}
+}
+
+async function load(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session){ showSignIn(); return; }
+  try{
+    const [artsR, peopleR] = await Promise.all([
+      sb.from('artefacts').select('id,kind,body,metadata,storage_path').eq('status','published'),
+      sb.from('people').select('id,display_name,called_name')
+    ]);
+    if(artsR.error) throw artsR.error;
+    const arts=(artsR.data||[]).filter(a=>a.metadata && a.metadata.when);
+    const nameById={}; (peopleR.data||[]).forEach(p=> nameById[p.id]=p.called_name||p.display_name);
+    const idByName={}; (peopleR.data||[]).forEach(p=> idByName[p.display_name]=p.id);
+
+    /* people per artefact */
+    const peopleByArt={};
+    if(arts.length){
+      const subs=await sb.from('artefact_subjects').select('artefact_id,person_id').in('artefact_id', arts.map(a=>a.id));
+      (subs.data||[]).forEach(s=>{ (peopleByArt[s.artefact_id]=peopleByArt[s.artefact_id]||[]).push(s.person_id); });
+    }
+
+    const items=arts.map(a=>({a, y:sortYear(a.metadata.when)})).sort((x,y)=>x.y-y.y);
+
+    if(!items.length){
+      $('#content').innerHTML='<div class="empty">No dated memories yet. Add a photograph or story with a rough &ldquo;when&rdquo;, and it will take its place here.</div>';
+      $('#content').style.opacity=1; $('#gate').style.display='none'; return;
+    }
+
+    let h='<div class="tl">';
+    let lastBucket=null;
+    items.forEach(({a,y})=>{
+      const bucket = (y===9999) ? String(a.metadata.when) : String(y);
+      if(bucket!==lastBucket){ h+='<div class="yr">'+esc(bucket)+'</div>'; lastBucket=bucket; }
+      const isImg=(a.kind==='photo'||a.kind==='object') && a.storage_path;
+      const where=a.metadata.where?(' &middot; '+esc(a.metadata.where)):'';
+      const title = a.body ? esc(a.body.replace(/\s+/g,' ').slice(0,80)) + (a.body.length>80?'\u2026':'') : ('A '+esc(a.kind||'memory'));
+      const ppl=(peopleByArt[a.id]||[]).map(id=>nameById[id]).filter(Boolean);
+      let chips='';
+      if(ppl.length){ chips='<div class="chips">'+ppl.slice(0,10).map(n=>'<span class="chip" data-id="'+esc(idByName[n]||'')+'">'+esc(n)+'</span>').join('')+'</div>'; }
+      h+='<div class="mem" data-edit="'+esc(a.id)+'">'+
+           (isImg?'<div class="thumb" data-path="'+esc(a.storage_path)+'">photo</div>':'<div class="thumb">'+esc(a.kind||'memory')+'</div>')+
+           '<div class="mt"><div class="ww"><b>'+esc(a.metadata.when)+'</b>'+where+'</div><div class="ttl">'+title+'</div>'+chips+'</div>'+
+         '</div>';
+    });
+    h+='</div>';
+
+    const n=items.length;
+    h+='<div class="appnote"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><path d="M3 15l4-4 4 4 5-5 5 5"></path></svg></span>'+
+       '<div class="body">The app placed these '+n+' dated '+(n===1?'memory':'memories')+' in order. It arranged them &mdash; every word within belongs to the family.'+
+       '<span class="src">Assembled by The Living Forest</span></div></div>';
+
+    h+='<div class="foot"><span class="leaf serif">A family, in the order it happened.</span></div>';
+
+    $('#content').innerHTML=h;
+
+    /* thumbnails */
+    document.querySelectorAll('.thumb[data-path]').forEach(el=>{ bgThumb(el, el.getAttribute('data-path')); });
+    /* chip → person */
+    document.querySelectorAll('.chip').forEach(c=>{ c.addEventListener('click',e=>{ e.stopPropagation(); const id=c.getAttribute('data-id'); if(id) location.href='person-real.html?id='+encodeURIComponent(id); }); });
+    /* row → its people's first person (a gentle way in); if none, no-op */
+    document.querySelectorAll('.mem').forEach(row=>{ row.addEventListener('click',()=>{ const chip=row.querySelector('.chip[data-id]'); const id=chip&&chip.getAttribute('data-id'); if(id) location.href='person-real.html?id='+encodeURIComponent(id); }); });
+
+    $('#content').style.opacity=1;
+    $('#gate').style.display='none';
+  }catch(err){ gateError(err.message||'Could not open the timeline.'); }
+}
+
+$('#back').addEventListener('click', e=>{ if(history.length>1){ e.preventDefault(); history.back(); } });
+
+function showSignIn(){ const box=$('#gateBox');
+  box.innerHTML='<h2 class="serif">Your forest</h2><p>Sign in with your family account to see the timeline.</p>'+
+    '<input id="gEmail" type="email" placeholder="you@example.com" autocomplete="email"/>'+
+    '<input id="gPw" type="password" placeholder="password" autocomplete="current-password"/>'+
+    '<button id="gGo">Sign in</button><div class="msg" id="gMsg"></div>';
+  $('#gGo').onclick=async()=>{ const email=$('#gEmail').value.trim(), password=$('#gPw').value; const m=$('#gMsg');
+    if(!email||!password){ m.textContent='Enter your email and password.'; return; }
+    m.style.color='rgba(206,221,240,.65)'; m.textContent='Signing in\u2026';
+    const { error }=await sb.auth.signInWithPassword({email,password});
+    if(error){ m.style.color='#ff9a8f'; m.textContent=error.message; } else { box.innerHTML='<div class="spin"></div><p style="margin-top:16px">Opening\u2026</p>'; load(); } }; }
+function gateError(msg){ $('#gate').style.display='flex'; $('#gateBox').innerHTML='<h2 class="serif">Hmm</h2><p>'+esc(msg)+'</p><a href="home-real.html" style="color:#f3cd84;text-decoration:none">\u2190 back to the sky</a>'; }
+
+load();
+</script>
+  <script src="lf-nav.js" data-here="when" data-parent="home-real.html"></script>
+</body>
+</html>
