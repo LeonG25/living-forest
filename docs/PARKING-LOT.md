@@ -1,0 +1,38 @@
+# The Living Forest — Parking Lot
+
+Living list of things to build later. Add freely; nothing here is committed to a date.
+
+---
+
+## Ideas & features (future)
+
+### The Tangled Thread — game, hooks into the Person page
+The lightweight **"how are you related"** path on the Person page is the seed for this game.
+- That path runs from the **viewing player's own person-node** (via `profiles.id = auth.uid()` → `profiles.person_id`) → shortest path over `relationships` → the person being viewed. "A path not yet traced" when there is no path. Players can only be people already in the system (a profile with a non-null `person_id`).
+- **The Tangled Thread game grows exactly here:** turn that static shortest-path into a *played* journey — trace the thread hop by hop, revealing each connecting relative in turn, until it lands on you.
+- Open question to reconcile: an earlier note had Tangled Thread needing a "places lived" structure per person. The authoritative hook is now the Person-page relationship path; revisit whether places-lived is still wanted as a second thread.
+
+### Idea 1 — Events on the globe, by year
+Surface **world events and family events** (anyone/anything in the visible database) on the globe **for the year currently shown** on the year-wheel. Turning the wheel changes not just the family dots but also what was happening in the world and in the family that year.
+
+### Idea 2 — Quest / escape-room game
+An **escape-room-style chained quest**: the player hunts for clues and information, unlocks things, and progresses step by step through a chain of challenges — solving the whole task/riddle at the end.
+
+---
+
+## Games still to build (from roadmap)
+- **The Missing Voice** — needs a "told by person" narrator field on memories.
+- **The Tangled Thread** — see above; hooks into the Person page.
+
+## Designed but not yet built
+- **Timeline**, **Journal** — mockups exist; port to real data.
+- **Story Reel** — referenced by the Person page "Reel" doorway; needs building so that doorway opens something real.
+- **Tree, Memory Lane, Themed Threads, Thread-back-to-You, Gaps, Manage Curators** — written design only, no mockup yet.
+
+## Cleanup / retirement (on consolidation)
+- Retire `preview-globe.html`, the old Leaflet Places map, and the old 2D Forest home tab.
+- Sweep untracked patch scripts from the working tree (`p2–p7.py`, `patch_globe.py`).
+
+## Data prerequisites to add
+- "told by person" narrator field on memories → The Missing Voice.
+- "places lived" per person → possible second Tangled Thread; reconcile with the relationship-path hook.
