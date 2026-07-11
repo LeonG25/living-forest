@@ -36,3 +36,10 @@ An **escape-room-style chained quest**: the player hunts for clues and informati
 ## Data prerequisites to add
 - "told by person" narrator field on memories → The Missing Voice.
 - "places lived" per person → possible second Tangled Thread; reconcile with the relationship-path hook.
+
+---
+
+## Person page v2 — gaps to close later
+- **Per-person "Find Them in the Crowd".** The Crowd game builds its own rounds and has no target param, so the Person page Play button enters the game generally. Add a `?id=` (or similar) so Play pre-loads a round featuring this person; then the "Uncover {name}" copy becomes literally true.
+- **Story Reel.** The Person page shows a Reel doorway + a Story-Reel card, both currently coming-soon. They light up once the Story Reel page is built (see "Designed but not yet built").
+- **i18n on the live "-real" pages.** `home-real`, `globe-real`, `crowd-real`, and `person-real` are English-only; the MutationObserver i18n system, per-person name variants, and story/photo translation aren't wired into them yet. Port i18n onto the real pages as a dedicated pass.
