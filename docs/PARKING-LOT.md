@@ -57,3 +57,24 @@ The current `timeline-real.html` was **engineered, not designed** — it never h
    - **Resurfacing** — "this week, years ago": a few dated memories surfaced to now, not an infinite list.
 
 Note: the **Journal** port carries the same risk — confirm it has a real Claude Design pass before engineering it, rather than porting the old prototype screen.
+
+---
+
+## The Moment page — engineer here; the Claude Design file is reference only
+Claude Design produced a standalone visual for the Moment (photo hub) page (`A_Moment_-_The_Living_Forest__standalone_.html`). **Treat it as a visual + motion reference ONLY — do not trust or port its logic.** It emits React; the app is vanilla HTML/CSS/JS. Re-engineer here as `moment-real.html`, wired to Supabase, reproducing the *look and feel* — magical, precious, colourful drifting lights; breathing/glowing motion; Truth Guardrail (gold = human, cool-blue = facts, never blended); its own distinct character — but building **all** behaviour ourselves.
+
+**All functionality that must be present (lose none):**
+- **View one moment** (`?id=`/`?moment=`): photo shown full at natural aspect (portrait shows fully, no crop); year stamp (cool-blue fact); "In this moment" people as tappable face-crops (crop from the tagged photo via `artefact_subjects.detail`, like the Person page → open each person's page); the story in the teller's own words with "told by [name]" (gold); Where + When as cool-blue facts; "Where" jumps to the globe.
+- **Edit everything & everyone — through the keeper.** One lean "Suggest an edit" entry (no button-clutter). Editable: story (per language), people (add / remove / rename / name an unnamed face), where, when, and the photo (replace). Every edit is a *suggestion* → keeper approves/declines from the review queue (same pattern as `name_variants`: submitted → in_review → published). Show "Sent to the keeper" / "Waiting for the keeper"; if the viewer is the keeper, a quiet approve/decline queue.
+- **Three languages, first-class:** English / Русский / עברית, Hebrew RTL (whole layout mirrors). Language = a single **icon that opens a selector**, not three buttons. Switching changes UI strings, names (per-language `name_variants` + transliteration), and the story. Reuse the existing i18n (translate edge function, caching, `setLang`, `preferred_lang`).
+- **Human vs machine story (guardrail):** a human-authored per-language story is gold truth; where only a machine translation exists, show it clearly marked "Auto-translated", visually distinct from human words, with an invite to write a real one. Never present machine text as someone's voice.
+- **Quality floor:** mobile-first; responsive; legible over the moving colour; visible keyboard focus; honours `prefers-reduced-motion` (calm/still fallback for the lights); no harmful flashing.
+
+**Schema gap to add first:**
+- `artefact_translations(artefact_id, lang, body, status[in_review/published], created_by, reviewed_by, published_at, …)` — human per-language stories (gold), mirroring `name_variants`, superseding the machine translation for that language.
+- A lean edit-queue path for the other fields (story / where / when / tags / photo) that lands in the keeper's existing review flow.
+
+**Wiring / links:**
+- Replace the interim **lightbox** on the Place page (and any photo elsewhere) with a real link into `moment-real.html`.
+- Reuse `faceInto` for face crops; signed URLs from the `family` bucket for the photo; "told by" = contributor (`profiles.display_name` of `contributor_user`).
+- Functional skeleton `moment-design.html` (behaviour/structure) is also reference-only.
