@@ -613,6 +613,15 @@ load();
   const py=t=>{const m=String(t||'').match(/\d{4}/);return m?+m[0]:NaN;};
   const joinNames=a=>{a=a.filter(Boolean);if(!a.length)return '';if(a.length===1)return a[0];if(a.length===2)return a[0]+' & '+a[1];return a.slice(0,-1).join(', ')+' & '+a[a.length-1];};
   async function signedUrl(path){ try{const s=await sb2.storage.from('family').createSignedUrl(path,3600);return (s.data&&s.data.signedUrl)||'';}catch(e){return '';} }
+  async function faceInto(el, path, box){ if(!el||!path) return;
+    try{ const u=await signedUrl(path); if(!u) return; const img=new Image(); img.crossOrigin='anonymous';
+      img.onload=()=>{ const c=document.createElement('canvas'); c.width=c.height=200; const g=c.getContext('2d');
+        if(box&&box.w>0&&box.h>0){ const pad=0.35, side=Math.max(box.w*(1+2*pad),box.h*(1+2*pad)); const ss=side*Math.max(img.naturalWidth,img.naturalHeight);
+          let sx=(box.x+box.w/2)*img.naturalWidth-ss/2, sy=(box.y+box.h/2)*img.naturalHeight-ss/2;
+          sx=Math.max(0,Math.min(img.naturalWidth-ss,sx)); sy=Math.max(0,Math.min(img.naturalHeight-ss,sy)); g.drawImage(img,sx,sy,ss,ss,0,0,200,200);
+        } else { const side=Math.min(img.naturalWidth,img.naturalHeight); g.drawImage(img,(img.naturalWidth-side)/2,(img.naturalHeight-side)/2,side,side,0,0,200,200); }
+        c.style.cssText='width:100%;height:100%;display:block;'; el.innerHTML=''; el.appendChild(c); }; img.src=u;
+    }catch(e){} }
 
   const sheet=document.getElementById('placeSheet');
   const handle=document.getElementById('placeHandle');
@@ -657,9 +666,12 @@ load();
     const pById={}; (peopleR.data||[]).forEach(p=>pById[p.id]=p);
     const nameOf=id=>{const p=pById[id];return p?(p.called_name||p.display_name||'Someone'):'Someone';};
     const prov={}; (profsR.data||[]).forEach(p=>prov[p.id]=p.display_name);
-    const byArt={}, seen=[], seenSet={};
+    const artById={}; arts.forEach(a=>artById[a.id]=a);
+    const byArt={}, seen=[], seenSet={}, faceOf={};
     if(arts.length){ const subs=await sb2.from('artefact_subjects').select('artefact_id,person_id,detail').in('artefact_id',arts.map(a=>a.id));
-      (subs.data||[]).forEach(s=>{ (byArt[s.artefact_id]=byArt[s.artefact_id]||[]).push(s.person_id); if(s.person_id&&!seenSet[s.person_id]){seenSet[s.person_id]=1;seen.push(s.person_id);} }); }
+      (subs.data||[]).forEach(s=>{ (byArt[s.artefact_id]=byArt[s.artefact_id]||[]).push(s.person_id);
+        if(s.person_id&&!seenSet[s.person_id]){seenSet[s.person_id]=1;seen.push(s.person_id);}
+        if(s.person_id){ const a=artById[s.artefact_id]; if(a&&a.storage_path){ const cur=faceOf[s.person_id]; if(!cur||(!cur.box&&s.detail)) faceOf[s.person_id]={path:a.storage_path,box:s.detail||null}; } } }); }
     arts.sort((x,y)=>{const a=py(x.metadata&&x.metadata.when),b=py(y.metadata&&y.metadata.when);return (isNaN(a)?9999:a)-(isNaN(b)?9999:b);});
     const head=(PL.split(',')[0]||PL).trim(), w=head.split(/\s+/);
     const nameHtml=w.length>1?esc(w.slice(0,-1).join(' '))+' <em>'+esc(w[w.length-1])+'</em>':'<em>'+esc(head)+'</em>';
@@ -680,19 +692,17 @@ load();
     else h+='<div class="soft">No photographs from here have been gathered yet.</div>';
     h+='</div>';
     h+='<div class="sec" id="pFaces"><div class="sec-h"><div class="t"><span class="lp"></span>Seen here</div><div class="meta">'+nPeople+'</div></div>';
-    if(nPeople){ const show=seen.slice(0,8),extra=nPeople-show.length; h+='<div class="faces">';
-      show.forEach(id=>{ const asset=(pById[id]&&pById[id].primary_asset)||''; h+='<div class="face" data-id="'+esc(id)+'"><div class="crop" data-asset="'+esc(asset)+'"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#2a1d16"/><ellipse cx="50" cy="46" rx="24" ry="27" fill="#e0b98d"/><path d="M50 96 Q50 68 26 64 Q30 40 50 40 Q70 40 74 64 Q50 68 50 96Z" fill="#5a4030"/></svg></div><div class="fn">'+esc(firstName(nameOf(id)))+'</div></div>'; });
-      if(extra>0) h+='<div class="face more"><div class="crop"><span class="cnt">+'+extra+'</span></div><div class="fn">more</div></div>';
+    if(nPeople){ h+='<div class="faces">';
+      seen.forEach(id=>{ h+='<div class="face" data-id="'+esc(id)+'"><div class="crop" data-face="'+esc(id)+'"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#2a1d16"/><ellipse cx="50" cy="46" rx="24" ry="27" fill="#e0b98d"/><path d="M50 96 Q50 68 26 64 Q30 40 50 40 Q70 40 74 64 Q50 68 50 96Z" fill="#5a4030"/></svg></div><div class="fn">'+esc(firstName(nameOf(id)))+'</div></div>'; });
       h+='</div>'; }
     else h+='<div class="soft">No one has been recognised here yet.</div>';
     h+='</div>';
     h+='<div class="sec"><div class="doors">'+
-      '<div class="door" data-go="pFaces"><div><div class="l">Everyone seen here</div><div class="s">The '+nPeople+' '+(nPeople===1?'person':'people')+' recognised in this place.</div></div><span class="chev">\u203a</span></div>'+
       '<div class="door" data-go="globe"><div><div class="l">Back to the whole globe</div><div class="s">Every place the family has stood.</div></div><span class="chev">\u203a</span></div>'+
       '</div></div><div class="foot">The place remembers.</div>';
     const body=document.getElementById('placeBody'); if(!body) return; body.innerHTML=h;
     const tt=document.querySelector('#placeHandle .hd .ttl'); if(tt) tt.textContent=head;
-    document.querySelectorAll('#placeBody .face .crop[data-asset]').forEach(async el=>{const a=el.getAttribute('data-asset'); if(!a)return; const u=await signedUrl(a); if(u){el.innerHTML='<img alt="">'; el.firstChild.src=u;}});
+    document.querySelectorAll('#placeBody .face .crop[data-face]').forEach(el=>{ const id=el.getAttribute('data-face'); const f=faceOf[id]; if(f){ faceInto(el,f.path,f.box); } else { const pa=(pById[id]&&pById[id].primary_asset)||''; if(pa) faceInto(el,pa,null); } });
     document.querySelectorAll('#placeBody .moment .img[data-m]').forEach(async el=>{ const m=moments[+el.getAttribute('data-m')]; if(m&&m.path){ const u=await signedUrl(m.path); if(u){ const im=document.createElement('img'); im.alt=''; im.src=u; el.insertBefore(im, el.firstChild); } } });
     document.querySelectorAll('#placeBody .moment .img[data-m]').forEach(el=>el.addEventListener('click',()=>openLb(moments[+el.getAttribute('data-m')])));
     document.querySelectorAll('#placeBody .face[data-id]').forEach(el=>el.addEventListener('click',()=>{const id=el.getAttribute('data-id');if(id)location.href='person-real.html?id='+encodeURIComponent(id);}));
