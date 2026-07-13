@@ -15,9 +15,10 @@
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;min-height:100%;overflow-x:hidden;overflow-y:auto;background:#04070e;
     font-family:'Hanken Grotesk',system-ui,sans-serif;color:#e8eef8;
-    user-select:none;-webkit-user-select:none;touch-action:none;}
+    user-select:none;-webkit-user-select:none;overscroll-behavior:none;}
   #stage{position:fixed;inset:0;background:radial-gradient(120% 120% at 62% 30%, #0d1a2f 0%, #081120 46%, #04070e 100%);}
-  #mount{position:fixed;inset:0;z-index:1;}
+  #mount{position:fixed;inset:0;z-index:1;touch-action:none;}
+  #hitring{touch-action:none;}
   .mono{font-family:'Azeret Mono',ui-monospace,monospace;}
   .serif{font-family:'Newsreader',serif;}
 
@@ -580,7 +581,7 @@ load();
 <script>
 (function(){
   const SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
-  const sb2=window.supabase.createClient(SB_URL, SB_KEY, {auth:{storageKey:'lf-place-sheet'}});
+  const sb2=window.supabase.createClient(SB_URL, SB_KEY, {auth:{autoRefreshToken:false}});
   const PL=new URLSearchParams(location.search).get('place');
   if(!PL) return;
   const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -591,7 +592,12 @@ load();
   async function faceInto(el,path){ if(!el||!path)return; try{const s=await sb2.storage.from('family').createSignedUrl(path,3600);const u=s.data&&s.data.signedUrl;if(!u)return;const im=document.createElement('img');im.src=u;el.innerHTML='';el.appendChild(im);}catch(e){} }
 
   const handle=document.getElementById('placeHandle');
-  if(handle) handle.addEventListener('click',()=>{ const b=document.getElementById('placeBody'); if(b) b.scrollIntoView({behavior:'smooth',block:'start'}); });
+  if(handle){ handle.style.touchAction='none'; let hd=false,hy0=0,hs0=0,hmv=0;
+    handle.addEventListener('pointerdown',e=>{ hd=true; hy0=e.clientY; hs0=window.scrollY||window.pageYOffset||0; hmv=0; try{handle.setPointerCapture(e.pointerId);}catch(_){} });
+    handle.addEventListener('pointermove',e=>{ if(!hd)return; const dy=hy0-e.clientY; hmv=Math.max(hmv,Math.abs(dy)); window.scrollTo(0,hs0+dy); e.preventDefault(); },{passive:false});
+    const hend=e=>{ if(!hd)return; hd=false; try{handle.releasePointerCapture(e.pointerId);}catch(_){}
+      if(hmv<8){ const b=document.getElementById('placeBody'); if(b) b.scrollIntoView({behavior:'smooth',block:'start'}); } };
+    handle.addEventListener('pointerup',hend); handle.addEventListener('pointercancel',hend); }
   window.addEventListener('scroll',()=>{ const c=document.getElementById('placeCap'); if(c) c.style.opacity=(window.scrollY>window.innerHeight*0.4)?0:1; }, {passive:true});
 
   async function render(){
