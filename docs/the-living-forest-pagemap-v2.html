@@ -75,6 +75,7 @@ flowchart LR
   subgraph WEB["The nodes you open"]
     CARD["Person card — tap a star"]:::live
     PERSON["Person — the hub"]:::live
+    PEDIT["Person · edit details<br/>names·dates·any detail — all languages; set face"]:::plan
     PLACE["Place"]:::plan
     MOMENT["Moment / Event"]:::plan
     STORY["Memory / Story"]:::plan
@@ -126,6 +127,7 @@ flowchart LR
   SKY -->|tap a star| CARD
   GLOBE -->|tap a person| CARD
   CARD -->|meet →| PERSON
+  PERSON -->|edit| PEDIT
   GLOBE -->|tap a place| PLACE
   TIME -->|tap a year| MOMENT
 
