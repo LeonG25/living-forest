@@ -149,6 +149,10 @@
   .allhere.show { opacity:1; height:auto; }
   .allhere .line { font-family:'Newsreader',serif; font-weight:300; font-size:20px; color:#ffe9c2; }
   .allhere .line em { font-style:italic; }
+.allhere .meet { margin-top:12px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+.allhere .meet a { display:inline-flex; align-items:center; gap:6px; padding:7px 13px; border-radius:99px;
+  border:1px solid rgba(243,205,132,.55); background:rgba(243,205,132,.10); color:#ffe9c2;
+  font-size:12.5px; text-decoration:none; }
 
   @media (prefers-reduced-motion: reduce) {
     * { animation-duration:.001ms !important; transition-duration:.12s !important; }
@@ -483,6 +487,7 @@ function allHere(){
   $('#caption').classList.add('lit'); $('#quest').classList.add('done');
   const n=PEOPLE.length;
   celebrateAll('All '+n+' are home.\u2003Beautifully done.');
+  $('#allHere').innerHTML='<div class="line">Everyone is <em>home.</em></div>'+'<div class="meet">'+PEOPLE.map(p=>'<a href="person-real.html?id='+encodeURIComponent(p.id)+'">'+esc(p.name)+'</a>').join('')+'</div>';
   setTimeout(()=>$('#allHere').classList.add('show'), reduce?0:600);
   $('#hintNote').textContent = 'You found every last one \u2014 all '+n+' faces are home. The whole gathering is lit, and it will remember you.'+(ROUNDS.length>1?' Try another gathering whenever you like.':'');
   $('#hintBtn').style.display='none';

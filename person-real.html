@@ -1,611 +1,685 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
-<meta name="theme-color" content="#04070e" />
+<html lang="en" dir="ltr"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>The Living Forest — meeting someone</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body{ margin:0; padding:0; }
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body{ background:#05080f; }
   :root{
-    --cream:#f4ecdb; --muted:#9db0cc; --panel:#ffffff0d; --hair:#ffffff1f;
-    --gold:#f3cd84; --gold-hi:#ffe6ad; --cool:#7fb4d8;
+    --cream:#f4ecdb; --muted:#9db0cc; --hair:#ffffff18; --panel:#ffffff0b;
+    --gold:#f3cd84; --gold-hi:#ffe6ad; --cool:#7fb4d8; --cool-hi:#a9d2ee;
+    --edit:#c9a2ff; --edit-hi:#ddc6ff; --edit-soft:#efe6ff;
+    --leaf:#8fd6a0;
   }
-  body{
-    background:radial-gradient(125% 100% at 50% 0%, #0d1a2f 0%, #081120 48%, #04070e 100%);
-    color:var(--cream); font-family:'Hanken Grotesk',system-ui,sans-serif;
-    min-height:100dvh; -webkit-user-select:none; user-select:none; overflow-x:hidden;
-  }
+  body{ font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--cream); min-height:100dvh;
+    display:flex; align-items:flex-start; justify-content:center; gap:34px; padding:30px 16px 70px;
+    background:radial-gradient(140% 100% at 50% 0%, #12233c 0%, #0a1526 44%, #05080f 100%);
+    -webkit-user-select:none; user-select:none; flex-wrap:wrap; }
   .serif{ font-family:'Newsreader',Georgia,serif; }
-  .appvoice{ font-family:'Hanken Grotesk',sans-serif; letter-spacing:.22em; text-transform:uppercase; font-size:10px; color:var(--muted); }
+  .mono{ font-family:'Azeret Mono',monospace; }
+  [dir="rtl"] .serif, [dir="rtl"] .name-input, [dir="rtl"] .disp{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
 
-  /* twinkling star field */
-  .sky{ position:fixed; inset:0; z-index:0; pointer-events:none; }
-  .sky i{ position:absolute; width:2px; height:2px; border-radius:50%; background:#cfe0f5;
-    opacity:.5; animation:tw 4s ease-in-out infinite; }
-  @keyframes tw{ 0%,100%{opacity:.15;} 50%{opacity:.7;} }
+  /* device viewport control */
+  .stagewrap{ display:flex; flex-direction:column; align-items:center; gap:12px; }
+  .stagewrap .lbl{ font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:#6f83a3; }
+  .device{ position:relative; width:390px; height:800px; border-radius:40px; overflow:hidden; flex:0 0 auto;
+    background:#05080f; box-shadow:0 40px 110px -50px #000, 0 0 0 9px #14141b, 0 0 0 10px #2b2b34;
+    transition:width .4s cubic-bezier(.16,.8,.28,1); }
+  .device.tablet{ width:720px; height:800px; }
 
-  .phone{ position:relative; z-index:1; width:100%; max-width:430px; margin:0 auto;
-    padding:0 20px calc(56px + env(safe-area-inset-bottom));
-    padding-top:max(16px, env(safe-area-inset-top)); }
+  /* ===== growing-vine atmosphere ===== */
+  .atmo{ position:absolute; inset:0; z-index:0; width:100%; height:100%; }
+  .atmo-veil{ position:absolute; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(120% 75% at 50% 8%, rgba(143,214,160,.08), transparent 42%),
+      radial-gradient(120% 90% at 50% 40%, transparent 34%, rgba(5,8,15,.62) 100%); }
 
-  /* ---- top bar ---- */
-  .topbar{ display:flex; align-items:center; justify-content:space-between; height:44px; }
-  .icon-btn{ width:40px; height:40px; border-radius:50%; border:1px solid var(--hair);
-    background:var(--panel); color:var(--cream); display:grid; place-items:center; cursor:pointer; }
-  .icon-btn svg{ width:18px; height:18px; }
-  .breadcrumb{ display:flex; align-items:center; gap:7px; }
-  .breadcrumb .dot{ width:5px; height:5px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px 1px var(--gold); }
+  .screen{ position:absolute; inset:0; z-index:2; overflow-y:auto; scrollbar-width:none; }
+  .screen::-webkit-scrollbar{ display:none; }
+  .pad{ padding:0 20px calc(40px + env(safe-area-inset-bottom)); }
 
-  /* ---- portrait + ring ---- */
-  .hero{ display:flex; flex-direction:column; align-items:center; text-align:center; margin-top:14px; }
-  .ringwrap{ position:relative; width:220px; height:220px; }
-  .faceedit{ position:absolute; right:12px; bottom:12px; z-index:5; width:38px; height:38px; border-radius:50%;
-    display:grid; place-items:center; background:linear-gradient(180deg,#12233b,#0c1728); color:var(--gold);
-    border:1px solid var(--gold); box-shadow:0 6px 18px -8px #000, 0 0 0 4px #0a1422; text-decoration:none; }
-  .faceedit svg{ width:18px; height:18px; }
-  .editbtn{ margin-top:12px; display:inline-flex; align-items:center; gap:8px; align-self:center;
-    padding:9px 16px; border-radius:99px; border:1px solid var(--gold); background:#f3cd8412;
-    color:var(--gold-hi); font-size:12.5px; font-weight:600; cursor:pointer; text-decoration:none; }
-  .editbtn svg{ width:15px; height:15px; }
-  .ringwrap svg.ring{ position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg); }
-  .portrait{ position:absolute; inset:26px; border-radius:50%; overflow:hidden;
-    box-shadow:0 0 40px -6px rgba(243,205,132,.4), inset 0 0 0 1px rgba(255,255,255,.14); }
-  .portrait svg{ width:100%; height:100%; display:block; }
-  .ring-legend{ position:absolute; font-size:9px; letter-spacing:.14em; text-transform:uppercase;
-    color:var(--muted); white-space:nowrap; }
+  /* ===== top bar ===== */
+  .topbar{ position:sticky; top:0; z-index:8; display:flex; align-items:center; gap:10px;
+    padding:16px 20px 12px; background:linear-gradient(to bottom, rgba(6,11,20,.86), rgba(6,11,20,.4) 70%, transparent);
+    backdrop-filter:blur(6px); }
+  .ibtn{ width:40px; height:40px; border-radius:12px; flex:0 0 auto; display:grid; place-items:center; cursor:pointer;
+    border:1px solid var(--hair); background:rgba(10,20,34,.55); color:var(--cream); transition:border-color .2s,background .2s; }
+  .ibtn:hover{ border-color:rgba(255,255,255,.34); }
+  .ibtn:focus-visible{ outline:2px solid var(--cool-hi); outline-offset:2px; }
+  .ibtn svg{ width:18px; height:18px; }
+  .ttl{ flex:1; min-width:0; text-align:center; }
+  .ttl .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.26em; text-transform:uppercase; color:var(--muted); }
+  .ttl .n{ font-family:'Newsreader',serif; font-size:16px; color:#fbf5e8; margin-top:1px; }
 
-  .name{ font-weight:300; font-size:34px; line-height:1.05; margin:20px 0 0; letter-spacing:-.01em; color:#fbf5e8; }
-  .name em{ font-style:italic; }
-  .known-line{ margin-top:9px; font-size:13px; color:var(--muted); display:flex; align-items:center; gap:8px; justify-content:center; }
-  .known-line b{ color:var(--gold); font-weight:600; }
+  /* keeper reassurance ribbon */
+  .keeper-note{ display:flex; align-items:center; gap:9px; margin:2px 20px 0; padding:9px 13px; border-radius:11px;
+    background:rgba(201,162,255,.09); border:1px solid rgba(201,162,255,.28); }
+  .keeper-note svg{ width:15px; height:15px; color:var(--edit); flex:0 0 auto; }
+  .keeper-note span{ font-size:11.5px; color:#cbbce6; line-height:1.35; }
 
-  /* how related */
-  .relate{ margin-top:16px; display:inline-flex; align-items:center; gap:9px; align-self:center;
-    padding:9px 15px; border-radius:99px; border:1px solid var(--hair); background:var(--panel);
-    color:var(--cream); font-size:12.5px; cursor:pointer; }
-  .relate .thread{ width:26px; height:1px; background:linear-gradient(90deg,transparent,var(--gold)); position:relative; }
-  .relate .thread::after{ content:""; position:absolute; right:0; top:-2px; width:5px; height:5px; border-radius:50%; background:var(--gold); box-shadow:0 0 7px 1px var(--gold); }
+  /* ===== HERO: face + light ring of categories ===== */
+  .hero{ position:relative; margin:40px auto 0; width:300px; height:300px; }
+  .ring-svg{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; z-index:1; }
+  .facewrap{ position:absolute; inset:78px; z-index:3; border-radius:50%; }
+  .face{ width:100%; height:100%; border-radius:50%; overflow:hidden; position:relative;
+    border:1px solid rgba(255,244,214,.9);
+    box-shadow:0 0 26px -2px rgba(255,232,180,.6), 0 0 70px -12px rgba(243,205,132,.45), inset 0 0 0 4px rgba(5,8,15,.6); }
+  .face svg, .face img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .face .changef{ position:absolute; inset-inline-end:6px; inset-block-end:6px; z-index:4; width:36px; height:36px; border-radius:50%;
+    display:grid; place-items:center; cursor:pointer; color:#1a0f2e; border:2px solid #05080f;
+    background:linear-gradient(180deg,var(--edit-hi),var(--edit)); box-shadow:0 4px 12px -2px #000; }
+  .face .changef svg{ width:17px; height:17px; }
+  .hero .who{ position:absolute; z-index:4; inset-inline:0; bottom:-8px; text-align:center; pointer-events:none; }
 
-  /* section heading */
-  .sec{ margin-top:34px; }
-  .sec-h{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
-  .sec-h .t{ font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:9px; }
-  .sec-h .t .lp{ width:7px; height:7px; border-radius:50%; }
-  .sec-h .meta{ font-size:11px; color:var(--muted); }
+  /* category points around the ring */
+  .cat{ position:absolute; z-index:5; width:52px; transform:translate(-50%,-50%); text-align:center; cursor:pointer;
+    background:none; border:none; color:inherit; }
+  .cat .bead{ width:46px; height:46px; margin:0 auto; border-radius:50%; display:grid; place-items:center; position:relative;
+    background:rgba(12,22,38,.72); border:1px solid var(--hair); backdrop-filter:blur(4px);
+    transition:transform .22s cubic-bezier(.16,.8,.28,1), border-color .22s, box-shadow .22s; }
+  .cat .bead svg{ width:20px; height:20px; color:var(--gold-hi); }
+  .cat .bead::after{ content:""; position:absolute; inset:-3px; border-radius:50%; opacity:0;
+    box-shadow:0 0 16px 2px rgba(243,205,132,.6); transition:opacity .22s; }
+  .cat .lab{ font-family:'Azeret Mono',monospace; font-size:8px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--muted); margin-top:6px; line-height:1.1; }
+  .cat:hover .bead, .cat.on .bead{ transform:scale(1.09); border-color:rgba(243,205,132,.6); }
+  .cat.on .bead{ background:rgba(243,205,132,.16); }
+  .cat:hover .bead::after, .cat.on .bead::after{ opacity:1; }
+  .cat:focus-visible .bead{ outline:2px solid var(--gold-hi); outline-offset:3px; }
+  .cat.cool .bead svg{ color:var(--cool-hi); }
+  .cat.cool:hover .bead, .cat.cool.on .bead{ border-color:rgba(127,180,216,.6); }
+  .cat.cool.on .bead{ background:rgba(127,180,216,.16); }
+  .cat.cool .bead::after{ box-shadow:0 0 16px 2px rgba(127,180,216,.6); }
+  /* pending dot on a category */
+  .cat .pin{ position:absolute; top:-1px; inset-inline-end:2px; width:13px; height:13px; border-radius:50%;
+    background:var(--edit); border:2px solid #05080f; display:none; }
+  .cat.has-pending .pin{ display:block; }
 
-  /* light-point doorways */
-  .doorways{ display:flex; flex-direction:column; gap:10px; margin-top:8px; }
-  .door{ display:flex; align-items:center; gap:14px; padding:15px 16px; border-radius:16px;
-    background:var(--panel); border:1px solid var(--hair); cursor:pointer; position:relative; overflow:hidden;
-    transition:border-color .3s ease, background .3s ease; }
-  .door:active{ background:#ffffff14; }
-  .door .lp-icon{ width:38px; height:38px; border-radius:50%; display:grid; place-items:center; flex-shrink:0; position:relative; }
-  .door .lp-icon svg{ width:18px; height:18px; }
-  .door .txt{ flex:1; min-width:0; }
-  .door .txt .lab{ font-family:'Newsreader',serif; font-size:17px; color:var(--cream); }
-  .door .txt .sub{ font-size:12px; color:var(--muted); margin-top:2px; }
-  .door .chev{ color:var(--muted); flex-shrink:0; }
-  .door .chev svg{ width:16px; height:16px; }
-  .door.locked{ opacity:.7; }
-  .door.locked .txt .sub{ color:#7f8fa8; }
-  /* the little facet meter inside each doorway icon */
-  .lp-icon .fill-ring{ position:absolute; inset:0; }
+  /* ===== the open editor panel ===== */
+  .editor{ margin-top:26px; }
+  .ed-head{ display:flex; align-items:center; gap:11px; margin-bottom:14px; }
+  .ed-head .ic{ width:34px; height:34px; border-radius:10px; display:grid; place-items:center; flex:0 0 auto;
+    background:rgba(243,205,132,.12); border:1px solid rgba(243,205,132,.3); }
+  .ed-head .ic svg{ width:17px; height:17px; color:var(--gold-hi); }
+  .ed-head.cool .ic{ background:rgba(127,180,216,.12); border-color:rgba(127,180,216,.3); }
+  .ed-head.cool .ic svg{ color:var(--cool-hi); }
+  .ed-head .tt{ flex:1; }
+  .ed-head .tt .h{ font-family:'Newsreader',serif; font-size:20px; color:#fbf5e8; }
+  .ed-head .tt .s{ font-size:11.5px; color:var(--muted); margin-top:1px; }
 
-  /* ---- photographs ---- */
-  .photostrip{ display:flex; gap:14px; overflow-x:auto; scroll-snap-type:x mandatory;
-    margin:0 -20px; padding:2px 20px 8px; -webkit-overflow-scrolling:touch; }
-  .photostrip::-webkit-scrollbar{ display:none; }
-  .photo{ scroll-snap-align:start; flex:0 0 82%; border-radius:18px; overflow:hidden;
-    background:#0a1422; border:1px solid var(--hair); box-shadow:0 20px 50px -28px #000; }
-  .photo .img{ position:relative; aspect-ratio:4/3; }
-  .photo .img svg{ width:100%; height:100%; display:block; }
-  .photo .img .whenwhere{ position:absolute; left:12px; bottom:10px; display:flex; gap:8px; align-items:center;
-    font-size:11px; z-index:2; }
-  .photo .img .whenwhere .yr{ font-family:'Newsreader',serif; font-style:italic; color:var(--gold-hi); }
-  .photo .img .whenwhere .wh{ color:#dbe6f5; }
-  .photo .img::after{ content:""; position:absolute; inset:0; background:linear-gradient(to top, rgba(4,7,14,.85), transparent 45%); }
-  .photo .story{ padding:14px 16px 16px; }
-  /* GOLD — human memory, always attributed */
-  .photo .story .words{ font-family:'Newsreader',serif; font-style:italic; font-weight:300; font-size:15px; line-height:1.5; color:#f6ecd7; }
-  .photo .story .told{ margin-top:11px; display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--gold); }
-  .photo .story .told .flame{ width:6px; height:6px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px 1px var(--gold); }
-  .photo .story .told b{ font-weight:600; }
-  /* gold invitation when no story exists */
-  .invite{ padding:15px 16px; border-radius:16px; border:1px dashed rgba(243,205,132,.35);
-    background:rgba(243,205,132,.05); }
-  .invite .words{ font-family:'Newsreader',serif; font-style:italic; font-size:14.5px; line-height:1.5; color:#efe0c2; }
-  .invite .cta{ margin-top:10px; font-size:12px; color:var(--gold); font-weight:600; display:inline-flex; align-items:center; gap:6px; }
+  /* a field block */
+  .field{ margin-bottom:14px; }
+  .field > label{ display:block; font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--muted); margin-bottom:7px; }
+  .inp{ width:100%; background:rgba(8,16,28,.66); border:1px solid var(--hair); border-radius:12px; padding:13px 14px;
+    color:var(--cream); font-family:'Newsreader',serif; font-size:17px; transition:border-color .2s; }
+  .inp:focus{ outline:none; border-color:rgba(243,205,132,.55); }
+  .inp::placeholder{ color:#5f7089; }
+  textarea.inp{ resize:vertical; line-height:1.5; min-height:84px; }
 
-  /* COOL BLUE — app-assembled facts. separated by a visible line. neutral counts only. */
-  .appfacts{ margin-top:16px; border-top:1px solid var(--hair); padding-top:14px;
-    display:flex; align-items:flex-start; gap:11px; }
-  .appfacts .mark{ width:22px; height:22px; border-radius:6px; flex-shrink:0; display:grid; place-items:center;
-    background:rgba(127,180,216,.12); border:1px solid rgba(127,180,216,.3); }
-  .appfacts .mark svg{ width:12px; height:12px; color:var(--cool); }
-  .appfacts .body{ font-size:12.5px; line-height:1.5; color:var(--cool); }
-  .appfacts .body .src{ display:block; margin-top:4px; font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:rgba(127,180,216,.55); }
+  /* multilingual reveal */
+  .mlrow{ display:flex; align-items:center; gap:8px; }
+  .mlrow .inp{ flex:1; }
+  .mladd{ flex:0 0 auto; height:44px; padding:0 11px; border-radius:11px; cursor:pointer; display:flex; align-items:center; gap:6px;
+    background:rgba(243,205,132,.1); border:1px solid rgba(243,205,132,.32); color:var(--gold-hi);
+    font-family:'Azeret Mono',monospace; font-size:11px; }
+  .mladd svg{ width:15px; height:15px; }
+  .mlvars{ margin-top:9px; display:none; flex-direction:column; gap:8px; padding-inline-start:12px;
+    border-inline-start:2px solid rgba(243,205,132,.25); }
+  .mlvars.open{ display:flex; }
+  .mlvar{ display:flex; align-items:center; gap:9px; }
+  .mlvar .tag{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.1em; color:var(--gold);
+    width:26px; flex:0 0 auto; text-transform:uppercase; }
+  .mlvar .inp{ font-size:15px; padding:10px 12px; }
+  .mlvar.rtl .inp{ direction:rtl; text-align:right; }
 
-  /* ---- relatives (linked stars) ---- */
-  .kin{ display:flex; gap:16px; overflow-x:auto; margin:0 -20px; padding:2px 20px 6px; }
-  .kin::-webkit-scrollbar{ display:none; }
-  .kinperson{ flex:0 0 auto; width:78px; text-align:center; cursor:pointer; }
-  .kinstar{ position:relative; width:70px; height:70px; margin:0 auto; }
-  .kinstar .crop{ position:absolute; inset:6px; border-radius:50%; overflow:hidden; border:1px solid rgba(243,205,132,.5); }
-  .kinstar .crop svg{ width:100%; height:100%; }
-  .kinstar .glow{ position:absolute; inset:0; border-radius:50%; box-shadow:0 0 18px -2px rgba(243,205,132,.55); }
-  .kinperson .kn{ font-family:'Newsreader',serif; font-size:14px; margin-top:8px; color:var(--cream); line-height:1.15; }
-  .kinperson .kr{ font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-top:2px; }
+  /* chip lists (nicknames, places, custom) */
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; }
+  .chip{ display:inline-flex; align-items:center; gap:8px; padding:9px 12px; border-radius:99px;
+    background:rgba(243,205,132,.09); border:1px solid rgba(243,205,132,.3); font-size:13.5px; color:var(--cream);
+    font-family:'Newsreader',serif; }
+  .chip .x{ width:15px; height:15px; color:var(--muted); cursor:pointer; }
+  .chip.add{ background:transparent; border-style:dashed; border-color:var(--hair); color:var(--muted); cursor:pointer; font-family:'Hanken Grotesk',sans-serif; font-size:12.5px; }
+  .chip.add:hover{ border-color:rgba(243,205,132,.5); color:var(--gold-hi); }
+  .chip.cool{ background:rgba(127,180,216,.09); border-color:rgba(127,180,216,.3); }
+  .chip .ord{ font-family:'Azeret Mono',monospace; font-size:9px; color:var(--cool); }
 
-  /* ---- places ---- */
-  .places{ display:flex; flex-wrap:wrap; gap:9px; }
-  .place{ display:inline-flex; align-items:center; gap:8px; padding:9px 14px; border-radius:99px;
-    background:var(--panel); border:1px solid var(--hair); font-size:13px; color:var(--cream); cursor:pointer; }
-  .place .pin{ width:5px; height:5px; border-radius:50%; background:var(--cool); box-shadow:0 0 7px 1px rgba(127,180,216,.7); }
+  /* dates row */
+  .row2{ display:flex; gap:10px; } .row2 > *{ flex:1; }
+  .seg{ display:flex; gap:5px; background:rgba(8,16,28,.6); border:1px solid var(--hair); border-radius:11px; padding:4px; }
+  .seg button{ flex:1; border:none; background:transparent; color:var(--muted); cursor:pointer; padding:8px 4px; border-radius:8px;
+    font-family:'Hanken Grotesk',sans-serif; font-size:11px; }
+  .seg button.on{ background:rgba(127,180,216,.18); color:var(--cool-hi); }
+  .toggle{ display:flex; align-items:center; gap:10px; }
+  .sw{ width:42px; height:24px; border-radius:99px; background:rgba(255,255,255,.12); position:relative; cursor:pointer; transition:background .2s; flex:0 0 auto; }
+  .sw::after{ content:""; position:absolute; top:2px; inset-inline-start:2px; width:20px; height:20px; border-radius:50%; background:#dfe7f2; transition:transform .2s; }
+  .sw.on{ background:rgba(127,180,216,.5); } .sw.on::after{ transform:translateX(18px); }
+  [dir="rtl"] .sw.on::after{ transform:translateX(-18px); }
 
-  /* ---- challenges / reel ---- */
-  .challenge{ display:flex; align-items:center; gap:15px; padding:16px; border-radius:18px;
-    background:linear-gradient(120deg, rgba(243,205,132,.1), rgba(127,180,216,.06));
-    border:1px solid rgba(243,205,132,.28); cursor:pointer; }
-  .challenge .cimg{ width:56px; height:56px; border-radius:14px; overflow:hidden; flex-shrink:0; border:1px solid var(--hair); }
-  .challenge .cimg svg{ width:100%; height:100%; }
-  .challenge .c-txt{ flex:1; }
-  .challenge .c-txt .ct{ font-family:'Newsreader',serif; font-size:18px; color:#fbf5e8; }
-  .challenge .c-txt .cs{ font-size:12px; color:var(--muted); margin-top:3px; }
-  .challenge .go{ font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:#0c1220;
-    background:linear-gradient(180deg,var(--gold-hi),var(--gold)); padding:9px 13px; border-radius:99px; font-weight:600; }
-  .soon{ display:flex; gap:10px; margin-top:10px; }
-  .soon .s{ flex:1; padding:13px; border-radius:14px; background:var(--panel); border:1px solid var(--hair); text-align:center; opacity:.6; }
-  .soon .s .sn{ font-family:'Newsreader',serif; font-size:14px; color:var(--cream); }
-  .soon .s .sl{ font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin-top:4px; }
+  /* pending chip */
+  .pending{ display:none; align-items:center; gap:8px; margin-top:12px; padding:9px 12px; border-radius:11px;
+    background:rgba(201,162,255,.1); border:1px solid rgba(201,162,255,.34); font-size:12px; color:var(--edit-hi); }
+  .pending.show{ display:inline-flex; }
+  .pending .sp{ width:12px; height:12px; border-radius:50%; border:2px solid rgba(201,162,255,.35); border-top-color:var(--edit); animation:spin 1s linear infinite; flex:0 0 auto; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  /* keeper inline approve/decline (shown when viewer is keeper) */
+  .keeperbar{ display:none; align-items:center; gap:8px; margin-top:10px; }
+  body.is-keeper .pending.show + .keeperbar{ display:flex; }
+  .kbtn{ display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border-radius:9px; cursor:pointer; font-size:12px; font-weight:600;
+    font-family:'Hanken Grotesk',sans-serif; border:1px solid transparent; }
+  .kbtn.ok{ background:rgba(143,214,160,.16); border-color:rgba(143,214,160,.4); color:#a9e6ba; }
+  .kbtn.no{ background:transparent; border-color:var(--hair); color:var(--muted); }
+  .kbtn svg{ width:13px; height:13px; }
+  .was{ font-size:11px; color:var(--muted); margin-inline-start:auto; }
+  .was b{ color:var(--edit-hi); font-weight:500; }
 
-  .foot{ margin-top:40px; text-align:center; }
-  .foot .leaf{ font-family:'Newsreader',serif; font-style:italic; font-size:14px; color:var(--muted); }
+  .savebar{ margin-top:20px; display:flex; gap:10px; }
+  .btn{ flex:1; padding:14px; border-radius:13px; font-family:'Hanken Grotesk',sans-serif; font-size:14px; font-weight:600; cursor:pointer; border:1px solid transparent; }
+  .btn.ghost{ background:transparent; border-color:var(--hair); color:var(--cream); }
+  .btn.primary{ background:linear-gradient(180deg,var(--edit-hi),var(--edit)); color:#1a0f2e; }
+  .btn:focus-visible{ outline:2px solid var(--cool-hi); outline-offset:2px; }
 
-  @media (prefers-reduced-motion: reduce){
-    *{ animation:none !important; }
-  }
+  /* add-a-detail picker */
+  .adddetail{ margin-top:24px; }
+  .adddetail .plus{ width:100%; display:flex; align-items:center; justify-content:center; gap:9px; padding:14px; border-radius:14px;
+    background:rgba(201,162,255,.07); border:1px dashed rgba(201,162,255,.4); color:var(--edit-hi); cursor:pointer;
+    font-family:'Newsreader',serif; font-size:16px; }
+  .adddetail .plus svg{ width:18px; height:18px; }
 
-  /* gate */
-  #gate{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(4,7,14,.92);backdrop-filter:blur(6px);padding:24px;}
-  #gate .box{width:min(380px,92vw);background:rgba(10,18,34,.92);border:1px solid rgba(180,205,235,.16);border-radius:20px;padding:26px;text-align:center;}
-  #gate h2{font-family:'Newsreader',serif;font-weight:300;font-size:24px;margin:6px 0;color:#f4ecdb;}
-  #gate p{font-size:13px;color:rgba(206,221,240,.65);line-height:1.5;margin:0 0 16px;}
-  #gate input{width:100%;background:#0a1220;border:1px solid rgba(180,205,235,.2);border-radius:12px;color:#eef2fb;padding:12px 13px;font-size:15px;font-family:inherit;margin-top:8px;outline:none;}
-  #gate input:focus{border-color:#f3cd84;}
-  #gate button{width:100%;margin-top:14px;background:linear-gradient(180deg,#ffe6ad,#f3cd84);color:#3a2a05;font-weight:700;font-family:inherit;font-size:15px;padding:13px;border:none;border-radius:13px;cursor:pointer;}
-  #gate .msg{margin-top:12px;font-size:12.5px;color:#ff9a8f;min-height:16px;}
-  #gate .spin{display:inline-block;width:34px;height:34px;border:3px solid rgba(243,205,132,.25);border-top-color:#f3cd84;border-radius:50%;animation:sp 1s linear infinite;}
-  @keyframes sp{to{transform:rotate(360deg)}}
-  /* how-related revealed line */
-  .pathline{margin-top:12px;font-size:13px;line-height:1.55;color:var(--cream);max-width:340px;text-align:center;}
-  .pathline .hop{color:var(--gold);}
-  .relate.open .thread{opacity:.4;}
-  /* empty / invite blocks reused */
-  .softinvite{padding:15px 16px;border-radius:16px;border:1px dashed rgba(243,205,132,.35);background:rgba(243,205,132,.05);font-family:'Newsreader',serif;font-style:italic;font-size:14.5px;line-height:1.5;color:#efe0c2;}
+  .foot{ margin-top:26px; text-align:center; }
+  .foot .l{ font-family:'Newsreader',serif; font-style:italic; font-size:13.5px; color:rgba(143,214,160,.6); }
+
+  /* ===== overlays ===== */
+  .scrim{ position:absolute; inset:0; z-index:30; background:rgba(4,7,14,.66); backdrop-filter:blur(3px);
+    opacity:0; pointer-events:none; transition:opacity .28s ease; }
+  .scrim.show{ opacity:1; pointer-events:auto; }
+  .sheet{ position:absolute; z-index:31; inset-inline:0; bottom:0; background:linear-gradient(180deg,#0f1e33,#081120);
+    border:1px solid var(--hair); border-bottom:none; border-radius:22px 22px 0 0; padding:10px 20px calc(22px + env(safe-area-inset-bottom));
+    transform:translateY(103%); transition:transform .34s cubic-bezier(.16,.8,.28,1); box-shadow:0 -24px 70px -30px #000; max-height:88%; overflow-y:auto; scrollbar-width:none; }
+  .sheet::-webkit-scrollbar{ display:none; }
+  .sheet.show{ transform:translateY(0); }
+  .grip{ width:40px; height:4px; border-radius:99px; background:rgba(255,255,255,.2); margin:6px auto 15px; }
+  .sheet h3{ font-family:'Newsreader',serif; font-weight:400; font-size:21px; color:#fbf5e8; margin-bottom:4px; }
+  .sheet .sub{ font-size:12.5px; color:var(--muted); margin-bottom:16px; line-height:1.45; }
+
+  .lang-opt{ display:flex; align-items:center; gap:14px; width:100%; padding:14px 15px; border-radius:14px;
+    background:var(--panel); border:1px solid var(--hair); color:var(--cream); cursor:pointer; margin-bottom:9px; text-align:start; }
+  .lang-opt.on{ border-color:rgba(243,205,132,.55); background:rgba(243,205,132,.08); }
+  .lang-opt .native{ font-family:'Newsreader',serif; font-size:18px; } .lang-opt .en{ font-size:11.5px; color:var(--muted); margin-top:1px; }
+  .lang-opt .tick{ margin-inline-start:auto; color:var(--gold); opacity:0; } .lang-opt.on .tick{ opacity:1; } .lang-opt .tick svg{ width:18px; height:18px; }
+
+  /* change-face gallery + crop */
+  .gal{ display:grid; grid-template-columns:repeat(4,1fr); gap:9px; margin-bottom:16px; }
+  .gal .g{ position:relative; aspect-ratio:1; border-radius:11px; overflow:hidden; cursor:pointer; border:2px solid transparent; }
+  .gal .g svg{ width:100%; height:100%; }
+  .gal .g.on{ border-color:var(--edit); }
+  .gal .g .tagbox{ position:absolute; border:2px solid var(--gold-hi); border-radius:4px; box-shadow:0 0 0 400px rgba(5,8,15,.4); }
+  .cropstage{ position:relative; width:100%; aspect-ratio:1; max-width:260px; margin:0 auto 8px; border-radius:16px; overflow:hidden;
+    background:#0a1120; touch-action:none; }
+  .cropstage .cimg{ position:absolute; inset:0; }
+  .cropstage .cimg svg{ width:100%; height:100%; }
+  .cropstage .cmask{ position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(circle at center, transparent 46%, rgba(5,8,15,.72) 47%);
+    box-shadow:none; }
+  .cropstage .cring{ position:absolute; inset:0; pointer-events:none; }
+  .cropstage .cring::after{ content:""; position:absolute; inset:calc(50% - 46%); border-radius:50%; border:1.5px solid rgba(255,244,214,.9); box-shadow:0 0 18px rgba(255,232,180,.5); }
+  .zoomrow{ display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+  .zoomrow svg{ width:16px; height:16px; color:var(--muted); flex:0 0 auto; }
+  input[type=range]{ -webkit-appearance:none; appearance:none; flex:1; height:4px; border-radius:99px; background:rgba(255,255,255,.16); }
+  input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:18px; height:18px; border-radius:50%; background:var(--edit-hi); cursor:pointer; box-shadow:0 0 10px rgba(201,162,255,.6); }
+  input[type=range]::-moz-range-thumb{ width:18px; height:18px; border:none; border-radius:50%; background:var(--edit-hi); cursor:pointer; }
+
+  .add-opt{ display:flex; align-items:center; gap:12px; width:100%; padding:13px 14px; border-radius:13px;
+    background:var(--panel); border:1px solid var(--hair); color:var(--cream); cursor:pointer; margin-bottom:8px; text-align:start; }
+  .add-opt:hover{ border-color:rgba(201,162,255,.45); }
+  .add-opt .ic{ width:32px; height:32px; border-radius:9px; background:rgba(201,162,255,.12); display:grid; place-items:center; flex:0 0 auto; }
+  .add-opt .ic svg{ width:16px; height:16px; color:var(--edit-hi); }
+  .add-opt .nm{ font-family:'Newsreader',serif; font-size:16px; } .add-opt .ds{ font-size:11.5px; color:var(--muted); margin-top:1px; }
+
+  /* toast */
+  .toast{ position:absolute; z-index:40; left:50%; transform:translate(-50%,20px); bottom:24px; display:flex; align-items:center; gap:10px;
+    padding:12px 17px; border-radius:99px; background:rgba(28,18,46,.92); backdrop-filter:blur(12px); border:1px solid rgba(201,162,255,.45);
+    color:var(--edit-soft); font-size:13px; opacity:0; pointer-events:none; transition:opacity .3s, transform .3s; box-shadow:0 18px 44px -18px #000; max-width:88%; }
+  .toast.show{ opacity:1; transform:translate(-50%,0); }
+  .toast .fl{ width:8px; height:8px; border-radius:50%; background:var(--edit); box-shadow:0 0 10px 2px var(--edit); flex:0 0 auto; }
+
+  @media (prefers-reduced-motion: reduce){ .pending .sp{ animation:none; } }
+
+
+/* full-viewport page (drop the mock device frame) */
+html,body{background:#04070e;margin:0}
+.stagewrap{gap:0}
+.stagewrap>.lbl{display:none!important}
+.device{width:100vw!important;height:100dvh!important;max-width:none!important;border-radius:0!important;border:none!important;box-shadow:none!important}
 </style>
 </head>
-<body>
-  <div class="sky" id="sky" aria-hidden="true"></div>
-  <main class="phone">
-    <div class="topbar">
-      <a class="icon-btn" id="back" href="home-real.html" aria-label="Back to the sky">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
-      </a>
-      <div class="breadcrumb">
-        <span class="appvoice">The Living Forest</span>
-        <span class="dot"></span>
-        <span class="appvoice" id="crumb">meeting someone</span>
+<body class="is-keeper">
+  <!-- MOBILE -->
+  <div class="stagewrap">
+    <div class="lbl" id="lblM">Mobile · 390</div>
+    <div class="device" id="device">
+      <canvas class="atmo" aria-hidden="true"></canvas>
+      <div class="atmo-veil"></div>
+      <div class="screen">
+        <div class="topbar" id="topbar"></div>
+        <div class="keeper-note" id="keeperNote"></div>
+        <div class="pad" id="pad"></div>
       </div>
-      <span class="icon-btn" style="visibility:hidden"></span>
+      <div class="scrim" id="scrim"></div>
+      <section class="sheet" id="langSheet" role="dialog" aria-modal="true" aria-label="Language"></section>
+      <section class="sheet" id="faceSheet" role="dialog" aria-modal="true" aria-label="Change the face"></section>
+      <section class="sheet" id="addSheet" role="dialog" aria-modal="true" aria-label="Add a detail"></section>
+      <div class="toast" id="toast"><span class="fl"></span><span id="toastMsg"></span></div>
     </div>
-    <div id="content" style="opacity:0;transition:opacity .45s ease;"></div>
-  </main>
+    <div class="lbl" style="cursor:pointer" id="toTablet">↔ preview tablet width</div>
+  </div>
 
-  <div id="gate"><div class="box" id="gateBox"><div class="spin"></div><p style="margin-top:16px">Opening&hellip;</p></div></div>
-
-<script>
-const $ = s => document.querySelector(s);
-const SUPABASE_URL='https://oabcdrktuikifbormjip.supabase.co';
-const SUPABASE_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-const PID = new URLSearchParams(location.search).get('id');
-const NS='http://www.w3.org/2000/svg';
-const reduceMo = matchMedia('(prefers-reduced-motion: reduce)').matches;
-function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-const NUMW=['none','one','two','three','four','five','six','seven','eight','nine'];
-function worded(n){ return n>=0 && n<NUMW.length ? NUMW[n] : String(n); }
-function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
-function firstName(n){ return String(n||'').trim().split(/\s+/)[0] || 'them'; }
-function poss(n){ const f=firstName(n); return f + (f.slice(-1).toLowerCase()==='s' ? '\u2019' : '\u2019s'); }
-function sexKey(s){ const c=String(s||'').trim().toLowerCase().charAt(0); return c==='m'?'m':(c==='f'?'f':'n'); }
-function pronoun(sex){ return {m:'his',f:'her',n:'their'}[sexKey(sex)]; }
-
-/* twinkling star field */
+  <script>
 (function(){
-  const sky = $('#sky'); if(!sky) return;
-  let html='';
-  for(let i=0;i<60;i++){
-    const x=(Math.random()*100).toFixed(2), y=(Math.random()*100).toFixed(2);
-    const d=(Math.random()*4+2).toFixed(1), delay=(Math.random()*4).toFixed(1), s=(Math.random()*1.4+1).toFixed(1);
-    html += '<i style="left:'+x+'%;top:'+y+'%;width:'+s+'px;height:'+s+'px;animation-duration:'+d+'s;animation-delay:'+delay+'s;'+(reduceMo?'animation:none;opacity:.4;':'')+'"></i>';
+  const SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
+  const sb=window.supabase.createClient(SB_URL,SB_KEY);
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+  const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+  const uuid=()=> (window.crypto&&crypto.randomUUID?crypto.randomUUID():('x'+Math.random().toString(36).slice(2)+Date.now().toString(36)));
+  const qs=new URLSearchParams(location.search);
+  const PERSON_ID=qs.get('id')||qs.get('person')||'c9aa4593-7670-4305-bc81-28c2dbf189f3';
+  const LANGS=['en','ru','he'];
+
+  const T={
+      en:{ dir:'ltr', native:'English', label:'English',
+        eyebrow:'Edit details', title:'Rita Golnick',
+        keeper:'Nothing reaches the family until the keeper approves it.',
+        cats:{ names:'Names', dates:'Dates', places:'Places', kin:'Relations', life:'Life', gender:'Gender', custom:'Details', sources:'Sources' },
+        display:'Display name', addlang:'other languages', given:'Given', family:'Family', patronymic:'Patronymic',
+        nicks:'Nicknames & pet names', addnick:'add a nickname',
+        birth:'Born', death:'Died', living:'Still living', precise:'Precision',
+        prec:['exact','month','year','approx','unknown'],
+        pbirth:'Place of birth', lived:'Places lived', addplace:'add a home',
+        addkin:'Add a connection', kinsub:'Feeds the family graph — kept light.',
+        about:'About', occupation:'Occupation', langspoken:'Languages spoken',
+        genderq:'Gender', gendersub:'Helps translate names correctly.',
+        gopts:['She','He','They','Prefer not to say'],
+        adddetail:'Add a detail', adddetailsub:'Record anything — a saying, a recipe, a medal.',
+        source:'Add a source or note',
+        send:'Send to the keeper', cancel:'Cancel', waiting:'Waiting for the keeper', sent:'Sent to the keeper',
+        changeface:'Change the face', facesub:'Pick a photo they\u2019re tagged in, then fine-tune the round crop.',
+        zoom:'Zoom', preview:'Preview', save:'Save', suggesting:'You\u2019re suggesting an edit',
+        approve:'Approve', decline:'Decline', wasnow:'was',
+        langtitle:'Language', langsub:'Names, labels and details all follow the language you choose.',
+        foot:'A life, told a little more fully.', addfield:'Add this in another language',
+        detailLabel:'Label', detailValue:'Value', keeperView:'You are the keeper' },
+      ru:{ dir:'ltr', native:'Русский', label:'Russian',
+        eyebrow:'Изменить данные', title:'Рита Гольник',
+        keeper:'Ничто не дойдёт до семьи, пока хранитель не одобрит.',
+        cats:{ names:'Имена', dates:'Даты', places:'Места', kin:'Родство', life:'Жизнь', gender:'Пол', custom:'Детали', sources:'Источники' },
+        display:'Отображаемое имя', addlang:'другие языки', given:'Имя', family:'Фамилия', patronymic:'Отчество',
+        nicks:'Прозвища и ласковые имена', addnick:'добавить прозвище',
+        birth:'Родилась', death:'Умерла', living:'Ещё жива', precise:'Точность',
+        prec:['точно','месяц','год','около','неизвестно'],
+        pbirth:'Место рождения', lived:'Где жила', addplace:'добавить дом',
+        addkin:'Добавить связь', kinsub:'Пополняет семейный граф — коротко.',
+        about:'О человеке', occupation:'Занятие', langspoken:'Языки',
+        genderq:'Пол', gendersub:'Помогает правильно склонять имена.',
+        gopts:['Она','Он','Они','Не указывать'],
+        adddetail:'Добавить деталь', adddetailsub:'Запишите что угодно — поговорку, рецепт, награду.',
+        source:'Добавить источник или заметку',
+        send:'Отправить хранителю', cancel:'Отмена', waiting:'Ожидает хранителя', sent:'Отправлено хранителю',
+        changeface:'Сменить лицо', facesub:'Выберите фото, где она отмечена, и настройте круглую обрезку.',
+        zoom:'Масштаб', preview:'Просмотр', save:'Сохранить', suggesting:'Вы предлагаете правку',
+        approve:'Одобрить', decline:'Отклонить', wasnow:'было',
+        langtitle:'Язык', langsub:'Имена, подписи и детали — на выбранном языке.',
+        foot:'Жизнь, рассказанная чуть полнее.', addfield:'Добавить на другом языке',
+        detailLabel:'Название', detailValue:'Значение', keeperView:'Вы хранитель' },
+      he:{ dir:'rtl', native:'עברית', label:'Hebrew',
+        eyebrow:'עריכת פרטים', title:'ריטה גולניק',
+        keeper:'שום דבר לא יגיע למשפחה עד שהשומר יאשר.',
+        cats:{ names:'שמות', dates:'תאריכים', places:'מקומות', kin:'קרבה', life:'חיים', gender:'מגדר', custom:'פרטים', sources:'מקורות' },
+        display:'שם לתצוגה', addlang:'שפות נוספות', given:'שם פרטי', family:'שם משפחה', patronymic:'שם האב',
+        nicks:'כינויים ושמות חיבה', addnick:'הוספת כינוי',
+        birth:'נולדה', death:'נפטרה', living:'עדיין בחיים', precise:'דיוק',
+        prec:['מדויק','חודש','שנה','בערך','לא ידוע'],
+        pbirth:'מקום לידה', lived:'מקומות מגורים', addplace:'הוספת בית',
+        addkin:'הוספת קשר', kinsub:'מזין את עץ המשפחה — בקצרה.',
+        about:'אודות', occupation:'עיסוק', langspoken:'שפות',
+        genderq:'מגדר', gendersub:'עוזר לתרגם שמות נכון.',
+        gopts:['היא','הוא','הם','מעדיפה לא לומר'],
+        adddetail:'הוספת פרט', adddetailsub:'תעדו כל דבר — פתגם, מתכון, עיטור.',
+        source:'הוספת מקור או הערה',
+        send:'שליחה לשומר', cancel:'ביטול', waiting:'ממתין לשומר', sent:'נשלח לשומר',
+        changeface:'החלפת התמונה', facesub:'בחרו תמונה שבה היא מתויגת, וכווננו את החיתוך העגול.',
+        zoom:'זום', preview:'תצוגה', save:'שמירה', suggesting:'אתם מציעים עריכה',
+        approve:'לאשר', decline:'לדחות', wasnow:'היה',
+        langtitle:'שפה', langsub:'השמות, התוויות והפרטים — לפי השפה שתבחרו.',
+        foot:'חיים, מסופרים מעט יותר במלואם.', addfield:'הוספה בשפה אחרת',
+        detailLabel:'תווית', detailValue:'ערך', keeperView:'אתם השומר' }
+    };
+  let lang='en'; const d=()=>T[lang];
+  const I={
+      back:'<path d="M15 18l-6-6 6-6"/>', globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+      keeper:'<path d="M12 3l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V6z"/><path d="M9 12l2 2 4-4"/>',
+      names:'<path d="M4 7V5h16v2M9 5v14M7 19h4"/><path d="M14 13h6M14 17h6M14 9h6" opacity=".5"/>',
+      dates:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/>',
+      places:'<path d="M12 21s-6-5.7-6-10a6 6 0 1112 0c0 4.3-6 10-6 10z"/><circle cx="12" cy="11" r="2"/>',
+      kin:'<circle cx="7" cy="8" r="2.4"/><circle cx="17" cy="8" r="2.4"/><circle cx="12" cy="17" r="2.4"/><path d="M7 10v2a2 2 0 002 2h6a2 2 0 002-2v-2M12 14v1"/>',
+      life:'<path d="M4 5h13l3 3v11H4z"/><path d="M8 10h8M8 14h6" opacity=".6"/>',
+      gender:'<circle cx="12" cy="9" r="4"/><path d="M12 13v8M9 18h6"/>',
+      custom:'<path d="M12 3l2.2 5.8L20 9l-4.5 3.8L17 19l-5-3.4L7 19l1.5-6.2L4 9l5.8-.2z"/>',
+      sources:'<path d="M9 7h6M9 11h6M9 15h4"/><rect x="5" y="3" width="14" height="18" rx="2"/>',
+      pencil:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>',
+      camera:'<path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3.2"/>',
+      plus:'<path d="M12 5v14M5 12h14"/>', x:'<path d="M6 6l12 12M18 6L6 18"/>',
+      check:'<path d="M20 6L9 17l-5-5"/>', info:'<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/>',
+      globe2:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/>',
+      zoomout:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4M8 11h6"/>', zoomin:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4M11 8v6M8 11h6"/>',
+      quote:'<path d="M7 7h4v6H7zM13 7h4v6h-4z"/>', medal:'<circle cx="12" cy="15" r="5"/><path d="M9 3l3 6 3-6"/>', phone:'<path d="M5 4h4l2 5-2 1a11 11 0 005 5l1-2 5 2v4a2 2 0 01-2 2A17 17 0 013 6a2 2 0 012-2z"/>'
+    };
+  const sv=(p,w)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w||1.6}" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+  function faceSVG(){ return `<svg viewBox="0 0 100 100"><defs><radialGradient id="fg" cx="42%" cy="34%" r="76%"><stop offset="0%" stop-color="#f0d3ad"/><stop offset="60%" stop-color="#dcae82"/><stop offset="100%" stop-color="#9c6f4c"/></radialGradient><linearGradient id="fb" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2a3a52"/><stop offset="100%" stop-color="#141f30"/></linearGradient></defs><rect width="100" height="100" fill="url(#fb)"/><path d="M50 98 Q50 70 24 66 Q28 40 50 40 Q72 40 76 66 Q50 70 50 98Z" fill="#7a5a44"/><ellipse cx="50" cy="52" rx="25" ry="28" fill="url(#fg)"/><path d="M24 44 Q28 18 50 18 Q72 18 76 44 Q64 30 50 30 Q36 30 24 44Z" fill="#e9e4dc"/><ellipse cx="41" cy="52" rx="2.7" ry="3.1" fill="#3a2b22"/><ellipse cx="59" cy="52" rx="2.7" ry="3.1" fill="#3a2b22"/><path d="M43 66 Q50 71 57 66" stroke="#a06b4c" stroke-width="1.9" fill="none" stroke-linecap="round"/></svg>`; }
+  function galSVG(seed){ const s=['#c9a878','#8fa6b8','#b58a5c','#9fb0a0','#c08a70','#8a92b0'][seed%6];
+      return `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="${s}"/><rect y="58" width="100" height="42" fill="rgba(0,0,0,.18)"/><circle cx="50" cy="42" r="16" fill="#e6c49b"/><path d="M50 92 Q50 66 30 63 Q34 50 50 50 Q66 50 70 63 Q50 66 50 92Z" fill="#5a4030"/></svg>`; }
+
+  /* ---------- state ---------- */
+  let user=null, isKeeper=false, person=null;
+  let NV=[], facts=[], tagged=[];
+  let openCat='names';
+  const CATS=[
+    {id:'names',kind:'gold'},{id:'dates',kind:'cool'},{id:'places',kind:'cool'},{id:'kin',kind:'gold'},
+    {id:'life',kind:'gold'},{id:'gender',kind:'gold'},{id:'custom',kind:'gold'},{id:'sources',kind:'cool'}
+  ];
+  let S={}; // editable working copy, seeded from published data
+
+  /* ---------- storage / face crop ---------- */
+  async function signedUrl(path){ if(!path) return ''; try{const r=await sb.storage.from('family').createSignedUrl(path,3600); return (r.data&&r.data.signedUrl)||'';}catch(e){return '';} }
+  async function faceInto(el, path, box){ if(!el||!path) return; const u=await signedUrl(path); if(!u) return;
+    const img=new Image(); img.crossOrigin='anonymous';
+    img.onload=()=>{ const c=document.createElement('canvas'); c.width=c.height=200; const g=c.getContext('2d');
+      if(box&&box.w>0&&box.h>0){ const pad=0.35, side=Math.max(box.w*(1+2*pad),box.h*(1+2*pad))*Math.max(img.naturalWidth,img.naturalHeight);
+        let sx=(box.x+box.w/2)*img.naturalWidth-side/2, sy=(box.y+box.h/2)*img.naturalHeight-side/2;
+        sx=Math.max(0,Math.min(img.naturalWidth-side,sx)); sy=Math.max(0,Math.min(img.naturalHeight-side,sy)); g.drawImage(img,sx,sy,side,side,0,0,200,200);
+      } else { const s=Math.min(img.naturalWidth,img.naturalHeight); g.drawImage(img,(img.naturalWidth-s)/2,(img.naturalHeight-s)/2,s,s,0,0,200,200); }
+      c.style.cssText='width:100%;height:100%;display:block'; el.innerHTML=''; el.appendChild(c); }; img.src=u; }
+
+  /* ---------- fact helpers ---------- */
+  const pub=(field,lg)=>{ const r=facts.find(x=>x.field===field&&x.status==='published'&&(lg==null||x.lang===lg)); return r?r.value:''; };
+  const pubList=(field,lg)=>facts.filter(x=>x.field===field&&x.status==='published'&&(lg==null||x.lang===lg)).sort((a,b)=>a.ord-b.ord);
+  const CATFIELDS={names:['display','given','family','patronymic','maiden','nickname'],dates:['birth','death','birth_prec','death_prec','living'],
+    places:['pbirth','lived'],kin:['kin'],life:['bio','occupation','langspoken'],gender:['gender'],custom:['custom_label','custom_value'],sources:['source']};
+  function catPending(cat){ const fs=CATFIELDS[cat]||[];
+    if(cat==='names' && NV.some(v=>v.status!=='published')) return true;
+    return facts.some(x=>fs.includes(x.field)&&x.status!=='published'); }
+  const nvBy=(lg,st)=>NV.find(v=>v.lang===lg&&(st?v.status===st:v.status==='published'));
+
+  /* ---------- seed working copy ---------- */
+  function seed(){ const g={}; LANGS.forEach(l=>{ const v=nvBy(l); g[l]=v||{}; });
+    const perLang=(field)=>{ const o={}; LANGS.forEach(l=>o[l]=pub(field,l)); return o; };
+    const dispDerived={}; LANGS.forEach(l=>{ dispDerived[l]=pub('display',l)|| [ (g[l].given||''),(g[l].family||'') ].filter(Boolean).join(' '); }); if(!dispDerived.en) dispDerived.en=(person.display_name||'');
+    S={
+      names:{ display:dispDerived, given:{en:(g.en.given||person.called_name||(person.display_name||'').split(' ')[0]||''),ru:(g.ru.given||''),he:(g.he.given||'')},
+        family:{en:(g.en.family||(person.display_name||'').split(' ').slice(1).join(' ')||''),ru:(g.ru.family||''),he:(g.he.family||'')},
+        patronymic:perLang('patronymic'), maiden:perLang('maiden'),
+        nicks:{en:pubList('nickname','en').map(r=>r.value),ru:pubList('nickname','ru').map(r=>r.value),he:pubList('nickname','he').map(r=>r.value)} },
+      dates:{ birth:person.birth_date||'', death:person.death_date||'', birth_prec:person.birth_certainty||'', living:!!person.is_living },
+      places:{ pbirth:pub('pbirth','und'), lived:pubList('lived','und') },
+      kin:pubList('kin','und'),
+      life:{ bio:perLang('bio'), occupation:perLang('occupation'), langspoken:pubList('langspoken','und') },
+      gender:person.sex||'',
+      custom:groupCustom(),
+      sources:pubList('source','und')
+    };
   }
-  sky.innerHTML=html;
+  function groupCustom(){ const groups={}; facts.filter(x=>(x.field==='custom_label'||x.field==='custom_value')&&x.status==='published').forEach(x=>{ (groups[x.group_id]=groups[x.group_id]||{label:{},value:{}}); groups[x.group_id][x.field==='custom_label'?'label':'value'][x.lang]=x.value; });
+    return Object.keys(groups).map(gid=>({group_id:gid,...groups[gid]})); }
+
+  /* ---------- write helpers (all land as in_review suggestions) ---------- */
+  async function insFact(field,lg,value,ord,group_id){ if(!user) return; try{ await sb.from('person_facts').insert({person_id:PERSON_ID,group_id:group_id||uuid(),field,lang:lg||'und',value:value==null?'':String(value),ord:ord||0,status:'in_review',created_by:user.id}); }catch(e){} }
+  async function delFact(id){ try{ await sb.from('person_facts').delete().eq('id',id);}catch(e){} }
+  async function upsertNV(lg,given,family){ if(!user) return; try{
+    await sb.from('name_variants').delete().eq('person_id',PERSON_ID).eq('lang',lg).eq('created_by',user.id).neq('status','published');
+    if((given&&given.trim())||(family&&family.trim())) await sb.from('name_variants').insert({person_id:PERSON_ID,lang:lg,given:given||'',family:family||null,status:'in_review',created_by:user.id});
+  }catch(e){} }
+
+  /* ---------- the multilingual field (design pattern) ---------- */
+  function ml(fieldLabel, field, valsByLang){ const cur=valsByLang[lang]||''; const others=LANGS.filter(l=>l!==lang);
+    const varsId='ml_'+field+'_'+Math.random().toString(36).slice(2,6);
+    const varRows=others.map(l=>`<div class="mlvar ${l==='he'?'rtl':''}"><span class="tag">${l}</span><input class="inp" data-field="${field}" data-lang="${l}" value="${esc(valsByLang[l]||'')}" placeholder="${esc(d().addfield)}"></div>`).join('');
+    return `<div class="field"><label>${esc(fieldLabel)}</label>
+      <div class="mlrow"><input class="inp name-input" data-field="${field}" data-lang="${lang}" value="${esc(cur)}" ${lang==='he'?'style="direction:rtl;text-align:right"':''}>
+        <button class="mladd" data-ml="${varsId}">${sv(I.globe2,1.5)} ${esc(d().addlang)}</button></div>
+      <div class="mlvars" id="${varsId}">${varRows}</div></div>`; }
+
+  function chips(field, list, addLabel, cool){ return `<div class="field"><div class="chips">${list.map(r=>`<span class="chip ${cool?'cool':''}">${r.ord!=null&&cool?`<span class="ord">${String(r.ord+1).padStart(2,'0')}</span>`:''}${esc(r.value)}<span class="x" data-del="${r.id}">${sv(I.x,2)}</span></span>`).join('')}<button class="chip add" data-addchip="${field}">${sv(I.plus,2)} ${esc(addLabel)}</button></div><div class="chipadd" data-for="${field}" style="display:none;margin-top:8px"><input class="inp" placeholder="${esc(addLabel)}"><div class="savebar" style="margin-top:8px"><button class="btn ghost" data-cadd-cancel>${esc(d().cancel)}</button><button class="btn primary" data-cadd-ok="${field}">${esc(d().send)}</button></div></div></div>`; }
+
+  /* ---------- category bodies (design DOM, real data) ---------- */
+  function bodyFor(id){ const L=d();
+    if(id==='names') return ml(L.display,'display',S.names.display)+ml(L.given,'given',S.names.given)+ml(L.family,'family',S.names.family)
+      +ml(L.patronymic,'patronymic',S.names.patronymic)+ml('Maiden name','maiden',S.names.maiden)
+      +`<div class="field"><label>${L.nicks}</label><div class="chips">${(S.names.nicks[lang]||[]).map(n=>`<span class="chip">${esc(n.value!=null?n.value:n)}${n.id?`<span class="x" data-del="${n.id}">${sv(I.x,2)}</span>`:''}</span>`).join('')}<button class="chip add" data-addchip="nickname">${sv(I.plus,2)} ${esc(L.addnick)}</button></div><div class="chipadd" data-for="nickname" style="display:none;margin-top:8px"><input class="inp" placeholder="${esc(L.addnick)}"><div class="savebar" style="margin-top:8px"><button class="btn ghost" data-cadd-cancel>${esc(L.cancel)}</button><button class="btn primary" data-cadd-ok="nickname">${esc(L.send)}</button></div></div></div>`;
+    if(id==='dates') return `<div class="field"><label>${L.birth}</label><input class="inp" data-field="birth" value="${esc(S.dates.birth)}" placeholder="YYYY-MM-DD"></div>
+      <div class="field"><label>${L.death}</label><input class="inp" data-field="death" value="${esc(S.dates.death)}" placeholder="YYYY-MM-DD"></div>
+      <div class="field"><label>${L.precise}</label><div class="seg" data-field="birth_prec">${L.prec.map((p,i)=>`<button class="${S.dates.birth_prec===['exact','month','year','circa','unknown'][i]?'on':(!S.dates.birth_prec&&i===0?'on':'')}" data-v="${['exact','month','year','circa','unknown'][i]}">${esc(p)}</button>`).join('')}</div></div>
+      <div class="field"><div class="toggle"><span class="sw ${S.dates.living?'on':''}" data-sw data-field="living"></span><span style="font-size:14px">${esc(L.living)}</span></div></div>`;
+    if(id==='places') return `<div class="field"><label>${L.pbirth}</label><input class="inp" data-field="pbirth" value="${esc(S.places.pbirth)}"></div>`
+      +chips('lived',S.places.lived,L.addplace,true)+`<div style="font-size:11.5px;color:var(--muted);margin-top:2px">${esc(L.placenote||'Place names are translated once on the Place page and shared.')}</div>`;
+    if(id==='kin') return chips('kin',S.kin,L.addkin,false)+`<div style="font-size:11.5px;color:var(--muted);margin-top:2px">${esc(L.kinsub)}</div>`;
+    if(id==='life') return ml(L.about,'bio',S.life.bio)+ml(L.occupation,'occupation',S.life.occupation)
+      +`<div class="field"><label>${L.langspoken}</label><div class="chips">${S.life.langspoken.map(r=>`<span class="chip">${esc(r.value)}<span class="x" data-del="${r.id}">${sv(I.x,2)}</span></span>`).join('')}<button class="chip add" data-addchip="langspoken">${sv(I.plus,2)}</button></div><div class="chipadd" data-for="langspoken" style="display:none;margin-top:8px"><input class="inp" placeholder="${esc(L.langspoken)}"><div class="savebar" style="margin-top:8px"><button class="btn ghost" data-cadd-cancel>${esc(L.cancel)}</button><button class="btn primary" data-cadd-ok="langspoken">${esc(L.send)}</button></div></div></div>`;
+    if(id==='gender') return `<div class="field"><label>${L.genderq} — <span style="text-transform:none;letter-spacing:0;color:#7f8fa8">${esc(L.gendersub)}</span></label>
+      <div class="seg" data-field="gender">${L.gopts.map((g,i)=>`<button class="${(S.gender===['f','m','x','']?'':'')||(S.gender===['f','m','x',''][i])?'on':(!S.gender&&i===3?'on':'')}" data-v="${['f','m','x',''][i]}">${esc(g)}</button>`).join('')}</div></div>`;
+    if(id==='custom') return `<div class="field"><div class="chips" style="flex-direction:column;align-items:stretch;gap:9px">${S.custom.map(c=>`<div class="chip" style="justify-content:space-between;border-radius:12px"><span><b style="font-family:'Azeret Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:2px">${esc((c.label[lang]||c.label.en||c.label.ru||c.label.he||'')||'')}</b>${esc((c.value[lang]||c.value.en||c.value.ru||c.value.he||'')||'')}</span><span class="x" data-delgroup="${c.group_id}">${sv(I.x,2)}</span></div>`).join('')}</div></div>
+      <div class="adddetail"><button class="plus" data-add>${sv(I.plus,1.8)} ${esc(L.adddetail)}</button></div>`;
+    return chips('source',S.sources,L.source,true);
+  }
+
+  /* ---------- ring + render (design) ---------- */
+  function ringHTML(){ const cx=150,cy=150,R=130;
+    const beads=CATS.map((c,i)=>{ const a=-Math.PI/2+i*(Math.PI*2/CATS.length), x=cx+R*Math.cos(a), y=cy+R*Math.sin(a);
+      return `<button class="cat ${c.kind==='cool'?'cool':''} ${c.id===openCat?'on':''} ${catPending(c.id)?'has-pending':''}" data-cat="${c.id}" style="left:${x}px;top:${y}px" aria-label="${esc(d().cats[c.id])}"><span class="bead">${sv(I[c.id])}<span class="pin"></span></span><span class="lab">${esc(d().cats[c.id])}</span></button>`; }).join('');
+    return `<svg class="ring-svg" viewBox="0 0 300 300"><circle cx="150" cy="150" r="130" fill="none" stroke="rgba(243,205,132,.14)" stroke-width="1"/><circle cx="150" cy="150" r="130" fill="none" stroke="rgba(243,205,132,.4)" stroke-width="2" stroke-dasharray="1 13" stroke-linecap="round"/></svg>
+      <div class="facewrap"><div class="face" id="faceHost"></div><button class="changef" id="changeFace" aria-label="${esc(d().changeface)}">${sv(I.camera,1.6)}</button></div>${beads}`; }
+
+  function render(){ const L=d(); document.documentElement.lang=lang; document.documentElement.dir=L.dir;
+    $('#topbar').innerHTML=`<button class="ibtn" id="backBtn" aria-label="Back">${sv(I.back)}</button>
+      <div class="ttl"><div class="k">${esc(L.eyebrow)}</div><div class="n serif">${esc(S.names.display[lang]||S.names.display.en||'')}</div></div>
+      <button class="ibtn" id="langBtn" aria-label="${esc(L.langtitle)}">${sv(I.globe,1.5)}</button>`;
+    $('#keeperNote').innerHTML=`${sv(I.keeper,1.5)}<span>${esc(L.keeper)}</span>`;
+    const cat=CATS.find(c=>c.id===openCat); const pend=catPending(openCat);
+    $('#pad').innerHTML=`<div class="hero">${ringHTML()}</div>
+      <div class="editor">
+        <div class="ed-head ${cat.kind==='cool'?'cool':''}"><span class="ic">${sv(I[cat.id])}</span><div class="tt"><div class="h">${esc(L.cats[cat.id])}</div><div class="s">${cat.kind==='cool'?'App-assembled fact':'Told by the family'}</div></div></div>
+        ${bodyFor(cat.id)}
+        <div class="pending ${pend?'show':''}" id="pend"><span class="sp"></span>${esc(L.waiting)}</div>
+        ${isKeeper&&pend?`<div class="keeperbar"><button class="kbtn ok" id="kOk">${sv(I.check,2)} ${esc(L.approve)}</button><button class="kbtn no" id="kNo">${esc(L.decline)}</button></div>`:''}
+        <div class="savebar"><button class="btn ghost" id="revert">${esc(L.cancel)}</button><button class="btn primary" id="send">${esc(L.send)}</button></div>
+      </div>
+      <div class="foot"><div class="l">${esc(L.foot)}</div></div>`;
+    // real representative face
+    const fh=$('#faceHost'); if(fh){ if(person.primary_asset){ faceInto(fh,person.primary_asset,(person.metadata&&person.metadata.face_box)||null); } else if(tagged[0]){ faceInto(fh,tagged[0].storage_path,tagged[0].box); } else { fh.innerHTML=faceSVG(); } }
+    wire();
+  }
+
+  /* ---------- overlays ---------- */
+  const scrim=$('#scrim');
+  const show=sh=>{scrim.classList.add('show');sh.classList.add('show');};
+  const hide=()=>{scrim.classList.remove('show');$$('.sheet').forEach(s=>s.classList.remove('show'));};
+  scrim.addEventListener('click',hide);
+  window.__lfClose=()=>{ if(document.querySelector('.sheet.show')){ hide(); return true; } return false; };
+  function toast(m){ $('#toastMsg').textContent=m; const el=$('#toast'); el.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('show'),2500); }
+
+  function openLang(){ const L=d();
+    $('#langSheet').innerHTML=`<div class="grip"></div><h3>${esc(L.langtitle)}</h3><div class="sub">${esc(L.langsub)}</div>
+      ${Object.keys(T).map(k=>`<button class="lang-opt ${k===lang?'on':''}" data-lang="${k}"><span><span class="native">${esc(T[k].native)}</span><span class="en" style="display:block">${esc(T[k].label)}</span></span><span class="tick">${sv(I.check,2)}</span></button>`).join('')}`;
+    $$('#langSheet [data-lang]').forEach(b=>b.onclick=async()=>{ lang=b.dataset.lang; hide(); try{localStorage.setItem('lf_lang',lang);}catch(e){} if(user){try{await sb.from('profiles').update({preferred_lang:lang}).eq('id',user.id);}catch(e){}} render(); });
+    show($('#langSheet'));
+  }
+
+  async function openFace(){ const L=d(); if(!tagged.length){ toast(L.facesub); }
+    const gal=await Promise.all(tagged.map(async(t,i)=>({i,url:await signedUrl(t.storage_path),box:t.box})));
+    const gals=gal.map(g=>`<div class="g" data-g="${g.i}" style="background:#0c1626">${g.url?`<img src="${g.url}" style="width:100%;height:100%;object-fit:cover" alt="">`:galSVG(g.i)}</div>`).join('');
+    $('#faceSheet').innerHTML=`<div class="grip"></div><h3>${esc(L.changeface)}</h3><div class="sub">${esc(L.facesub)}</div>
+      <div class="gal">${gals||`<div class="sub">${esc(L.facesub)}</div>`}</div>
+      <div class="cropstage" id="cropStage"><div class="cimg" id="cimg"></div><div class="cmask"></div><div class="cring"></div></div>
+      <div class="zoomrow">${sv(I.zoomout,1.6)}<input type="range" min="100" max="260" value="140" id="zoom">${sv(I.zoomin,1.6)}</div>
+      <div class="ed-note" style="display:flex;gap:9px;margin:10px 0 0;font-size:12px;color:var(--muted)">${sv(I.info,1.7)}<span>${esc(L.keeper)}</span></div>
+      <div class="savebar"><button class="btn ghost" data-close>${esc(L.cancel)}</button><button class="btn primary" id="faceSave">${esc(L.send)}</button></div>`;
+    let z=140,px=50,py=44,drag=false,sx,sy,bx,by,chosen=null; const img=$('#cimg'), st=$('#cropStage');
+    function apply(){ img.style.cssText=`position:absolute;left:${px}%;top:${py}%;width:100%;height:100%;transform:translate(-50%,-50%) scale(${z/100});transform-origin:center`; }
+    function setImg(g){ chosen=g; img.innerHTML=g.url?`<img src="${g.url}" style="width:100%;height:100%;object-fit:cover" alt="">`:galSVG(g.i); apply(); }
+    if(gal[0]) setImg(gal[0]);
+    $('#zoom').oninput=e=>{z=+e.target.value;apply();};
+    st.addEventListener('pointerdown',e=>{drag=true;sx=e.clientX;sy=e.clientY;bx=px;by=py;st.setPointerCapture(e.pointerId);});
+    st.addEventListener('pointermove',e=>{if(!drag)return;px=bx+(e.clientX-sx)/st.clientWidth*100;py=by+(e.clientY-sy)/st.clientHeight*100;apply();});
+    st.addEventListener('pointerup',()=>drag=false);
+    $$('#faceSheet [data-g]').forEach(el=>el.onclick=()=>{ $$('#faceSheet .g').forEach(x=>x.classList.remove('on')); el.classList.add('on'); setImg(gal[+el.dataset.g]); });
+    $('#faceSheet [data-close]').onclick=hide;
+    $('#faceSave').onclick=async()=>{ if(chosen){ const t=tagged[chosen.i]; await insFact('face','und',JSON.stringify({artefact_id:t.artefact_id,storage_path:t.storage_path,zoom:z,px:px,py:py})); } hide(); await reload(); toast(L.sent); };
+    show($('#faceSheet'));
+  }
+
+  function openAdd(){ const L=d();
+    $('#addSheet').innerHTML=`<div class="grip"></div><h3>${esc(L.adddetail)}</h3><div class="sub">${esc(L.adddetailsub)}</div>
+      <div class="field"><label>${esc(L.detailLabel)} (${lang})</label><input class="inp" id="cLabel" placeholder="${esc(L.detailLabel)}" style="margin-bottom:10px">
+      <label>${esc(L.detailValue)} (${lang})</label><input class="inp" id="cValue" placeholder="${esc(L.detailValue)}"></div>
+      <div class="ed-note" style="display:flex;gap:9px;margin:2px 0 0;font-size:12px;color:var(--muted)">${sv(I.info,1.7)}<span>${esc(L.keeper)}</span></div>
+      <div class="savebar"><button class="btn ghost" data-close>${esc(L.cancel)}</button><button class="btn primary" id="cSend">${esc(L.send)}</button></div>`;
+    $('#addSheet [data-close]').onclick=hide;
+    $('#cSend').onclick=async()=>{ const lab=$('#cLabel').value.trim(), val=$('#cValue').value.trim(); if(lab||val){ const gid=uuid(); await insFact('custom_label',lang,lab,0,gid); await insFact('custom_value',lang,val,0,gid); } hide(); await reload(); toast(L.sent); };
+    show($('#addSheet'));
+  }
+
+  /* ---------- submit a category's scalar/text fields ---------- */
+  async function submitCat(cat){ if(!user){ toast(d().suggesting); return; } const ed=$('.editor'); if(!ed) return;
+    const read=(field,lg)=>{ const el=ed.querySelector(`[data-field="${field}"][data-lang="${lg}"]`); return el?el.value:null; };
+    if(cat==='names'){ for(const l of LANGS){ const gv=read('given',l), fm=read('family',l); if(gv!=null||fm!=null) await upsertNV(l, gv||'', fm||''); }
+      for(const f of ['display','patronymic','maiden']){ for(const l of LANGS){ const v=read(f,l); if(v!=null&&v.trim()!=='') await insFact(f,l,v.trim()); } } }
+    else if(cat==='dates'){ const b=read('birth','und')||(ed.querySelector('[data-field="birth"]')||{}).value; const de=(ed.querySelector('[data-field="death"]')||{}).value;
+      const prec=(ed.querySelector('.seg[data-field="birth_prec"] .on')||{}).getAttribute&&ed.querySelector('.seg[data-field="birth_prec"] .on').getAttribute('data-v');
+      const living=ed.querySelector('.sw[data-field="living"]')&&ed.querySelector('.sw[data-field="living"]').classList.contains('on');
+      if(b!=null) await insFact('birth','und',b); if(de!=null) await insFact('death','und',de); if(prec) await insFact('birth_prec','und',prec); await insFact('living','und',living?'1':'0'); }
+    else if(cat==='places'){ const pb=(ed.querySelector('[data-field="pbirth"]')||{}).value; if(pb!=null) await insFact('pbirth','und',pb); }
+    else if(cat==='life'){ for(const f of ['bio','occupation']){ for(const l of LANGS){ const v=read(f,l); if(v!=null&&v.trim()!=='') await insFact(f,l,v.trim()); } } }
+    else if(cat==='gender'){ const g=(ed.querySelector('.seg[data-field="gender"] .on')||{}).getAttribute&&ed.querySelector('.seg[data-field="gender"] .on').getAttribute('data-v'); await insFact('gender','und',g||''); }
+    await reload(); toast(d().sent);
+  }
+
+  /* ---------- keeper apply ---------- */
+  async function approveCat(cat){ const fs=CATFIELDS[cat]||[]; const pendFacts=facts.filter(x=>fs.includes(x.field)&&x.status!=='published');
+    const now=new Date().toISOString();
+    // apply structured facts onto the people row, then publish
+    const patch={}; pendFacts.forEach(f=>{ if(f.field==='birth') patch.birth_date=f.value||null; if(f.field==='death') patch.death_date=f.value||null;
+      if(f.field==='birth_prec') patch.birth_certainty=f.value||null; if(f.field==='living') patch.is_living=(f.value==='1'); if(f.field==='gender') patch.sex=f.value||null;
+      if(f.field==='face'){ try{ const j=JSON.parse(f.value); patch.primary_asset=j.storage_path||patch.primary_asset; }catch(e){} } });
+    if(Object.keys(patch).length){ try{ await sb.from('people').update(patch).eq('id',PERSON_ID);}catch(e){} }
+    for(const f of pendFacts){ try{ await sb.from('person_facts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',f.id);}catch(e){} }
+    if(cat==='names'){ for(const v of NV.filter(v=>v.status!=='published')){ try{ await sb.from('name_variants').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',v.id);}catch(e){} } }
+    await reload(); toast(d().approve+' ✓');
+  }
+  async function declineCat(cat){ const fs=CATFIELDS[cat]||[];
+    for(const f of facts.filter(x=>fs.includes(x.field)&&x.status!=='published')){ try{ await sb.from('person_facts').delete().eq('id',f.id);}catch(e){} }
+    if(cat==='names'){ for(const v of NV.filter(v=>v.status!=='published')){ try{ await sb.from('name_variants').delete().eq('id',v.id);}catch(e){} } }
+    await reload(); toast(d().decline);
+  }
+
+  /* ---------- wire ---------- */
+  function wire(){ const L=d();
+    $('#backBtn').onclick=()=>{ if(history.length>1) history.back(); else location.href='globe-real.html'; };
+    $('#langBtn').onclick=openLang;
+    const cf=$('#changeFace'); if(cf) cf.onclick=openFace;
+    $$('.cat').forEach(c=>c.onclick=()=>{ openCat=c.dataset.cat; render(); });
+    $$('.mladd').forEach(b=>b.onclick=()=>{ const v=document.getElementById(b.dataset.ml); if(v) v.classList.toggle('open'); });
+    $$('[data-sw]').forEach(s=>s.onclick=()=>s.classList.toggle('on'));
+    $$('.seg button').forEach(b=>b.onclick=()=>{ [...b.parentElement.children].forEach(x=>x.classList.remove('on')); b.classList.add('on'); });
+    const add=$('[data-add]'); if(add) add.onclick=openAdd;
+    // chip add reveal
+    $$('[data-addchip]').forEach(b=>b.onclick=()=>{ const box=$(`.chipadd[data-for="${b.dataset.addchip}"]`); if(box){ box.style.display='block'; const i=box.querySelector('input'); if(i) i.focus(); } });
+    $$('[data-cadd-cancel]').forEach(b=>b.onclick=()=>{ const box=b.closest('.chipadd'); if(box) box.style.display='none'; });
+    $$('[data-cadd-ok]').forEach(b=>b.onclick=async()=>{ const field=b.getAttribute('data-cadd-ok'); const box=b.closest('.chipadd'); const val=box.querySelector('input').value.trim(); if(val){ const isLangNeutral=(field==='lived'||field==='langspoken'||field==='kin'||field==='source'); const ord=(field==='lived'?S.places.lived.length:field==='source'?S.sources.length:0); await insFact(field, isLangNeutral?'und':lang, val, ord); } await reload(); });
+    $$('[data-del]').forEach(x=>x.onclick=async()=>{ await delFact(x.getAttribute('data-del')); await reload(); });
+    $$('[data-delgroup]').forEach(x=>x.onclick=async()=>{ const gid=x.getAttribute('data-delgroup'); for(const f of facts.filter(f=>f.group_id===gid)) await delFact(f.id); await reload(); });
+    const send=$('#send'); if(send) send.onclick=()=>submitCat(openCat);
+    const rev=$('#revert'); if(rev) rev.onclick=()=>{ seed(); render(); };
+    const ok=$('#kOk'); if(ok) ok.onclick=()=>approveCat(openCat);
+    const no=$('#kNo'); if(no) no.onclick=()=>declineCat(openCat);
+  }
+
+  (function vines(){
+      const cv=$('.atmo'), ctx=cv.getContext('2d'); let W,H,DPR=Math.min(2,window.devicePixelRatio||1);
+      function resize(){ W=cv.clientWidth; H=cv.clientHeight; cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); build(); }
+      new ResizeObserver(resize).observe(cv);
+      // build a set of vines: each a path of points growing upward with side branches + glowing nodes
+      let vines=[];
+      const COL=[[143,214,160],[243,205,132],[127,180,216],[201,162,255]];
+      function makeVine(x0){ const pts=[]; let x=x0,y=1.05, ang=-Math.PI/2+(Math.random()-.5)*.4;
+        const n=Math.floor(Math.random()*5)+7;
+        for(let i=0;i<n;i++){ pts.push({x,y}); ang+=(Math.random()-.5)*.6; const step=0.07+Math.random()*0.05; x+=Math.cos(ang)*step*0.5; y+=Math.sin(ang)*step; }
+        return { pts, c:COL[(Math.random()*COL.length)|0], grow:0, gspd:0.0016+Math.random()*0.0012, sway:Math.random()*6.28, buds:pts.map(()=>Math.random()>.55) };
+      }
+      function build(){ vines=[]; const k=Math.max(3,Math.round(W/120)); for(let i=0;i<k;i++) vines.push(makeVine((i+0.5)/k + (Math.random()-.5)*0.12)); }
+      resize();
+      function frame(now){ const t=(now||0)/1000; ctx.clearRect(0,0,W,H); ctx.globalCompositeOperation='lighter';
+        vines.forEach(v=>{ if(!reduce && v.grow<1) v.grow+=v.gspd;
+          const g=reduce?1:v.grow, seg=(v.pts.length-1)*g, last=Math.floor(seg), frac=seg-last;
+          const sway=reduce?0:Math.sin(t*0.6+v.sway)*0.035;
+          const P=k=> ({ x:(v.pts[k].x+ (reduce?0:Math.sin(t*0.5+k*0.5+v.sway)*0.02*(k/ v.pts.length)))*W, y:v.pts[k].y*H });
+          // stem
+          ctx.strokeStyle=`rgba(${v.c[0]},${v.c[1]},${v.c[2]},0.16)`; ctx.lineWidth=1.4; ctx.beginPath();
+          for(let i=0;i<=last;i++){ const p=P(i); i?ctx.lineTo(p.x,p.y+sway*H):ctx.moveTo(p.x,p.y); }
+          if(last<v.pts.length-1){ const a=P(last), b=P(last+1); ctx.lineTo(a.x+(b.x-a.x)*frac, a.y+(b.y-a.y)*frac); } ctx.stroke();
+          // glowing buds along grown part
+          for(let i=0;i<=last;i++){ if(!v.buds[i]) continue; const p=P(i); const tw=reduce?0.7:(0.4+0.6*(0.5+0.5*Math.sin(t*1.2+i+v.sway)));
+            const R=6+ (i===v.pts.length-1?4:0); const gr=ctx.createRadialGradient(p.x,p.y+sway*H,0,p.x,p.y+sway*H,R);
+            gr.addColorStop(0,`rgba(${v.c[0]},${v.c[1]},${v.c[2]},${0.5*tw})`); gr.addColorStop(1,`rgba(${v.c[0]},${v.c[1]},${v.c[2]},0)`);
+            ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(p.x,p.y+sway*H,R,0,6.2832); ctx.fill();
+            ctx.fillStyle=`rgba(255,250,236,${0.7*tw})`; ctx.beginPath(); ctx.arc(p.x,p.y+sway*H,1.3,0,6.2832); ctx.fill(); }
+        });
+        ctx.globalCompositeOperation='source-over';
+        if(!reduce) requestAnimationFrame(frame);
+      }
+      if(!reduce) requestAnimationFrame(frame); else frame(0);
+    })();
+
+  /* ---------- load ---------- */
+  async function reload(){ await loadData(); seed(); render(); }
+  async function loadData(){
+    const {data:p}=await sb.from('people').select('id,display_name,called_name,sex,primary_asset,birth_date,birth_certainty,death_date,death_certainty,is_living,metadata').eq('id',PERSON_ID).maybeSingle();
+    person=p||{id:PERSON_ID};
+    const {data:nv}=await sb.from('name_variants').select('id,lang,given,family,status,created_by').eq('person_id',PERSON_ID); NV=nv||[];
+    const {data:fs}=await sb.from('person_facts').select('id,group_id,field,lang,value,ord,status,created_by').eq('person_id',PERSON_ID); facts=fs||[];
+    const {data:subs}=await sb.from('artefact_subjects').select('artefact_id,detail').eq('person_id',PERSON_ID);
+    const ids=(subs||[]).map(s=>s.artefact_id);
+    tagged=[];
+    if(ids.length){ const {data:arts}=await sb.from('artefacts').select('id,storage_path').in('id',ids);
+      const byId={}; (arts||[]).forEach(a=>byId[a.id]=a);
+      tagged=(subs||[]).filter(s=>byId[s.artefact_id]&&byId[s.artefact_id].storage_path).map(s=>({artefact_id:s.artefact_id,storage_path:byId[s.artefact_id].storage_path,box:s.detail||null})); }
+  }
+
+  /* ---------- gate + boot ---------- */
+  function showGate(){ const L=d(); let g=$('#gate'); if(!g){ g=document.createElement('div'); g.id='gate'; document.querySelector('.device').appendChild(g); }
+    g.setAttribute('style','position:absolute;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(5,8,15,.86);backdrop-filter:blur(6px)');
+    g.innerHTML=`<div style="width:100%;max-width:300px;background:linear-gradient(180deg,#0e1c31,#081120);border:1px solid var(--hair);border-radius:20px;padding:24px;text-align:center">
+      <h3 style="font-family:'Newsreader',serif;font-weight:400;font-size:22px;color:#fbf5e8">${esc(L.eyebrow)}</h3>
+      <div style="font-size:12.5px;color:var(--muted);margin:6px 0 16px">${esc(L.keeper)}</div>
+      <input id="gEmail" type="email" placeholder="you@example.com" style="width:100%;margin-bottom:10px;background:rgba(6,14,26,.7);border:1px solid var(--hair);border-radius:12px;padding:12px;color:var(--cream);font-family:inherit;font-size:14px">
+      <input id="gPass" type="password" placeholder="Password" style="width:100%;margin-bottom:12px;background:rgba(6,14,26,.7);border:1px solid var(--hair);border-radius:12px;padding:12px;color:var(--cream);font-family:inherit;font-size:14px">
+      <button id="gBtn" class="btn primary" style="width:100%">${esc(L.send.replace(/.*/, T[lang].langtitle==='Language'?'Sign in':'Войти'))}</button>
+      <div id="gErr" style="color:#ff9a8a;font-size:12px;min-height:16px;margin-top:8px"></div></div>`;
+    $('#gBtn').textContent='Sign in';
+    $('#gBtn').onclick=async()=>{ const {error}=await sb.auth.signInWithPassword({email:$('#gEmail').value.trim(),password:$('#gPass').value}); if(error){$('#gErr').textContent=error.message;return;} g.remove(); boot(); };
+  }
+  async function boot(){ const {data:{session}}=await sb.auth.getSession();
+    const stored=localStorage.getItem('lf_lang'); if(stored&&T[stored]) lang=stored;
+    if(!session){ showGate(); return; }
+    user=session.user;
+    try{ const {data:pr}=await sb.from('profiles').select('is_keeper,preferred_lang').eq('id',user.id).maybeSingle(); if(pr){ isKeeper=!!pr.is_keeper; if(pr.preferred_lang&&!stored&&T[pr.preferred_lang]) lang=pr.preferred_lang; } }catch(e){}
+    await loadData(); seed(); render();
+  }
+  boot();
 })();
 
-/* draw a face crop onto a canvas inside el (uses normalized box {x,y,w,h} if given) */
-async function faceInto(el, path, box){
-  if(!el || !path) return;
-  try{
-    const s=await sb.storage.from('family').createSignedUrl(path,3600);
-    const url=s.data&&s.data.signedUrl; if(!url) return;
-    const img=new Image(); img.crossOrigin='anonymous';
-    img.onload=()=>{
-      const c=document.createElement('canvas'); c.width=c.height=220; const g=c.getContext('2d');
-      if(box&&box.w>0&&box.h>0){
-        const pad=0.35; let bw=box.w*(1+2*pad), bh=box.h*(1+2*pad); const side=Math.max(bw,bh);
-        let sx=(box.x+box.w/2-side/2)*img.naturalWidth, sy=(box.y+box.h/2-side/2)*img.naturalHeight, ss=side*Math.max(img.naturalWidth,img.naturalHeight);
-        sx=Math.max(0,Math.min(img.naturalWidth-ss,sx)); sy=Math.max(0,Math.min(img.naturalHeight-ss,sy));
-        g.drawImage(img,sx,sy,ss,ss,0,0,220,220);
-      } else {
-        const side=Math.min(img.naturalWidth,img.naturalHeight);
-        g.drawImage(img,(img.naturalWidth-side)/2,(img.naturalHeight-side)/2,side,side,0,0,220,220);
-      }
-      c.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
-      el.innerHTML=''; el.appendChild(c);
-    };
-    img.src=url;
-  }catch(e){}
-}
-
-/* set a full photo as a cover image inside el */
-async function imgInto(el, path){
-  if(!el || !path) return;
-  try{
-    const s=await sb.storage.from('family').createSignedUrl(path,3600);
-    const url=s.data&&s.data.signedUrl; if(!url) return;
-    const im=document.createElement('img');
-    im.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;';
-    im.src=url; el.insertBefore(im, el.firstChild);
-  }catch(e){}
-}
-
-/* ---- the five-point light ring, fed by computed facets ---- */
-function drawRing(facets){
-  const ring=$('#lightRing'); if(!ring) return;
-  ring.innerHTML='';
-  const cx=110, cy=110, r=92, gap=0.09, seg=(Math.PI*2)/facets.length;
-  function arc(a0,a1,stroke,w){
-    const large=(a1-a0)>Math.PI?1:0;
-    const x0=cx+r*Math.cos(a0), y0=cy+r*Math.sin(a0), x1=cx+r*Math.cos(a1), y1=cy+r*Math.sin(a1);
-    const p=document.createElementNS(NS,'path');
-    p.setAttribute('d','M '+x0+' '+y0+' A '+r+' '+r+' 0 '+large+' 1 '+x1+' '+y1);
-    p.setAttribute('stroke',stroke); p.setAttribute('stroke-width',w);
-    p.setAttribute('fill','none'); p.setAttribute('stroke-linecap','round');
-    return p;
-  }
-  facets.forEach((f,i)=>{
-    const a0=i*seg+gap/2, a1=(i+1)*seg-gap/2;
-    ring.appendChild(arc(a0,a1,'rgba(255,255,255,.10)',5));
-    const lvl=Math.max(0,Math.min(1,f.lvl));
-    if(lvl<=0) return;
-    const aFill=a0+(a1-a0)*lvl;
-    const col=f.lit?'#f3cd84':'#7fb4d8';
-    const p=arc(a0,aFill,col,5);
-    p.style.filter=f.lit?'drop-shadow(0 0 4px rgba(243,205,132,.9))':'drop-shadow(0 0 3px rgba(127,180,216,.6))';
-    if(!f.lit) p.setAttribute('opacity','.7');
-    ring.appendChild(p);
-    const bx=cx+r*Math.cos(aFill), by=cy+r*Math.sin(aFill);
-    const bead=document.createElementNS(NS,'circle');
-    bead.setAttribute('cx',bx); bead.setAttribute('cy',by); bead.setAttribute('r',f.lit?3.4:2.6);
-    bead.setAttribute('fill',f.lit?'#ffe6ad':'#aed4ee');
-    bead.style.filter='drop-shadow(0 0 6px '+(f.lit?'#f3cd84':'#7fb4d8')+')';
-    ring.appendChild(bead);
-  });
-}
-
-/* ---- build the five doorways ---- */
-const DOOR_IC={
-  Face:'<circle cx="12" cy="9" r="4"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7"/>',
-  Story:'<path d="M4 5h16v11H8l-4 4z"/>',
-  Place:'<path d="M12 21s-6-5.7-6-10a6 6 0 1112 0c0 4.3-6 10-6 10z"/><circle cx="12" cy="11" r="2"/>',
-  People:'<circle cx="9" cy="9" r="3"/><path d="M3 20c0-3 2.7-5 6-5s6 2 6 5"/><path d="M16 6a3 3 0 010 6M21 20c0-2.4-1.6-4.2-4-4.8"/>',
-  Reel:'<circle cx="12" cy="12" r="9"/><path d="M10 8l6 4-6 4z"/>'
-};
-function buildDoorways(doors){
-  const wrap=$('#doorways'); if(!wrap) return; wrap.innerHTML='';
-  doors.forEach(d=>{
-    const el=document.createElement('div');
-    el.className='door'+(d.locked?' locked':'');
-    const col=d.cool?'#7fb4d8':(d.lit?'#f3cd84':'#7fb4d8');
-    const bg=d.cool?'rgba(127,180,216,.12)':(d.lit?'rgba(243,205,132,.12)':'rgba(127,180,216,.08)');
-    const rr=17, circ=2*Math.PI*rr, off=circ*(1-Math.max(0,Math.min(1,d.lvl)));
-    el.innerHTML=
-      '<div class="lp-icon" style="background:'+bg+';">'+
-        '<svg class="fill-ring" viewBox="0 0 38 38">'+
-          '<circle cx="19" cy="19" r="17" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="2"/>'+
-          '<circle cx="19" cy="19" r="17" fill="none" stroke="'+col+'" stroke-width="2" stroke-linecap="round" stroke-dasharray="'+circ.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" transform="rotate(-90 19 19)" style="filter:drop-shadow(0 0 3px '+col+');"/>'+
-        '</svg>'+
-        '<svg viewBox="0 0 24 24" fill="none" stroke="'+col+'" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+DOOR_IC[d.key]+'</svg>'+
-      '</div>'+
-      '<div class="txt"><div class="lab">'+d.lab+'</div><div class="sub">'+d.sub+'</div></div>'+
-      '<div class="chev">'+(d.locked
-        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>'
-        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>')+'</div>';
-    el.addEventListener('click',()=>{
-      if(d.locked) return;
-      const t=d.target && document.getElementById(d.target);
-      if(t) t.scrollIntoView({behavior:reduceMo?'auto':'smooth', block:'start'});
-    });
-    wrap.appendChild(el);
-  });
-}
-
-/* ---- shortest relationship path from the viewing player to this person ---- */
-function relWord(edge, fromId, toId, sexOf){
-  const sx=sexOf(toId);
-  if(edge.kind==='parent'){
-    if(edge.to_person===fromId && edge.from_person===toId) return {m:'father',f:'mother',n:'parent'}[sexKey(sx)];
-    if(edge.from_person===fromId && edge.to_person===toId) return {m:'son',f:'daughter',n:'child'}[sexKey(sx)];
-  }
-  if(edge.kind==='spouse') return {m:'husband',f:'wife',n:'spouse'}[sexKey(sx)];
-  if(edge.kind==='sibling') return {m:'brother',f:'sister',n:'sibling'}[sexKey(sx)];
-  return 'relative';
-}
-function shortestPath(rels, startId, endId){
-  if(!startId || !endId) return null;
-  if(startId===endId) return {nodes:[startId], edges:[]};
-  const adj={};
-  rels.forEach(r=>{
-    (adj[r.from_person]=adj[r.from_person]||[]).push({other:r.to_person, edge:r});
-    (adj[r.to_person]=adj[r.to_person]||[]).push({other:r.from_person, edge:r});
-  });
-  const prev={}, prevEdge={}, seen={}; seen[startId]=1; const q=[startId];
-  while(q.length){
-    const cur=q.shift();
-    if(cur===endId) break;
-    (adj[cur]||[]).forEach(n=>{ if(!seen[n.other]){ seen[n.other]=1; prev[n.other]=cur; prevEdge[n.other]=n.edge; q.push(n.other); } });
-  }
-  if(!seen[endId]) return null;
-  const nodes=[endId], edges=[]; let c=endId;
-  while(c!==startId){ edges.unshift(prevEdge[c]); c=prev[c]; nodes.unshift(c); }
-  return {nodes, edges};
-}
-function renderPath(path, nameOf, sexOf){
-  if(!path) return 'A path not yet traced &mdash; but you share this forest.';
-  if(path.nodes.length===1) return 'This is you.';
-  let out='You';
-  for(let i=0;i<path.edges.length;i++){
-    const fromId=path.nodes[i], toId=path.nodes[i+1];
-    const w=relWord(path.edges[i], fromId, toId, sexOf);
-    const lead = i===0 ? 'your' : pronoun(sexOf(fromId));
-    out += ' &rarr; <span class="hop">'+esc(lead+' '+w)+'</span> '+esc(nameOf(toId));
-  }
-  return out;
-}
-
-async function load(){
-  const { data:{ session } } = await sb.auth.getSession();
-  if(!session){ showSignIn(); return; }
-  if(!PID){ gateError('No one was chosen. Go back to the sky and tap a light.'); return; }
-  try{
-    const [people, rels, subsMine, profs] = await Promise.all([
-      sb.from('people').select('id,display_name,called_name,primary_asset,sex'),
-      sb.from('relationships').select('from_person,to_person,kind'),
-      sb.from('artefact_subjects').select('artefact_id,person_id,detail').eq('person_id',PID),
-      sb.from('profiles').select('id,display_name,person_id')
-    ]);
-    if(people.error) throw people.error;
-    const peopleById={}; (people.data||[]).forEach(p=> peopleById[p.id]=p);
-    const nameOf=id=>{ const p=peopleById[id]; return p ? (p.called_name||p.display_name||'Someone') : 'Someone'; };
-    const sexOf=id=>{ const p=peopleById[id]; return p?p.sex:null; };
-    const me=peopleById[PID]; if(!me) throw new Error('That person is not in your forest.');
-    const name=me.called_name||me.display_name||'Someone';
-    const first=firstName(name);
-
-    const artIds=[...new Set((subsMine.data||[]).map(s=>s.artefact_id))];
-    let arts=[];
-    if(artIds.length){ const a=await sb.from('artefacts').select('id,body,certainty,metadata,storage_path,contributor_user').eq('status','published').in('id',artIds); arts=a.data||[]; }
-    const boxByArt={}; (subsMine.data||[]).forEach(s=>{ if(s.detail) boxByArt[s.artefact_id]=s.detail; });
-    const provName={}; (profs.data||[]).forEach(p=> provName[p.id]=p.display_name);
-    const myProfile=(profs.data||[]).find(p=>p.id===session.user.id);
-    const myPid=myProfile ? myProfile.person_id : null;
-
-    /* co-appearance: distinct other people across this person's photos */
-    let coCount=0;
-    if(artIds.length){
-      const all=await sb.from('artefact_subjects').select('person_id,artefact_id').in('artefact_id',artIds);
-      coCount=new Set((all.data||[]).map(s=>s.person_id).filter(id=>id&&id!==PID)).size;
-    }
-
-    const places=[...new Set(arts.map(a=>a.metadata&&a.metadata.where).filter(Boolean))];
-    const stories=arts.filter(a=>a.body);
-    const nMem=stories.length, nPhoto=arts.length;
-
-    /* relationships grouped for this person */
-    const kin=[];
-    (rels.data||[]).forEach(r=>{
-      if(r.kind==='parent' && r.to_person===PID) kin.push({id:r.from_person, role:'Parent'});
-      else if(r.kind==='parent' && r.from_person===PID) kin.push({id:r.to_person, role:'Child'});
-      else if(r.kind==='spouse' && (r.from_person===PID||r.to_person===PID)) kin.push({id:(r.from_person===PID?r.to_person:r.from_person), role:'Spouse'});
-      else if(r.kind==='sibling' && (r.from_person===PID||r.to_person===PID)) kin.push({id:(r.from_person===PID?r.to_person:r.from_person), role:'Sibling'});
-    });
-    const relCount=kin.length;
-
-    /* ---- facet levels ---- */
-    const hasFace=(subsMine.data||[]).some(s=>s.detail) || !!me.primary_asset;
-    const fFace = { key:'Face',   lvl: hasFace?1:(nPhoto?0.5:0),                lit: nPhoto>0 || hasFace };
-    const fStory= { key:'Story',  lvl: nPhoto? nMem/nPhoto : 0,                  lit: nMem>0 };
-    const fPlace= { key:'Place',  lvl: Math.min(1, places.length/3),            lit: places.length>0 };
-    const fPeople={ key:'People', lvl: relCount? Math.min(1, relCount/3) : 0,    lit: relCount>0 };
-    const base=[fFace,fStory,fPlace,fPeople];
-    const avg=base.reduce((s,f)=>s+Math.max(0,Math.min(1,f.lvl)),0)/base.length;
-    const fReel = { key:'Reel', lvl: Math.max(avg,0.05), lit: avg>=0.9 };
-    const facets=[fFace,fStory,fPlace,fPeople,fReel];
-    const litCount=facets.filter(f=>f.lit).length;
-
-    /* ---- portrait photo (prefer one with a face box) ---- */
-    const portraitArt = arts.find(a=>boxByArt[a.id]) || arts[0];
-
-    /* ============ build markup ============ */
-    let h='';
-    /* hero */
-    h+='<div class="hero">'+
-      '<div class="ringwrap">'+
-        '<svg class="ring" viewBox="0 0 220 220" id="lightRing" aria-hidden="true"></svg>'+
-        '<div class="portrait" id="portrait"></div>'+'<a class="faceedit" href="person-edit-real.html?id='+encodeURIComponent(PID||'')+'" aria-label="Change photo">'+'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>'+'</a>'+
-      '</div>'+
-      '<h1 class="name serif">'+esc(name)+'</h1>'+
-      '<div class="known-line"><b>'+cap(worded(litCount))+' of five</b> lights kindled</div>'+
-      '<button class="relate" id="relateBtn"><span class="thread"></span>How you\u2019re related</button>'+'<a class="editbtn" href="person-edit-real.html?id='+encodeURIComponent(PID||'')+'">'+'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>'+'Edit details</a>'+
-      '<div class="pathline" id="pathline" style="display:none"></div>'+
-    '</div>';
-
-    /* doorways */
-    const doors=[
-      { key:'Face',  lab:'Face',  target:'sec-photos', lvl:fFace.lvl, lit:fFace.lit,
-        sub: fFace.lit ? ('You\u2019d know '+esc(first)+' across a room.') : 'No face placed yet.' },
-      { key:'Story', lab:'Story', target:'sec-photos', lvl:fStory.lvl, lit:fStory.lit,
-        sub: nMem>0 ? (cap(worded(nMem))+' '+(nMem===1?'memory':'memories')+' told, more waiting.') : 'No story told yet \u2014 be the first.' },
-      { key:'Place', lab:'Place', target:'sec-places', lvl:fPlace.lvl, lit:fPlace.lit,
-        sub: places.length ? ('Where '+esc(first)+' sits in the family \u2014 and beside you.') : 'Not yet placed on the tree.' },
-      { key:'People',lab:'People',target:'sec-kin', lvl:fPeople.lvl, lit:fPeople.lit, cool:true,
-        sub: coCount>0 ? ('Appears with '+coCount+' the app can recognise.') : (relCount>0 ? (cap(worded(relCount))+' close '+(relCount===1?'relative':'relatives')+'.') : 'No people linked yet.') },
-      { key:'Reel',  lab:'Reel',  target:'sec-reel', lvl:fReel.lvl, lit:fReel.lit, locked:!fReel.lit,
-        sub: fReel.lit ? ('Every light kindled \u2014 watch '+esc(first)+'\u2019s life assemble.') : ('Kindle every light to assemble '+esc(first)+'\u2019s life.') }
-    ];
-    h+='<div class="sec"><div class="sec-h"><div class="t">Ways to know '+esc(first)+'</div><div class="meta">'+litCount+' of 5 lit</div></div><div class="doorways" id="doorways"></div></div>';
-
-    /* photographs */
-    h+='<div class="sec" id="sec-photos"><div class="sec-h"><div class="t"><span class="lp" style="background:var(--gold);box-shadow:0 0 8px 1px var(--gold);"></span>Photographs</div><div class="meta">'+nPhoto+(nPhoto===1?' kept':' kept')+'</div></div>';
-    if(nPhoto){
-      h+='<div class="photostrip">';
-      arts.forEach((a,idx)=>{
-        const md=a.metadata||{}; const yr=md.when||'\u2014'; const wh=md.where||'';
-        h+='<div class="photo"><div class="img" data-path="'+esc(a.storage_path)+'">'+
-             '<div class="whenwhere"><span class="yr">'+esc(yr)+'</span>'+(wh?'<span class="wh">'+esc(wh)+'</span>':'')+'</div>'+
-           '</div><div class="story">';
-        if(a.body){
-          const who=provName[a.contributor_user]||'family';
-          h+='<div class="words">\u201c'+esc(a.body)+'\u201d</div>'+
-             '<div class="told"><span class="flame"></span>told by <b>'+esc(who)+'</b></div>';
-        } else {
-          h+='<div class="invite"><div class="words">No one has told the story of this one yet.</div><div class="cta">Ask someone who might remember \u2192</div></div>';
-        }
-        h+='</div></div>';
-      });
-      h+='</div>';
-      /* app-assembled facts: visible line, counts only */
-      h+='<div class="appfacts"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><path d="M3 15l4-4 4 4 5-5 5 5"></path></svg></span>'+
-         '<div class="body">'+esc(name)+' appears in '+nPhoto+(nPhoto===1?' photograph':' photographs')+(coCount>0?(', alongside '+coCount+' '+(coCount===1?'person':'people')+' the app can recognise'):'')+'.'+
-         '<span class="src">Assembled by The Living Forest</span></div></div>';
-    } else {
-      h+='<div class="softinvite">No photographs of '+esc(first)+' have been gathered yet. If you have one, it would light this star.</div>';
-    }
-    h+='</div>';
-
-    /* who they knew */
-    h+='<div class="sec" id="sec-kin"><div class="sec-h"><div class="t"><span class="lp" style="background:var(--gold);box-shadow:0 0 8px 1px var(--gold);"></span>Who '+esc(first)+' knew</div><div class="meta">'+relCount+' close</div></div>';
-    if(relCount){
-      h+='<div class="kin">';
-      kin.forEach(k=>{
-        h+='<div class="kinperson" data-id="'+esc(k.id)+'">'+
-             '<div class="kinstar"><span class="glow"></span><div class="crop" data-asset="'+esc(peopleById[k.id]&&peopleById[k.id].primary_asset||'')+'">'+
-               '<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#243449"></rect><ellipse cx="50" cy="46" rx="24" ry="27" fill="#c9a06f"></ellipse><path d="M50 96 Q50 68 26 64 Q30 40 50 40 Q70 40 74 64 Q50 68 50 96Z" fill="#33465e"></path></svg>'+
-             '</div></div>'+
-             '<div class="kn">'+esc(nameOf(k.id))+'</div><div class="kr">'+esc(k.role)+'</div>'+
-           '</div>';
-      });
-      h+='</div>';
-    } else {
-      h+='<div class="softinvite">No relatives have been placed beside '+esc(first)+' yet.</div>';
-    }
-    h+='</div>';
-
-    /* places */
-    if(places.length){
-      h+='<div class="sec" id="sec-places"><div class="sec-h"><div class="t"><span class="lp" style="background:var(--cool);box-shadow:0 0 8px 1px var(--cool);"></span>Places</div><div class="meta">'+places.length+' tied to '+esc(first)+'</div></div><div class="places">';
-      places.forEach(pl=>{ h+='<span class="place" data-place="'+esc(pl)+'"><span class="pin"></span>'+esc(pl)+'</span>'; });
-      h+='</div></div>';
-    }
-
-    /* bring them to light — challenges */
-    h+='<div class="sec"><div class="sec-h"><div class="t">Bring '+esc(first)+' to light</div></div>'+
-       '<a class="challenge" href="crowd-real.html" style="text-decoration:none;">'+
-         '<div class="cimg"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#0a1422"></rect><circle cx="35" cy="42" r="10" fill="#1b2e46"></circle><circle cx="65" cy="42" r="10" fill="#20344e"></circle><circle cx="50" cy="60" r="16" fill="none" stroke="#f3cd84" stroke-width="3"></circle><circle cx="50" cy="60" r="11" fill="#e6c197"></circle></svg></div>'+
-         '<div class="c-txt"><div class="ct">Find Them in the Crowd</div><div class="cs">Uncover '+esc(first)+' among the gathering.</div></div>'+
-         '<span class="go">Play</span>'+
-       '</a>'+
-       '<div class="soon"><div class="s"><div class="sn serif">Who Is Who?</div><div class="sl">Coming soon</div></div><div class="s"><div class="sn serif">Where Was This?</div><div class="sl">Coming soon</div></div></div></div>';
-
-    /* story reel doorway (not built yet — gentle coming-soon) */
-    h+='<div class="sec" id="sec-reel"><div class="challenge" style="background:linear-gradient(120deg, rgba(127,180,216,.1), rgba(243,205,132,.05)); border-color:rgba(127,180,216,.3); cursor:default;">'+
-         '<div class="cimg"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#0a1422"></rect><path d="M35 38 L62 50 L35 62 Z" fill="#ffe6ad"></path><circle cx="50" cy="50" r="30" fill="none" stroke="#7fb4d8" stroke-width="2" opacity=".5"></circle></svg></div>'+
-         '<div class="c-txt"><div class="ct">'+esc(poss(name))+' Story Reel</div><div class="cs">'+(nPhoto?(cap(worded(nPhoto))+' photograph'+(nPhoto===1?'':'s')+', one day assembling into a life.'):'A life, once the photographs are gathered.')+'</div></div>'+
-         '<span class="go" style="background:linear-gradient(180deg,#a9d0ec,#7fb4d8);">Soon</span>'+
-       '</div></div>';
-
-    /* foot */
-    h+='<div class="foot"><span class="leaf serif">One star, a little brighter than before.</span></div>';
-
-    $('#content').innerHTML=h;
-
-    /* ---- post-render wiring ---- */
-    drawRing(facets);
-    buildDoorways(doors);
-
-    /* portrait + photo images + kin crops */
-    if(portraitArt) faceInto($('#portrait'), portraitArt.storage_path, boxByArt[portraitArt.id]);
-    else if(me.primary_asset) faceInto($('#portrait'), me.primary_asset, null);
-    document.querySelectorAll('.photo .img').forEach(el=>{ const p=el.getAttribute('data-path'); if(p) imgInto(el,p); });
-    document.querySelectorAll('.kinstar .crop').forEach(el=>{ const p=el.getAttribute('data-asset'); if(p) faceInto(el,p,null); });
-
-    /* kin navigation */
-    document.querySelectorAll('.kinperson').forEach(el=>{ el.addEventListener('click',()=>{ const id=el.getAttribute('data-id'); if(id) location.href='person-real.html?id='+encodeURIComponent(id); }); });
-    /* place navigation → globe */
-    document.querySelectorAll('.place').forEach(el=>{ el.addEventListener('click',()=>{ const pl=el.getAttribute('data-place'); location.href=pl?('place-real.html?place='+encodeURIComponent(pl)):'globe-real.html'; }); });
-
-    /* how-you're-related */
-    const pathObj=shortestPath(rels.data||[], myPid, PID);
-    const pathHtml=renderPath(pathObj, nameOf, sexOf);
-    const btn=$('#relateBtn'), line=$('#pathline');
-    btn.addEventListener('click',()=>{
-      const open=line.style.display!=='none';
-      line.style.display=open?'none':'block';
-      btn.classList.toggle('open',!open);
-      if(!open && !line.innerHTML) line.innerHTML=pathHtml;
-    });
-
-    /* crumb = first place, if any */
-    if(places.length) $('#crumb').textContent=places[0];
-
-    $('#content').style.opacity=1;
-    $('#gate').style.display='none';
-  }catch(err){ gateError(err.message||'Could not open this person.'); }
-}
-
-/* back button → sky */
-$('#back').addEventListener('click', e=>{ if(history.length>1){ e.preventDefault(); history.back(); } });
-
-function showSignIn(){ const box=$('#gateBox');
-  box.innerHTML='<h2 class="serif">Your forest</h2><p>Sign in with your family account to meet your people.</p>'+
-    '<input id="gEmail" type="email" placeholder="you@example.com" autocomplete="email"/>'+
-    '<input id="gPw" type="password" placeholder="password" autocomplete="current-password"/>'+
-    '<button id="gGo">Sign in</button><div class="msg" id="gMsg"></div>';
-  $('#gGo').onclick=async()=>{ const email=$('#gEmail').value.trim(), password=$('#gPw').value; const m=$('#gMsg');
-    if(!email||!password){ m.textContent='Enter your email and password.'; return; }
-    m.style.color='rgba(206,221,240,.65)'; m.textContent='Signing in\u2026';
-    const { error }=await sb.auth.signInWithPassword({email,password});
-    if(error){ m.style.color='#ff9a8f'; m.textContent=error.message; } else { box.innerHTML='<div class="spin"></div><p style="margin-top:16px">Opening\u2026</p>'; load(); } }; }
-function gateError(msg){ $('#gate').style.display='flex'; $('#gateBox').innerHTML='<h2 class="serif">Hmm</h2><p>'+esc(msg)+'</p><a href="home-real.html" style="color:#f3cd84;text-decoration:none">\u2190 back to the sky</a>'; }
-
-load();
 </script>
-  <script src="lf-nav.js" data-here="" data-parent="home-real.html"></script>
-</body>
-</html>
+<script src="lf-nav.js" data-here="" data-parent="home-real.html"></script>
+</body></html>
