@@ -601,7 +601,7 @@ load();
 </script>
   <script src="lf-nav.js" data-here="map" data-parent="home-real.html"></script>
 <div id="placeSheet"><div id="placeHandle"><span class="grip"></span><span class="chevs"><svg viewBox="0 0 32 14"><path d="M2 11.5 L16 3 L30 11.5" fill="none" stroke="#f3cd84" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><svg viewBox="0 0 32 14"><path d="M2 11.5 L16 3 L30 11.5" fill="none" stroke="#f3cd84" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lbl">Pull up for photographs, people &amp; stories</span><div class="hd"><span class="ttl"></span><span class="x">&#10005;</span></div></div><div id="placeBody"><div class="ph-loading">Gathering the photographs&#8230;</div></div></div>
-<div id="lightbox"><div class="lx-top"><span class="lx-x">&#10005;</span></div><div class="lx-img"></div><div class="lx-meta"><div class="lx-yr"></div><div class="lx-ppl"></div><div class="lx-story"></div><div class="lx-told"></div><div class="lx-note">Full moment view. A dedicated moment page — with editing of the story and the people tagged — is coming next.</div></div></div>
+<div id="lightbox"><div class="lx-top"><span class="lx-x">&#10005;</span></div><div class="lx-img"></div><div class="lx-meta"><div class="lx-yr"></div><div class="lx-ppl"></div><div class="lx-story"></div><div class="lx-told"></div><div class="lx-note" id="lxNote"></div></div></div>
 <script>
 (function(){
   const SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
@@ -649,6 +649,7 @@ load();
     lb.querySelector('.lx-ppl').innerHTML = (m.people||[]).map(n=>'<span class="tag">'+esc(n)+'</span>').join('');
     lb.querySelector('.lx-story').innerHTML = m.body ? '\u201c'+esc(m.body)+'\u201d' : '<span style="color:rgba(205,191,164,.85);font-style:italic">No one has told the story of this moment yet.</span>';
     lb.querySelector('.lx-told').innerHTML = m.body ? ('told by <b>'+esc(m.teller||'family')+'</b>') : '';
+    const nEl=lb.querySelector('#lxNote'); if(nEl) nEl.innerHTML = m.id ? '<a href="moment-real.html?id='+encodeURIComponent(m.id)+'" style="color:#f3cd84;text-decoration:none;font-weight:600;font-size:13.5px;">Open the full moment \u2192</a>' : '';
     lb.classList.add('show');
     if(m.path){ const u=await signedUrl(m.path); const im=lb.querySelector('.lx-img img'); if(im&&u) im.src=u; }
   }
@@ -684,7 +685,7 @@ load();
     h+='<div class="sec" id="pMoments"><div class="sec-h"><div class="t"><span class="lp"></span>Moments here</div><div class="meta">'+nP+'</div></div>';
     if(nP){ arts.forEach((a,i)=>{ const md=a.metadata||{},yr=py(md.when),yrT=isNaN(yr)?esc(md.when||''):String(yr); const pplNames=(byArt[a.id]||[]).map(id=>firstName(nameOf(id)));
       const isImg=(a.kind==='photo'||a.kind==='object')&&a.storage_path;
-      const mi=moments.length; moments.push({path:isImg?a.storage_path:'', yr:yrT, people:pplNames, body:a.body||'', teller:prov[a.contributor_user]||'family'});
+      const mi=moments.length; moments.push({id:a.id, path:isImg?a.storage_path:'', yr:yrT, people:pplNames, body:a.body||'', teller:prov[a.contributor_user]||'family'});
       h+='<div class="moment'+(i===0?' first':'')+'"><div class="img" data-m="'+mi+'">'+(isImg?'<span class="expand">\u21f1</span>':'<div class="ph">No photograph yet</div>')+'<div class="stamp"><span class="yr">'+yrT+'</span>'+(pplNames.length?'<span class="ppl">'+esc(joinNames(pplNames))+'</span>':'')+'</div></div>';
       if(a.body){ h+='<div class="words">\u201c'+esc(a.body)+'\u201d</div><div class="told"><span class="flame"></span>told by <b>'+esc(prov[a.contributor_user]||'family')+'</b></div>'; }
       else { h+='<div class="invite"><div class="words">No one has told the story of this moment yet.</div><div class="cta">Ask someone who remembers it \u2192</div></div>'; }
