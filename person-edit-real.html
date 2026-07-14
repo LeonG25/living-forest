@@ -417,10 +417,10 @@ html,body{background:#04070e;margin:0}
   /* ---------- seed working copy ---------- */
   function seed(){ const g={}; LANGS.forEach(l=>{ const v=nvBy(l); g[l]=v||{}; });
     const perLang=(field)=>{ const o={}; LANGS.forEach(l=>o[l]=pub(field,l)); return o; };
-    const dispDerived={}; LANGS.forEach(l=>{ dispDerived[l]=pub('display',l)|| [ (g[l].given||''),(g[l].family||'') ].filter(Boolean).join(' '); });
+    const dispDerived={}; LANGS.forEach(l=>{ dispDerived[l]=pub('display',l)|| [ (g[l].given||''),(g[l].family||'') ].filter(Boolean).join(' '); }); if(!dispDerived.en) dispDerived.en=(person.display_name||'');
     S={
-      names:{ display:dispDerived, given:{en:(g.en.given||''),ru:(g.ru.given||''),he:(g.he.given||'')},
-        family:{en:(g.en.family||''),ru:(g.ru.family||''),he:(g.he.family||'')},
+      names:{ display:dispDerived, given:{en:(g.en.given||person.called_name||(person.display_name||'').split(' ')[0]||''),ru:(g.ru.given||''),he:(g.he.given||'')},
+        family:{en:(g.en.family||(person.display_name||'').split(' ').slice(1).join(' ')||''),ru:(g.ru.family||''),he:(g.he.family||'')},
         patronymic:perLang('patronymic'), maiden:perLang('maiden'),
         nicks:{en:pubList('nickname','en').map(r=>r.value),ru:pubList('nickname','ru').map(r=>r.value),he:pubList('nickname','he').map(r=>r.value)} },
       dates:{ birth:person.birth_date||'', death:person.death_date||'', birth_prec:person.birth_certainty||'', living:!!person.is_living },
@@ -615,15 +615,15 @@ html,body{background:#04070e;margin:0}
       function makeVine(x0){ const pts=[]; let x=x0,y=1.05, ang=-Math.PI/2+(Math.random()-.5)*.4;
         const n=Math.floor(Math.random()*5)+7;
         for(let i=0;i<n;i++){ pts.push({x,y}); ang+=(Math.random()-.5)*.6; const step=0.07+Math.random()*0.05; x+=Math.cos(ang)*step*0.5; y+=Math.sin(ang)*step; }
-        return { pts, c:COL[(Math.random()*COL.length)|0], grow:0, gspd:0.0009+Math.random()*0.0008, sway:Math.random()*6.28, buds:pts.map(()=>Math.random()>.55) };
+        return { pts, c:COL[(Math.random()*COL.length)|0], grow:0, gspd:0.0016+Math.random()*0.0012, sway:Math.random()*6.28, buds:pts.map(()=>Math.random()>.55) };
       }
       function build(){ vines=[]; const k=Math.max(3,Math.round(W/120)); for(let i=0;i<k;i++) vines.push(makeVine((i+0.5)/k + (Math.random()-.5)*0.12)); }
       resize();
       function frame(now){ const t=(now||0)/1000; ctx.clearRect(0,0,W,H); ctx.globalCompositeOperation='lighter';
         vines.forEach(v=>{ if(!reduce && v.grow<1) v.grow+=v.gspd;
           const g=reduce?1:v.grow, seg=(v.pts.length-1)*g, last=Math.floor(seg), frac=seg-last;
-          const sway=reduce?0:Math.sin(t*0.25+v.sway)*0.012;
-          const P=k=> ({ x:(v.pts[k].x+ (reduce?0:Math.sin(t*0.2+k*0.5+v.sway)*0.006*(k/ v.pts.length)))*W, y:v.pts[k].y*H });
+          const sway=reduce?0:Math.sin(t*0.6+v.sway)*0.035;
+          const P=k=> ({ x:(v.pts[k].x+ (reduce?0:Math.sin(t*0.5+k*0.5+v.sway)*0.02*(k/ v.pts.length)))*W, y:v.pts[k].y*H });
           // stem
           ctx.strokeStyle=`rgba(${v.c[0]},${v.c[1]},${v.c[2]},0.16)`; ctx.lineWidth=1.4; ctx.beginPath();
           for(let i=0;i<=last;i++){ const p=P(i); i?ctx.lineTo(p.x,p.y+sway*H):ctx.moveTo(p.x,p.y); }
