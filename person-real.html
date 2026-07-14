@@ -480,7 +480,7 @@ html,body{background:#04070e;margin:0}
     const beads=CATS.map((c,i)=>{ const a=-Math.PI/2+i*(Math.PI*2/CATS.length), x=cx+R*Math.cos(a), y=cy+R*Math.sin(a);
       return `<button class="cat ${c.kind==='cool'?'cool':''} ${c.id===openCat?'on':''} ${catPending(c.id)?'has-pending':''}" data-cat="${c.id}" style="left:${x}px;top:${y}px" aria-label="${esc(d().cats[c.id])}"><span class="bead">${sv(I[c.id])}<span class="pin"></span></span><span class="lab">${esc(d().cats[c.id])}</span></button>`; }).join('');
     return `<svg class="ring-svg" viewBox="0 0 300 300"><circle cx="150" cy="150" r="130" fill="none" stroke="rgba(243,205,132,.14)" stroke-width="1"/><circle cx="150" cy="150" r="130" fill="none" stroke="rgba(243,205,132,.4)" stroke-width="2" stroke-dasharray="1 13" stroke-linecap="round"/></svg>
-      <div class="facewrap"><div class="face" id="faceHost"></div><button class="changef" id="changeFace" aria-label="${esc(d().changeface)}">${sv(I.camera,1.6)}</button></div>${beads}`; }
+      <div class="facewrap"><div class="face"><div id="faceHost" style="position:absolute;inset:0">${faceSVG()}</div><button class="changef" id="changeFace" aria-label="${esc(d().changeface)}">${sv(I.camera,1.6)}</button></div></div>${beads}`; }
 
   function render(){ const L=d(); document.documentElement.lang=lang; document.documentElement.dir=L.dir;
     $('#topbar').innerHTML=`<button class="ibtn" id="backBtn" aria-label="Back">${sv(I.back)}</button>
