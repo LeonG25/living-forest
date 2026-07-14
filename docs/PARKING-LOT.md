@@ -78,3 +78,15 @@ Claude Design produced a standalone visual for the Moment (photo hub) page (`A_M
 - Replace the interim **lightbox** on the Place page (and any photo elsewhere) with a real link into `moment-real.html`.
 - Reuse `faceInto` for face crops; signed URLs from the `family` bucket for the photo; "told by" = contributor (`profiles.display_name` of `contributor_user`).
 - Functional skeleton `moment-design.html` (behaviour/structure) is also reference-only.
+
+---
+
+## Requesting designs from Claude Design — handoff format (learned 2026-07-14)
+When asking Claude Design for a page, request one of these **exact-match-friendly** formats, in order of preference:
+1. **Flat static HTML/CSS export** (self-contained; no build step) — easiest to reproduce faithfully.
+2. **Screenshots** of the rendered screens (with any motion described in notes).
+3. **A hosted URL** of the live design.
+
+**Avoid the compiled React/Babel "standalone" bundle.** It does not render with our tooling and cannot be ported directly. It only worked for the Moment page because a fully-rendered HTML snapshot happened to be embedded inside it, which had to be extracted resource-by-resource (gzip+base64) — slow and luck-dependent. Don't rely on that again.
+
+Note: the Moment page above is now **built and live** (`moment-real.html`, commit 30ebd89) — reproduced faithfully from the recovered Claude Design render, wired to real data + the keeper edit flow.
