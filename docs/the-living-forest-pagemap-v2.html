@@ -74,7 +74,7 @@ flowchart LR
 
   subgraph WEB["The nodes you open"]
     CARD["Person card — tap a star"]:::live
-    PERSON["Person — the one page<br/>face + 8 categories: names·dates·places·kin·life·gender·custom·sources<br/>all editable, all languages; set face"]:::live
+    PERSON["<b>Person — the one page</b><br/>LIVE: face + every detail editable in place, EN·RU·HE<br/>IN DESIGN: 8 facets — Name·Face·Life·Places·Story·Kin·Reel·More<br/>every facet open on screen; each game lives inside its facet"]:::live
     PLACE["Place"]:::plan
     MOMENT["Moment / Event"]:::plan
     STORY["Memory / Story"]:::plan
@@ -129,19 +129,19 @@ flowchart LR
   GLOBE -->|tap a place| PLACE
   TIME -->|tap a year| MOMENT
 
-  PERSON --> STORY
-  PERSON --> WHO
-  PERSON --> PLACE
-  PERSON --> MOMENT
-  PERSON --> YOU
-  PERSON --> REEL
-  PERSON -->|play| CROWD
-  PERSON -->|play| WHERE
-  PERSON -->|play| WIW
-  PERSON -->|play| ORDER
-  PERSON -->|play| WHOSE
-  PERSON -->|play| THREAD
-  PERSON -->|play| NEXT
+  PERSON -->|Story facet| STORY
+  PERSON -->|Kin facet| WHO
+  PERSON -->|Places facet| PLACE
+  PERSON -->|Face facet| MOMENT
+  PERSON -->|Kin facet| YOU
+  PERSON -->|Reel facet| REEL
+  PERSON -->|Face · play| CROWD
+  PERSON -->|Face · play| WIW
+  PERSON -->|Life · play| ORDER
+  PERSON -->|Places · play| WHERE
+  PERSON -->|Story · play| WHOSE
+  PERSON -->|Kin · play| THREAD
+  PERSON -->|Story · play| NEXT
 
   PLACE --> PERSON
   PLACE --> MOMENT
@@ -188,6 +188,26 @@ flowchart LR
     <b>The one rule that prevents orphans:</b> the hub is the <b>Person</b> page, and the three node types — Person, Place, Moment — all point at each other. Add the always-present <b>⊕ menu</b> and every screen has a way in and a way out. Hardware <b>Back</b> closes an open card first, else steps one real screen back, and only the Sky (root) exits — after a confirm.
   </div>
 
+  <h2 class="disp">The Person page — the facet model (decided 2026-07-15)</h2>
+  <p class="sub">One page per person. No separate edit page; <b>everything is editable in place</b>. Every facet is <b>open and visible on the screen</b> — disclosure is allowed <em>within</em> a facet, never <em>between</em> facets. <b>Exactly eight icons — do not add a ninth.</b> A game is not its own icon: it lives in the facet whose subject it exercises. This absorbs the retired hub's five lights, the edit page's eight categories, and all seven games without growing the count.</p>
+  <div class="panel" style="padding:0">
+  <table>
+    <thead><tr><th>Facet</th><th>Holds / edits</th><th>Game(s) inside</th></tr></thead>
+    <tbody>
+      <tr><td><b>Name</b></td><td>display, given, family, patronymic, maiden, nicknames, honorific — every language</td><td>—</td></tr>
+      <tr><td><b>Face</b></td><td>the photos they appear in; choose &amp; crop the portrait used everywhere</td><td>Who Is Who? · Find Them in the Crowd</td></tr>
+      <tr><td><b>Life</b></td><td>birth, death, precision, still-living, gender, occupation, about, languages spoken</td><td>Put Their Life in Order</td></tr>
+      <tr><td><b>Places</b></td><td>born in, places lived (ordered), on the map</td><td>Where Was This?</td></tr>
+      <tr><td><b>Story</b></td><td>the memories told about them</td><td>Whose Memory Is This? · The Missing Voice · What Happened Next?</td></tr>
+      <tr><td><b>Kin</b></td><td>relatives, and how you're related</td><td>The Tangled Thread</td></tr>
+      <tr><td><b>Reel</b></td><td>their life assembled; the payoff as the rest fill in</td><td>—</td></tr>
+      <tr><td><b>More</b></td><td>any custom detail (label + value), sources / provenance</td><td>—</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="sub" style="margin-top:12px"><b>How the count held at eight:</b> dates + gender + life → <b>Life</b>; custom + sources → <b>More</b>; the place fields + the Places section → one <b>Places</b>; the kin fields + Who-they-knew + Thread-back-to-You → one <b>Kin</b>. Those merges freed three slots, and <b>Face</b>, <b>Story</b> and <b>Reel</b> walked back in. <b>Kin + The Tangled Thread are one idea at two levels</b> — the path you read, and the path you play.</p>
+  <p class="sub"><b>Status:</b> the live <code>person-real.html</code> is today's Claude Design (face + all details editable, EN·RU·HE, RTL, keeper flow). The <b>facet merge is out to Claude Design</b> (brief written 2026-07-15). The old five-light hub was retired the same day — recoverable at <code>75defd8</code> — and its Photos/Places/Kin/Reel sections must return <b>inside the facets</b>, not as a second page. Until then those journeys dead-end.</p>
+
   <h2 class="disp">Status &amp; roadmap — every page, card, menu</h2>
   <p class="sub">“Designed” = a Claude-Design visual exists (reskin <code>preview.html</code>, the globe preview, or the <em>Find Them</em> bundle). “Built” = live on real data. <b>Design #</b> and <b>Build #</b> give the logical order of the work still to do; <span class="ord done">✓</span> = done, <span class="ord na">—</span> = not needed.</p>
   <div class="panel" style="padding:0">
@@ -210,9 +230,9 @@ flowchart LR
 
       <tr class="sec"><td colspan="5">Nodes &amp; cards (the web)</td></tr>
       <tr><td><b>Person card</b> (tap a star)</td><td><span class="b des">yes</span> reskin + built</td><td><span class="b live">live</span> sky &amp; globe</td><td class="ord done">✓</td><td class="ord done">✓</td></tr>
-      <tr><td><b>Person · hub</b> (deepen: “light points”)</td><td><span class="b part">v1 built; v2 no</span></td><td><span class="b live">v1 live</span> person-real</td><td class="ord">1</td><td class="ord">5</td></tr>
+      <tr><td><b>Person</b> — the one page (8 facets; no separate edit page)</td><td><span class="b part">brief sent 2026-07-15</span></td><td><span class="b live">live</span> person-real — details editable, EN·RU·HE</td><td class="ord">1</td><td class="ord">5</td></tr>
       <tr><td><b>Place</b> page</td><td><span class="b no">no</span></td><td><span class="b no">no</span></td><td class="ord">2</td><td class="ord">6</td></tr>
-      <tr><td><b>Moment / Event</b> page</td><td><span class="b no">no</span></td><td><span class="b no">no</span></td><td class="ord">3</td><td class="ord">7</td></tr>
+      <tr><td><b>Moment / Event</b> page</td><td><span class="b live">yes</span></td><td><span class="b live">live</span> moment-real (30ebd89)</td><td class="ord na">✓</td><td class="ord na">✓</td></tr>
       <tr><td><b>Memory / Story</b> page</td><td><span class="b no">no</span></td><td><span class="b no">no</span></td><td class="ord">4</td><td class="ord">8</td></tr>
       <tr><td><b>Who they knew</b> (mini-tree)</td><td><span class="b no">no</span></td><td><span class="b no">no</span></td><td class="ord">7</td><td class="ord">11</td></tr>
       <tr><td><b>Story Reel / Reveal</b> &amp; Memory Lane</td><td><span class="b no">no</span></td><td><span class="b no">no</span></td><td class="ord">9</td><td class="ord">16</td></tr>
@@ -224,7 +244,7 @@ flowchart LR
       <tr><td>1 · <b>Who Is Who?</b> (real clue-generator)</td><td><span class="b des">yes</span> reskin/proto</td><td><span class="b part">old skin</span></td><td class="ord na">~</td><td class="ord">13</td></tr>
       <tr><td>3 · <b>The Order of Things</b></td><td><span class="b part">partial</span></td><td><span class="b part">old skin</span></td><td class="ord na">~</td><td class="ord">14*</td></tr>
       <tr><td>4 · <b>The Missing Voice</b> (needs narrator field)</td><td><span class="b part">as “Whose memory”</span></td><td><span class="b part">variant, old</span></td><td class="ord na">~</td><td class="ord">15</td></tr>
-      <tr><td>2 · <b>The Tangled Thread</b> (needs places-lived)</td><td><span class="b no">no</span></td><td><span class="b no">no</span></td><td class="ord na">~</td><td class="ord">14</td></tr>
+      <tr><td>2 · <b>The Tangled Thread</b> — plays the kin path (Kin facet); <b>unblocked</b></td><td><span class="b no">no</span></td><td><span class="b no">no</span></td><td class="ord na">~</td><td class="ord">14</td></tr>
       <tr><td>7 · <b>What Happened Next?</b> (bridge to Tend)</td><td><span class="b no">no</span></td><td><span class="b no">no</span></td><td class="ord">12</td><td class="ord">19</td></tr>
 
       <tr class="sec"><td colspan="5">Tend · contribution &amp; curation</td></tr>
@@ -243,9 +263,9 @@ flowchart LR
   <h2 class="disp">The logical order, in phases</h2>
   <div class="phase">
     <div class="p"><h4>Phase 1 · Light up what's already designed</h4><p>No new Claude Design needed — port existing reskin designs onto real data. <b>Build 1–4:</b> Timeline → Journal → unify the skin (Add/Review/Places/Profile + old games in the new look) → Where&nbsp;Was&nbsp;This? on the globe.</p></div>
-    <div class="p"><h4>Phase 2 · The node web (needs design)</h4><p><b>Design 1–4 → Build 5–8:</b> Person page v2 (“light points”), then the Place, Moment, and Memory/Story pages — the cross-linking that makes the forest feel whole.</p></div>
+    <div class="p"><h4>Phase 2 · The node web (needs design)</h4><p><b>Design 1–4 → Build 5–8:</b> <b>Person page — the 8-facet merge (brief sent 2026-07-15; awaiting handoff)</b>, then the Place and Memory/Story pages. <b>Moment is done</b> (live). This is the cross-linking that makes the forest feel whole — and it is what re-homes the retired hub's sections.</p></div>
     <div class="p"><h4>Phase 3 · Connective &amp; global (needs design)</h4><p><b>Design 5–7 → Build 9–11:</b> Thread-back-to-You, Search, and the Tree lens (with “Who they knew”).</p></div>
-    <div class="p"><h4>Phase 4 · Deepen Tend + harder games</h4><p><b>Design 8 → Build 12–15:</b> Contribute hub, Propose, Record-a-voice, Gaps; then the games that need a data/engine change — Who&nbsp;Is&nbsp;Who? (clue generator), Tangled Thread (places-lived), Missing Voice (narrator field).</p></div>
+    <div class="p"><h4>Phase 4 · Deepen Tend + harder games</h4><p><b>Design 8 → Build 12–15:</b> Contribute hub, Propose, Record-a-voice, Gaps; then the games that need a data/engine change — Who&nbsp;Is&nbsp;Who? (clue generator), <b>Tangled Thread (unblocked — plays the kin path)</b>, <b>Missing Voice (still needs the narrator field — the last schema gap blocking a game)</b>. Also here: per-person <code>?id=</code> for Find&nbsp;Them&nbsp;in&nbsp;the&nbsp;Crowd, which the Face facet needs.</p></div>
     <div class="p"><h4>Phase 5 · Payoffs &amp; curation</h4><p><b>Design 9–12 → Build 16–19:</b> Story Reel / Memory Lane, Manage curators, Themed threads / Connection-found, and What&nbsp;Happened&nbsp;Next? (the one bridge from Wander into Tend).</p></div>
     <div class="p"><h4>Phase 6 · Parked big ideas (later)</h4><p>The globe <b>placement game</b> (a year + names → drop them on the map), the <b>world &amp; family events</b> layer on the globe, and the <b>escape-room quest</b> chain. Each needs its own design pass when we get there.</p></div>
   </div>
@@ -260,9 +280,9 @@ flowchart LR
       <tr><td><b>Timeline</b></td><td><span class="b des">designed</span></td><td>⊕ menu; lenses</td><td>Moment; lenses</td></tr>
       <tr><td><b>Tree</b></td><td><span class="b no">planned</span></td><td>⊕ menu; lenses</td><td>Person; other lenses</td></tr>
       <tr><td><b>Person card</b></td><td><span class="b live">live</span></td><td>tap a star on Sky or Globe</td><td>meet → Person; close</td></tr>
-      <tr><td><b>Person · hub</b></td><td><span class="b live">live</span></td><td>Person card; any lens; Place/Moment/Story; You; Search</td><td>Reel, Story, Who-they-knew, Place, Moment, a challenge, You</td></tr>
+      <tr><td><b>Person</b> — the one page</td><td><span class="b live">live</span></td><td>Person card; any lens; Place/Moment/Story; Crowd win; Search</td><td>via its facets: Face→photos/Crowd/Who-Is-Who · Life→Order · Places→Place/Where-Was-This · Story→Story/Whose-Memory · Kin→Who-they-knew/You/Tangled-Thread · Reel</td></tr>
       <tr><td><b>Place</b></td><td><span class="b no">planned</span></td><td>Globe; Person; Moment</td><td>Person, Moment</td></tr>
-      <tr><td><b>Moment / Event</b></td><td><span class="b no">planned</span></td><td>Globe; Timeline; Person; Place</td><td>Person, Place</td></tr>
+      <tr><td><b>Moment / Event</b></td><td><span class="b live">live</span></td><td>Globe; Timeline; Person; Place</td><td>Person, Place</td></tr>
       <tr><td><b>Memory / Story</b></td><td><span class="b no">planned</span></td><td>Person</td><td>Person (subject &amp; teller)</td></tr>
       <tr><td><b>Challenge</b> (7 types)</td><td><span class="b part">1 live · rest old/planned</span></td><td>Person (“play”); ⊕ menu (Find Them)</td><td>Reveal/Reel, Journal (writes), Record (the #7 quest)</td></tr>
       <tr><td><b>Story Reel / Reveal</b></td><td><span class="b no">planned</span></td><td>Person; a solved challenge</td><td>Person; Memory Lane</td></tr>
@@ -291,7 +311,7 @@ flowchart LR
     <b>Deviations from the original plan (kept on purpose):</b> Home became <b>the Sky</b> (heavens from within) and the Map became <b>the Globe</b> (earth from outside) — a cleaner split of the two lenses; the <b>year wheel</b> lives on the globe (time-on-map, not a replacement for the Timeline lens); the fixed top bar is, for now, the <b>⊕ menu</b>. Superseded and due for retirement on consolidation: <code>preview-globe.html</code>, the old Leaflet Places map, and the old 2-D “Forest” home tab.
   </div>
 
-  <p class="sub" style="margin-top:22px">Next step: with this map and roadmap fixed, we write the <b>Claude Design prompts</b> in Design # order — starting with the <b>Person page v2</b> (Design #1), then <b>Place</b>, <b>Moment</b>, and <b>Memory/Story</b> — while Phase 1 (Timeline, Journal, skin unification, Where&nbsp;Was&nbsp;This?) proceeds in parallel since it needs no new design.</p>
+  <p class="sub" style="margin-top:22px">Next step: the <b>Person page</b> brief (Design #1) is <b>written and out to Claude Design</b> — build from that handoff the moment it lands, since it is what re-homes the retired hub. Then the <b>Place</b> and <b>Memory/Story</b> briefs (<b>Moment</b> is done and live). Phase 1 (Timeline, Journal, skin unification) proceeds in parallel since it needs no new design — but <b>Timeline still owes a design decision</b> before it earns its place (see the parking lot). Ask Claude Design for a <b>flat static HTML export, screenshots, or a hosted URL — never a compiled React bundle</b>.</p>
 </div>
 
 <script>

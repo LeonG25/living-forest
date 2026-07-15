@@ -10,7 +10,7 @@ Living list of things to build later. Add freely; nothing here is committed to a
 The lightweight **"how are you related"** path on the Person page is the seed for this game.
 - That path runs from the **viewing player's own person-node** (via `profiles.id = auth.uid()` → `profiles.person_id`) → shortest path over `relationships` → the person being viewed. "A path not yet traced" when there is no path. Players can only be people already in the system (a profile with a non-null `person_id`).
 - **The Tangled Thread game grows exactly here:** turn that static shortest-path into a *played* journey — trace the thread hop by hop, revealing each connecting relative in turn, until it lands on you.
-- Open question to reconcile: an earlier note had Tangled Thread needing a "places lived" structure per person. The authoritative hook is now the Person-page relationship path; revisit whether places-lived is still wanted as a second thread.
+- **RESOLVED (2026-07-15).** The hook is the **kin path**, not places-lived. In the Person page's 8-facet model the path display and the game are the same idea at two levels of interaction, and both live in the **Kin** facet. Places-lived now exists anyway (`person_facts` field=`lived`), so a second, geographic thread is *possible* — but it is a separate idea, not a prerequisite. **Tangled Thread is no longer schema-blocked.**
 
 ### Idea 1 — Events on the globe, by year
 Surface **world events and family events** (anyone/anything in the visible database) on the globe **for the year currently shown** on the year-wheel. Turning the wheel changes not just the family dots but also what was happening in the world and in the family that year.
@@ -21,8 +21,8 @@ An **escape-room-style chained quest**: the player hunts for clues and informati
 ---
 
 ## Games still to build (from roadmap)
-- **The Missing Voice** — needs a "told by person" narrator field on memories.
-- **The Tangled Thread** — see above; hooks into the Person page.
+- **The Missing Voice** — still blocked: needs a "told by person" narrator field on memories. Lives in the **Story** facet.
+- **The Tangled Thread** — **unblocked** (see above); plays the kin path. Lives in the **Kin** facet.
 
 ## Designed but not yet built
 - **Timeline**, **Journal** — mockups exist; port to real data.
@@ -34,15 +34,16 @@ An **escape-room-style chained quest**: the player hunts for clues and informati
 - Sweep untracked patch scripts from the working tree (`p2–p7.py`, `patch_globe.py`).
 
 ## Data prerequisites to add
-- "told by person" narrator field on memories → The Missing Voice.
-- "places lived" per person → possible second Tangled Thread; reconcile with the relationship-path hook.
+- "told by person" narrator field on memories → The Missing Voice. **Still outstanding — the last schema gap blocking a game.**
+- ~~"places lived" per person~~ — **done**: `person_facts` field=`lived` (ordered, keeper-gated). No longer blocks anything.
 
 ---
 
-## Person page v2 — gaps to close later
-- **Per-person "Find Them in the Crowd".** The Crowd game builds its own rounds and has no target param, so the Person page Play button enters the game generally. Add a `?id=` (or similar) so Play pre-loads a round featuring this person; then the "Uncover {name}" copy becomes literally true.
-- **Story Reel.** The Person page shows a Reel doorway + a Story-Reel card, both currently coming-soon. They light up once the Story Reel page is built (see "Designed but not yet built").
-- **i18n on the live "-real" pages.** `home-real`, `globe-real`, `crowd-real`, and `person-real` are English-only; the MutationObserver i18n system, per-person name variants, and story/photo translation aren't wired into them yet. Port i18n onto the real pages as a dedicated pass.
+## Person page — gaps to close later
+- **Per-person "Find Them in the Crowd".** The Crowd game builds its own rounds and has no target param. Add a `?id=` so it pre-loads a round featuring this person. **Now blocks the Face facet**, which is supposed to host this game person-scoped.
+- **Story Reel.** The **Reel facet** has nothing real to open until the Story Reel page is built (see "Designed but not yet built").
+- **i18n on the live "-real" pages.** `home-real`, `globe-real` and `crowd-real` are still English-only. **`person-real` is now done** — it carries the full EN/RU/HE dictionary, name transliteration and RTL as of the 2026-07-15 rebuild. Port i18n onto the remaining real pages as a dedicated pass.
+- **Re-home the retired hub's content.** The old five-light hub (portrait, lights, doorways, and its on-page Photos / Places / Kin / Reel sections) was retired on 2026-07-15 — it is recoverable at commit `75defd8`. Its content must come back **inside the 8 facets**, not as a second page. Until the facet design lands, those journeys dead-end.
 
 ---
 
