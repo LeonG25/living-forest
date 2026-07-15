@@ -1,0 +1,253 @@
+# The Living Forest — Handover
+
+> **Revision:** 2026-07-15 16:18 (UTC+2)
+> **Status:** **single source of truth.** Replaces `docs/WORKPLAN.md`, `docs/PARKING-LOT.md`, and every dated `HANDOVER-the-living-forest*.md`. Those are deleted — git holds their history.
+> **Scheme:** `docs/the-living-forest-pagemap-v2.html` · rev **2026-07-15** (stamp in file head)
+> **Repo:** `LeonG25/living-forest` · branch `main` · live at https://leong25.github.io/living-forest/
+
+---
+
+## 0. Bookkeeping rules — read before writing anything
+
+We drowned once. Six files existed for three documents: `HANDOVER-the-living-forest.md`, `-2026-07-10.md`, `-2026-07-15.md`, `pagemap.html`, `pagemap-v2.html`, `pagemap-v2-2.html`. They disagreed with each other and with reality, and that is **exactly why two of the roadmap's five status marks turned out to be false**. These rules exist to stop it recurring.
+
+1. **One handover. Never dated in the filename.** This file is always `docs/HANDOVER.md`. A dated filename means someone must guess which copy is current — that guess is the bug. Git is the history; the commit message is the changelog.
+2. **Dated filenames are banned for text documents.** No `-v2`, no `-final`, no `-2026-07-15`.
+3. **The scheme filename is frozen** at `docs/the-living-forest-pagemap-v2.html`. The `-v2` is a scar, not a pattern. **There will never be a v3.** It carries an internal revision stamp in its `<head>`; this handover cites that stamp.
+4. **Design deliveries ARE dated** — they are immutable artefacts and several versions legitimately coexist. Format: `docs/designs/YYYY-MM-DD--<page>--v<N>.html`. Every one is catalogued in `docs/designs/INDEX.md` with its delivery date, source, and QC status.
+5. **Every write bumps the stamp**: date + time + commit. Top of the file. No exceptions.
+6. **A status claim must cite its evidence** — file + line, table + row count, or commit hash. This is the rule that would have caught the false `✓` marks on day one. "Designed" is not a status; "designed — `docs/designs/2026-07-15--person--v1.html`, QC pending" is.
+
+---
+
+## 1. Where we are — verified 2026-07-15
+
+### Live pages
+`home-real.html` (Sky) · `globe-real.html` (year-wheel globe) · `person-real.html` · `crowd-real.html` · `moment-real.html` · `place-real.html`
+All carry `lf-nav.js` (floating ⊕ menu + unified hardware-back guard). `lf-nav.js` owns `popstate` exclusively; page-level close handlers route through `window.__lfClose`.
+
+### There is one Person page
+`person-real.html` **is** the Person page. No separate edit page — `person-edit-real.html` existed for hours on 2026-07-15 and is gone (404). Everything is editable **in place**; the portrait has a camera control on the image itself.
+- Wired to `people`, `name_variants`, `person_facts`, `relationships`, `artefact_subjects`.
+- **Full i18n** — EN / RU / HE with RTL, transliteration via the `translate` edge function, language persisted to `localStorage` + `profiles.preferred_lang`.
+- Every edit is a **keeper suggestion** → keeper approval writes through to the real columns.
+- **i18n still owed** on `home-real`, `globe-real`, `crowd-real`.
+
+### What the hub retirement cost
+The old **five-light hub** was retired 2026-07-15. **Recoverable at commit `75defd8`.** Its doorways were *in-page anchors* (`sec-photos`, `sec-places`, `sec-kin`, `sec-reel`), so retiring it took those sections too. **Those journeys currently dead-end.** They come back **inside the facets** — not as a second page. This is what Design #1 re-homes.
+
+### Every person route is wired
+Pages reaching `person-real.html?id=`: globe, home, moment, place (×2), crowd. *(Was eight; timeline's ×2 go when it retires — see §3. Person keeps 6 inbound. No orphans.)*
+
+---
+
+## 2. The facet model — decided 2026-07-15
+
+One icon per **facet** of a person. Each facet holds its content, its editable fields, **and the game that exercises it**. A game is not its own icon. **Exactly eight — do not add a ninth.**
+
+| Facet | Holds / edits | Game(s) inside |
+|---|---|---|
+| **Name** | display, given, family, patronymic, maiden, nicknames, honorific — every language | — |
+| **Face** | the photos they appear in; choose & crop the portrait used everywhere | Who Is Who? · Find Them in the Crowd |
+| **Life** | birth, death, precision, still-living, gender, occupation, about, languages spoken | Put Their Life in Order |
+| **Places** | born in, places lived (ordered), on the map | Where Was This? · The Tangled Thread |
+| **Story** | the memories told about them | Whose Memory Is This? · The Missing Voice · What Happened Next? |
+| **Kin** | relatives, and how you're related — **the thread back to you** | *the path itself, walked hop by hop* |
+| **Reel** | their life assembled; the payoff as the rest fill in | — |
+| **More** | any custom detail (label + value), sources / provenance | — |
+
+**How the count held at eight:** dates + gender + life → **Life**; custom + sources → **More**; place fields + Places section → one **Places**; kin fields + Who-they-knew + Thread-back-to-You → one **Kin**. That freed three slots and **Face**, **Story**, **Reel** walked back in.
+
+**Consequence nobody has absorbed yet:** every game is now **person-scoped, launched from a facet**. Each therefore needs four surfaces that have never been designed — facet entry · the "not enough yet" state · person-scoped play · return (completion → Reel, writes → Journal). See §5.
+
+### The two threads are different games
+An earlier note merged them. Framework, gameplay supplement §2, and the original handover all agree they are separate:
+- **The Tangled Thread** — a hunt across **places**: two strangers once shared a city years apart and never met; find them. Wrong pairs answer warm/cold; solving draws the thread across the map. **Places facet. Unblocked** (places-lived now exists).
+- **The thread back to you** — the path from the viewer's own node through the kin graph to the person on screen. A founding promise ("a thread back to you always lights the way home"). Its own node. **Kin facet.** Walking it hop by hop belongs here.
+
+---
+
+## 3. Decision log
+
+| Date | Decision | Consequence |
+|---|---|---|
+| 2026-07-15 | **Facet model** — 8 facets, games live inside them | Retro-invalidated every game's design status; the `~` column in the scheme is stale |
+| 2026-07-15 | **One Person page**, editable in place | `person-edit-real.html` retired (404) |
+| 2026-07-15 | **Timeline is "a life in order"** → **Timeline IS Reel** | Merged into **Design #9**. `timeline-real.html` → retirement. ⊕ lenses become **Sky · Globe · Tree**. Moment loses Timeline as a way in (keeps Globe/Person/Place). Person 8→6 inbound. **No orphans.** The Timeline reskin in `preview.html` becomes *reference* for D9, not a port target. |
+| 2026-07-15 | **Journal is not a log** — it is where you are motivated to play more: progression made visible (points / stars / levels / status), warm and **non-competitive**, never a leaderboard | **Parked** pending a progression model. See §6. |
+| 2026-07-15 | **Phase 1 is dissolved** | See §4. |
+
+### Open decisions — these retro-invalidate designs if left unsettled
+**Precedent:** the facet decision retro-invalidated every game's design status. **Do not commission a design before its architectural decision is settled.**
+
+| Decision | Status | Blocks |
+|---|---|---|
+| **Progression model** (points / stars / levels / status; non-competitive) | **PARKED** | all 6 game briefs · D12 · Profile · Journal · Idea 3 |
+| **Does progression show on the payoffs?** | **OPEN** | D9 · D5 · D11 |
+| Timeline's purpose | ✅ resolved 2026-07-15 | — |
+| Journal's purpose | ✅ resolved 2026-07-15 (design still parked) | — |
+
+---
+
+## 4. Verification ledger — the `yes reskin ✓` rows
+
+**The finding that forced this section:** `preview.html` is **not a mockup — it is `index.html` recoloured.** Both are 1742 lines; ~104 differ, all palette/font. So **"yes reskin" means "exists in the recoloured prototype", not "designed".** Every row carrying that mark is suspect until checked.
+
+| Row | Build | Checked? | Result | Evidence |
+|---|---|---|---|---|
+| Timeline | 1 | ✅ | **FALSE** | engineered, never designed; `timeline-real.html` 15KB, no design pass |
+| My Journal | 2 | ✅ | **FALSE** | a *tab* (`<button data-w="journal">`), not a page; whole "design" = 7 lines (`viewJournal()`, `preview.html:1141–1148`); no `journal-real.html`; data is localStorage (`S.prog[pid].journal`); `journal_entries` **0 rows**; `player_profiles` **0 rows** |
+| **Where Was This?** | **4** | ❌ | — | **unverified — Build #4 stands on it** |
+| Profile | 3 | ❌ | — | unverified |
+| Who Is Who? | 13 | ❌ | — | unverified |
+
+**Also corrected:** the scheme says Place has no design. **It has one** — `Tel-Aviv_Jaffo_-_Place_Page__standalone_.html`, extracts to 37KB flat HTML (Newsreader/Hanken, gold + `#7fb4d8`; sections *A place we stood · Seen here · Moments here · Ways in · See it on the globe*). Predates the keeper/i18n/in-place-edit decisions. **D2 is a QC + delta, not a fresh brief.**
+
+**Also corrected:** Design **#3 = Moment** — done (`moment-real.html`, commit `30ebd89`). That is why #3 is missing from the scheme's Design column.
+
+---
+
+## 5. Phase 1 has dissolved — do not work from it
+
+The scheme says: *"No new Claude Design needed — Build 1–4: Timeline → Journal → unify the skin → Where Was This?"*
+
+| # | Build | Status |
+|---|---|---|
+| 1 | Timeline | **Gone** — merged into Design #9 |
+| 2 | Journal | **Gone** — parked; never designed, never built |
+| 3 | Unify the skin (+ old games in the new look) | **Throwaway** — repaints 6 games due for redesign; "the new look" is a palette swap; Profile is progression-blocked |
+| 4 | Where Was This? | **Suspect + blocked** — unverified `✓`, and it is a game |
+
+Its premise was *"Phase 1 proceeds in parallel since it needs no new design."* Nothing remains to run in parallel with. **The design queue is now the only pipeline.** Fill it.
+
+---
+
+## 6. The design queue — 15 briefs, split by progression risk
+
+### GO NOW — progression-proof (6 briefs · ~10 screens)
+About content and structure. No score system can redraw them.
+
+| D | Brief | Screens | Note |
+|---|---|---|---|
+| 2 | **Place** | 1 | Mockup exists → QC + delta |
+| 4 | **Memory / Story page** | 1 | With D2, closes Phase 2 |
+| 6 | **Search** | 1 | |
+| 7 | **Tree · kinship + Who they knew** | 2 | One brief |
+| 8 | **Contribute hub + Propose + Record a voice + Gaps** | 4 | One brief |
+| 10 | **Manage curators** | 1 | |
+
+### HOLD — progression will redraw them (8)
+- **6 game briefs** — Who Is Who? (*the clue generator is the game; never designed*) · Order of Things (*"partial" = not designed*) · Missing Voice (*also blocked on the narrator field; it is **not** a "Whose memory" variant*) · Tangled Thread (*marked `~` **in error** — it has no design at all*) · Where Was This? (*a reskin is a page skin, not a game design*) · Find Them in the Crowd (*scoped `?id=` variant delta only — the global version is genuinely done*)
+- **D12 What Happened Next?** — game #7
+- **Profile** (Build 3) — literally "who's playing"; it holds the status
+
+### BORDERLINE — settle "does progression show here?" first (3)
+D9 Reel / Memory Lane · D5 Thread back to You · D11 Connection found / Themed thread.
+⚠️ **D9 especially:** *"their life assembled; the payoff as the rest fill in"* **is** progression language. Reel is a progress bar made cinematic.
+
+---
+
+## 7. ORDER OF WORK — proceed in this sequence
+
+1. **Verification sweep** — the three unchecked `✓` marks (Where Was This? #4, Profile #3, Who Is Who? #13). Minutes, not days. Build #4 stands on one.
+2. **QC the Person design (#1)** against schema. The keystone — every other node cross-links to it.
+3. **Write `docs/design-house-rules.md` once** — palette · fonts · truth guardrail · EN·RU·HE + RTL · suggestion→keeper states · motion · output format · quality floor. The Person brief was 11KB and **~45% boilerplate**. Every later brief then = ~3KB of *this page only* + this appendix.
+4. **Batch A → Claude Design: D2 + D4** (the node web). Closes Phase 2.
+5. **Batch B → Claude Design: D6 + D7 + D8 + D10.**
+6. **QC each design against schema AS IT LANDS** — never at the end. This converts "fix it later" into "know the gaps before building". Checklist: every field shown exists in `people` / `person_facts` / `name_variants` / `relationships` / `artefacts` / `artefact_subjects`; every value has its three states; nothing invented that the schema cannot store. Log gaps → §9.
+7. **Consolidated scheme edit** — one pass on the pagemap, not seven (§8).
+8. **Then build**, per design, per schema.
+
+---
+
+## 8. Queued corrections for the scheme (one consolidated edit)
+`docs/the-living-forest-pagemap-v2.html` — currently stamped 2026-07-10 and **wrong in seven places**:
+1. Design #1 (Person) **delivered** 2026-07-15 — extracted clean, QC pending
+2. Design #2 (Place) — **mockup exists**; downgrade to QC + delta
+3. Design #3 = **Moment — done**
+4. **Games: the `~` column is stale** — it predates the facet decision. 6 of 7 need a pass. Tangled Thread's `~` is a straight error.
+5. **Timeline → Design #9**; retire `timeline-real.html`; lenses become Sky · Globe · Tree; route counts
+6. **Phase 1 dissolved**
+7. **Journal parked** (§6)
+
+---
+
+## 9. Schema
+
+### Gaps still open
+- ❌ **`told by person` narrator field** on memories → blocks **The Missing Voice**. *The last schema gap blocking a game.*
+- ❌ **Progression store** (points / level / status) → blocks Journal, all games, Profile
+- ❌ **Messages + person↔user identity link** → blocks Idea 3
+- ✅ ~~places lived~~ — **done**: `person_facts` field=`lived`, ordered, keeper-gated. **Tangled Thread unblocked.**
+
+### `person_facts` — the open-ended person store
+`id, person_id, group_id, field, lang, value, ord, status, created_by, reviewed_by, created_at, published_at`. RLS mirrors `name_variants`. **No `label` column** — a custom detail is two rows (`custom_label` / `custom_value`) sharing a `group_id`.
+Fields in use: `birth`, `birth_prec`, `death`, `living`, `gender`, `lived`, `langspoken`, `source`, `kin`, `custom_label`, `custom_value`, `face`.
+*(A redundant `person_details` table was created and dropped the same day — use `person_facts`.)*
+
+### Tables (public, 2026-07-15)
+`app_assets` · `artefact_edits` · `artefact_links` · `artefact_subjects` · `artefact_translations` · `artefacts` · `audit_log` · `curators` · `event_participants` · `events` · `journal_entries` *(0 rows, never wired)* · `name_variants` · `people` · `person_facts` · `place_geo` · `places` · `player_profiles` *(0 rows)* · `profiles` · `relationships` · `translations` · `world_context`
+
+All user-contributed content passes a `pub_status` keeper gate before appearing publicly.
+
+---
+
+## 10. Ideas — parked (future)
+
+### Idea 1 — Events on the globe, by year
+### Idea 2 — Quest / escape-room game
+### Idea 3 — Family messages: discover, connect, advance *(added 2026-07-15)*
+Members find each other and send messages tied to a memory — e.g. *"Hey, remember this…"* about a photo they are tagged in. Discovery is part of the play: the more of the family you reach and connect with, the further your status advances (points / level). Feeds the Journal progression model — messages and connections are among the things progression counts. Keeper gate and child-safety rules apply.
+**Schema gaps:** no messages table; no person↔user identity link ("you are in this photo"); no progression/score store.
+
+### Journal — parked 2026-07-15, blocked on a progression model
+Direction is decided (§3): **not a log** — a log is boring and has no relation to play. It is where you go to be **motivated to play more**: progression made visible, warm, family, non-competitive, never a leaderboard. Creative work still to do. **Settle the progression model before commissioning any game design, or the games get drawn twice.**
+
+### Phase 6 — parked big ideas
+The globe placement game (a year + names → drop them on the map); the world & family events layer on the globe; the escape-room quest chain. Each needs its own design pass.
+
+---
+
+## 11. Working method
+
+### Design handoffs from Claude Design
+Request, in order of preference: **flat static HTML/CSS export** → **screenshots** → **hosted URL**.
+**The compiled React bundle problem is now solved.** Both bundles received so far embed the rendered page as a JSON string in `<script type="__bundler/template">`; extracting it is one line:
+```python
+i = s.find('<script type="__bundler/template">'); j = s.find('</script>', i)
+html = json.loads(s[i+len('<script type="__bundler/template">'):j].strip())
+```
+Fonts arrive as woff2 blobs in `__bundler/manifest` — substitute Google Fonts (Frank Ruhl Libre for Hebrew/RTL). **Still ask for flat HTML** — the embedded template is not guaranteed.
+
+**Design fidelity first:** reproduce the handoff verbatim (exact CSS/DOM). Graft application logic onto the design shell afterward. Never hand-fuse two visual languages — that is the engineered-not-designed trap.
+
+### Deployment pipeline (strict)
+1. Write + validate in the Claude sandbox (Node v22; `node --check`)
+2. Gzip + base64; `split -b 4500 -d`
+3. `printf '%s' '<chunk>' >> /tmp/target.b64` (first chunk uses `>`)
+4. Verify `tail -c 4500 | sha256sum` + running total after each chunk
+5. Decode `base64 -d | gunzip`; verify decoded SHA against source
+6. Push: `git push "https://x-access-token:$(cat /home/botuser/.gh_token)@github.com/LeonG25/living-forest.git" main`
+
+### Hard-won rules
+- **Chunk corruption is routine** (~1 in 4–5). Recovery: truncate to last verified offset → resend as two halves → bisect 375 → 188 → 94 bytes.
+- **`wc -c` before re-appending.** A transient `exec_bash` error does **not** mean the write failed — verify first, or you double-corrupt. *(Hit twice on 2026-07-15; both writes had succeeded.)*
+- **Never rerun failed Pages jobs** — single-job build/deploy means `rerun-failed-jobs` re-uploads the artifact → "Multiple artifacts" failure. Use a fresh `workflow_dispatch` or an empty commit.
+- **`popstate` belongs to `lf-nav.js` alone**; page close handlers route through `window.__lfClose`.
+- Droplet: `botuser@droplet`, repo at `/home/botuser/living-forest`, **Python 3 only** (no Node), 8192-char limit per `exec_bash`, ~30s timeout. Use `bash -c` for process substitution — default shell is `sh`.
+
+### Environment
+Supabase project `oabcdrktuikifbormjip` · keeper `lenya.golnik@gmail.com` (`e7035e2f-0156-42b5-a1ad-13c57684a3d6`) · edge function `translate` (Claude Haiku, gender-aware, feminine surname forms) · raw fetch `https://raw.githubusercontent.com/LeonG25/living-forest/main/<path>`
+
+---
+
+## 12. Retirement list (on consolidation)
+`timeline-real.html` · `preview-globe.html` · `preview.html` · `index.html` (old 2D hub) · old Leaflet Places map · untracked patch scripts (`p2–p7.py`, `patch_globe.py`)
+**Do not retire `preview.html` before D9** — it holds the Timeline reskin that is D9's reference.
+
+---
+
+## 13. Commit history — 2026-07-15
+`30ebd89` Moment page · `dc57ea7` handoff-format rule · `c9916cc` pagemap PEDIT node · `a56e6f5` person-edit built · `ee2646f` drifting lights + pre-filled names · `75defd8` **last commit containing the five-light hub** · `7898c59` one Person page; edit page retired; crowd links · `99acc358`\* face control fix · `16ff45f` facet model + work plan · `118b884` two-threads reconciliation · `1b1e6f6` Journal parked; Timeline=Reel; Idea 3 · `a81d5fa` WORKPLAN.md *(now folded into this file)*
+
+\* deployed sha; see `git log` for the commit hash.
