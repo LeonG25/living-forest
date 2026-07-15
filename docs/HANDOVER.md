@@ -1,6 +1,6 @@
 # The Living Forest — Handover
 
-> **Revision:** 2026-07-15 16:18 (UTC+2)
+> **Revision:** 2026-07-15 17:04 (UTC+2)
 > **Status:** **single source of truth.** Replaces `docs/WORKPLAN.md`, `docs/PARKING-LOT.md`, and every dated `HANDOVER-the-living-forest*.md`. Those are deleted — git holds their history.
 > **Scheme:** `docs/the-living-forest-pagemap-v2.html` · rev **2026-07-15** (stamp in file head)
 > **Repo:** `LeonG25/living-forest` · branch `main` · live at https://leong25.github.io/living-forest/
@@ -82,8 +82,35 @@ An earlier note merged them. Framework, gameplay supplement §2, and the origina
 
 | Decision | Status | Blocks |
 |---|---|---|
-| **Progression model** (points / stars / levels / status; non-competitive) | **PARKED** | all 6 game briefs · D12 · Profile · Journal · Idea 3 |
+| **Progression — PLAYER axis** (points / levels / status) | **PARKED** | Journal · Profile · Idea 3 · game *completion cards* only |
+| ~~Progression — PERSON axis~~ | ✅ **already settled — engine + design both exist** (see below) | — |
 | **Does progression show on the payoffs?** | **OPEN** | D9 · D5 · D11 |
+
+### Progression already exists — corrected 2026-07-15 17:04
+An earlier reading of this file claimed "a progression model" was parked wholesale, and that every game needed four undesigned surfaces. **Both claims were wrong.** Evidence:
+
+**The engine is in the prototype** (`preview.html`):
+```js
+const SEGS = ['face','story','place','people','reel'];
+function fillSegment(personId, seg, note){...}   // every game already calls this
+function ringCount(personId){...}                // "You've lit 3 of 5 lights for Rita."
+```
+**The design is in Design #1** (`2026-07-15--person--v1.html`):
+```js
+{ id:'face', kind:'gold', k:1.0, games:['whoiswho','crowd'] }  // --k drives bead brightness
+<div class="bar"><i style="width:75%"></i></div>
+reelBar:'Six of eight facets kindled'      // + RU + HE
+gameLocked:'Add a story and this opens'    // the "not enough yet" state
+gameScoped:'Scoped to Rita'                // person-scoping
+```
+
+**There are two axes, not one:**
+| Axis | Question | Status |
+|---|---|---|
+| **Per-person** | "How lit up is Rita?" | ✅ **Settled.** Non-competitive by construction — you don't score points, you light someone up. Prototype's 5 segments map onto the 8 facets. `fillSegment` writes; the ring displays. |
+| **Per-player** | "What's my level?" | ❌ **Parked.** This is what the Journal and Idea 3 need. |
+
+**Games feed the per-person axis, not the player axis.** Therefore the games are **largely unblocked** — Design #1 already draws facet entry, the locked state, scoping, and return-to-Reel. What remains undesigned is **the play screen itself** (the clue board, the sequencing board) — pure mechanics, which no score system touches. Only the **completion card** is exposed to the player axis, and today it already speaks per-person language ("You found where Rita's photo was taken").
 | Timeline's purpose | ✅ resolved 2026-07-15 | — |
 | Journal's purpose | ✅ resolved 2026-07-15 (design still parked) | — |
 
@@ -97,9 +124,13 @@ An earlier note merged them. Framework, gameplay supplement §2, and the origina
 |---|---|---|---|---|
 | Timeline | 1 | ✅ | **FALSE** | engineered, never designed; `timeline-real.html` 15KB, no design pass |
 | My Journal | 2 | ✅ | **FALSE** | a *tab* (`<button data-w="journal">`), not a page; whole "design" = 7 lines (`viewJournal()`, `preview.html:1141–1148`); no `journal-real.html`; data is localStorage (`S.prog[pid].journal`); `journal_entries` **0 rows**; `player_profiles` **0 rows** |
-| **Where Was This?** | **4** | ❌ | — | **unverified — Build #4 stands on it** |
-| Profile | 3 | ❌ | — | unverified |
-| Who Is Who? | 13 | ❌ | — | unverified |
+| **Where Was This?** | **4** | ✅ | **FALSE** | only in `preview.html`/`index.html`; entry = stock `btn secondary` (`preview.html:1181`); render = `.findtop` + inline styles + **Leaflet/CARTO dark tiles** — i.e. the old Leaflet map already on the retirement list |
+| Profile | 3 | ✅ | **FALSE** | `paintWho()` (`preview.html:1121–1140`) = 18 lines of stock `.card`/`.eyebrow`/`.lede` + 2 inputs. A panel, not a page. `S.players` in localStorage. Its own copy: *"it isn't a login."* `player_profiles` **0 rows** |
+| Who Is Who? | 13 | ✅ | **FALSE** | the clue generator — the game's core — renders as `clueTexts.map(t=>'<div class="clue">• '+t+'</div>')`. A bulleted list in a stock div. |
+
+### Result: **5 of 5 checked. 5 of 5 false.** The `yes reskin ✓` column has a 0% accuracy rate. Treat every remaining claim in the scheme as unverified until evidenced.
+
+**Build #4 is worse than "unverified".** It is specified as *"Where Was This? **on the globe**"*, but what exists is a **Leaflet map puzzle** — a re-platform onto the globe, not a port, built on a file scheduled for deletion.
 
 **Also corrected:** the scheme says Place has no design. **It has one** — `Tel-Aviv_Jaffo_-_Place_Page__standalone_.html`, extracts to 37KB flat HTML (Newsreader/Hanken, gold + `#7fb4d8`; sections *A place we stood · Seen here · Moments here · Ways in · See it on the globe*). Predates the keeper/i18n/in-place-edit decisions. **D2 is a QC + delta, not a fresh brief.**
 
@@ -124,6 +155,8 @@ Its premise was *"Phase 1 proceeds in parallel since it needs no new design."* N
 
 ## 6. The design queue — 15 briefs, split by progression risk
 
+> **Corrected 2026-07-15 17:04.** The earlier split over-blocked the games. The person axis of progression is already settled (§3), and only the *player* axis is parked. Six game briefs moved HOLD → GO.
+
 ### GO NOW — progression-proof (6 briefs · ~10 screens)
 About content and structure. No score system can redraw them.
 
@@ -136,10 +169,19 @@ About content and structure. No score system can redraw them.
 | 8 | **Contribute hub + Propose + Record a voice + Gaps** | 4 | One brief |
 | 10 | **Manage curators** | 1 | |
 
-### HOLD — progression will redraw them (8)
-- **6 game briefs** — Who Is Who? (*the clue generator is the game; never designed*) · Order of Things (*"partial" = not designed*) · Missing Voice (*also blocked on the narrator field; it is **not** a "Whose memory" variant*) · Tangled Thread (*marked `~` **in error** — it has no design at all*) · Where Was This? (*a reskin is a page skin, not a game design*) · Find Them in the Crowd (*scoped `?id=` variant delta only — the global version is genuinely done*)
-- **D12 What Happened Next?** — game #7
-- **Profile** (Build 3) — literally "who's playing"; it holds the status
+### GO — the game PLAY SCREENS (6 briefs) — *unblocked, corrected 2026-07-15 17:04*
+Design #1 already draws the entry, locked, scoped and return surfaces. What these briefs cover is **the play screen itself** — pure mechanics, which the parked player-axis does not touch. All 5 of 5 checked `✓` marks were false, so **none of these has ever had a design pass**:
+- **Who Is Who?** — *the clue generator IS the game*; it currently renders as a bulleted list of strings
+- **Order of Things** — "partial" = not designed
+- **Where Was This?** — spec says *on the globe*; what exists is a Leaflet puzzle. **A re-platform, not a port.**
+- **The Missing Voice** — **not** a "Whose Memory" variant; a different mechanic. *Also blocked on the narrator field.*
+- **The Tangled Thread** — marked `~` **in error**; it has no design at all. Unblocked (places-lived exists).
+- **Find Them in the Crowd** — scoped `?id=` variant **delta only**; the global version is genuinely done.
+
+### HOLD — the player axis really does redraw these (2)
+- **D12 What Happened Next?** — game #7, and the bridge to Tend
+- **Profile** (Build 3) — literally "who's playing"; it holds the status. Verified FALSE; from-scratch.
+- *(Journal — parked, §10)*
 
 ### BORDERLINE — settle "does progression show here?" first (3)
 D9 Reel / Memory Lane · D5 Thread back to You · D11 Connection found / Themed thread.
