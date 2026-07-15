@@ -1,6 +1,6 @@
 # The Living Forest — Handover
 
-> **Revision:** 2026-07-15 17:04 (UTC+2)
+> **Revision:** 2026-07-15 17:41 (UTC+2)
 > **Status:** **single source of truth.** Replaces `docs/WORKPLAN.md`, `docs/PARKING-LOT.md`, and every dated `HANDOVER-the-living-forest*.md`. Those are deleted — git holds their history.
 > **Scheme:** `docs/the-living-forest-pagemap-v2.html` · rev **2026-07-15** (stamp in file head)
 > **Repo:** `LeonG25/living-forest` · branch `main` · live at https://leong25.github.io/living-forest/
@@ -217,10 +217,50 @@ D9 Reel / Memory Lane · D5 Thread back to You · D11 Connection found / Themed 
 ## 9. Schema
 
 ### Gaps still open
-- ❌ **`told by person` narrator field** on memories → blocks **The Missing Voice**. *The last schema gap blocking a game.*
-- ❌ **Progression store** (points / level / status) → blocks Journal, all games, Profile
+- ❌ **Progression store — PLAYER axis only** (points / level / status) → blocks Journal, Profile, Idea 3. *(The person axis needs no store beyond what exists — see §3.)*
 - ❌ **Messages + person↔user identity link** → blocks Idea 3
-- ✅ ~~places lived~~ — **done**: `person_facts` field=`lived`, ordered, keeper-gated. **Tangled Thread unblocked.**
+- ✅ ~~places lived~~ — **done**: `person_facts` field=`lived`, ordered, keeper-gated. *Schema only — **0 rows**; nothing to play with until seeded.*
+- ✅ ~~narrator field~~ — **NOT A GAP. Corrected 2026-07-15 17:41.**
+
+### The narrator was never missing — it was never wired
+`artefacts.contributor_id` **exists**, typed `uuid`, **FK → `people.id`**. It is **0 of 17 used**, while `contributor_user` (the auth account that *uploaded*) is **17 of 17**. Someone built the narrator and never connected it. The prototype even carries the input string: *"Its story — in whose words?"* / *"The memory — in their words"*.
+- **The Missing Voice is schema-unblocked.** It needs **wiring + a 17-row backfill**, not a migration.
+- Design #1's `mem1by:'Michael Golnick'` maps straight onto `contributor_id → people.display_name`.
+- ⚠️ Until backfilled, Design #1's **Story facet renders without a narrator**.
+- **`contributor_id` = who told it (a person). `contributor_user` = who uploaded it (an account). Never conflate them.**
+
+---
+
+## 9b. Person page QC — Design #1 vs schema (2026-07-15 17:41)
+
+**Verdict: Design #1 PASSES. It invents nothing the schema cannot hold.** Every gap found is wiring or data, not structure.
+
+**Passes cleanly:** `display_name` · `given`/`family` · `birth_date` · `birth_certainty` · `is_living` · `sex` · `lived` · `langspoken` · memories (`artefacts` + `artefact_subjects`) · relatives (`relationships`) · custom detail (`custom_label`/`custom_value`) · `source` · auto-translated (`translations`/`artefact_translations`) · `taggedIn` · `face`
+
+**Passes via `person_facts` — needs only a new field string, no migration:** `about` · `occupation` · place of birth · nicknames (list, via `ord`) · former surname (*"was Golnik"*)
+
+### Resolved 2026-07-15: where name parts live
+**This was an internal question only — the UI is fixed by the design; no one sees which table.** It decided two things: how many tables the Name facet touches, and **what the keeper approves**. Five `person_facts` rows would make one Russian name into *five separate approvals* — but it is **one name**.
+
+**The design drew the line itself:** every part is a single field *except* `nicks` + `addnick` — an open list. So:
+- **`name_variants`** = the formal name per language: `given, family, patronymic, maiden, honorific`. One row, one keeper approval.
+- **`person_facts`** = nicknames — a list needs rows, not columns.
+
+**Migration applied 2026-07-15 17:41** *(additive, zero data risk)*:
+```sql
+alter table public.name_variants
+  add column if not exists patronymic text,
+  add column if not exists maiden text,
+  add column if not exists honorific text;
+```
+All nullable — consistent with `given`/`family`, which were already nullable. Keeper flow (`status`/`reviewed_by`/`published_at`) and RLS unchanged.
+
+### ⚠️ Design-vs-spec drift — open
+The facet model (§2) says **Name** holds **patronymic** and **honorific**. **The delivered Design #1 shows neither** — its Name facet renders display, given, family, maiden, nicknames, former surname. Leon confirmed 2026-07-15: **both are wanted, both optional.** The schema now holds them; **the design does not yet draw them.** → **Feed this into the D2/D4 batch as a Person delta, or accept the design as-is and add them at build.**
+
+### Data reality (not schema)
+`person_facts`: **1 row** (`field='face'`). `lived`: **0 rows**. `artefacts`: 17, metadata keys in use = `when`, `where` only.
+**Schema-ready ≠ playable.** The Tangled Thread and The Missing Voice both need seeded data before they are worth playing.
 
 ### `person_facts` — the open-ended person store
 `id, person_id, group_id, field, lang, value, ord, status, created_by, reviewed_by, created_at, published_at`. RLS mirrors `name_variants`. **No `label` column** — a custom detail is two rows (`custom_label` / `custom_value`) sharing a `group_id`.

@@ -1,6 +1,6 @@
 # Design deliveries — catalogue
 
-> **Revision:** 2026-07-15 16:18 (UTC+2) · authority: `docs/HANDOVER.md`
+> **Revision:** 2026-07-15 17:41 (UTC+2) · authority: `docs/HANDOVER.md`
 
 **Naming — dated on purpose.** Unlike text documents (which are single, stable-named files — see HANDOVER §0), design deliveries **are** dated: they are immutable artefacts, several versions legitimately coexist, and we must always know which one a build was made from.
 
@@ -17,10 +17,12 @@ Every build must cite the exact design file it was made from.
 
 | File | Design # | Page | Delivered | Format as received | QC | Notes |
 |---|---|---|---|---|---|---|
-| `2026-07-15--person--v1.html` | **1** | Person (8 facets) | 2026-07-15 | React bundle → template extracted, 92,628 chars flat HTML | ❌ **pending** | Brief: `person-page-brief-for-claude-design.md`. Facets + games verified correct on extraction. **The keystone — QC this first.** |
-| `undated--place-tel-aviv--v1.html` | **2** | Place | **unknown** | React bundle → template extracted, 36,967 chars flat HTML | ❌ pending | The scheme wrongly says Place has no design. Predates keeper / i18n / in-place-edit decisions → **QC + delta, not a fresh brief**. |
-| `undated--person-rita--v0.html` | — | Person (old five-light hub) | **unknown** | React bundle → template extracted, 40,647 chars | — | **Superseded** by the facet model. Reference only. Live version recoverable at commit `75defd8`. |
+| `2026-07-15--person--v1.html` | **1** | Person (8 facets) | 2026-07-15 | React bundle → template extracted, 92,628 chars flat HTML | ✅ **PASSED** 2026-07-15 17:41 | Brief: `person-page-brief-for-claude-design.md`. **QC: passes — invents nothing the schema cannot hold** (HANDOVER §9b). Two follow-ups: patronymic + honorific are specified in the facet model but **not drawn** by this design; the Story facet needs `contributor_id` backfilled or it renders without a narrator. |
+| `2026-07-14--place-tel-aviv--v1.html` | **2** | Place | 2026-07-14 17:00 † | React bundle → template extracted, 36,967 chars flat HTML | ❌ pending | **`place-real.html` is already built from this design — partially.** Present: *Seen here · Moments here · Located by*. **Missing: *A place we stood · Ways in · See it on the globe*.** Also **no i18n** (`preferred_lang` 0× vs 2× in `person-real.html`). So D2 is mostly a **build delta**, not a design brief. The scheme wrongly says Place has no design. Predates keeper / i18n / in-place-edit decisions → **QC + delta, not a fresh brief**. |
+| `2026-07-14--person-rita--v0.html` | — | Person (old five-light hub) | 2026-07-14 17:00 † | React bundle → template extracted, 40,647 chars | — | **Superseded** by the facet model. Reference only. Live version recoverable at commit `75defd8`. |
 | — | **3** | Moment | *(built)* | — | ✅ | Built and live: `moment-real.html`, commit `30ebd89`. |
+
+† **Date provenance: owner-stated (Leon, 2026-07-15), not independently evidenced.** No artefact in the repo or chat record dates these two deliveries. Recorded as stated, flagged as such — §0 rule 6 bars *guessing*, not the owner's knowledge, but a future session must be able to tell the difference.
 
 **Not yet filed:** the three files above are still only in chat uploads / project knowledge. They need transferring into this directory via the chunked pipeline (HANDOVER §11) so they are durable and citable. **Until then, no build may claim to be "per design".**
 
