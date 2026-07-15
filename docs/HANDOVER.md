@@ -1,6 +1,6 @@
 # The Living Forest — Handover
 
-> **Revision:** 2026-07-15 18:47 (UTC+2)
+> **Revision:** 2026-07-15 19:40 (UTC+2)
 > **Status:** **single source of truth.** Replaces `docs/WORKPLAN.md`, `docs/PARKING-LOT.md`, and every dated `HANDOVER-the-living-forest*.md`. Those are deleted — git holds their history.
 > **Scheme:** `docs/the-living-forest-pagemap-v2.html` · rev **2026-07-15** (stamp in file head)
 > **Repo:** `LeonG25/living-forest` · branch `main` · live at https://leong25.github.io/living-forest/
@@ -186,6 +186,34 @@ Design #1 already draws the entry, locked, scoped and return surfaces. What thes
 ### BORDERLINE — settle "does progression show here?" first (3)
 D9 Reel / Memory Lane · D5 Thread back to You · D11 Connection found / Themed thread.
 ⚠️ **D9 especially:** *"their life assembled; the payoff as the rest fill in"* **is** progression language. Reel is a progress bar made cinematic.
+
+---
+
+## 6b. Batches — WRITTEN 2026-07-15 19:40, ready to send
+
+Briefs live in `docs/briefs/`. **Each is ~2.5–3.3KB and covers only its own page.** Append `docs/design-house-rules.md` to every one before sending. *(The old Person brief was 11KB at ~45% boilerplate — this is the payoff.)*
+
+### Batch A — deltas to things that already exist (no new page)
+| Brief | Was | What changed |
+|---|---|---|
+| `person-name-delta.md` | — | Add **patronymic · honorific · called** to the Name facet. Schema ready. |
+| `moment-photoless.md` | **D4** | **D4 DISSOLVED into Moment 2026-07-15.** *(see below)* |
+| `place-modernise.md` | D2 | Not a redesign — the Tel-Aviv design predates i18n, keeper flow, and in-place edit. |
+
+### Batch B — genuinely new pages
+`search.md` (D6) · `tree-and-kin.md` (D7, 2 screens) · `contribute.md` (D8, 4 screens) · `manage-curators.md` (D10)
+
+### D4 dissolved into Moment — decided 2026-07-15 19:40
+The third page to evaporate under inspection, after Timeline (→ Reel) and Journal (never existed). **Same cause every time: the pagemap named a *concept* and assumed a *page*.**
+
+`moment-real.html` already does the whole job — hero → story (`human`/`machine`/`empty`, per-language, gold/cool, with teller) → where → when → people tagged → ways out, plus the full keeper queue (`artefact_translations` + `artefact_edits`). All 17 artefacts are `kind='photo'`; no story/voice/video/object exists yet.
+
+A photoless memory changes **exactly one thing: the hero.** Story leads with words, voice with a recording, object with a photograph (= a photo again). Same routes, same story block, same guardrail, same keeper, same tagging. **One page, one variant hero.**
+
+### ✅ Narrator backfilled 2026-07-15 19:40
+Leon confirmed he alone uploaded **and** told all 17. So `contributor_id` → **Leonid Golnick** (`bff9e2b7-…`, the *person*) on all 17; `contributor_user` stays the *account*. **17/17 both set, and now distinct.** The Missing Voice has data.
+
+⚠️ **Live conflation, not yet fixed:** `moment-real.html:626` reads `contributor_user` → `profiles.display_name` and renders it as **`toldBy`** — i.e. it shows the **uploader** as the teller, **in gold**. Harmless today only because Leon is both. It lies the moment anyone else uploads a story someone else told. Folded into `moment-photoless.md` as a correction; **the build must repoint it to `contributor_id`.**
 
 ---
 
