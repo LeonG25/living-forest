@@ -10,7 +10,10 @@ Living list of things to build later. Add freely; nothing here is committed to a
 The lightweight **"how are you related"** path on the Person page is the seed for this game.
 - That path runs from the **viewing player's own person-node** (via `profiles.id = auth.uid()` → `profiles.person_id`) → shortest path over `relationships` → the person being viewed. "A path not yet traced" when there is no path. Players can only be people already in the system (a profile with a non-null `person_id`).
 - **The Tangled Thread game grows exactly here:** turn that static shortest-path into a *played* journey — trace the thread hop by hop, revealing each connecting relative in turn, until it lands on you.
-- **RESOLVED (2026-07-15).** The hook is the **kin path**, not places-lived. In the Person page's 8-facet model the path display and the game are the same idea at two levels of interaction, and both live in the **Kin** facet. Places-lived now exists anyway (`person_facts` field=`lived`), so a second, geographic thread is *possible* — but it is a separate idea, not a prerequisite. **Tangled Thread is no longer schema-blocked.**
+- **RECONCILED (2026-07-15) — this entry had conflated two different games.** Checked against the framework, the gameplay supplement (§2) and the handover, which agree with each other:
+  - **The Tangled Thread** is a **hunt across places**: eight people lived in certain cities at certain times; *two strangers once shared a city years apart and never met* — find them. Wrong pairs answer warm/cold; solving draws the thread across the map. It is geographic → it lives in the **Places** facet, and it did need places-lived. **That prerequisite is now closed** (`person_facts` field=`lived`), so **Tangled Thread is unblocked**.
+  - **The thread back to you** is a different thing entirely — the path from the viewer's own node through the kin graph to the person on screen, and one of the app's founding promises ("a thread back to you always lights the way home"). It has its own node (*Thread back to You*) and lives in the **Kin** facet. The good idea in the old entry — *walk* that path hop by hop, each connecting relative revealing in turn — belongs to **that**, not to Tangled Thread.
+  - Both are wanted. They are not the same thread.
 
 ### Idea 1 — Events on the globe, by year
 Surface **world events and family events** (anyone/anything in the visible database) on the globe **for the year currently shown** on the year-wheel. Turning the wheel changes not just the family dots but also what was happening in the world and in the family that year.
@@ -22,7 +25,7 @@ An **escape-room-style chained quest**: the player hunts for clues and informati
 
 ## Games still to build (from roadmap)
 - **The Missing Voice** — still blocked: needs a "told by person" narrator field on memories. Lives in the **Story** facet.
-- **The Tangled Thread** — **unblocked** (see above); plays the kin path. Lives in the **Kin** facet.
+- **The Tangled Thread** — **unblocked** (see above): places-lived now exists. A hunt for two strangers who shared a city. Lives in the **Places** facet.
 
 ## Designed but not yet built
 - **Timeline**, **Journal** — mockups exist; port to real data.

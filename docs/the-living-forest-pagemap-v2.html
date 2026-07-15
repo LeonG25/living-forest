@@ -140,7 +140,7 @@ flowchart LR
   PERSON -->|Life · play| ORDER
   PERSON -->|Places · play| WHERE
   PERSON -->|Story · play| WHOSE
-  PERSON -->|Kin · play| THREAD
+  PERSON -->|Places · play| THREAD
   PERSON -->|Story · play| NEXT
 
   PLACE --> PERSON
@@ -197,15 +197,15 @@ flowchart LR
       <tr><td><b>Name</b></td><td>display, given, family, patronymic, maiden, nicknames, honorific — every language</td><td>—</td></tr>
       <tr><td><b>Face</b></td><td>the photos they appear in; choose &amp; crop the portrait used everywhere</td><td>Who Is Who? · Find Them in the Crowd</td></tr>
       <tr><td><b>Life</b></td><td>birth, death, precision, still-living, gender, occupation, about, languages spoken</td><td>Put Their Life in Order</td></tr>
-      <tr><td><b>Places</b></td><td>born in, places lived (ordered), on the map</td><td>Where Was This?</td></tr>
+      <tr><td><b>Places</b></td><td>born in, places lived (ordered), on the map</td><td>Where Was This? · The Tangled Thread</td></tr>
       <tr><td><b>Story</b></td><td>the memories told about them</td><td>Whose Memory Is This? · The Missing Voice · What Happened Next?</td></tr>
-      <tr><td><b>Kin</b></td><td>relatives, and how you're related</td><td>The Tangled Thread</td></tr>
+      <tr><td><b>Kin</b></td><td>relatives, and how you're related — the thread back to you</td><td><em>the path itself, walked hop by hop</em></td></tr>
       <tr><td><b>Reel</b></td><td>their life assembled; the payoff as the rest fill in</td><td>—</td></tr>
       <tr><td><b>More</b></td><td>any custom detail (label + value), sources / provenance</td><td>—</td></tr>
     </tbody>
   </table>
   </div>
-  <p class="sub" style="margin-top:12px"><b>How the count held at eight:</b> dates + gender + life → <b>Life</b>; custom + sources → <b>More</b>; the place fields + the Places section → one <b>Places</b>; the kin fields + Who-they-knew + Thread-back-to-You → one <b>Kin</b>. Those merges freed three slots, and <b>Face</b>, <b>Story</b> and <b>Reel</b> walked back in. <b>Kin + The Tangled Thread are one idea at two levels</b> — the path you read, and the path you play.</p>
+  <p class="sub" style="margin-top:12px"><b>How the count held at eight:</b> dates + gender + life → <b>Life</b>; custom + sources → <b>More</b>; the place fields + the Places section → one <b>Places</b>; the kin fields + Who-they-knew + Thread-back-to-You → one <b>Kin</b>. Those merges freed three slots, and <b>Face</b>, <b>Story</b> and <b>Reel</b> walked back in. <b>Two threads, not one:</b> <em>The Tangled Thread</em> is a geographic hunt (two strangers who shared a city) and sits in <b>Places</b>; <em>the thread back to you</em> is the kin path home and sits in <b>Kin</b>. An earlier parking-lot note merged them — the framework, gameplay supplement and handover all keep them apart.</p>
   <p class="sub"><b>Status:</b> the live <code>person-real.html</code> is today's Claude Design (face + all details editable, EN·RU·HE, RTL, keeper flow). The <b>facet merge is out to Claude Design</b> (brief written 2026-07-15). The old five-light hub was retired the same day — recoverable at <code>75defd8</code> — and its Photos/Places/Kin/Reel sections must return <b>inside the facets</b>, not as a second page. Until then those journeys dead-end.</p>
 
   <h2 class="disp">Status &amp; roadmap — every page, card, menu</h2>
@@ -244,7 +244,7 @@ flowchart LR
       <tr><td>1 · <b>Who Is Who?</b> (real clue-generator)</td><td><span class="b des">yes</span> reskin/proto</td><td><span class="b part">old skin</span></td><td class="ord na">~</td><td class="ord">13</td></tr>
       <tr><td>3 · <b>The Order of Things</b></td><td><span class="b part">partial</span></td><td><span class="b part">old skin</span></td><td class="ord na">~</td><td class="ord">14*</td></tr>
       <tr><td>4 · <b>The Missing Voice</b> (needs narrator field)</td><td><span class="b part">as “Whose memory”</span></td><td><span class="b part">variant, old</span></td><td class="ord na">~</td><td class="ord">15</td></tr>
-      <tr><td>2 · <b>The Tangled Thread</b> — plays the kin path (Kin facet); <b>unblocked</b></td><td><span class="b no">no</span></td><td><span class="b no">no</span></td><td class="ord na">~</td><td class="ord">14</td></tr>
+      <tr><td>2 · <b>The Tangled Thread</b> — two strangers who shared a city (Places facet); <b>unblocked</b>: places-lived now exists</td><td><span class="b no">no</span></td><td><span class="b no">no</span></td><td class="ord na">~</td><td class="ord">14</td></tr>
       <tr><td>7 · <b>What Happened Next?</b> (bridge to Tend)</td><td><span class="b no">no</span></td><td><span class="b no">no</span></td><td class="ord">12</td><td class="ord">19</td></tr>
 
       <tr class="sec"><td colspan="5">Tend · contribution &amp; curation</td></tr>
@@ -265,7 +265,7 @@ flowchart LR
     <div class="p"><h4>Phase 1 · Light up what's already designed</h4><p>No new Claude Design needed — port existing reskin designs onto real data. <b>Build 1–4:</b> Timeline → Journal → unify the skin (Add/Review/Places/Profile + old games in the new look) → Where&nbsp;Was&nbsp;This? on the globe.</p></div>
     <div class="p"><h4>Phase 2 · The node web (needs design)</h4><p><b>Design 1–4 → Build 5–8:</b> <b>Person page — the 8-facet merge (brief sent 2026-07-15; awaiting handoff)</b>, then the Place and Memory/Story pages. <b>Moment is done</b> (live). This is the cross-linking that makes the forest feel whole — and it is what re-homes the retired hub's sections.</p></div>
     <div class="p"><h4>Phase 3 · Connective &amp; global (needs design)</h4><p><b>Design 5–7 → Build 9–11:</b> Thread-back-to-You, Search, and the Tree lens (with “Who they knew”).</p></div>
-    <div class="p"><h4>Phase 4 · Deepen Tend + harder games</h4><p><b>Design 8 → Build 12–15:</b> Contribute hub, Propose, Record-a-voice, Gaps; then the games that need a data/engine change — Who&nbsp;Is&nbsp;Who? (clue generator), <b>Tangled Thread (unblocked — plays the kin path)</b>, <b>Missing Voice (still needs the narrator field — the last schema gap blocking a game)</b>. Also here: per-person <code>?id=</code> for Find&nbsp;Them&nbsp;in&nbsp;the&nbsp;Crowd, which the Face facet needs.</p></div>
+    <div class="p"><h4>Phase 4 · Deepen Tend + harder games</h4><p><b>Design 8 → Build 12–15:</b> Contribute hub, Propose, Record-a-voice, Gaps; then the games that need a data/engine change — Who&nbsp;Is&nbsp;Who? (clue generator), <b>Tangled Thread (unblocked — places-lived now exists)</b>, <b>Missing Voice (still needs the narrator field — the last schema gap blocking a game)</b>. Also here: per-person <code>?id=</code> for Find&nbsp;Them&nbsp;in&nbsp;the&nbsp;Crowd, which the Face facet needs.</p></div>
     <div class="p"><h4>Phase 5 · Payoffs &amp; curation</h4><p><b>Design 9–12 → Build 16–19:</b> Story Reel / Memory Lane, Manage curators, Themed threads / Connection-found, and What&nbsp;Happened&nbsp;Next? (the one bridge from Wander into Tend).</p></div>
     <div class="p"><h4>Phase 6 · Parked big ideas (later)</h4><p>The globe <b>placement game</b> (a year + names → drop them on the map), the <b>world &amp; family events</b> layer on the globe, and the <b>escape-room quest</b> chain. Each needs its own design pass when we get there.</p></div>
   </div>
