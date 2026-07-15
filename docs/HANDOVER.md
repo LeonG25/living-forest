@@ -1,6 +1,6 @@
 # The Living Forest — Handover
 
-> **Revision:** 2026-07-15 18:22 (UTC+2)
+> **Revision:** 2026-07-15 18:47 (UTC+2)
 > **Status:** **single source of truth.** Replaces `docs/WORKPLAN.md`, `docs/PARKING-LOT.md`, and every dated `HANDOVER-the-living-forest*.md`. Those are deleted — git holds their history.
 > **Scheme:** `docs/the-living-forest-pagemap-v2.html` · rev **2026-07-15** (stamp in file head)
 > **Repo:** `LeonG25/living-forest` · branch `main` · live at https://leong25.github.io/living-forest/
@@ -266,7 +266,7 @@ from person_facts where status='published' and field in (...) group by person_id
 4. ⛔ **`name_variants` NOT dropped.** Only after step 3. Do not drop early.
 5. ⛔ **No unique index yet** — `(person_id, lang, field) where status='published'` would be correct, but **it fails on live data today** (see below). Add it once resolved.
 
-#### ⚠️ OPEN — what is "Рита"? (found by this migration)
+#### RESOLVED 2026-07-15 18:47 — "Рита" is a per-language CALLED-NAME
 **Rita Golnick has two published Russian given names**, 8 minutes apart, both `published`:
 | given | family | published_at |
 |---|---|---|
@@ -278,7 +278,33 @@ from person_facts where status='published' and field in (...) group by person_id
 - The view resolves to **Рита** (newest published). **Маргарита is not lost** — still in `person_facts`.
 - **`parts_published > 2` is the permanent conflict detector.** Today it flags exactly one person: Rita.
 - **Decision needed:** is Рита a `nickname`, a *called name* in Russian, or a second `given`? `people.called_name` exists but is a single English column, and the facet model has no "called name, per language" slot. **Do not guess — this is a meaning question.**
-- Related: **Leonid Golnick's Russian `given` is "Лёня"** — itself the familiar form. The formal "Леонид" is recorded nowhere. The formal/familiar distinction may be unrecorded across the board.
+**Decision (Leon, 2026-07-15):** Рита is the **Russian called-name**. `called` is now a first-class name field, per language.
+
+**`called` ≠ `nickname`.** `called` is the everyday form of the formal name (Маргарита → Рита; Леонид → Лёня). `nickname` is a pet name (*Ritaleh*) — the design already has `nicks` for those, as a list.
+
+**Applied 2026-07-15 18:47:**
+1. ✅ Рита's row → `field='called'`. Rita `ru` now reads **given=Маргарита · called=Рита · family=Бетито-Гольник**.
+2. ✅ Deleted an exact-duplicate `family` row (Бетито-Гольник ×2, value-identical). **Lesson: the migration's `not exists` guard evaluates against the pre-insert snapshot — it prevents *re-running*, not duplicates *within* one `insert…select`.**
+3. ✅ `called` added to the `person_names` view. *(Needed `drop view` + `create` — `create or replace` cannot insert a column mid-list.)*
+4. ✅ **Unique index created — the guard that could not exist before:**
+```sql
+create unique index person_facts_one_published_name_part
+on person_facts (person_id, lang, field)
+where status='published'
+  and field in ('given','called','family','patronymic','maiden','honorific');
+```
+It created **without error**, so no conflicts remain. **The database now prevents this class of bug permanently.** `parts_published` is obsolete as a detector (given+called+family = 3 is legitimate) — keep it as a convenience count only.
+
+#### ⚠️ OPEN — transliteration wrote called-names into the `given` slot
+The `given` field across the data may hold **familiar** forms, because transliteration ran from the **English display name**:
+- **Rita, `he`**: `given=ריטה` — that is *"Rita"*, the called form. The formal **מרגריטה** is recorded nowhere.
+- **Leonid, `ru`**: `given=Лёня` — the familiar form. The formal **Леонид** is recorded nowhere.
+
+**Only Rita's Russian surfaced**, and only because someone happened to enter *both* Маргарита and Рита. Everyone else has a single `given` row, so nothing flags them.
+
+**This is a data-meaning question per person — do not bulk-fix, and do not guess.** Options when addressed: (a) leave as-is and let the family correct names in place via the Name facet — the keeper flow already supports exactly this; (b) audit the 21 name rows by hand. **(a) is likely right**: the Person page makes every name editable in place, so the family fixes their own names as they meet them. That is the app working as intended, not a migration.
+
+**Also open:** `people.called_name` is a single **English** column (1 person populated). Now that `called` exists per language, `called_name` is redundant — migrate to `field='called', lang='en'` and drop, **when the Person page is rebuilt**. Not before.
 
 ### Superseded 2026-07-15 18:22: the earlier "columns" decision
 **This was an internal question only — the UI is fixed by the design; no one sees which table.** It decided two things: how many tables the Name facet touches, and **what the keeper approves**. Five `person_facts` rows would make one Russian name into *five separate approvals* — but it is **one name**.
@@ -290,7 +316,8 @@ from person_facts where status='published' and field in (...) group by person_id
 **REVERTED 2026-07-15 18:22.** The columns were added at 17:41 and dropped unused (0 rows touched). The reasoning behind them — *"one name, one keeper approval"* — was wrong: it is not one name, it is several separately-attributed attributes, and Design #1 already draws them that way.
 
 ### ⚠️ Design-vs-spec drift — open
-The facet model (§2) says **Name** holds **patronymic** and **honorific**. **The delivered Design #1 shows neither** — its Name facet renders display, given, family, maiden, nicknames, former surname. Leon confirmed 2026-07-15: **both are wanted, both optional.** The schema now holds them; **the design does not yet draw them.** → **Feed this into the D2/D4 batch as a Person delta, or accept the design as-is and add them at build.**
+The facet model (§2) says **Name** holds **patronymic** and **honorific**. **The delivered Design #1 shows neither** — its Name facet renders display, given, family, maiden, nicknames, former surname. Leon confirmed 2026-07-15: **both are wanted, both optional** — and **`called` (per language) joins them** (see above). The schema holds all three; **Design #1 draws none of them.**
+→ **DECIDED 2026-07-15: the Person delta rides along in Batch A.** Its scope: add **patronymic**, **honorific**, and **called** to the Name facet — all optional, all per-language, each independently suggestible and approvable (they are separate rows, so each carries its own "Suggested by X" / "waiting" chip).
 
 ### Data reality (not schema)
 `person_facts`: **1 row** (`field='face'`). `lived`: **0 rows**. `artefacts`: 17, metadata keys in use = `when`, `where` only.
