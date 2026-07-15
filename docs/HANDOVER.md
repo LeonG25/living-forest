@@ -1,6 +1,6 @@
 # The Living Forest — Handover
 
-> **Revision:** 2026-07-15 17:41 (UTC+2)
+> **Revision:** 2026-07-15 18:22 (UTC+2)
 > **Status:** **single source of truth.** Replaces `docs/WORKPLAN.md`, `docs/PARKING-LOT.md`, and every dated `HANDOVER-the-living-forest*.md`. Those are deleted — git holds their history.
 > **Scheme:** `docs/the-living-forest-pagemap-v2.html` · rev **2026-07-15** (stamp in file head)
 > **Repo:** `LeonG25/living-forest` · branch `main` · live at https://leong25.github.io/living-forest/
@@ -239,21 +239,55 @@ D9 Reel / Memory Lane · D5 Thread back to You · D11 Connection found / Themed 
 
 **Passes via `person_facts` — needs only a new field string, no migration:** `about` · `occupation` · place of birth · nicknames (list, via `ord`) · former surname (*"was Golnik"*)
 
-### Resolved 2026-07-15: where name parts live
+### RESOLVED 2026-07-15 18:22 — name parts are ROWS, not columns. `name_variants` is being retired.
+
+**Decision (Leon):** each name part is a separate field, because they are separate though related attributes. Keeper effort is negligible; **query-ability is what matters.**
+
+**Why rows win — the argument that settled it:** *the unit of a row is the unit of approval.* A row carries `created_by` / `status` / `reviewed_by`, so whoever owns the row owns everything in it. With parts as columns, Michael cannot suggest only a maiden name, and Michael + Leonid cannot suggest different parts of the same name — one `created_by`. **Design #1 already requires per-part provenance** (`suggesting:'Suggested by Michael'`, `pendingChip:'waiting'` against a single field). Columns cannot express it.
+
+**On query-ability — rows are better, not worse, and the objection is answered by a view:**
+- **Write as rows, read as columns.** `person_names` (below) pivots them back. Queries stay as simple as today.
+- **Search (D6)** is one indexable query over `(field, value)` across every part and every language. With columns it is an `OR` across five columns *and* still misses `person_facts`, where half the person already lives.
+- **`person_facts` already holds** birth, gender, lived, langspoken, occupation, about, source, custom. Names were the only holdout. One store = one query shape.
+
+#### Applied 2026-07-15 18:22
+1. ✅ **Migrated** — 22 `name_variants` rows → **44 `person_facts` rows** (`field='given'|'family'`), preserving `status`, `created_by`, `reviewed_by`, `created_at`, `published_at`. Idempotent (`not exists` guard). Counts verified: given he=8/ru=14, family he=8/ru=14.
+2. ✅ **View `person_names` created** — published-only, pivoted, deterministic (**newest published wins**, not `max(value)` which would pick alphabetically by accident):
+```sql
+select person_id, lang,
+  (array_agg(value order by published_at desc nulls last, created_at desc)
+     filter (where field='given'))[1] as given,
+  ... family, patronymic, maiden, honorific ...,
+  coalesce(array_agg(value order by ord, created_at) filter (where field='nickname'), '{}') as nicknames,
+  count(*) filter (where field in ('given','family','patronymic','maiden','honorific')) as parts_published
+from person_facts where status='published' and field in (...) group by person_id, lang;
+```
+3. ⏳ **Readers not yet rewritten** — `person-real.html` (free: it is being rebuilt from Design #1), `moment-real.html` (small read change). `preview.html`/`index.html` are retiring.
+4. ⛔ **`name_variants` NOT dropped.** Only after step 3. Do not drop early.
+5. ⛔ **No unique index yet** — `(person_id, lang, field) where status='published'` would be correct, but **it fails on live data today** (see below). Add it once resolved.
+
+#### ⚠️ OPEN — what is "Рита"? (found by this migration)
+**Rita Golnick has two published Russian given names**, 8 minutes apart, both `published`:
+| given | family | published_at |
+|---|---|---|
+| **Маргарита** | Бетито-Гольник | 2026-07-06 17:22:27 |
+| **Рита** | Бетито-Гольник | 2026-07-06 17:29:52 |
+
+`name_variants` had **no slot for "the Russian familiar form"**, so it stored a second `given` row, and nothing enforced uniqueness — so nobody noticed. **This is the column-collapse in the wild, and it is the design's own example person.**
+
+- The view resolves to **Рита** (newest published). **Маргарита is not lost** — still in `person_facts`.
+- **`parts_published > 2` is the permanent conflict detector.** Today it flags exactly one person: Rita.
+- **Decision needed:** is Рита a `nickname`, a *called name* in Russian, or a second `given`? `people.called_name` exists but is a single English column, and the facet model has no "called name, per language" slot. **Do not guess — this is a meaning question.**
+- Related: **Leonid Golnick's Russian `given` is "Лёня"** — itself the familiar form. The formal "Леонид" is recorded nowhere. The formal/familiar distinction may be unrecorded across the board.
+
+### Superseded 2026-07-15 18:22: the earlier "columns" decision
 **This was an internal question only — the UI is fixed by the design; no one sees which table.** It decided two things: how many tables the Name facet touches, and **what the keeper approves**. Five `person_facts` rows would make one Russian name into *five separate approvals* — but it is **one name**.
 
 **The design drew the line itself:** every part is a single field *except* `nicks` + `addnick` — an open list. So:
 - **`name_variants`** = the formal name per language: `given, family, patronymic, maiden, honorific`. One row, one keeper approval.
 - **`person_facts`** = nicknames — a list needs rows, not columns.
 
-**Migration applied 2026-07-15 17:41** *(additive, zero data risk)*:
-```sql
-alter table public.name_variants
-  add column if not exists patronymic text,
-  add column if not exists maiden text,
-  add column if not exists honorific text;
-```
-All nullable — consistent with `given`/`family`, which were already nullable. Keeper flow (`status`/`reviewed_by`/`published_at`) and RLS unchanged.
+**REVERTED 2026-07-15 18:22.** The columns were added at 17:41 and dropped unused (0 rows touched). The reasoning behind them — *"one name, one keeper approval"* — was wrong: it is not one name, it is several separately-attributed attributes, and Design #1 already draws them that way.
 
 ### ⚠️ Design-vs-spec drift — open
 The facet model (§2) says **Name** holds **patronymic** and **honorific**. **The delivered Design #1 shows neither** — its Name facet renders display, given, family, maiden, nicknames, former surname. Leon confirmed 2026-07-15: **both are wanted, both optional.** The schema now holds them; **the design does not yet draw them.** → **Feed this into the D2/D4 batch as a Person delta, or accept the design as-is and add them at build.**
