@@ -37,7 +37,9 @@ A recording of a family member telling something. It needs to be playable and it
 The story block, the teller, where, when, the people tagged, all three languages, the guardrail colours, the keeper queue, the ways out. **A memory is a memory** — only the head changes.
 
 ## One correction to fold in
-The page currently shows the **uploader** as the teller. It must show **who told it** — a person in the family, who is often not the person who typed it in. Leon may upload a story that Rita told; the page must say **Rita**. Draw *"Told by…"* as a person, and draw the case where **nobody knows who told it** — that is a real and common state, and it is an invitation: someone in the family knows.
+The page currently shows the **uploader** as the teller. It must show **who told it** — a person in the family, who is often not the person who typed it in. Leon may upload a story that Rita told; the page must say **Rita**. Draw *"Told by…"* as a person, and draw the case where **nobody knows who told it** — a real and common state, and an invitation: someone in the family knows.
+
+**Leon's steer:** an optional field — *"Who told the story?"* — with a **"me"** button beside it. Most of the time the person typing is the person telling, and that should cost one tap. But it must stay just as easy to say *"Rita told me this"*, because that is the case the whole field exists for.
 
 ## States to draw
 1. A **story-led** memory, told by a person, in all three languages

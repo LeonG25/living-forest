@@ -1,6 +1,6 @@
 # The Living Forest — design house rules
 
-> **Revision:** 2026-07-15 19:05 (UTC+2) · authority: `docs/HANDOVER.md`
+> **Revision:** 2026-07-15 20:15 (UTC+2) · authority: `docs/HANDOVER.md`
 > **Extracted from the verified Design #1** (`docs/designs/2026-07-15--person--v1.html`, QC passed 2026-07-15), not written from memory. Where this document and that file disagree, **the file wins** — and tell us.
 
 **How to use this:** paste this whole file at the end of every Claude Design brief. The brief above it should describe **only that one page**. This appendix carries everything shared, so briefs stay ~3KB instead of ~11KB.
@@ -17,18 +17,34 @@ Tone: warm, quiet, unhurried, a little reverent. Never chirpy, never corporate, 
 
 ---
 
-## 2. Rules that never bend
+## 2. What is yours, and what is not
 
-1. **Nothing reaches the family until the keeper approves it.** Every contribution is a *suggestion* first.
-2. **Never blend a human's telling with a machine's guess.** See §4 — this is the heart of the app.
-3. **Three languages, always: English · Russian · Hebrew.** Hebrew is RTL. Not an afterthought, not a toggle bolted on.
-4. **Everything is editable in place.** No separate edit page — a field is just a field; the portrait has its control on the image.
-5. **Resting-open.** Content sits open on the screen. Do not hide things behind accordions or tabs the user must hunt through.
-6. **Games are a core joy, not an afterthought.** They must not feel buried.
+**You are the designer. We are not.** We want work that does not look like everything else — in layout, in colour, in motion, in dimension. If your answer is stranger than ours, say so and **insist**. We will take a strong opinion over a safe one every time.
+
+There is exactly **one** condition: **it has to work with what the app actually does.** Below is that line, drawn honestly.
+
+### Yours — decide freely, and argue with us
+Layout · composition · colour · type at every scale · motion and its character · 2D or 3D · depth, light, space · what a page is even shaped like · what to throw away.
+**The globe and the night sky already exist — 3D is native here, not a stretch.**
+
+### Not yours — because these are the app, not its style
+
+1. **Three provenance states, always distinguishable, never blended.**
+   The app's whole promise is that a family's memory is never dressed up as a machine's guess. So every value on screen says where it came from: **a human told us** · **the app worked it out** · **waiting for the keeper**. Today those are gold, cool blue, and violet — **the meaning is fixed; the colours are yours.** If you have a better system, propose it and we will re-skin the existing pages to match. What we cannot have is one page diverging alone.
+2. **Nothing reaches the family until the keeper approves it** — and **attribution is per-field**. Michael may suggest only a maiden name while Leonid suggests only a patronymic, on the same person, at once. Each is approved alone. Never one button over several fields.
+3. **English · Russian · Hebrew, all three, always. Hebrew is RTL** and mirrors completely.
+4. **Everything is editable in place.** No edit mode, no edit page.
+5. **It is not competitive.** No points, levels, ranks or leaderboards. Progress means **lighting a person up** — the more the family tells, the more of them you can see.
+6. **The data is what it is.** Do not design fields we cannot store; if you need one, say so and we will add it.
+
+### The failure we are afraid of
+Not weirdness. **Blandness.** Every family-history product on earth looks like a database with a serif font, and every "manage people" screen ever built is an admin panel. If a brief below tempts you toward the familiar version of that page, **that is the brief failing, not you.** Go somewhere else and tell us why.
 
 ---
 
-## 3. The visual system — exact values
+## 3. What is currently true
+
+Useful as ground, not as law. Everything here is **evidence of where the app is**, extracted from the one page that exists and has been verified — `2026-07-15--person--v1.html`. Depart from it deliberately, not accidentally.
 
 ### Ground
 ```css
@@ -37,34 +53,25 @@ background:radial-gradient(150% 100% at 50% -6%, #12233c 0%, #0a1526 44%, #04070
 ```
 A night sky. Everything else is light on it.
 
-### Palette — use these, do not invent
+### The palette in use today
 ```css
 --cream:#f4ecdb;  --muted:#9db0cc;  --dim:#6f83a3;
 --hair:#ffffff18; --panel:#ffffff0b;
 --gold:#f3cd84;   --gold-hi:#ffe6ad;    /* a human told us this */
 --cool:#7fb4d8;   --cool-hi:#a9d2ee;    /* the app worked this out */
---edit:#c9a2ff;   --edit-hi:#ddc6ff;  --edit-soft:#efe6ff;   /* waiting for the keeper */
---leaf:#8fd6a0;   /* growth, used sparingly */
+--edit:#c9a2ff;   --edit-hi:#ddc6ff;    /* waiting for the keeper */
+--leaf:#8fd6a0;   /* growth, sparingly */
 ```
 Auto-translation indicator: `#9a8bbd`.
 
-### Typography
-| Face | Role |
-|---|---|
-| **Newsreader** (serif) | display, names, titles, anything a person said |
-| **Hanken Grotesk** (sans) | UI, body, controls |
-| **Azeret Mono** (mono) | eyebrows and small labels — uppercase, `letter-spacing:.24–.28em`, 9–11px, `--dim`/`--muted` |
-| **Frank Ruhl Libre** | **Hebrew / RTL** — substitutes for Newsreader |
+### Type in use today
+**Newsreader** (serif) — display, names, anything a person said · **Hanken Grotesk** (sans) — UI and body · **Azeret Mono** — eyebrows and small labels, uppercase, `letter-spacing:.24–.28em` · **Frank Ruhl Libre** — **Hebrew / RTL**, substituting for Newsreader.
 
-Google Fonts. If a handoff bundles fonts as blobs we substitute these.
-
-### Motion
-Signature easing: `cubic-bezier(.16,.8,.28,1)`. Durations **.2s–.42s**. Nothing faster (jarring), nothing slower (sluggish). Motion is a settling, not a bounce.
+### Motion in use today
+`cubic-bezier(.16,.8,.28,1)`, **.2s–.42s**. Motion settles; it does not bounce.
 
 ### Icons
-Inline stroke SVG on a 24 box, ~1.7 stroke, `currentColor`. No icon fonts, no emoji as UI.
-
----
+Inline stroke SVG, 24 box, ~1.7 stroke, `currentColor`.
 
 ## 4. The truth guardrail — the heart of it
 
@@ -145,4 +152,4 @@ If flat HTML is impossible: **screenshots** are the next best thing, then a **ho
 - Nothing is conveyed by colour alone — the guardrail colours always carry words too.
 - Empty states are **invitations**, not apologies: *"No one has told the story of this afternoon yet."* + *"Ask someone who might remember →"*
 - Real-length content: Russian runs ~20% longer than English; Hebrew names are short and RTL. Do not design to lorem.
-- **Do not hand-fuse two visual languages.** If a page needs to merge ideas, say so and we will brief it properly. Interpretation is our failure mode; fidelity is the fix.
+- **If a brief is wrong, say so.** Three pages have already dissolved under inspection because we named a concept and assumed a page. If a brief below describes something that should not exist, or should be part of something else, **that is the most valuable thing you can tell us.**
