@@ -21,6 +21,10 @@ Surface **world events and family events** (anyone/anything in the visible datab
 ### Idea 2 — Quest / escape-room game
 An **escape-room-style chained quest**: the player hunts for clues and information, unlocks things, and progresses step by step through a chain of challenges — solving the whole task/riddle at the end.
 
+### Idea 3 — Family messages: discover, connect, advance
+Members find each other and send messages tied to a memory — e.g. "Hey, remember this…" about a photo they are tagged in. Discovery is part of the play: the more of the family you reach and connect with, the further your status advances (points / level). Feeds the Journal progression model below — messages and connections are among the things progression counts. Keeper gate and child-safety rules apply.
+**Schema gaps:** no messages table; no person↔user identity link (“you are in this photo”); no progression/score store.
+
 ---
 
 ## Games still to build (from roadmap)
@@ -50,7 +54,25 @@ An **escape-room-style chained quest**: the player hunts for clues and informati
 
 ---
 
-## Timeline — needs a design decision before it earns its place
+## Journal — PARKED 2026-07-15 (blocked on a progression model)
+
+**Verified 2026-07-15: the roadmap's `✓` was false.** Journal has never been designed and has never been built.
+- `preview.html` is **not a mockup** — it is `index.html` recoloured. Both are 1742 lines; ~104 lines differ, all palette/font. **"yes reskin" certifies nothing** — every row carrying that mark is suspect.
+- Journal is a **tab** (`<button data-w="journal">`) inside the old prototype's wander mode. Not a page.
+- The entire "design" is 7 lines: `viewJournal()` renders a stock `.card` + `.eyebrow` + a list of `.jrow` divs. Nothing bespoke was ever drawn.
+- **No `journal-real.html` exists.** Journal appears only in `preview.html`, `index.html` (both due for retirement), and the pagemap.
+- Data is **localStorage** — `S.prog[pid].journal` → `savePlay()`. Per-device, per-player.
+- `journal_entries` (id, player_id, text, person_id, event_id, created_at) exists in Supabase with **0 rows** — created, never wired. `player_profiles`: **0 rows**.
+
+**Direction (decided 2026-07-15, not yet designed):** the Journal must **not** be a log. A log is boring and has no relation to play. It is where you go to be **motivated to play more** — progression made visible: points / stars / levels / status — in the spirit of the app: warm, family, **non-competitive**; not a leaderboard. Creative work still to do.
+
+**Blocked on:** a **progression model**. It touches games, Profile, Journal, and Idea 3 (messages). Settle it before commissioning any game design — otherwise the games get drawn twice.
+
+**Consequence:** Journal is a from-scratch design + build, not a port. Phase 1 loses Build #2 (as it lost Build #1 to the Timeline decision).
+
+---
+
+## Timeline — RESOLVED 2026-07-15: Timeline IS Reel (Design #9)
 The current `timeline-real.html` was **engineered, not designed** — it never had a Claude Design pass. Like every page/card/menu, it must be designed in Claude Design first. Three things to settle:
 
 1. **Design concept (in Claude Design).** Do the concept + visual there, then re-engineer the page to match — don't hand-build the look.
