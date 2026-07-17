@@ -272,16 +272,16 @@ async function load(){
   const { data:{ session } } = await sb.auth.getSession();
   if(!session){ showSignIn(); return; }
   try{
-    const [arts, subs, ppl, profs, rels] = await Promise.all([
-      sb.from('artefacts').select('id,body,contributor_user,storage_path,metadata').eq('status','published').eq('kind','photo'),
+    const [arts, subs, ppl, rels] = await Promise.all([
+      sb.from('artefacts').select('id,body,contributor_id,storage_path,metadata').eq('status','published').eq('kind','photo'),
       sb.from('artefact_subjects').select('artefact_id,person_id,detail'),
       sb.from('people').select('id,display_name,called_name'),
-      sb.from('profiles').select('id,display_name'),
       sb.from('relationships').select('from_person,to_person,kind'),
     ]);
     if(arts.error) throw arts.error;
     (ppl.data||[]).forEach(p=> NAME[p.id]=p.called_name||p.display_name||'Someone');
-    window.__prov={}; (profs.data||[]).forEach(p=> window.__prov[p.id]=p.display_name);
+    // the teller is a person (contributor_id), never the uploading account
+    window.__prov={}; (ppl.data||[]).forEach(p=> window.__prov[p.id]=p.display_name);
     REL=rels.data||[];
     // generations from the parent graph (parent -> child)
     const kids={}; REL.forEach(r=>{ if(r.kind==='parent')(kids[r.from_person]=kids[r.from_person]||[]).push(r.to_person); });
@@ -315,10 +315,10 @@ async function loadRound(i){
   ri=i; const round=ROUNDS[i]; foundOrder=[]; hintNode=null; ti=0;
   $('#caption').classList.remove('lit'); $('#allHere').classList.remove('show'); $('#quest').classList.remove('done');
   $('#hintBtn').style.display=''; $('#hintNote').textContent='Tap where you think they are. No wrong moves \u2014 only warmer or cooler.';
-  const who=(window.__prov&&window.__prov[round.art.contributor_user])||null;
+  const who=(round.art.contributor_id&&window.__prov&&window.__prov[round.art.contributor_id])||null;
   const body=round.art.body||''; const where=round.art.metadata&&round.art.metadata.where; const when=round.art.metadata&&round.art.metadata.when;
   $('#captionWords').textContent = body? '\u201C'+body+'\u201D' : '';
-  $('#capWho').textContent = body? ('in '+(who||'the family')+'\u2019s words') : (where||'');
+  $('#capWho').textContent = body? (who? ('in '+who+'\u2019s words') : '') : (where||'');
   $('#capAttrib').innerHTML = who? ('\u2014 <b>'+esc(who)+'</b>, who kept this photograph') : ((where||'')+(when?(' \u00b7 '+when):''));
   $('#caption').style.display = (body||who)? '' : 'none';
   let url='';

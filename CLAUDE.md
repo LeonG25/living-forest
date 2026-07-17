@@ -95,9 +95,12 @@ seven places (§8). Treat every claim in it as unverified. It gets one consolida
 correction pass (§7 step 7). Filename is frozen; **there will never be a v3.**
 
 ## Design
-- Claude Design project **4931d7e6-358d-4ef9-a066-9a422439ee44** holds **26 files**.
-  `docs/designs/` holds **none** — only `INDEX.md`. Nothing has been transferred yet, so
-  **no build may claim to be "per design"** until it is (INDEX.md).
+- Claude Design project **4931d7e6-358d-4ef9-a066-9a422439ee44** holds **29 files**
+  (INDEX.md, `list_files` 2026-07-17; the old "26" predates three deliveries). `docs/designs/` holds
+  **9 of 9, byte-exact** (commit `e566a08`) — **the "no build may claim to be per design"
+  blocker is cleared.** Cite the exact design file (INDEX.md).
+- **Design #2 = `2026-07-12--place-tel-aviv--v2.html`** — Leon, 2026-07-17: *"the one with
+  globe."* The v1 file is the superseded predecessor; do not build from it.
 - **Flat HTML sources live in `screens/` inside the design project. Never extract the
   1MB bundles** — go to the flat source.
 - **Design #1 = "The Person Page"** (project root, 78,814 bytes). **"Rita Golnick" is v0,
@@ -114,8 +117,10 @@ correction pass (§7 step 7). Filename is frozen; **there will never be a v3.**
 
 ## Frontend
 - Vanilla JS, single self-contained HTML files. Three.js and Leaflet from CDN.
-- Live pages (§1): `home-real.html` (Sky) · `globe-real.html` · `person-real.html` ·
+- Live pages (§1): `home-real.html` (Sky) · **`index.html`** (the globe — **front door**;
+  `globe-real.html` no longer exists, commit `e566a08`) · `person-real.html` ·
   `crowd-real.html` · `moment-real.html` · `place-real.html`.
+  The old 2D hub is now `prototype.html` (retirement list, §12).
 - `lf-nav.js` = floating ⊕ lens menu + unified hardware-back guard. Its five items today:
   The sky · The globe · Find them in a crowd · The timeline · Add a memory (→ index.html).
   Lenses become **Sky · Globe · Tree** when timeline retires (§3).
@@ -124,17 +129,33 @@ correction pass (§7 step 7). Filename is frozen; **there will never be a v3.**
 - `node --check` every inline `<script>` before committing.
 
 ### Known live bugs
-- **`moment-real.html:618` selects `contributor_user`, and `:626` reads it →
-  `profiles.display_name` → renders it as `toldBy` in gold** (`.told .txt{color:var(--gold)}`,
-  `:381`). It shows the **uploader** as the teller. Harmless only while Leon is both.
-  **It must read `contributor_id`.** Folded into `docs/briefs/moment-photoless.md`.
-- **`index.html` is the front door, has no lf-nav, and has zero outbound links** — its
-  only `href`s are Leaflet CDN CSS. **Decision taken: the globe becomes the front door.**
-- `moment-real.html` carries no `lf-nav.js` — it is the one live page without it.
-  (HANDOVER §1 says all six carry it; the file disagrees. Flagged, not fixed.)
-- The old five-light hub's journeys (`sec-photos`, `sec-places`, `sec-kin`, `sec-reel`)
-  **dead-end today** (§1). Recoverable at commit `75defd8`. They come back inside the
-  facets — not as a second page.
+- **`place-real.html` tells the narrator gold-lie — the same bug moment-real just shed.**
+  `:662` selects `contributor_user`; `:688`/`:690` resolve it through `profiles.display_name`
+  and render it as **`told by` in gold** (`.told{color:#f3cd84}`, `:127`). It names the
+  **uploader**, not the teller. `:535` repeats it on the globe card. **It must read
+  `contributor_id` → `people.display_name`**, as `moment-real.html:622`/`:630` now does.
+  Harmless only while Leon is both. **Not folded into any brief yet.**
+- `place-real.html` also **carries a v1 element Design #2 (v2) dropped** — *"Located by
+  The Living Forest"* (`:684`); and has **one** *Ways in* door (`:715`) where v2 specifies
+  three. See `docs/designs/INDEX.md` → "Design #2 (Place v2) vs `place-real.html`".
+- The old five-light hub's journeys **dead-end** (§1). ⚠️ **The four ids this entry used to
+  cite (`sec-photos`, `sec-places`, `sec-kin`, `sec-reel`) exist in no file — not in
+  `prototype.html`, not in `preview.html`, and not at commit `75defd8`** (`grep -c` → 0 in
+  all three). The *claim* may hold; **its evidence does not.** Re-derive the real ids before
+  acting on it. They come back inside the facets — not as a second page.
+
+### Fixed — do not re-report
+- ~~`moment-real.html` shows the uploader as the teller.~~ **Fixed and deployed, commit
+  `e566a08`.** It now selects `contributor_id` (`:622`) and resolves it through
+  `people.display_name` (`:630`). Verified 2026-07-17. **The identical bug is still live in
+  `place-real.html` — see above.**
+- ~~`index.html` is the front door with no lf-nav and zero outbound links.~~ **Resolved,
+  commit `e566a08`:** the globe became the front door. `globe-real.html` → `index.html`
+  (title *"the Living Globe"*, `:7`); the old 2D hub → `prototype.html`.
+- ~~`moment-real.html` carries no `lf-nav.js`.~~ **Fixed — but uncommitted.** The working
+  tree adds `<script src="lf-nav.js" …>` (`:640`) and a `window.__lfClose` handler (`:462`),
+  satisfying the popstate rule (§11). `git log -S'lf-nav.js' -- moment-real.html` returns
+  **nothing**: this is not in history yet. **It is a working-tree change, not a shipped fix.**
 
 ## Backend
 - Supabase project `oabcdrktuikifbormjip` · https://oabcdrktuikifbormjip.supabase.co

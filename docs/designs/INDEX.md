@@ -1,6 +1,6 @@
 # Design deliveries — catalogue
 
-> **Revision:** 2026-07-17 08:39 (UTC+2) · commit `5c59625` · authority: `docs/HANDOVER.md`
+> **Revision:** 2026-07-17 10:24 (UTC+2) · commit `e566a08` · authority: `docs/HANDOVER.md`
 
 **Naming — dated on purpose.** Unlike text documents (which are single, stable-named files — see HANDOVER §0), design deliveries **are** dated: they are immutable artefacts, several versions legitimately coexist, and we must always know which one a build was made from.
 
@@ -35,14 +35,34 @@ bundle, not Design #1, and the resemblance to the Design #1 name is a trap.
 | File | Design # | Page | Delivered | Filed | QC | Notes |
 |---|---|---|---|---|---|---|
 | `2026-07-15--person--v1.html` | **1** | Person (8 facets) | **2026-07-15 09:18** ‡ | ✅ **78,814 b, verified** | ✅ **PASSED** 2026-07-15 17:41 | Flat source `The Person Page.html`. Brief: `person-page-brief-for-claude-design.md`. **QC: passes — invents nothing the schema cannot hold** (HANDOVER §9b). Two follow-ups: patronymic + honorific are specified in the facet model but **not drawn**; the Story facet needs `contributor_id` backfilled or it renders without a narrator. |
-| `2026-07-11--place-tel-aviv--v1.html` | **2** | Place | **2026-07-11 23:12** ‡ | ✅ **24,693 b, verified** | ❌ pending | Flat source `screens/Place.html`, 24,693 b. **`place-real.html` is already built from this design — partially.** Present: *Seen here · Moments here · Located by*. **Missing: *A place we stood · Ways in · See it on the globe*.** Also **no i18n** (`preferred_lang` 0× vs 2× in `person-real.html`). So D2 is mostly a **build delta**, not a design brief. Predates keeper / i18n / in-place-edit decisions → **QC + delta, not a fresh brief**. |
-| `2026-07-12--place-tel-aviv--v2.html` | — | Place | **2026-07-12 02:28** ‡ | ✅ **42,328 b, verified** | — | Flat source `screens/Place v2.html`, 42,328 b. **Was not in this catalogue before 2026-07-17.** Supersedes the v1 above by 3h16m; its relationship to Design #2 is **undecided — for Leon.** |
+| `2026-07-12--place-tel-aviv--v2.html` | **2** | Place | **2026-07-12 02:28** ‡ | ✅ **42,328 b, verified** | ❌ pending | Flat source `screens/Place v2.html`, 42,328 b. **Design #2 = this file — Leon, 2026-07-17: *"The one with globe."*** The globe is the identifying feature and it is unambiguous: v2 loads `three.min.js` + `topojson-client` (`:10–11`) and renders a live WebGL globe as the page's fixed background (`<canvas id="globe">`, `:173`); v1 loads no JS libraries at all. **Build gap vs. v2 — see below.** Predates keeper / i18n / in-place-edit decisions. |
+| `2026-07-11--place-tel-aviv--v1.html` | — | Place | **2026-07-11 23:12** ‡ | ✅ **24,693 b, verified** | — | Flat source `screens/Place.html`, 24,693 b. **Superseded** by v2 above, 3h16m later. Reference only — **do not build from it.** Its distinct idea, not carried into v2: the **time-of-day place-scape** (`--sky-top`/`--sun`/`--haze` interpolated by scroll through morning → golden hour → dusk, `:339–357`), and the cool cartographic strip (`.cartostrip`, `:197`). v2 replaces both with the globe. |
 | `2026-07-13--moment--v1.html` | **3** | Moment | **2026-07-13 23:48** ‡ | ✅ **41,600 b, verified** | ✅ | Flat source `screens/Moment.html`, 41,600 b. Built and live: `moment-real.html`, commit `30ebd89`. The design itself had never been filed. |
 | `2026-07-13--moment-directions--v1.html` | — | Moment — Directions | **2026-07-13 22:43** ‡ | ✅ **23,310 b, verified** | — | Flat source `screens/Moment - Directions.html`, 23,310 b. **Was not in this catalogue before 2026-07-17.** |
 | `2026-07-13--moment-reliquary--v1.html` | — | Moment — Reliquary | **2026-07-13 22:53** ‡ | ✅ **19,016 b, verified** | — | Flat source `screens/Moment - Reliquary.html`, 19,016 b. **Was not in this catalogue before 2026-07-17.** |
 | `2026-07-11--person-rita--v0.html` | — | Person (old five-light hub) | **2026-07-11 17:54** ‡ | ✅ **28,415 b, verified** | — | Flat source `screens/Person.html`, 28,415 b. **Superseded** by the facet model. Reference only. Live version recoverable at commit `75defd8`. See the warning box above. |
 | `2026-07-14--person-edit--v1.html` | — | Person Edit | **2026-07-14 17:34** ‡ | ✅ **47,771 b, verified** | — | Flat source `screens/Person Edit.html`, 47,771 b. **Was not in this catalogue before 2026-07-17.** **The page it designs is retired** (HANDOVER: `person-edit-real.html` is a 404; everything is edited in place). Filed for the record only — **do not build from it.** |
 | `2026-07-09--crowd--v1.html` | — | Find Them in the Crowd | **2026-07-09 22:01** ‡ | ✅ **32,204 b, verified** | — | Flat source `Find Them in the Crowd.html` (project root), 32,204 b. **Was not in this catalogue before 2026-07-17.** The earliest delivery we hold. |
+
+### Design #2 (Place v2) vs `place-real.html` — the gap, restated 2026-07-17
+
+The previous revision measured the build against **v1** and reported it *"missing: A place we stood · Ways in · See it on the globe."* Measured against **v2**, that list is wrong in every element:
+
+- **"A place we stood" is not in v2 at all** (`grep -c` → **0**). In v1 it was never a section: it is the topbar breadcrumb eyebrow (`v1:183`, `<span class="appvoice">A place we stood</span>`). v2 replaces it with a live chip reading **"On the globe"** (`v2:182`). **The designer already deleted it.** Nothing is missing here.
+- **"Located by The Living Forest" is also gone from v2** (`grep -c` → **0**) — and `place-real.html` **has** it (`:684`). The build carries a v1 element that v2 dropped.
+- **"See it on the globe" and "Ways in" are both in v2** (`v2:254`, `v2:258`) — and both are **still genuinely unbuilt**. `place-real.html` has a single door, *"Back to the whole globe"* (`:715`), where v2 specifies three (globe · everyone seen here · moments & stories).
+
+**`place-real.html` is not the v1 static page.** It is titled *"a place on the globe"* (`:7`), loads `three.min.js` + `topojson-client` (`:11–12`), and already renders a WebGL globe with a time dial (`#dial`, `:29`). **Structurally it is closer to v2 than to v1** — which is consistent with Leon's ruling. The real gap against v2 is narrower than "three missing sections" and lies elsewhere:
+
+| v2 specifies | `place-real.html` |
+|---|---|
+| Globe **parked on this place**, eased back to centre on release (`homeQuat`, `v2:442`; `returning`, `v2:592`) | Free globe, fixed rotation `globe.rotation.set(0.35,-1.2,0)` (`:292`) — **not** centred on the place |
+| **Connection rays** to linked places, each revealed as its year arrives on the dial (`links[]` + `applyYear`, `v2:532–537`) | Ties exist (`tiesGroup`, `:328`) but are not place-scoped reveals |
+| Hero HUD: **year readout + note** ("living memory here" / "the years since", `v2:574`), side stats, coords | Panel head with `kick`/`years`/`counts` — v1's language (`:682–684`) |
+| **Three doors** under *Ways in* (`v2:255–271`) | **One** door (`:715`) |
+| Dial spans the **place's own** `spanStart`→`spanEnd` (`v2:302`) | Global dial |
+
+**Neither design answers i18n, the keeper gate, or in-place editing.** v2 scores **0** for `preferred_lang` / `pub_status` / RTL / `--edit` violet — it is English-only and read-only, exactly as v1 was. Its `--cool` is **`#5fd0e6`** (`v2:19`), **not** the house-rules `#7fb4d8`; it also introduces `--sea` `#0bd3c4` and `--coral` `#ff7a5c` (`v2:20`) and colours the *Ways in* doors with them (`v2:256–266`) — **provenance-neutral decoration on a page where colour is supposed to carry provenance.** A build from v2 must reconcile this against house rules §4.
 
 ‡ **Date provenance: evidenced by etag.** The Claude Design MCP returns each file's `etag` as **epoch microseconds**; every date above is that etag decoded, read in UTC+2. This is machine evidence, not testimony.
 
@@ -105,7 +125,7 @@ directory is the design of record, builds cite it, and HANDOVER §11 puts design
 
 1. **Design #1's size and provenance.** The previous revision described D1 as *"React bundle → template extracted, 92,628 chars flat HTML."* The flat source actually served by the MCP is **78,814 bytes**. Whether 92,628 was a different (bundle-extracted) rendering of the same page, or a stale figure, is unsettled. **The filed file is the flat source, fetched directly from the MCP root — the better provenance either way.**
 2. **A tenth file, not on any list.** The project root holds `Person Edit (static export).html` — **the same 47,771 bytes** as `screens/Person Edit.html` but a **different etag** (`1784043615386023` → 2026-07-14 **17:40**, six minutes later). Same size, different timestamp. Duplicate export or divergent file: **unknown, unexamined.**
-3. **Design #2 vs Place v2.** The catalogue pinned Design #2 to Place v1. Place v2 exists, is 3h16m newer and 71% larger. Nobody has said which one Design #2 *is*.
+3. ~~**Design #2 vs Place v2.**~~ **RESOLVED 2026-07-17 by Leon.** Asked whether Design #2 was Place v1 or v2, he answered **"The one with globe."** Only v2 has a globe (`v2:10–11`, `:173`); v1 has no JS libraries. **Design #2 = `2026-07-12--place-tel-aviv--v2.html`.** v1 is the superseded predecessor. The catalogue and the gap analysis above are restated accordingly.
 
 ---
 

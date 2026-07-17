@@ -172,15 +172,15 @@ async function load(){
   const { data:{ session } } = await sb.auth.getSession();
   if(!session){ showSignIn(); return; }
   try{
-    const [ppl, rels, arts, subs, profs] = await Promise.all([
+    const [ppl, rels, arts, subs] = await Promise.all([
       sb.from('people').select('id,display_name,called_name'),
       sb.from('relationships').select('from_person,to_person,kind'),
-      sb.from('artefacts').select('id,body,certainty,metadata,storage_path,contributor_user').eq('status','published'),
+      sb.from('artefacts').select('id,body,certainty,metadata,storage_path,contributor_id').eq('status','published'),
       sb.from('artefact_subjects').select('artefact_id,person_id,detail'),
-      sb.from('profiles').select('id,display_name'),
     ]);
     if(ppl.error) throw ppl.error;
-    (profs.data||[]).forEach(p=> prov[p.id]=p.display_name);
+    // the teller is a person (contributor_id), never the uploading account
+    (ppl.data||[]).forEach(p=> prov[p.id]=p.display_name);
     const artById={}; (arts.data||[]).forEach(a=>{ a._year=parseYear(a.metadata&&a.metadata.when); a._where=(a.metadata&&a.metadata.where)||''; artById[a.id]=a; });
     const perPerson={}; (subs.data||[]).forEach(s=>{ const a=artById[s.artefact_id]; if(!a) return; (perPerson[s.person_id]=perPerson[s.person_id]||[]).push({art:a,box:s.detail}); });
     const places=[...new Set((arts.data||[]).map(a=>a._where).filter(Boolean))]; const coords={};
@@ -357,8 +357,9 @@ function openCard(p){
   const recs=p.records||[]; let rec=recs.find(r=>r.art&&r.art.body)||recs[0];
   const cStory=$('#cStory'), cProv=$('#cProv');
   if(rec && rec.art && rec.art.body){ cStory.style.display='block'; cStory.textContent=rec.art.body;
-    const who=prov[rec.art.contributor_user]||''; const cert=rec.art.certainty||'';
-    cProv.style.display='block'; cProv.textContent='told by '+(who||'family')+(cert?' \u00b7 '+cert:''); }
+    const who=(rec.art.contributor_id&&prov[rec.art.contributor_id])||''; const cert=rec.art.certainty||'';
+    const bits=[who?'told by '+who:'', cert].filter(Boolean).join(' \u00b7 ');
+    if(bits){ cProv.style.display='block'; cProv.textContent=bits; } else cProv.style.display='none'; }
   else { cStory.style.display='none'; cProv.style.display='none'; }
   const disc=$('#cDisc'); disc.textContent='photo'; if(rec&&rec.art) faceInto(disc, rec.art, rec.box);
   $('#card').classList.add('show');

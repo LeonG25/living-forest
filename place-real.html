@@ -333,15 +333,15 @@ async function load(){
   const { data:{ session } } = await sb.auth.getSession();
   if(!session){ showSignIn(); return; }
   try{
-    const [ppl, rels, arts, subs, profs] = await Promise.all([
+    const [ppl, rels, arts, subs] = await Promise.all([
       sb.from('people').select('id,display_name,called_name'),
       sb.from('relationships').select('from_person,to_person,kind'),
-      sb.from('artefacts').select('id,body,certainty,metadata,storage_path,contributor_user').eq('status','published'),
+      sb.from('artefacts').select('id,body,certainty,metadata,storage_path,contributor_id').eq('status','published'),
       sb.from('artefact_subjects').select('artefact_id,person_id,detail'),
-      sb.from('profiles').select('id,display_name'),
     ]);
     if(ppl.error) throw ppl.error;
-    const provName = {}; (profs.data||[]).forEach(p=> provName[p.id]=p.display_name);
+    // the teller is a person (contributor_id), never the uploading account
+    const provName = {}; (ppl.data||[]).forEach(p=> provName[p.id]=p.display_name);
     const artById = {}; (arts.data||[]).forEach(a=>{ a._year=parseYear(a.metadata&&a.metadata.when); a._where=(a.metadata&&a.metadata.where)||''; artById[a.id]=a; });
     // subjects per person and per artefact
     const perPerson = {}; // id -> [{art, box}]
@@ -532,8 +532,9 @@ function openCard(p){
   const recs=p.records||[]; let rec=recs.find(r=>r.art.body) || recs[0];
   const cStory=$('#cStory'), cProv=$('#cProv');
   if(rec && rec.art.body){ cStory.style.display='block'; cStory.textContent=rec.art.body;
-    const who=(PEOPLE._prov&&PEOPLE._prov[rec.art.contributor_user])||''; const cert=rec.art.certainty||'';
-    cProv.style.display='block'; cProv.innerHTML='<span>told by '+(who||'family')+(cert?' \u00b7 '+cert:'')+'</span>'; }
+    const who=(rec.art.contributor_id&&PEOPLE._prov&&PEOPLE._prov[rec.art.contributor_id])||''; const cert=rec.art.certainty||'';
+    const bits=[who?'told by '+who:'', cert].filter(Boolean).join(' \u00b7 ');
+    if(bits){ cProv.style.display='block'; cProv.innerHTML='<span>'+bits+'</span>'; } else cProv.style.display='none'; }
   else { cStory.style.display='none'; cProv.style.display='none'; }
   const disc=$('#cDisc'); disc.textContent='photo';
   if(rec) faceInto(disc, rec.art, rec.box);
@@ -648,7 +649,7 @@ load();
     lb.querySelector('.lx-yr').textContent = m.yr || '';
     lb.querySelector('.lx-ppl').innerHTML = (m.people||[]).map(n=>'<span class="tag">'+esc(n)+'</span>').join('');
     lb.querySelector('.lx-story').innerHTML = m.body ? '\u201c'+esc(m.body)+'\u201d' : '<span style="color:rgba(205,191,164,.85);font-style:italic">No one has told the story of this moment yet.</span>';
-    lb.querySelector('.lx-told').innerHTML = m.body ? ('told by <b>'+esc(m.teller||'family')+'</b>') : '';
+    lb.querySelector('.lx-told').innerHTML = (m.body && m.teller) ? ('told by <b>'+esc(m.teller)+'</b>') : '';
     const nEl=lb.querySelector('#lxNote'); if(nEl) nEl.innerHTML = m.id ? '<a href="moment-real.html?id='+encodeURIComponent(m.id)+'" style="color:#f3cd84;text-decoration:none;font-weight:600;font-size:13.5px;">Open the full moment \u2192</a>' : '';
     lb.classList.add('show');
     if(m.path){ const u=await signedUrl(m.path); const im=lb.querySelector('.lx-img img'); if(im&&u) im.src=u; }
@@ -657,16 +658,17 @@ load();
   async function render(){
     let sess=null; try{ sess=(await sb2.auth.getSession()).data.session; }catch(e){}
     if(!sess){ setTimeout(render, 700); return; }
-    const [geoR,artsR,peopleR,profsR]=await Promise.all([
+    const [geoR,artsR,peopleR]=await Promise.all([
       sb2.from('place_geo').select('name,lat,lng,label').eq('name',PL).maybeSingle(),
-      sb2.from('artefacts').select('id,kind,body,metadata,storage_path,contributor_user').eq('status','published').eq('metadata->>where',PL),
-      sb2.from('people').select('id,display_name,called_name,primary_asset'),
-      sb2.from('profiles').select('id,display_name')
+      sb2.from('artefacts').select('id,kind,body,metadata,storage_path,contributor_id').eq('status','published').eq('metadata->>where',PL),
+      sb2.from('people').select('id,display_name,called_name,primary_asset')
     ]);
     const geo=geoR.data||null, arts=artsR.data||[];
     const pById={}; (peopleR.data||[]).forEach(p=>pById[p.id]=p);
     const nameOf=id=>{const p=pById[id];return p?(p.called_name||p.display_name||'Someone'):'Someone';};
-    const prov={}; (profsR.data||[]).forEach(p=>prov[p.id]=p.display_name);
+    // the teller is a person (contributor_id), never the uploading account
+    const prov={}; (peopleR.data||[]).forEach(p=>prov[p.id]=p.display_name);
+    const tellerOf=a=>(a.contributor_id&&prov[a.contributor_id])||'';
     const artById={}; arts.forEach(a=>artById[a.id]=a);
     const byArt={}, seen=[], seenSet={}, faceOf={};
     if(arts.length){ const subs=await sb2.from('artefact_subjects').select('artefact_id,person_id,detail').in('artefact_id',arts.map(a=>a.id));
@@ -685,9 +687,9 @@ load();
     h+='<div class="sec" id="pMoments"><div class="sec-h"><div class="t"><span class="lp"></span>Moments here</div><div class="meta">'+nP+'</div></div>';
     if(nP){ arts.forEach((a,i)=>{ const md=a.metadata||{},yr=py(md.when),yrT=isNaN(yr)?esc(md.when||''):String(yr); const pplNames=(byArt[a.id]||[]).map(id=>firstName(nameOf(id)));
       const isImg=(a.kind==='photo'||a.kind==='object')&&a.storage_path;
-      const mi=moments.length; moments.push({id:a.id, path:isImg?a.storage_path:'', yr:yrT, people:pplNames, body:a.body||'', teller:prov[a.contributor_user]||'family'});
+      const mi=moments.length; moments.push({id:a.id, path:isImg?a.storage_path:'', yr:yrT, people:pplNames, body:a.body||'', teller:tellerOf(a)});
       h+='<div class="moment'+(i===0?' first':'')+'"><div class="img" data-m="'+mi+'">'+(isImg?'<span class="expand">\u21f1</span>':'<div class="ph">No photograph yet</div>')+'<div class="stamp"><span class="yr">'+yrT+'</span>'+(pplNames.length?'<span class="ppl">'+esc(joinNames(pplNames))+'</span>':'')+'</div></div>';
-      if(a.body){ h+='<div class="words">\u201c'+esc(a.body)+'\u201d</div><div class="told"><span class="flame"></span>told by <b>'+esc(prov[a.contributor_user]||'family')+'</b></div>'; }
+      if(a.body){ const tn=tellerOf(a); h+='<div class="words">\u201c'+esc(a.body)+'\u201d</div>'+(tn?'<div class="told"><span class="flame"></span>told by <b>'+esc(tn)+'</b></div>':''); }
       else { h+='<div class="invite"><div class="words">No one has told the story of this moment yet.</div><div class="cta">Ask someone who remembers it \u2192</div></div>'; }
       h+='</div>'; }); }
     else h+='<div class="soft">No photographs from here have been gathered yet.</div>';

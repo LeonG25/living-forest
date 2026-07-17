@@ -252,15 +252,15 @@ async function load(){
   const { data:{ session } } = await sb.auth.getSession();
   if(!session){ showSignIn(); return; }
   try{
-    const [ppl, rels, arts, subs, profs] = await Promise.all([
+    const [ppl, rels, arts, subs] = await Promise.all([
       sb.from('people').select('id,display_name,called_name'),
       sb.from('relationships').select('from_person,to_person,kind'),
-      sb.from('artefacts').select('id,body,certainty,metadata,storage_path,contributor_user').eq('status','published'),
+      sb.from('artefacts').select('id,body,certainty,metadata,storage_path,contributor_id').eq('status','published'),
       sb.from('artefact_subjects').select('artefact_id,person_id,detail'),
-      sb.from('profiles').select('id,display_name'),
     ]);
     if(ppl.error) throw ppl.error;
-    const provName = {}; (profs.data||[]).forEach(p=> provName[p.id]=p.display_name);
+    // the teller is a person (contributor_id), never the uploading account
+    const provName = {}; (ppl.data||[]).forEach(p=> provName[p.id]=p.display_name);
     const artById = {}; (arts.data||[]).forEach(a=>{ a._year=parseYear(a.metadata&&a.metadata.when); a._where=(a.metadata&&a.metadata.where)||''; artById[a.id]=a; });
     // subjects per person and per artefact
     const perPerson = {}; // id -> [{art, box}]
@@ -450,8 +450,9 @@ function openCard(p){
   const recs=p.records||[]; let rec=recs.find(r=>r.art.body) || recs[0];
   const cStory=$('#cStory'), cProv=$('#cProv');
   if(rec && rec.art.body){ cStory.style.display='block'; cStory.textContent=rec.art.body;
-    const who=(PEOPLE._prov&&PEOPLE._prov[rec.art.contributor_user])||''; const cert=rec.art.certainty||'';
-    cProv.style.display='block'; cProv.innerHTML='<span>told by '+(who||'family')+(cert?' \u00b7 '+cert:'')+'</span>'; }
+    const who=(rec.art.contributor_id&&PEOPLE._prov&&PEOPLE._prov[rec.art.contributor_id])||''; const cert=rec.art.certainty||'';
+    const bits=[who?'told by '+who:'', cert].filter(Boolean).join(' \u00b7 ');
+    if(bits){ cProv.style.display='block'; cProv.innerHTML='<span>'+bits+'</span>'; } else cProv.style.display='none'; }
   else { cStory.style.display='none'; cProv.style.display='none'; }
   const disc=$('#cDisc'); disc.textContent='photo';
   if(rec) faceInto(disc, rec.art, rec.box);

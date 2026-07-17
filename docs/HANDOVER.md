@@ -1,6 +1,6 @@
 # The Living Forest — Handover
 
-> **Revision:** 2026-07-17 (UTC+2) · on `5c59625` — §11 navigation contract added; `lf-nav.js` referrer whitelist fixed (`moment-real`), sub-page `data-parent` → `index.html`
+> **Revision:** 2026-07-17 20:10 (UTC+2) · on `e566a08` — `moment-real.html` gains `lf-nav.js` + `window.__lfClose`; §1's "all carry it" corrected from aspiration to verified fact
 > **Status:** **single source of truth.** Replaces `docs/WORKPLAN.md`, `docs/PARKING-LOT.md`, and every dated `HANDOVER-the-living-forest*.md`. Those are deleted — git holds their history.
 > **Scheme:** `docs/the-living-forest-pagemap-v2.html` · rev **2026-07-15** (stamp in file head)
 > **Repo:** `LeonG25/living-forest` · branch `main` · live at https://leong25.github.io/living-forest/
@@ -24,7 +24,7 @@ We drowned once. Six files existed for three documents: `HANDOVER-the-living-for
 
 ### Live pages
 `home-real.html` (Sky) · `globe-real.html` (year-wheel globe) · `person-real.html` · `crowd-real.html` · `moment-real.html` · `place-real.html`
-All carry `lf-nav.js` (floating ⊕ menu + unified hardware-back guard). `lf-nav.js` owns `popstate` exclusively; page-level close handlers route through `window.__lfClose`.
+All six carry `lf-nav.js` (floating ⊕ menu + unified hardware-back guard) — verified 2026-07-17 by `grep -n lf-nav *.html`: `home-real.html:390` · `index.html:501` (the globe) · `person-real.html:684` · `crowd-real.html:512` · `place-real.html:602` · `moment-real.html:640`. This was an **aspiration until 2026-07-17**: `moment-real.html` carried none of it (0 `lf-nav`, 0 `popstate`, 0 `__lfClose`) and gained the tag that day. `lf-nav.js` owns `popstate` exclusively; page-level close handlers route through `window.__lfClose` (`moment-real.html:462` closes a sheet, else exits `editing` mode).
 
 ### There is one Person page
 `person-real.html` **is** the Person page. No separate edit page — `person-edit-real.html` existed for hours on 2026-07-15 and is gone (404). Everything is editable **in place**; the portrait has a camera control on the image itself.
@@ -426,7 +426,7 @@ Back means *where you actually were*, and only history knows that. There is no l
 1. **`history.back()` is the mechanism.** `goBack()` (`lf-nav.js:17`) closes an overlay → else `inAppRef()` true → `history.back()`.
 2. **`data-parent` is the cold-entry fallback only** — no referrer: WhatsApp, a bookmark, a fresh tab. The globe is the front door, so every sub-page carries `data-parent="index.html"`; `index.html` carries none (root → confirm-exit).
 3. **`inAppRef()` (`lf-nav.js:14`) is a same-origin + filename whitelist. Any page that links onward MUST be listed**, or arriving from it silently falls back to `data-parent`. Exactly how `moment-real` broke: absent until 2026-07-17, so Back from Person/Place/Globe skipped the Moment. `globe-real.html` is deliberately absent — retired name.
-4. **Still outstanding:** `moment-real.html` carries no `lf-nav.js` at all (§1's "all carry it" is false). Whitelisting it fixes Back *from* a Moment; Back *on* a Moment stays unguarded until the tag is added.
+4. **Closed 2026-07-17.** `moment-real.html` now carries the tag (`:640`, `data-here="" data-parent="index.html"`) and exposes `window.__lfClose` (`:462`). Back *from* a Moment was fixed by the whitelist; Back *on* a Moment is now guarded too. §1's "all carry it" is true as of this date.
 - Droplet: `botuser@droplet`, repo at `/home/botuser/living-forest`, **Python 3 only** (no Node), 8192-char limit per `exec_bash`, ~30s timeout. Use `bash -c` for process substitution — default shell is `sh`.
 
 ### Environment
