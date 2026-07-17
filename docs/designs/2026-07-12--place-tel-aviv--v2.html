@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Tel-Aviv Jaffo — The Living Forest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=Azeret+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/three@0.149.0/build/three.min.js"></script>
+<script src="https://unpkg.com/topojson-client@3/dist/topojson-client.min.js"></script>
+<style>
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; margin:0; padding:0; }
+  html,body{ background:#040d12; }
+  :root{
+    --cream:#f4ecdb; --muted:#9db0cc; --hair:#ffffff1f; --panel:#ffffff0d;
+    --gold:#f3cd84; --gold-hi:#ffe6ad;         /* human memory */
+    --cool:#5fd0e6;                            /* app / cartographic voice */
+    --sea:#0bd3c4; --coral:#ff7a5c;
+  }
+  body{
+    font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--cream);
+    min-height:100dvh; -webkit-user-select:none; user-select:none; overflow-x:hidden;
+    /* background colours kept from the previous Place page */
+    background:radial-gradient(120% 90% at 62% 26%, #0d1a2f 0%, #081120 46%, #04070e 100%);
+  }
+  .serif{ font-family:'Newsreader',Georgia,serif; }
+  .mono{ font-family:'Azeret Mono',ui-monospace,monospace; }
+  .appvoice{ font-family:'Azeret Mono',monospace; letter-spacing:.24em; text-transform:uppercase; font-size:10px; color:var(--cool); }
+
+  /* ===== globe canvas (fixed behind everything) ===== */
+  #globe{ position:fixed; inset:0; z-index:0; width:100%; height:100%; display:block; }
+  .veil{ position:fixed; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(120% 60% at 62% 20%, rgba(95,208,230,.10), transparent 46%); }
+
+  /* ===== fixed hero HUD (fades as you scroll into the page) ===== */
+  .hud{ position:fixed; inset:0; z-index:4; pointer-events:none; }
+  .hud > *{ position:absolute; }
+
+  .topbar{ top:max(12px,env(safe-area-inset-top)); left:0; right:0; padding:0 18px;
+    display:flex; align-items:center; justify-content:space-between; }
+  .icon-btn{ pointer-events:auto; width:40px; height:40px; border-radius:12px; border:1px solid rgba(95,208,230,.3);
+    background:rgba(6,20,30,.5); backdrop-filter:blur(8px); color:var(--cream); display:grid; place-items:center; cursor:pointer; }
+  .icon-btn svg{ width:18px; height:18px; }
+  .livechip{ display:flex; align-items:center; gap:8px; padding:7px 12px; border-radius:99px;
+    background:rgba(6,20,30,.5); border:1px solid rgba(95,208,230,.26); backdrop-filter:blur(8px); }
+  .livechip .blip{ width:7px; height:7px; border-radius:50%; background:var(--sea); box-shadow:0 0 10px 2px var(--sea);
+    animation:blip 1.6s ease-in-out infinite; }
+  @keyframes blip{ 0%,100%{opacity:.4;transform:scale(.8);} 50%{opacity:1;transform:scale(1.2);} }
+
+  /* year readout, top-right (driven by the dial) */
+  .year{ top:max(60px,calc(env(safe-area-inset-top) + 48px)); right:18px; text-align:right; }
+  .year .lab{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.3em; text-transform:uppercase; color:rgba(150,180,214,.6); }
+  .year .val{ font-family:'Newsreader',serif; font-weight:300; font-size:44px; line-height:.9; color:#f6efe0; margin-top:4px; }
+  .year .note{ font-size:11px; color:rgba(206,221,240,.6); margin-top:6px; max-width:150px; margin-left:auto; }
+
+  /* side stats — no frame, stacked on the left edge */
+  .stats{ left:18px; top:44%; transform:translateY(-50%); display:flex; flex-direction:column; gap:20px; }
+  .stat .num{ font-family:'Newsreader',serif; font-weight:300; font-size:38px; line-height:.9; color:#f3f6fc; display:block;
+    text-shadow:0 2px 20px rgba(0,0,0,.6); }
+  .stat .lab{ font-family:'Azeret Mono',monospace; font-size:9.5px; letter-spacing:.22em; text-transform:uppercase; color:rgba(150,180,214,.7); margin-top:5px; display:block; }
+
+  /* place name, bottom-left */
+  .placehead{ left:18px; right:18px; bottom:16vh; max-width:330px; }
+  .region{ display:flex; align-items:center; gap:10px; }
+  .region .flagline{ height:2px; width:30px; background:linear-gradient(90deg,var(--cool),transparent); }
+  .placename{ font-family:'Newsreader',serif; font-weight:300; font-size:clamp(40px,13vw,56px); line-height:.92;
+    letter-spacing:-.02em; margin-top:8px; color:#fbf5e8; text-shadow:0 4px 30px rgba(0,0,0,.7); }
+  .placename em{ font-style:italic; color:var(--cool); }
+  .coords{ margin-top:12px; font-family:'Azeret Mono',monospace; font-size:11px; letter-spacing:.1em; color:rgba(150,180,214,.75); }
+
+  .scrollcue{ left:0; right:0; bottom:calc(20px + env(safe-area-inset-bottom)); text-align:center;
+    font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.28em; text-transform:uppercase; color:rgba(150,180,214,.5); }
+  .scrollcue .arr{ display:block; margin:8px auto 0; width:16px; height:16px; color:rgba(150,180,214,.5);
+    animation:cue 2.2s ease-in-out infinite; }
+  @keyframes cue{ 0%,100%{transform:translateY(0);opacity:.5;} 50%{transform:translateY(5px);opacity:1;} }
+
+  /* ===== time dial ring (fixed, centered on the globe; fades on scroll) ===== */
+  .dial{ position:fixed; inset:0; z-index:3; display:flex; align-items:center; justify-content:center; pointer-events:none; }
+  .dial svg{ width:min(104vh,120vw); height:min(104vh,120vw); overflow:visible; }
+
+  /* ===== scrolling content ===== */
+  .phone{ position:relative; z-index:5; width:100%; max-width:430px; margin:0 auto; }
+  .herospace{ height:100dvh; }
+  .content{ position:relative; padding:0 20px calc(70px + env(safe-area-inset-bottom));
+    background:linear-gradient(to bottom, transparent 0, #04070e 22vh, #04070e 100%); }
+  .content::before{ content:""; position:absolute; left:0; right:0; top:-1px; height:22vh;
+    background:linear-gradient(to bottom, transparent, #04070e); pointer-events:none; }
+
+  /* ===== sections ===== */
+  .sec{ margin-top:40px; }
+  .sec:first-child{ padding-top:8vh; }
+  .sec-h{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .sec-h .t{ font-family:'Azeret Mono',monospace; font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:10px; }
+  .sec-h .t .lp{ width:8px; height:8px; border-radius:2px; transform:rotate(45deg); }
+  .sec-h .meta{ font-family:'Azeret Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:.1em; }
+
+  /* MOMENTS */
+  .timeline{ position:relative; }
+  .moment{ position:relative; border-radius:18px; overflow:hidden; margin-bottom:18px;
+    background:rgba(10,22,28,.6); backdrop-filter:blur(10px);
+    border:1px solid var(--hair); box-shadow:0 24px 60px -34px #000; }
+  .moment .img{ position:relative; aspect-ratio:16/10; }
+  .moment .img svg{ width:100%; height:100%; display:block; }
+  .moment .img::after{ content:""; position:absolute; inset:0; background:linear-gradient(to top, rgba(6,16,20,.92), transparent 48%); }
+  .moment .frame{ position:absolute; inset:9px; z-index:2; pointer-events:none; }
+  .moment .frame span{ position:absolute; width:16px; height:16px; border:1.5px solid rgba(95,208,230,.6); }
+  .moment .frame .tl{ left:0; top:0; border-right:0; border-bottom:0; }
+  .moment .frame .tr{ right:0; top:0; border-left:0; border-bottom:0; }
+  .moment .frame .bl{ left:0; bottom:0; border-right:0; border-top:0; }
+  .moment .frame .br{ right:0; bottom:0; border-left:0; border-top:0; }
+  .moment .stamp{ position:absolute; left:15px; bottom:12px; z-index:3; display:flex; align-items:center; gap:10px; }
+  .moment .stamp .yr{ font-family:'Azeret Mono',monospace; font-size:12px; color:var(--gold-hi); letter-spacing:.14em;
+    padding:3px 8px; border-radius:6px; background:rgba(243,205,132,.12); border:1px solid rgba(243,205,132,.3); }
+  .moment .stamp .ppl{ font-size:11.5px; color:#e7d6c2; }
+  .moment .body{ padding:15px 17px 17px; }
+  .moment .words{ font-family:'Newsreader',serif; font-style:italic; font-weight:300; font-size:16px; line-height:1.5; color:#f6ecd7; }
+  .moment .told{ margin-top:12px; display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--gold); }
+  .moment .told .flame{ width:6px; height:6px; border-radius:50%; background:var(--gold); box-shadow:0 0 9px 2px var(--gold); }
+  .moment .told b{ font-weight:600; }
+  .invite{ padding:16px; border-radius:14px; border:1px dashed rgba(243,205,132,.4); background:rgba(243,205,132,.06); }
+  .invite .words{ font-family:'Newsreader',serif; font-style:italic; font-size:15px; line-height:1.5; color:#efe0c2; }
+  .invite .cta{ margin-top:10px; font-size:12px; color:var(--gold); font-weight:600; }
+
+  /* SEEN HERE */
+  .faces{ display:flex; gap:16px; overflow-x:auto; margin:0 -20px; padding:4px 20px 8px; }
+  .faces::-webkit-scrollbar{ display:none; }
+  .face{ flex:0 0 auto; width:76px; text-align:center; cursor:pointer; }
+  .face .node{ position:relative; width:68px; height:68px; margin:0 auto; }
+  .face .crop{ position:absolute; inset:4px; border-radius:50%; overflow:hidden;
+    border:1.5px solid rgba(243,205,132,.55); box-shadow:0 0 18px -2px rgba(243,205,132,.55); }
+  .face .crop svg{ width:100%; height:100%; }
+  .face .ring{ position:absolute; inset:0; border-radius:50%; border:1px solid rgba(95,208,230,.35); animation:spin 9s linear infinite; }
+  .face .ring::before{ content:""; position:absolute; top:-2px; left:50%; width:4px; height:4px; border-radius:50%; background:var(--sea); box-shadow:0 0 8px 1px var(--sea); }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .face .fn{ font-family:'Newsreader',serif; font-size:13px; margin-top:9px; color:var(--cream); line-height:1.12; }
+  .face.more .crop{ display:grid; place-items:center; background:rgba(95,208,230,.1); border-color:rgba(95,208,230,.45); box-shadow:none; }
+  .face.more .cnt{ font-family:'Azeret Mono',monospace; font-size:16px; color:var(--cool); }
+
+  /* DOORWAYS */
+  .doors{ display:flex; flex-direction:column; gap:11px; }
+  .door{ display:flex; align-items:center; gap:14px; padding:15px 16px; border-radius:16px; position:relative; overflow:hidden;
+    background:rgba(10,22,28,.55); backdrop-filter:blur(10px); border:1px solid var(--hair); cursor:pointer;
+    transition:border-color .25s ease; }
+  .door::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent,var(--sea)); box-shadow:0 0 12px 1px var(--accent,var(--sea)); }
+  .door:active{ border-color:rgba(95,208,230,.4); }
+  .door .di{ width:40px; height:40px; border-radius:12px; display:grid; place-items:center; flex-shrink:0; background:rgba(95,208,230,.12); }
+  .door .di svg{ width:19px; height:19px; }
+  .door .dt{ flex:1; min-width:0; }
+  .door .dt .l{ font-family:'Newsreader',serif; font-size:17px; color:var(--cream); }
+  .door .dt .s{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .door .chev svg{ width:16px; height:16px; color:var(--muted); }
+
+  .foot{ margin-top:44px; text-align:center; }
+  .foot .leaf{ font-family:'Newsreader',serif; font-style:italic; font-size:14px; color:rgba(95,208,230,.7); }
+
+  /* place switcher (demo affordance) */
+  .switcher{ position:fixed; z-index:20; left:50%; bottom:calc(16px + env(safe-area-inset-bottom)); transform:translateX(-50%);
+    display:flex; gap:5px; padding:5px; border-radius:99px; max-width:calc(100vw - 24px);
+    background:rgba(6,20,26,.82); backdrop-filter:blur(14px); border:1px solid rgba(95,208,230,.28);
+    box-shadow:0 20px 50px -20px #000; }
+  .switcher button{ -webkit-appearance:none; appearance:none; border:none; cursor:pointer; white-space:nowrap;
+    font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--muted); background:transparent; padding:9px 13px; border-radius:99px; transition:all .25s ease; }
+  .switcher button.on{ color:#04141a; background:linear-gradient(180deg,var(--gold-hi),var(--gold)); font-weight:600; }
+
+  @media (prefers-reduced-motion: reduce){
+    .blip,.face .ring,.scrollcue .arr{ animation:none !important; }
+  }
+</style>
+</head>
+<body>
+  <canvas id="globe" aria-hidden="true"></canvas>
+  <div class="veil"></div>
+
+  <!-- fixed hero HUD -->
+  <div class="hud" id="hud">
+    <div class="topbar">
+      <button class="icon-btn" aria-label="Back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="livechip"><span class="blip"></span><span class="appvoice" style="letter-spacing:.18em;">On the globe</span></div>
+      <button class="icon-btn" aria-label="Share">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+      </button>
+    </div>
+
+    <div class="year">
+      <div class="lab">The year</div>
+      <div class="val" id="yearVal">2025</div>
+      <div class="note" id="yearNote">today</div>
+    </div>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="placehead">
+      <div class="region"><span class="flagline"></span><span class="appvoice" id="pRegion">Israel &middot; Mediterranean coast</span></div>
+      <h1 class="placename serif" id="pName">Tel-Aviv <em>Jaffo</em></h1>
+      <div class="coords" id="pCoords">32.05&deg;N &nbsp; 34.75&deg;E</div>
+    </div>
+
+    <div class="scrollcue">the story
+      <svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+    </div>
+  </div>
+
+  <!-- time dial ring -->
+  <div class="dial" id="dial">
+    <svg viewBox="0 0 1000 1000">
+      <defs>
+        <radialGradient id="handleGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="rgba(255,232,180,1)"/>
+          <stop offset="45%" stop-color="rgba(245,197,104,.7)"/>
+          <stop offset="100%" stop-color="rgba(245,197,104,0)"/>
+        </radialGradient>
+      </defs>
+      <circle cx="500" cy="500" r="430" fill="none" stroke="rgba(140,182,214,.16)" stroke-width="1"/>
+      <circle cx="500" cy="500" r="430" fill="none" stroke="rgba(140,182,214,.5)" stroke-width="9" stroke-dasharray="1 14.05" stroke-linecap="round"/>
+      <circle cx="500" cy="500" r="452" fill="none" stroke="rgba(120,160,196,.08)" stroke-width="1"/>
+      <g id="tickLabels"></g>
+      <circle id="hitRing" cx="500" cy="500" r="430" fill="none" stroke="rgba(0,0,0,0)" stroke-width="64" style="pointer-events:stroke; cursor:grab;"/>
+      <g id="handle" style="pointer-events:none;">
+        <circle cx="500" cy="70" r="26" fill="url(#handleGlow)"/>
+        <circle cx="500" cy="70" r="6" fill="#fff4dc"/>
+        <circle cx="500" cy="70" r="6" fill="none" stroke="rgba(255,244,220,.5)" stroke-width="10" opacity=".35"/>
+      </g>
+    </svg>
+  </div>
+
+  <main class="phone">
+    <div class="herospace"></div>
+    <div class="content">
+
+      <!-- MOMENTS -->
+      <div class="sec">
+        <div class="sec-h">
+          <div class="t"><span class="lp" style="background:var(--gold);box-shadow:0 0 8px 1px var(--gold);"></span>Moments here</div>
+          <div class="meta" id="mMeta">5 photographs</div>
+        </div>
+        <div class="timeline" id="moments"></div>
+      </div>
+
+      <!-- SEEN HERE -->
+      <div class="sec">
+        <div class="sec-h">
+          <div class="t"><span class="lp" style="background:var(--gold);box-shadow:0 0 8px 1px var(--gold);"></span>Seen here</div>
+          <div class="meta" id="fMeta">8 people</div>
+        </div>
+        <div class="faces" id="faces"></div>
+      </div>
+
+      <!-- DOORWAYS -->
+      <div class="sec">
+        <div class="sec-h"><div class="t">Ways in</div></div>
+        <div class="doors">
+          <div class="door" style="--accent:var(--cool);">
+            <div class="di" style="background:rgba(95,208,230,.14);"><svg viewBox="0 0 24 24" fill="none" stroke="var(--cool)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></div>
+            <div class="dt"><div class="l">See it on the globe</div><div class="s" id="dGlobe">Find Tel-Aviv Jaffo among the family&rsquo;s places.</div></div>
+            <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div>
+          </div>
+          <div class="door" style="--accent:var(--coral);">
+            <div class="di" style="background:rgba(255,122,92,.14);"><svg viewBox="0 0 24 24" fill="none" stroke="var(--coral)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="3"/><path d="M3 20c0-3 2.7-5 6-5s6 2 6 5"/><path d="M16 6a3 3 0 010 6M21 20c0-2.4-1.6-4.2-4-4.8"/></svg></div>
+            <div class="dt"><div class="l">Everyone seen here</div><div class="s" id="dPeople">The people recognised in this place.</div></div>
+            <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div>
+          </div>
+          <div class="door" style="--accent:var(--gold);">
+            <div class="di" style="background:rgba(243,205,132,.14);"><svg viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4z"/></svg></div>
+            <div class="dt"><div class="l">Moments &amp; stories</div><div class="s" id="dMoments">All the photographs kept from here.</div></div>
+            <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="foot"><span class="leaf serif" id="pLeaf">Eight people, one shoreline, two summers.</span></div>
+
+    </div>
+  </main>
+
+  <div class="switcher" id="switcher" role="tablist" aria-label="Preview place">
+    <button class="on" data-place="telaviv">Tel-Aviv</button>
+    <button data-place="rybinsk">Rybinsk</button>
+    <button data-place="morschach">Morschach</button>
+  </div>
+
+  <script>
+  (function(){
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const $=id=>document.getElementById(id);
+    const lerp=(a,b,k)=>a+(b-a)*k;
+    const smooth=(a,b,x)=>{ const t=Math.min(1,Math.max(0,(x-a)/(b-a))); return t*t*(3-2*t); };
+
+    /* =========================================================
+       PER-PLACE DATA — content + globe geometry, all from data.
+       center: where the place sits on the globe (kept centered).
+       links:  connection rays to other places, each with the year
+               the tie appears (so the time dial reveals them).
+       ========================================================= */
+    const PLACES = {
+      telaviv: {
+        name:'Tel-Aviv <em>Jaffo</em>', region:'Israel &middot; Mediterranean coast',
+        lat:32.05, lng:34.75, coords:'32.05&deg;N &nbsp; 34.75&deg;E',
+        accent:'#5fd0e6', spanStart:1984, spanEnd:1998,
+        sideStats:[[5,'photographs'],[8,'people'],[14,'years']],
+        mMeta:'5 photographs', fMeta:'8 people',
+        globeDoor:'Find Tel-Aviv Jaffo among the family&rsquo;s places.',
+        peopleDoor:'The 8 people recognised in this place.',
+        momentsDoor:'All five photographs kept from here.',
+        leaf:'Eight people, one shoreline, two summers.',
+        links:[
+          { name:'Holon',          lat:32.01, lng:34.78, year:1985 },
+          { name:'Rishon LeZion',  lat:31.96, lng:34.80, year:1988 },
+          { name:'Rybinsk',        lat:58.05, lng:38.84, year:1991, long:true },
+          { name:'Morschach',      lat:46.97, lng:8.60,  year:1998, long:true },
+        ],
+        moments:[
+          {yr:'1992', ppl:'Rita, Efim &amp; Leonid', words:'We&rsquo;d walk down to the sea after Shabbat lunch &mdash; the whole family, sandals slapping the hot pavement.', teller:'Leonid Golnick'},
+          {yr:'1991', ppl:'Ida Tserlina', invite:true}
+        ],
+        faces:['Rita','Efim','Leonid','Ida','Michael'], more:'+3',
+        theme:{ type:'coast', waterHi:0x0bd3c4, waterLo:0x073b45, landLo:0xc9743c, landHi:0x6c3f2c, glow:0x0bd3c4 }
+      },
+      rybinsk: {
+        name:'Rybinsk', region:'Russia &middot; on the Volga',
+        lat:58.05, lng:38.84, coords:'58.05&deg;N &nbsp; 38.84&deg;E',
+        accent:'#7fe0b4', spanStart:1958, spanEnd:1967,
+        sideStats:[[3,'photographs'],[5,'people'],[9,'years']],
+        mMeta:'3 photographs', fMeta:'5 people',
+        globeDoor:'Find Rybinsk among the family&rsquo;s places.',
+        peopleDoor:'The 5 people recognised in this place.',
+        momentsDoor:'All three photographs kept from here.',
+        leaf:'Where the family began, before the sea.',
+        links:[
+          { name:'Yaroslavl', lat:57.63, lng:39.87, year:1960 },
+          { name:'Tel-Aviv',  lat:32.05, lng:34.75, year:1991, long:true },
+        ],
+        moments:[
+          {yr:'the 60s', ppl:'Ida &amp; her mother', words:'The river froze so hard we walked across it to school, satchels heavy on our backs.', teller:'Ida Tserlina'},
+          {yr:'the 60s', ppl:'unknown', invite:true}
+        ],
+        faces:['Ida','Rosa','Yakov','Sofia'], more:'+1',
+        theme:{ type:'river', waterHi:0x3f8296, waterLo:0x123039, landLo:0x4c6b3c, landHi:0x28351f, glow:0x6fd0a8 }
+      },
+      morschach: {
+        name:'Morschach', region:'Switzerland &middot; above Lake Lucerne',
+        lat:46.97, lng:8.60, coords:'46.97&deg;N &nbsp; 8.60&deg;E',
+        accent:'#bcd8f0', spanStart:1998, spanEnd:1998,
+        sideStats:[[2,'photographs'],[3,'people'],[1,'year']],
+        mMeta:'2 photographs', fMeta:'3 people',
+        globeDoor:'Find Morschach among the family&rsquo;s places.',
+        peopleDoor:'The 3 people recognised in this place.',
+        momentsDoor:'Both photographs kept from here.',
+        leaf:'One winter, high above the lake.',
+        links:[
+          { name:'Lucerne',  lat:47.05, lng:8.31, year:1998 },
+          { name:'Tel-Aviv', lat:32.05, lng:34.75, year:1998, long:true },
+        ],
+        moments:[
+          {yr:'1998', ppl:'Leonid &amp; Michael', words:'We drove up the switchbacks until our ears popped, then just stood in the snow, saying nothing.', teller:'Michael Golnick'}
+        ],
+        faces:['Leonid','Michael','Nadia'], more:'',
+        theme:{ type:'alpine', waterHi:0x2a4a5a, waterLo:0x12252e, landLo:0x566173, landHi:0xdbe7f4, glow:0x9fc8ec }
+      }
+    };
+    let curKey='telaviv';
+
+    /* ---------- content builders ---------- */
+    const SKIN=['#e6c49b','#d9b083','#e0b98d','#eac6a0','#dcb58c'];
+    const HAIRC=['#8a6a4a','#3a3a3a','#4a3a2a','#b8b0a4','#2b2320','#cfc7bb','#5a4030'];
+    const BG=['#3a2a1e','#2a3446','#243449','#2c2a1e','#243a30'];
+    function hash(s){ let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))|0; return Math.abs(h); }
+    function facePortrait(name){
+      const h=hash(name), skin=SKIN[h%SKIN.length], hair=HAIRC[(h>>3)%HAIRC.length], bg=BG[(h>>5)%BG.length];
+      const gray=(h>>7)%3===0;
+      return `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="${bg}"/><ellipse cx="50" cy="47" rx="23" ry="26" fill="${skin}"/><path d="M50 96 Q50 70 27 66 Q31 42 50 42 Q69 42 73 66 Q50 70 50 96Z" fill="${hair}"/><path d="M27 44 Q31 23 50 23 Q69 23 73 44 Q61 33 50 33 Q39 33 27 44Z" fill="${gray?'#cfc7bb':hair}"/></svg>`;
+    }
+    function momentSVG(prof, i){
+      const T=prof.theme, hx=c=>'#'+c.toString(16).padStart(6,'0');
+      if(T.type==='coast') return `<svg viewBox="0 0 100 62"><defs><linearGradient id="mm${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffb26b"/><stop offset="42%" stop-color="#ff7a5c"/><stop offset="100%" stop-color="${hx(T.waterLo)}"/></linearGradient></defs><rect width="100" height="62" fill="url(#mm${i})"/><rect y="40" width="100" height="22" fill="${hx(T.waterHi)}" opacity=".5"/><circle cx="78" cy="16" r="8" fill="#ffe6ad"/><ellipse cx="34" cy="36" rx="8" ry="11" fill="#eac6a0"/><path d="M34 60 Q34 44 23 42 Q25 34 34 34 Q43 34 45 42 Q34 44 34 60Z" fill="#3a2a1e"/></svg>`;
+      if(T.type==='river') return `<svg viewBox="0 0 100 62"><defs><linearGradient id="mm${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#9fb6c8"/><stop offset="50%" stop-color="${hx(T.landLo)}"/><stop offset="100%" stop-color="${hx(T.landHi)}"/></linearGradient></defs><rect width="100" height="62" fill="url(#mm${i})"/><path d="M0 44 Q40 38 60 48 T100 46 V62 H0Z" fill="${hx(T.waterHi)}" opacity=".7"/><rect x="20" y="8" width="3" height="30" fill="#e8ece0"/><rect x="30" y="12" width="3" height="26" fill="#dfe6d4"/><ellipse cx="60" cy="34" rx="8" ry="11" fill="#e6c49b"/><path d="M60 58 Q60 42 49 40 Q51 32 60 32 Q69 32 71 40 Q60 42 60 58Z" fill="#5a4030"/></svg>`;
+      return `<svg viewBox="0 0 100 62"><defs><linearGradient id="mm${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#cfe0f2"/><stop offset="100%" stop-color="${hx(T.waterLo)}"/></linearGradient></defs><rect width="100" height="62" fill="url(#mm${i})"/><path d="M0 46 L26 18 L40 34 L58 10 L78 40 L100 22 V62 H0Z" fill="${hx(T.landLo)}"/><path d="M58 10 L66 24 L50 24Z M26 18 L34 30 L18 30Z" fill="#eef6ff"/><ellipse cx="46" cy="42" rx="7" ry="9" fill="#e6c49b"/><path d="M46 60 Q46 48 37 46 Q39 40 46 40 Q53 40 55 46 Q46 48 46 60Z" fill="#3a2a1e"/></svg>`;
+    }
+    function applyContent(key){
+      const p=PLACES[key];
+      $('pName').innerHTML=p.name;
+      $('pName').querySelectorAll('em').forEach(e=>{ e.style.color=p.accent; });
+      $('pRegion').innerHTML=p.region;
+      $('pCoords').innerHTML=p.coords;
+      $('stats').innerHTML = p.sideStats.map(s=>`<div class="stat"><span class="num">${s[0]}</span><span class="lab">${s[1]}</span></div>`).join('');
+      $('mMeta').textContent=p.mMeta; $('fMeta').textContent=p.fMeta;
+      $('dGlobe').innerHTML=p.globeDoor; $('dPeople').innerHTML=p.peopleDoor; $('dMoments').innerHTML=p.momentsDoor;
+      $('pLeaf').innerHTML=p.leaf;
+      $('moments').innerHTML = p.moments.map((m,i)=>{
+        const body = m.invite
+          ? `<div class="invite"><div class="words">No one has told the story of this moment yet.</div><div class="cta">Ask someone who remembers it &rarr;</div></div>`
+          : `<div class="words">&ldquo;${m.words}&rdquo;</div><div class="told"><span class="flame"></span>told by <b>${m.teller}</b></div>`;
+        return `<div class="moment"><div class="img"><span class="frame"><span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span></span>${momentSVG(p,i)}<div class="stamp"><span class="yr mono">${m.yr}</span><span class="ppl">${m.ppl}</span></div></div><div class="body">${body}</div></div>`;
+      }).join('');
+      let fh = p.faces.map(n=>`<div class="face"><div class="node"><span class="ring"></span><div class="crop">${facePortrait(n)}</div></div><div class="fn">${n}</div></div>`).join('');
+      if(p.more) fh += `<div class="face more"><div class="node"><div class="crop"><span class="cnt mono">${p.more}</span></div></div><div class="fn">more</div></div>`;
+      $('faces').innerHTML=fh;
+    }
+
+    /* ---------- HUD + dial fade on scroll ---------- */
+    const hud=$('hud'), dial=$('dial');
+    function onScroll(){
+      const y=window.scrollY||window.pageYOffset;
+      const f=Math.max(0, 1 - y/(window.innerHeight*0.6));
+      hud.style.opacity=f; dial.style.opacity=f;
+      hud.style.pointerEvents = f<0.1?'none':'';
+      dial.style.pointerEvents = f<0.1?'none':'';
+    }
+    window.addEventListener('scroll', onScroll, {passive:true}); onScroll();
+
+    /* =========================================================
+       THE GLOBE — the same rotating, ray-lit globe as the globe
+       page, parked so THIS place sits centered. The time dial
+       reveals each connection as its year arrives.
+       ========================================================= */
+    const GLOBE = (function(){
+      let THREE, scene, camera, renderer, globe, R=100;
+      let homeQ=null, dragging=false, returning=false, raf, _tries=0;
+      let year=2025, yearMin=1900, yearMax=2025;
+      let linkObjs=[], centreObj=null, flow=[];
+      const cv=$('globe');
+
+      function ll2v(lat,lng,r){ const phi=(90-lat)*Math.PI/180, th=(lng+180)*Math.PI/180;
+        return new THREE.Vector3(-r*Math.sin(phi)*Math.cos(th), r*Math.cos(phi), r*Math.sin(phi)*Math.sin(th)); }
+      function glowTex(){ const c=document.createElement('canvas'); c.width=c.height=128; const g=c.getContext('2d');
+        const rg=g.createRadialGradient(64,64,0,64,64,64);
+        rg.addColorStop(0,'rgba(255,255,255,1)'); rg.addColorStop(.25,'rgba(255,255,255,.85)');
+        rg.addColorStop(.5,'rgba(255,255,255,.28)'); rg.addColorStop(1,'rgba(255,255,255,0)');
+        g.fillStyle=rg; g.fillRect(0,0,128,128); return new THREE.CanvasTexture(c); }
+      function spikeTex(){ const c=document.createElement('canvas'); c.width=c.height=128; const g=c.getContext('2d'); g.translate(64,64);
+        for(let k=0;k<2;k++){ const grd=g.createLinearGradient(-64,0,64,0); grd.addColorStop(0,'rgba(255,255,255,0)'); grd.addColorStop(.5,'rgba(255,255,255,.9)'); grd.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle=grd; g.fillRect(-64,-1,128,2); g.rotate(Math.PI/2); }
+        return new THREE.CanvasTexture(c); }
+      function arcCurve(a,b,r){ const va=a.clone().normalize(), vb=b.clone().normalize(); const ang=Math.max(1e-4,va.angleTo(vb));
+        const lift=r*(0.06+0.30*Math.min(1,ang/Math.PI)); const pts=[]; const N=64;
+        for(let i=0;i<=N;i++){ const t=i/N; const s=Math.sin((1-t)*ang)/Math.sin(ang), e=Math.sin(t*ang)/Math.sin(ang);
+          const p=va.clone().multiplyScalar(s).add(vb.clone().multiplyScalar(e)).normalize(); const h=Math.sin(Math.PI*t)*lift; p.multiplyScalar(r+h); pts.push(p); }
+        return new THREE.CatmullRomCurve3(pts); }
+
+      function homeQuat(lat,lng){
+        const dir=ll2v(lat,lng,1);
+        const q=new THREE.Quaternion().setFromUnitVectors(dir, new THREE.Vector3(0,0,1));
+        const tilt=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), 0.20);
+        return new THREE.Quaternion().multiplyQuaternions(tilt,q);
+      }
+
+      function boot(){
+        if(!window.THREE){ setTimeout(boot,150); return; }
+        THREE=window.THREE;
+        const W=cv.clientWidth, H=cv.clientHeight;
+        try{ renderer=new THREE.WebGLRenderer({canvas:cv, antialias:true, alpha:true, powerPreference:'high-performance'}); }
+        catch(e){ _tries++; if(_tries%6===1) console.warn('globe waiting for a WebGL context…'); setTimeout(boot,Math.min(3000,400*_tries)); return; }
+        renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1)); renderer.setSize(W,H);
+        cv.addEventListener('webglcontextlost', e=>{ e.preventDefault(); cancelAnimationFrame(raf); renderer=null; _tries=0; setTimeout(boot,400); }, false);
+
+        scene=new THREE.Scene();
+        camera=new THREE.PerspectiveCamera(30, W/H, 1, 4000); camera.position.set(0,0,330);
+        globe=new THREE.Group(); scene.add(globe);
+
+        // ocean
+        globe.add(new THREE.Mesh(new THREE.SphereGeometry(R*0.997,64,64), new THREE.MeshBasicMaterial({color:0x0a1526})));
+        // atmosphere
+        scene.add(new THREE.Mesh(new THREE.SphereGeometry(R*1.16,64,64), new THREE.ShaderMaterial({
+          transparent:true, side:THREE.BackSide, blending:THREE.AdditiveBlending, depthWrite:false,
+          uniforms:{ c:{value:new THREE.Color(0x2f77b0)} },
+          vertexShader:'varying vec3 vN; void main(){ vN=normalize(normalMatrix*normal); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);} ',
+          fragmentShader:'varying vec3 vN; uniform vec3 c; void main(){ float i=pow(0.62-dot(vN,vec3(0.0,0.0,1.0)),3.0); gl_FragColor=vec4(c,1.0)*clamp(i,0.0,1.0)*0.9; }'
+        })));
+        // graticule
+        const gmat=new THREE.LineBasicMaterial({color:0x2a5470, transparent:true, opacity:0.32});
+        for(let lat=-60;lat<=60;lat+=30){ const p=[]; for(let l=-180;l<=180;l+=4) p.push(ll2v(lat,l,R*1.001)); globe.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p),gmat)); }
+        for(let lng=-180;lng<180;lng+=30){ const p=[]; for(let a=-88;a<=88;a+=4) p.push(ll2v(a,lng,R*1.001)); globe.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p),gmat)); }
+        // borders
+        fetch('https://unpkg.com/world-atlas@2/countries-110m.json').then(r=>r.json()).then(topo=>{
+          const geo=topojson.feature(topo, topo.objects.countries); const seg=[];
+          const addRing=ring=>{ for(let i=0;i<ring.length-1;i++){ const a=ll2v(ring[i][1],ring[i][0],R*1.002), b=ll2v(ring[i+1][1],ring[i+1][0],R*1.002); seg.push(a.x,a.y,a.z,b.x,b.y,b.z); } };
+          geo.features.forEach(f=>{ const g=f.geometry; if(!g) return; if(g.type==='Polygon') g.coordinates.forEach(addRing); else if(g.type==='MultiPolygon') g.coordinates.forEach(po=>po.forEach(addRing)); });
+          const bg=new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(seg,3));
+          globe.add(new THREE.LineSegments(bg, new THREE.LineBasicMaterial({color:0x4d86a0, transparent:true, opacity:0.5})));
+        }).catch(e=>console.warn('borders unavailable',e));
+
+        placesGroup=new THREE.Group(); globe.add(placesGroup);
+        glowT=glowTex(); spikeT=spikeTex();
+
+        buildPlace(PLACES[curKey]);
+        bindPointer(); bindDial();
+        window.addEventListener('resize', ()=>{ const w=cv.clientWidth,h=cv.clientHeight; camera.aspect=w/h; camera.updateProjectionMatrix(); renderer.setSize(w,h); });
+        loop();
+      }
+
+      let placesGroup, glowT, spikeT;
+      const GOLD=0xffcf7e, CORE=0xfff2d0, COOL=0x67c7d8;
+      function spr(tex,size,col,op){ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,color:col,transparent:true,opacity:op,blending:THREE.AdditiveBlending,depthWrite:false,depthTest:false})); s.scale.set(size,size,1); return s; }
+
+      function buildPlace(p){
+        // clear
+        while(placesGroup.children.length) placesGroup.remove(placesGroup.children[0]);
+        linkObjs=[]; flow=[]; centreObj=null;
+        const centre=ll2v(p.lat,p.lng,R+0.5);
+
+        // connection rays + link points
+        p.links.forEach(lk=>{
+          const to=ll2v(lk.lat,lk.lng,R+0.5);
+          const curve=arcCurve(ll2v(p.lat,p.lng,R), ll2v(lk.lat,lk.lng,R), R);
+          const pts=curve.getPoints(64);
+          const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
+            new THREE.LineBasicMaterial({color:COOL, transparent:true, opacity:0, blending:THREE.AdditiveBlending, depthWrite:false}));
+          placesGroup.add(line);
+          const halo=spr(glowT, 5.5, COOL, 0.0), core=spr(glowT, 3.2, 0xdff2ff, 0.0);
+          halo.position.copy(to); core.position.copy(to); placesGroup.add(halo); placesGroup.add(core);
+          const obj={ line, halo, core, year:lk.year, base:lk.long?0.55:0.4 };
+          if(lk.long){ const fs=spr(glowT,6,0x9fe6f0,0.9); placesGroup.add(fs); flow.push({s:fs,curve,year:lk.year,t:Math.random(),obj}); obj.flow=true; }
+          linkObjs.push(obj);
+        });
+
+        // the place itself — the bright, warm subject at centre
+        const g=new THREE.Group();
+        const halo=spr(glowT, 13, GOLD, 0.65), core=spr(glowT, 7, CORE, 0.98), spike=spr(spikeT, 22, 0xffe6b0, 0.5);
+        g.add(halo); g.add(spike); g.add(core); g.position.copy(centre); placesGroup.add(g);
+        centreObj={ g, halo, core, spike };
+
+        homeQ=homeQuat(p.lat,p.lng);
+        if(globe && (reduce || !homeSet)){ globe.quaternion.copy(homeQ); homeSet=true; }
+        returning=true;
+        applyYear(year);
+      }
+      let homeSet=false;
+
+      // reveal links by year
+      function applyYear(y){
+        year=y;
+        linkObjs.forEach(o=>{ const v=smooth(o.year-1, o.year+1.5, y);
+          o.line.material.opacity=o.base*v; o.halo.material.opacity=0.6*v; o.core.material.opacity=0.95*v; });
+        flow.forEach(f=>{ f.on = y>=f.year; });
+      }
+
+      /* ---- pointer: drag to turn, release eases back to centre, wheel/pinch zoom ---- */
+      function bindPointer(){
+        const ptrs=new Map(); let px=0,py=0,moved=0,pinchD=0,minZ=230,maxZ=560;
+        const qx=new THREE.Quaternion(), qy=new THREE.Quaternion(), UP=new THREE.Vector3(0,1,0), RT=new THREE.Vector3(1,0,0);
+        const zoom=dz=>{ returning=false; camera.position.z=Math.max(minZ,Math.min(maxZ,camera.position.z+dz)); };
+        cv.addEventListener('pointerdown', e=>{ try{cv.setPointerCapture(e.pointerId);}catch(_){}
+          ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+          if(ptrs.size===1){ dragging=true; returning=false; px=e.clientX; py=e.clientY; moved=0; }
+          else if(ptrs.size===2){ dragging=false; const q=[...ptrs.values()]; pinchD=Math.hypot(q[0].x-q[1].x,q[0].y-q[1].y); } });
+        cv.addEventListener('pointermove', e=>{ if(ptrs.has(e.pointerId)) ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+          if(ptrs.size>=2){ const q=[...ptrs.values()]; const d=Math.hypot(q[0].x-q[1].x,q[0].y-q[1].y); if(pinchD) zoom((pinchD-d)*0.9); pinchD=d; return; }
+          if(dragging){ const dx=e.clientX-px, dy=e.clientY-py; px=e.clientX; py=e.clientY; moved+=Math.abs(dx)+Math.abs(dy);
+            qx.setFromAxisAngle(UP, dx*0.006); qy.setFromAxisAngle(RT, dy*0.006);
+            globe.quaternion.premultiply(qy).premultiply(qx); } });
+        const up=e=>{ ptrs.delete(e.pointerId);
+          if(ptrs.size===1){ const q=[...ptrs.values()][0]; px=q.x; py=q.y; dragging=true; moved=999; pinchD=0; return; }
+          pinchD=0; if(!dragging) return; dragging=false;
+          returning=true;               // ease the place back to centre
+        };
+        cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+        cv.addEventListener('wheel', e=>{ e.preventDefault(); zoom(e.deltaY*0.4); }, {passive:false});
+      }
+
+      /* ---- time dial (same behaviour as the globe page) ---- */
+      function bindDial(){
+        const svg=dial.querySelector('svg'), hit=$('hitRing'), handle=$('handle'), gTicks=$('tickLabels');
+        const ns='http://www.w3.org/2000/svg';
+        [1900,1930,1960,1990,2020].forEach(y=>{ const frac=(y-yearMin)/(yearMax-yearMin); const ang=frac*Math.PI*2-Math.PI/2; const rr=468;
+          const t=document.createElementNS(ns,'text'); t.setAttribute('x',500+Math.cos(ang)*rr); t.setAttribute('y',500+Math.sin(ang)*rr);
+          t.setAttribute('fill','rgba(150,180,214,.5)'); t.setAttribute('font-size','15'); t.setAttribute('font-family','Azeret Mono, monospace');
+          t.setAttribute('text-anchor','middle'); t.setAttribute('dominant-baseline','middle'); t.textContent=y; gTicks.appendChild(t); });
+        let dialing=false;
+        const setYear=y=>{ y=Math.max(yearMin,Math.min(yearMax,y)); year=y;
+          $('yearVal').textContent=y;
+          const p=PLACES[curKey]; let note;
+          if(y>=yearMax) note='today'; else if(y>p.spanEnd) note='the years since'; else if(y>=p.spanStart) note='living memory here'; else if(y>=p.spanStart-12) note='just before'; else note='before this place';
+          $('yearNote').textContent=note;
+          const frac=(y-yearMin)/(yearMax-yearMin); handle.setAttribute('transform',`rotate(${frac*360} 500 500)`);
+          applyYear(y);
+        };
+        const dialTo=(cx,cy)=>{ const r=svg.getBoundingClientRect(); const ang=Math.atan2(cy-(r.top+r.height/2), cx-(r.left+r.width/2));
+          let deg=ang*180/Math.PI+90; deg=((deg%360)+360)%360; setYear(Math.round(yearMin+(deg/360)*(yearMax-yearMin))); };
+        hit.addEventListener('pointerdown', e=>{ dialing=true; hit.style.cursor='grabbing'; dialTo(e.clientX,e.clientY); });
+        window.addEventListener('pointermove', e=>{ if(dialing) dialTo(e.clientX,e.clientY); });
+        window.addEventListener('pointerup', ()=>{ dialing=false; hit.style.cursor='grab'; });
+        setYear(2025);
+      }
+
+      function loop(){
+        raf=requestAnimationFrame(loop);
+        const t=performance.now()/1000;
+        if(globe && homeQ){
+          if(dragging){ /* driven by pointer */ }
+          else if(returning){ globe.quaternion.slerp(homeQ, 0.06); if(globe.quaternion.angleTo(homeQ)<0.01) returning=false; }
+          else if(!reduce){ // alive but centred: gentle wobble around home
+            const wob=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), 0.05*Math.sin(t*0.4))
+              .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), 0.03*Math.sin(t*0.31)));
+            globe.quaternion.slerp(new THREE.Quaternion().multiplyQuaternions(wob,homeQ), 0.02);
+          }
+        }
+        if(centreObj && !reduce){ centreObj.core.material.rotation=0; centreObj.halo.scale.setScalar(13*(1+0.06*Math.sin(t*2.0))); }
+        if(!reduce) flow.forEach(f=>{ if(f.on){ f.t=(f.t+0.0016)%1; const v=new THREE.Vector3(); f.curve.getPoint(f.t,v); f.s.position.copy(v);} f.s.visible=!!f.on; });
+        else flow.forEach(f=>f.s.visible=!!f.on);
+        if(renderer) renderer.render(scene,camera);
+      }
+
+      return { boot, setPlace(key){ curKey=key; if(placesGroup) buildPlace(PLACES[key]); } };
+    })();
+
+    /* ---------- switcher ---------- */
+    function setPlace(key){
+      curKey=key; applyContent(key); GLOBE.setPlace(key);
+      document.querySelectorAll('#switcher button').forEach(b=>b.classList.toggle('on', b.dataset.place===key));
+      window.scrollTo({top:0, behavior:reduce?'auto':'smooth'});
+    }
+    document.querySelectorAll('#switcher button').forEach(b=> b.addEventListener('click', ()=>setPlace(b.dataset.place)) );
+
+    applyContent('telaviv');
+    GLOBE.boot();
+  })();
+  </script>
+</body>
+</html>

@@ -531,7 +531,7 @@
 
   /* ---------- wire interactions (design) ---------- */
   function wire(){ const d=t();
-    $('#backBtn').onclick=()=>{ if(history.length>1) history.back(); else location.href='globe-real.html'; };
+    $('#backBtn').onclick=()=>{ if(history.length>1) history.back(); else location.href='index.html'; };
     $('#langBtn').onclick=()=>show(langSheet);
     $('#editBtn').onclick=()=>document.body.classList.toggle('editing');
     const done=$('#doneBtn'); if(done) done.onclick=()=>document.body.classList.remove('editing');
@@ -615,7 +615,7 @@
     await loadMoment();
   }
   async function loadMoment(){
-    const {data:a}=await sb.from('artefacts').select('id,storage_path,body,original_language,metadata,contributor_user,kind').eq('id',MOMENT_ID).maybeSingle();
+    const {data:a}=await sb.from('artefacts').select('id,storage_path,body,original_language,metadata,contributor_id,kind').eq('id',MOMENT_ID).maybeSingle();
     if(!a){ $('#wrap').innerHTML='<div style="padding:60px 0;text-align:center;color:var(--muted);font-family:\'Newsreader\',serif;font-style:italic">'+esc(UI[lang].notFound)+'</div>'; return; }
     art=a;
     const subs=await sb.from('artefact_subjects').select('person_id,detail').eq('artefact_id',MOMENT_ID);
@@ -623,7 +623,7 @@
     const ids=subjects.map(s=>s.person_id);
     if(ids.length){ const {data:pp}=await sb.from('people').select('id,display_name,called_name,primary_asset,sex').in('id',ids); (pp||[]).forEach(p=>peopleById[p.id]=p);
       const {data:nv}=await sb.from('name_variants').select('person_id,lang,given,family,status').in('person_id',ids).eq('status','published'); (nv||[]).forEach(v=>{(vars[v.person_id]=vars[v.person_id]||[]).push(v);}); }
-    if(art.contributor_user){ const {data:cp}=await sb.from('profiles').select('display_name').eq('id',art.contributor_user).maybeSingle(); tellerName=(cp&&cp.display_name)||''; }
+    if(art.contributor_id){ const {data:cp}=await sb.from('people').select('display_name').eq('id',art.contributor_id).maybeSingle(); tellerName=(cp&&cp.display_name)||''; }
     const {data:tr}=await sb.from('artefact_translations').select('lang,body,status').eq('artefact_id',MOMENT_ID).eq('status','published'); translations=tr||[];
     await loadQueue();
     buildModel(); render(); ensureLangAssets();

@@ -1,6 +1,6 @@
 # The Living Forest — Handover
 
-> **Revision:** 2026-07-15 19:40 (UTC+2)
+> **Revision:** 2026-07-17 (UTC+2) · on `5c59625` — §11 navigation contract added; `lf-nav.js` referrer whitelist fixed (`moment-real`), sub-page `data-parent` → `index.html`
 > **Status:** **single source of truth.** Replaces `docs/WORKPLAN.md`, `docs/PARKING-LOT.md`, and every dated `HANDOVER-the-living-forest*.md`. Those are deleted — git holds their history.
 > **Scheme:** `docs/the-living-forest-pagemap-v2.html` · rev **2026-07-15** (stamp in file head)
 > **Repo:** `LeonG25/living-forest` · branch `main` · live at https://leong25.github.io/living-forest/
@@ -374,6 +374,21 @@ Members find each other and send messages tied to a memory — e.g. *"Hey, remem
 ### Journal — parked 2026-07-15, blocked on a progression model
 Direction is decided (§3): **not a log** — a log is boring and has no relation to play. It is where you go to be **motivated to play more**: progression made visible, warm, family, non-competitive, never a leaderboard. Creative work still to do. **Settle the progression model before commissioning any game design, or the games get drawn twice.**
 
+### Age-appropriate restrictions — parked 2026-07-17, Leon's call
+How heavy history reaches a young reader (the Holocaust, 1945 Belarus, deaths, war)
+is **deliberately not decided**. Leon: *"Don't worry about the content. It is what it is.
+We may think about age appropriate restrictions later."*
+Build to the content as it stands. Do **not** invent age tiers, gating, or softening.
+Revisit before the app reaches readers who are not Leon.
+
+### i18n on the front door — parked 2026-07-17, Leon's call
+The globe became the front door on 2026-07-17. It has **no i18n**: 0 Cyrillic, 0 Hebrew,
+no RTL. The `prototype.html` it replaced had 113 Cyrillic, 358 Hebrew and `dir=rtl`.
+So a Russian- or Hebrew-speaking relative now lands in English.
+**Shipped knowingly.** Leon: *"English only now."*
+i18n is still owed on `index.html` (the globe), `home-real.html` and `crowd-real.html`
+(HANDOVER §1). Front door first when this comes off the lot.
+
 ### Phase 6 — parked big ideas
 The globe placement game (a year + names → drop them on the map); the world & family events layer on the globe; the escape-room quest chain. Each needs its own design pass.
 
@@ -405,6 +420,13 @@ Fonts arrive as woff2 blobs in `__bundler/manifest` — substitute Google Fonts 
 - **`wc -c` before re-appending.** A transient `exec_bash` error does **not** mean the write failed — verify first, or you double-corrupt. *(Hit twice on 2026-07-15; both writes had succeeded.)*
 - **Never rerun failed Pages jobs** — single-job build/deploy means `rerun-failed-jobs` re-uploads the artifact → "Multiple artifacts" failure. Use a fresh `workflow_dispatch` or an empty commit.
 - **`popstate` belongs to `lf-nav.js` alone**; page close handlers route through `window.__lfClose`.
+
+### The navigation contract (`lf-nav.js`, verified 2026-07-17)
+Back means *where you actually were*, and only history knows that. There is no link graph and there must never be one — a hardcoded parent map drifts and lies.
+1. **`history.back()` is the mechanism.** `goBack()` (`lf-nav.js:17`) closes an overlay → else `inAppRef()` true → `history.back()`.
+2. **`data-parent` is the cold-entry fallback only** — no referrer: WhatsApp, a bookmark, a fresh tab. The globe is the front door, so every sub-page carries `data-parent="index.html"`; `index.html` carries none (root → confirm-exit).
+3. **`inAppRef()` (`lf-nav.js:14`) is a same-origin + filename whitelist. Any page that links onward MUST be listed**, or arriving from it silently falls back to `data-parent`. Exactly how `moment-real` broke: absent until 2026-07-17, so Back from Person/Place/Globe skipped the Moment. `globe-real.html` is deliberately absent — retired name.
+4. **Still outstanding:** `moment-real.html` carries no `lf-nav.js` at all (§1's "all carry it" is false). Whitelisting it fixes Back *from* a Moment; Back *on* a Moment stays unguarded until the tag is added.
 - Droplet: `botuser@droplet`, repo at `/home/botuser/living-forest`, **Python 3 only** (no Node), 8192-char limit per `exec_bash`, ~30s timeout. Use `bash -c` for process substitution — default shell is `sh`.
 
 ### Environment

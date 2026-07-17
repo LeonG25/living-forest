@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Rita Golnick — The Living Forest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; }
+  :root{
+    --cream:#f4ecdb; --muted:#9db0cc; --panel:#ffffff0d; --hair:#ffffff1f;
+    --gold:#f3cd84; --gold-hi:#ffe6ad; --cool:#7fb4d8;
+  }
+  body{
+    background:radial-gradient(125% 100% at 50% 0%, #0d1a2f 0%, #081120 48%, #04070e 100%);
+    color:var(--cream); font-family:'Hanken Grotesk',system-ui,sans-serif;
+    min-height:100dvh; -webkit-user-select:none; user-select:none; overflow-x:hidden;
+  }
+  .serif{ font-family:'Newsreader',Georgia,serif; }
+  .appvoice{ font-family:'Hanken Grotesk',sans-serif; letter-spacing:.22em; text-transform:uppercase; font-size:10px; color:var(--muted); }
+
+  /* twinkling star field */
+  .sky{ position:fixed; inset:0; z-index:0; pointer-events:none; }
+  .sky i{ position:absolute; width:2px; height:2px; border-radius:50%; background:#cfe0f5;
+    opacity:.5; animation:tw 4s ease-in-out infinite; }
+  @keyframes tw{ 0%,100%{opacity:.15;} 50%{opacity:.7;} }
+
+  .phone{ position:relative; z-index:1; width:100%; max-width:430px; margin:0 auto;
+    padding:0 20px calc(56px + env(safe-area-inset-bottom));
+    padding-top:max(16px, env(safe-area-inset-top)); }
+
+  /* ---- top bar ---- */
+  .topbar{ display:flex; align-items:center; justify-content:space-between; height:44px; }
+  .icon-btn{ width:40px; height:40px; border-radius:50%; border:1px solid var(--hair);
+    background:var(--panel); color:var(--cream); display:grid; place-items:center; cursor:pointer; }
+  .icon-btn svg{ width:18px; height:18px; }
+  .breadcrumb{ display:flex; align-items:center; gap:7px; }
+  .breadcrumb .dot{ width:5px; height:5px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px 1px var(--gold); }
+
+  /* ---- portrait + ring ---- */
+  .hero{ display:flex; flex-direction:column; align-items:center; text-align:center; margin-top:14px; }
+  .ringwrap{ position:relative; width:220px; height:220px; }
+  .ringwrap svg.ring{ position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg); }
+  .portrait{ position:absolute; inset:26px; border-radius:50%; overflow:hidden;
+    box-shadow:0 0 40px -6px rgba(243,205,132,.4), inset 0 0 0 1px rgba(255,255,255,.14); }
+  .portrait svg{ width:100%; height:100%; display:block; }
+  .ring-legend{ position:absolute; font-size:9px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--muted); white-space:nowrap; }
+
+  .name{ font-weight:300; font-size:34px; line-height:1.05; margin:20px 0 0; letter-spacing:-.01em; color:#fbf5e8; }
+  .name em{ font-style:italic; }
+  .known-line{ margin-top:9px; font-size:13px; color:var(--muted); display:flex; align-items:center; gap:8px; justify-content:center; }
+  .known-line b{ color:var(--gold); font-weight:600; }
+
+  /* how related */
+  .relate{ margin-top:16px; display:inline-flex; align-items:center; gap:9px; align-self:center;
+    padding:9px 15px; border-radius:99px; border:1px solid var(--hair); background:var(--panel);
+    color:var(--cream); font-size:12.5px; cursor:pointer; }
+  .relate .thread{ width:26px; height:1px; background:linear-gradient(90deg,transparent,var(--gold)); position:relative; }
+  .relate .thread::after{ content:""; position:absolute; right:0; top:-2px; width:5px; height:5px; border-radius:50%; background:var(--gold); box-shadow:0 0 7px 1px var(--gold); }
+
+  /* section heading */
+  .sec{ margin-top:34px; }
+  .sec-h{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .sec-h .t{ font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:9px; }
+  .sec-h .t .lp{ width:7px; height:7px; border-radius:50%; }
+  .sec-h .meta{ font-size:11px; color:var(--muted); }
+
+  /* light-point doorways */
+  .doorways{ display:flex; flex-direction:column; gap:10px; margin-top:8px; }
+  .door{ display:flex; align-items:center; gap:14px; padding:15px 16px; border-radius:16px;
+    background:var(--panel); border:1px solid var(--hair); cursor:pointer; position:relative; overflow:hidden;
+    transition:border-color .3s ease, background .3s ease; }
+  .door:active{ background:#ffffff14; }
+  .door .lp-icon{ width:38px; height:38px; border-radius:50%; display:grid; place-items:center; flex-shrink:0; position:relative; }
+  .door .lp-icon svg{ width:18px; height:18px; }
+  .door .txt{ flex:1; min-width:0; }
+  .door .txt .lab{ font-family:'Newsreader',serif; font-size:17px; color:var(--cream); }
+  .door .txt .sub{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .door .chev{ color:var(--muted); flex-shrink:0; }
+  .door .chev svg{ width:16px; height:16px; }
+  .door.locked{ opacity:.7; }
+  .door.locked .txt .sub{ color:#7f8fa8; }
+  /* the little facet meter inside each doorway icon */
+  .lp-icon .fill-ring{ position:absolute; inset:0; }
+
+  /* ---- photographs ---- */
+  .photostrip{ display:flex; gap:14px; overflow-x:auto; scroll-snap-type:x mandatory;
+    margin:0 -20px; padding:2px 20px 8px; -webkit-overflow-scrolling:touch; }
+  .photostrip::-webkit-scrollbar{ display:none; }
+  .photo{ scroll-snap-align:start; flex:0 0 82%; border-radius:18px; overflow:hidden;
+    background:#0a1422; border:1px solid var(--hair); box-shadow:0 20px 50px -28px #000; }
+  .photo .img{ position:relative; aspect-ratio:4/3; }
+  .photo .img svg{ width:100%; height:100%; display:block; }
+  .photo .img .whenwhere{ position:absolute; left:12px; bottom:10px; display:flex; gap:8px; align-items:center;
+    font-size:11px; z-index:2; }
+  .photo .img .whenwhere .yr{ font-family:'Newsreader',serif; font-style:italic; color:var(--gold-hi); }
+  .photo .img .whenwhere .wh{ color:#dbe6f5; }
+  .photo .img::after{ content:""; position:absolute; inset:0; background:linear-gradient(to top, rgba(4,7,14,.85), transparent 45%); }
+  .photo .story{ padding:14px 16px 16px; }
+  /* GOLD — human memory, always attributed */
+  .photo .story .words{ font-family:'Newsreader',serif; font-style:italic; font-weight:300; font-size:15px; line-height:1.5; color:#f6ecd7; }
+  .photo .story .told{ margin-top:11px; display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--gold); }
+  .photo .story .told .flame{ width:6px; height:6px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px 1px var(--gold); }
+  .photo .story .told b{ font-weight:600; }
+  /* gold invitation when no story exists */
+  .invite{ padding:15px 16px; border-radius:16px; border:1px dashed rgba(243,205,132,.35);
+    background:rgba(243,205,132,.05); }
+  .invite .words{ font-family:'Newsreader',serif; font-style:italic; font-size:14.5px; line-height:1.5; color:#efe0c2; }
+  .invite .cta{ margin-top:10px; font-size:12px; color:var(--gold); font-weight:600; display:inline-flex; align-items:center; gap:6px; }
+
+  /* COOL BLUE — app-assembled facts. separated by a visible line. neutral counts only. */
+  .appfacts{ margin-top:16px; border-top:1px solid var(--hair); padding-top:14px;
+    display:flex; align-items:flex-start; gap:11px; }
+  .appfacts .mark{ width:22px; height:22px; border-radius:6px; flex-shrink:0; display:grid; place-items:center;
+    background:rgba(127,180,216,.12); border:1px solid rgba(127,180,216,.3); }
+  .appfacts .mark svg{ width:12px; height:12px; color:var(--cool); }
+  .appfacts .body{ font-size:12.5px; line-height:1.5; color:var(--cool); }
+  .appfacts .body .src{ display:block; margin-top:4px; font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:rgba(127,180,216,.55); }
+
+  /* ---- relatives (linked stars) ---- */
+  .kin{ display:flex; gap:16px; overflow-x:auto; margin:0 -20px; padding:2px 20px 6px; }
+  .kin::-webkit-scrollbar{ display:none; }
+  .kinperson{ flex:0 0 auto; width:78px; text-align:center; cursor:pointer; }
+  .kinstar{ position:relative; width:70px; height:70px; margin:0 auto; }
+  .kinstar .crop{ position:absolute; inset:6px; border-radius:50%; overflow:hidden; border:1px solid rgba(243,205,132,.5); }
+  .kinstar .crop svg{ width:100%; height:100%; }
+  .kinstar .glow{ position:absolute; inset:0; border-radius:50%; box-shadow:0 0 18px -2px rgba(243,205,132,.55); }
+  .kinperson .kn{ font-family:'Newsreader',serif; font-size:14px; margin-top:8px; color:var(--cream); line-height:1.15; }
+  .kinperson .kr{ font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-top:2px; }
+
+  /* ---- places ---- */
+  .places{ display:flex; flex-wrap:wrap; gap:9px; }
+  .place{ display:inline-flex; align-items:center; gap:8px; padding:9px 14px; border-radius:99px;
+    background:var(--panel); border:1px solid var(--hair); font-size:13px; color:var(--cream); cursor:pointer; }
+  .place .pin{ width:5px; height:5px; border-radius:50%; background:var(--cool); box-shadow:0 0 7px 1px rgba(127,180,216,.7); }
+
+  /* ---- challenges / reel ---- */
+  .challenge{ display:flex; align-items:center; gap:15px; padding:16px; border-radius:18px;
+    background:linear-gradient(120deg, rgba(243,205,132,.1), rgba(127,180,216,.06));
+    border:1px solid rgba(243,205,132,.28); cursor:pointer; }
+  .challenge .cimg{ width:56px; height:56px; border-radius:14px; overflow:hidden; flex-shrink:0; border:1px solid var(--hair); }
+  .challenge .cimg svg{ width:100%; height:100%; }
+  .challenge .c-txt{ flex:1; }
+  .challenge .c-txt .ct{ font-family:'Newsreader',serif; font-size:18px; color:#fbf5e8; }
+  .challenge .c-txt .cs{ font-size:12px; color:var(--muted); margin-top:3px; }
+  .challenge .go{ font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:#0c1220;
+    background:linear-gradient(180deg,var(--gold-hi),var(--gold)); padding:9px 13px; border-radius:99px; font-weight:600; }
+  .soon{ display:flex; gap:10px; margin-top:10px; }
+  .soon .s{ flex:1; padding:13px; border-radius:14px; background:var(--panel); border:1px solid var(--hair); text-align:center; opacity:.6; }
+  .soon .s .sn{ font-family:'Newsreader',serif; font-size:14px; color:var(--cream); }
+  .soon .s .sl{ font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin-top:4px; }
+
+  .foot{ margin-top:40px; text-align:center; }
+  .foot .leaf{ font-family:'Newsreader',serif; font-style:italic; font-size:14px; color:var(--muted); }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; }
+  }
+</style>
+</head>
+<body>
+  <template id="__bundler_thumbnail" data-bg-color="#081120">
+    <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="600" cy="380" r="140" fill="none" stroke="#f3cd84" stroke-width="10" stroke-dasharray="150 40" stroke-linecap="round"/>
+      <circle cx="600" cy="380" r="105" fill="#dcae82"/>
+      <path d="M600 480 Q600 420 552 410 Q560 360 600 360 Q640 360 648 410 Q600 420 600 480Z" fill="#e9e4dc"/>
+      <circle cx="580" cy="378" r="7" fill="#3a2b22"/><circle cx="620" cy="378" r="7" fill="#3a2b22"/>
+    </svg>
+  </template>
+  <div class="sky" id="sky" aria-hidden="true"></div>
+  <main class="phone">
+
+    <!-- top bar: back to the sky, breadcrumb -->
+    <div class="topbar">
+      <button class="icon-btn" aria-label="Back to the sky">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="breadcrumb">
+        <span class="appvoice">The Living Forest</span>
+        <span class="dot"></span>
+      </div>
+      <button class="icon-btn" aria-label="Share this person">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+      </button>
+    </div>
+
+    <!-- HERO: portrait + five-point light ring (partially lit) -->
+    <div class="hero">
+      <div class="ringwrap">
+        <!-- ring: 5 segments. Face+Story+People lit gold; Place half; Reel dim. -->
+        <svg class="ring" viewBox="0 0 220 220" id="lightRing" aria-hidden="true"></svg>
+        <div class="portrait">
+          <!-- placeholder face-crop -->
+          <svg viewBox="0 0 100 100" role="img" aria-label="Portrait of Rita Golnick">
+            <defs>
+              <radialGradient id="pf" cx="42%" cy="34%" r="75%">
+                <stop offset="0%" stop-color="#f0d3ad"/><stop offset="60%" stop-color="#dcae82"/><stop offset="100%" stop-color="#9c6f4c"/>
+              </radialGradient>
+              <linearGradient id="pbg" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#2a3a52"/><stop offset="100%" stop-color="#141f30"/>
+              </linearGradient>
+            </defs>
+            <rect width="100" height="100" fill="url(#pbg)"/>
+            <path d="M50 96 Q50 70 26 66 Q30 40 50 40 Q70 40 74 66 Q50 70 50 96Z" fill="#7a5a44"/>
+            <ellipse cx="50" cy="52" rx="24" ry="27" fill="url(#pf)"/>
+            <path d="M26 44 Q28 20 50 20 Q72 20 74 44 Q64 32 50 32 Q36 32 26 44Z" fill="#e9e4dc"/>
+            <ellipse cx="41" cy="52" rx="2.6" ry="3" fill="#3a2b22"/>
+            <ellipse cx="59" cy="52" rx="2.6" ry="3" fill="#3a2b22"/>
+            <path d="M44 66 Q50 70 56 66" stroke="#a06b4c" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <h1 class="name serif">Rita <em>Golnick</em></h1>
+      <div class="known-line"><b>Four of five</b> lights kindled</div>
+
+      <!-- how am I related — thread back to you -->
+      <button class="relate">
+        <span class="thread"></span>
+        How are we related?
+      </button>
+    </div>
+
+    <!-- FIVE LIGHT POINTS as doorways -->
+    <div class="sec">
+      <div class="sec-h">
+        <div class="t">Ways to know her</div>
+        <div class="meta">4 of 5 lit</div>
+      </div>
+      <div class="doorways" id="doorways"></div>
+    </div>
+
+    <!-- PHOTOGRAPHS -->
+    <div class="sec">
+      <div class="sec-h">
+        <div class="t"><span class="lp" style="background:var(--gold);box-shadow:0 0 8px 1px var(--gold);"></span>Photographs</div>
+        <div class="meta">6 kept</div>
+      </div>
+      <div class="photostrip">
+
+        <!-- rich photo, with a GOLD attributed story + separated COOL app facts -->
+        <div class="photo">
+          <div class="img">
+            <svg viewBox="0 0 100 75"><defs><linearGradient id="ph1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#c9a986"/><stop offset="100%" stop-color="#6b5138"/></linearGradient></defs><rect width="100" height="75" fill="url(#ph1)"/><ellipse cx="38" cy="34" rx="13" ry="16" fill="#e6c49b"/><path d="M38 72 Q38 50 20 48 Q22 36 38 36 Q54 36 56 48 Q38 50 38 72Z" fill="#8a6a4a"/><ellipse cx="66" cy="40" rx="11" ry="13" fill="#dcb58c"/><path d="M66 72 Q66 54 52 52 Q54 44 66 44 Q78 44 80 52 Q66 54 66 72Z" fill="#6f5238"/></svg>
+            <div class="whenwhere"><span class="yr">1998</span><span class="wh">Holon</span></div>
+          </div>
+          <div class="story">
+            <div class="words">&ldquo;She kept the whole family fed out of a tiny Holon kitchen &mdash; you never left her table hungry.&rdquo;</div>
+            <div class="told"><span class="flame"></span>told by <b>Michael Golnick</b></div>
+            <!-- visible line separating human memory from app-assembled facts -->
+            <div class="appfacts">
+              <span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 15l4-4 4 4 5-5 5 5"/></svg></span>
+              <div class="body">Rita appears in 6 photographs, alongside 4 people the app can recognise.
+                <span class="src">Assembled by The Living Forest</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- photo with when/where but no story: a gold invitation, never blank -->
+        <div class="photo">
+          <div class="img">
+            <svg viewBox="0 0 100 75"><defs><linearGradient id="ph2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#b6a184"/><stop offset="100%" stop-color="#5a4c3a"/></linearGradient></defs><rect width="100" height="75" fill="url(#ph2)"/><ellipse cx="50" cy="32" rx="15" ry="18" fill="#e2be95"/><path d="M50 72 Q50 48 28 46 Q30 34 50 34 Q70 34 72 46 Q50 48 50 72Z" fill="#7c5c3f"/></svg>
+            <div class="whenwhere"><span class="yr">the 70s</span><span class="wh">Rishon LeZion</span></div>
+          </div>
+          <div class="story">
+            <div class="invite">
+              <div class="words">No one has told the story of this afternoon yet.</div>
+              <div class="cta">Ask someone who might remember &rarr;</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- a third, tighter photo -->
+        <div class="photo">
+          <div class="img">
+            <svg viewBox="0 0 100 75"><defs><linearGradient id="ph3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#a9b9c9"/><stop offset="100%" stop-color="#41556b"/></linearGradient></defs><rect width="100" height="75" fill="url(#ph3)"/><ellipse cx="50" cy="30" rx="14" ry="17" fill="#e6c49b"/><path d="M50 72 Q50 46 27 44 Q30 33 50 33 Q70 33 73 44 Q50 46 50 72Z" fill="#9c6f4c"/><path d="M27 32 Q30 12 50 12 Q70 12 73 32 Q62 20 50 20 Q38 20 27 32Z" fill="#e6e0d6"/></svg>
+            <div class="whenwhere"><span class="yr">1982</span><span class="wh">Tel Aviv-Yafo</span></div>
+          </div>
+          <div class="story">
+            <div class="words">&ldquo;Every Friday she walked us down to the shore before the light went.&rdquo;</div>
+            <div class="told"><span class="flame"></span>told by <b>Leonid Golnick</b></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- WHO SHE KNEW — linked stars -->
+    <div class="sec">
+      <div class="sec-h">
+        <div class="t"><span class="lp" style="background:var(--gold);box-shadow:0 0 8px 1px var(--gold);"></span>Who she knew</div>
+        <div class="meta">3 close</div>
+      </div>
+      <div class="kin">
+        <div class="kinperson">
+          <div class="kinstar"><span class="glow"></span><div class="crop"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#243449"/><ellipse cx="50" cy="46" rx="24" ry="27" fill="#d9b083"/><path d="M50 96 Q50 68 26 64 Q30 40 50 40 Q70 40 74 64 Q50 68 50 96Z" fill="#3a3a3a"/><path d="M28 40 Q32 22 50 22 Q68 22 72 40 Q60 30 50 30 Q40 30 28 40Z" fill="#2b2b2b"/></svg></div></div>
+          <div class="kn">Efim Golnick</div><div class="kr">Spouse</div>
+        </div>
+        <div class="kinperson">
+          <div class="kinstar"><span class="glow"></span><div class="crop"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#243449"/><ellipse cx="50" cy="48" rx="23" ry="26" fill="#e0b98d"/><path d="M50 96 Q50 70 27 66 Q31 42 50 42 Q69 42 73 66 Q50 70 50 96Z" fill="#4a3a2a"/><path d="M28 44 Q31 26 50 26 Q69 26 72 44 Q61 34 50 34 Q39 34 28 44Z" fill="#3a2c1e"/></svg></div></div>
+          <div class="kn">Leonid Golnick</div><div class="kr">Child</div>
+        </div>
+        <div class="kinperson">
+          <div class="kinstar"><span class="glow"></span><div class="crop"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#243449"/><ellipse cx="50" cy="46" rx="24" ry="27" fill="#eac6a0"/><path d="M50 96 Q50 68 26 64 Q30 40 50 40 Q70 40 74 64 Q50 68 50 96Z" fill="#8a6a4a"/><path d="M26 42 Q30 20 50 20 Q70 20 74 42 Q62 30 50 30 Q38 30 26 42Z" fill="#cfc7bb"/></svg></div></div>
+          <div class="kn">Ida Tserlina</div><div class="kr">Sibling</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLACES -->
+    <div class="sec">
+      <div class="sec-h">
+        <div class="t"><span class="lp" style="background:var(--cool);box-shadow:0 0 8px 1px var(--cool);"></span>Places</div>
+        <div class="meta">3 tied to her</div>
+      </div>
+      <div class="places">
+        <span class="place"><span class="pin"></span>Rishon LeZion</span>
+        <span class="place"><span class="pin"></span>Holon</span>
+        <span class="place"><span class="pin"></span>Tel Aviv-Yafo</span>
+      </div>
+    </div>
+
+    <!-- CHALLENGES + REEL -->
+    <div class="sec">
+      <div class="sec-h">
+        <div class="t">Bring her to light</div>
+      </div>
+      <div class="challenge">
+        <div class="cimg"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#0a1422"/><circle cx="35" cy="42" r="10" fill="#1b2e46"/><circle cx="65" cy="42" r="10" fill="#20344e"/><circle cx="50" cy="60" r="16" fill="none" stroke="#f3cd84" stroke-width="3"/><circle cx="50" cy="60" r="11" fill="#e6c197"/></svg></div>
+        <div class="c-txt">
+          <div class="ct">Find Them in the Crowd</div>
+          <div class="cs">Uncover Rita among the gathering.</div>
+        </div>
+        <span class="go">Play</span>
+      </div>
+      <div class="soon">
+        <div class="s"><div class="sn serif">Whose Eyes?</div><div class="sl">Coming soon</div></div>
+        <div class="s"><div class="sn serif">Name the Year</div><div class="sl">Coming soon</div></div>
+      </div>
+    </div>
+
+    <!-- STORY REEL doorway -->
+    <div class="sec">
+      <div class="challenge" style="background:linear-gradient(120deg, rgba(127,180,216,.1), rgba(243,205,132,.05)); border-color:rgba(127,180,216,.3);">
+        <div class="cimg"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#0a1422"/><path d="M35 38 L62 50 L35 62 Z" fill="#ffe6ad"/><circle cx="50" cy="50" r="30" fill="none" stroke="#7fb4d8" stroke-width="2" opacity=".5"/></svg></div>
+        <div class="c-txt">
+          <div class="ct">Rita&rsquo;s Story Reel</div>
+          <div class="cs">Six photographs, assembling into one life.</div>
+        </div>
+        <span class="go" style="background:linear-gradient(180deg,#a9d0ec,#7fb4d8);">Watch</span>
+      </div>
+    </div>
+
+    <div class="foot"><span class="leaf serif">One star, a little brighter than before.</span></div>
+
+  </main>
+
+  <script>
+  // ---------- twinkling star field ----------
+  (function(){
+    const sky = document.getElementById('sky');
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const n = 60;
+    let html = '';
+    for(let i=0;i<n;i++){
+      const x=Math.random()*100, y=Math.random()*100, d=(Math.random()*4+2).toFixed(1), delay=(Math.random()*4).toFixed(1);
+      const s=(Math.random()*1.4+1).toFixed(1);
+      html += `<i style="left:${x}%;top:${y}%;width:${s}px;height:${s}px;animation-duration:${d}s;animation-delay:${delay}s;${reduce?'animation:none;opacity:.4;':''}"></i>`;
+    }
+    sky.innerHTML = html;
+  })();
+
+  // ---------- the five-point light ring ----------
+  // segments fill/glow as each facet becomes known. shown PARTIALLY lit.
+  (function(){
+    const ring = document.getElementById('lightRing');
+    const R = 100, cx = 110, cy = 110, r = 92;
+    // facet : level 0..1
+    const facets = [
+      { key:'Face',   lvl:1,   lit:true },
+      { key:'Story',  lvl:1,   lit:true },
+      { key:'Place',  lvl:.5,  lit:true },
+      { key:'People', lvl:1,   lit:true },
+      { key:'Reel',   lvl:.15, lit:false },
+    ];
+    const NS='http://www.w3.org/2000/svg';
+    const gap = 0.09;                       // radians of gap between segments
+    const seg = (Math.PI*2)/facets.length;
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    facets.forEach((f,i)=>{
+      const a0 = i*seg + gap/2, a1 = (i+1)*seg - gap/2;
+      // track
+      ring.appendChild(arc(a0,a1,'rgba(255,255,255,.10)',5));
+      // filled portion (from a0, spanning lvl of the segment)
+      const aFill = a0 + (a1-a0)*f.lvl;
+      const col = f.lit ? '#f3cd84' : '#7fb4d8';
+      const p = arc(a0,aFill,col,5);
+      if(f.lit){ p.setAttribute('filter','url(#rg)'); p.style.filter='drop-shadow(0 0 4px rgba(243,205,132,.9))'; }
+      else { p.style.filter='drop-shadow(0 0 3px rgba(127,180,216,.6))'; p.setAttribute('opacity','.7'); }
+      ring.appendChild(p);
+      // a small point-of-light bead at the leading edge of lit segments
+      if(f.lvl>0){
+        const bx = cx + r*Math.cos(aFill), by = cy + r*Math.sin(aFill);
+        const bead = document.createElementNS(NS,'circle');
+        bead.setAttribute('cx',bx); bead.setAttribute('cy',by); bead.setAttribute('r', f.lit?3.4:2.6);
+        bead.setAttribute('fill', f.lit?'#ffe6ad':'#aed4ee');
+        bead.style.filter = `drop-shadow(0 0 6px ${f.lit?'#f3cd84':'#7fb4d8'})`;
+        ring.appendChild(bead);
+      }
+    });
+    function arc(a0,a1,stroke,w){
+      const large = (a1-a0) > Math.PI ? 1 : 0;
+      const x0=cx+r*Math.cos(a0), y0=cy+r*Math.sin(a0), x1=cx+r*Math.cos(a1), y1=cy+r*Math.sin(a1);
+      const p=document.createElementNS(NS,'path');
+      p.setAttribute('d',`M ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1}`);
+      p.setAttribute('stroke',stroke); p.setAttribute('stroke-width',w);
+      p.setAttribute('fill','none'); p.setAttribute('stroke-linecap','round');
+      return p;
+    }
+  })();
+
+  // ---------- build the five doorways ----------
+  (function(){
+    const ic = {
+      Face:'<circle cx="12" cy="9" r="4"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7"/>',
+      Story:'<path d="M4 5h16v11H8l-4 4z"/>',
+      Place:'<path d="M12 21s-6-5.7-6-10a6 6 0 1112 0c0 4.3-6 10-6 10z"/><circle cx="12" cy="11" r="2"/>',
+      People:'<circle cx="9" cy="9" r="3"/><path d="M3 20c0-3 2.7-5 6-5s6 2 6 5"/><path d="M16 6a3 3 0 010 6M21 20c0-2.4-1.6-4.2-4-4.8"/>',
+      Reel:'<circle cx="12" cy="12" r="9"/><path d="M10 8l6 4-6 4z"/>',
+    };
+    const doors = [
+      { key:'Face',   lab:'Face',   sub:'You&rsquo;d know her across a room.', lvl:1, lit:true },
+      { key:'Story',  lab:'Story',  sub:'Two memories told, more waiting.', lvl:1, lit:true },
+      { key:'Place',  lab:'Place',  sub:'Where she sits in the family &mdash; and beside you.', lvl:.5, lit:true },
+      { key:'People', lab:'People', sub:'Appears with 4 the app can recognise.', lvl:1, lit:true, cool:true },
+      { key:'Reel',   lab:'Reel',   sub:'Kindle every light to assemble her life.', lvl:.15, lit:false, locked:true },
+    ];
+    const wrap = document.getElementById('doorways');
+    doors.forEach(d=>{
+      const el = document.createElement('div');
+      el.className = 'door' + (d.locked?' locked':'');
+      const col = d.cool ? '#7fb4d8' : (d.lit ? '#f3cd84':'#7fb4d8');
+      const bg = d.cool ? 'rgba(127,180,216,.12)' : (d.lit?'rgba(243,205,132,.12)':'rgba(127,180,216,.08)');
+      // mini fill-ring around the icon
+      const c=19, rr=17, circ=2*Math.PI*rr, off=circ*(1-d.lvl);
+      el.innerHTML = `
+        <div class="lp-icon" style="background:${bg};">
+          <svg class="fill-ring" viewBox="0 0 38 38">
+            <circle cx="19" cy="19" r="17" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
+            <circle cx="19" cy="19" r="17" fill="none" stroke="${col}" stroke-width="2" stroke-linecap="round"
+              stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"
+              transform="rotate(-90 19 19)" style="filter:drop-shadow(0 0 3px ${col});"/>
+          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="${col}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ic[d.key]}</svg>
+        </div>
+        <div class="txt"><div class="lab">${d.lab}</div><div class="sub">${d.sub}</div></div>
+        <div class="chev">${d.locked
+          ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>'
+          : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>'}</div>`;
+      wrap.appendChild(el);
+    });
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>The Person page — The Living Forest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body{ background:#04070e; }
+  :root{
+    --cream:#f4ecdb; --muted:#9db0cc; --dim:#6f83a3; --hair:#ffffff18; --panel:#ffffff0b;
+    --gold:#f3cd84; --gold-hi:#ffe6ad; --cool:#7fb4d8; --cool-hi:#a9d2ee;
+    --edit:#c9a2ff; --edit-hi:#ddc6ff; --edit-soft:#efe6ff; --leaf:#8fd6a0;
+  }
+  body{ font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--cream); min-height:100dvh;
+    display:flex; align-items:flex-start; justify-content:center; gap:40px; padding:34px 20px 90px;
+    background:radial-gradient(150% 100% at 50% -6%, #12233c 0%, #0a1526 44%, #04070e 100%);
+    -webkit-user-select:none; user-select:none; flex-wrap:wrap; }
+  .serif{ font-family:'Newsreader',Georgia,serif; }
+  .mono{ font-family:'Azeret Mono',monospace; }
+  .screen[dir="rtl"] .serif,
+  .screen[dir="rtl"] .inp,
+  .screen[dir="rtl"] .name-input{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
+
+  /* ===== page intro ===== */
+  .lede{ flex-basis:100%; max-width:900px; margin:0 auto 4px; text-align:center; display:flex; flex-direction:column; gap:12px; align-items:center; }
+  .lede .k{ font-family:'Azeret Mono',monospace; font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--dim); }
+  .lede h1{ font-family:'Newsreader',serif; font-weight:300; font-size:34px; line-height:1.08; color:#f6efe0; }
+  .lede p{ font-size:14px; line-height:1.6; color:var(--muted); max-width:680px; }
+  .lede .badges{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:4px; }
+  .lede .badge{ font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted);
+    padding:6px 12px; border-radius:99px; border:1px solid var(--hair); background:var(--panel); }
+  .lede .badge b{ color:var(--gold); font-weight:500; }
+
+  /* ===== device ===== */
+  .stagewrap{ display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .stagewrap .cap{ text-align:center; max-width:390px; }
+  .stagewrap .cap .id{ display:inline-flex; align-items:center; gap:8px; font-family:'Newsreader',serif; font-size:15px; color:#f6efe0; }
+  .stagewrap .cap .id .n{ font-family:'Azeret Mono',monospace; font-size:11px; letter-spacing:.06em; color:#0c1220; background:linear-gradient(180deg,var(--gold-hi),var(--gold)); padding:2px 8px; border-radius:99px; }
+  .stagewrap .cap .d{ font-size:12px; color:var(--muted); margin-top:5px; line-height:1.45; }
+  .device{ position:relative; width:390px; height:820px; border-radius:42px; overflow:hidden; flex:0 0 auto;
+    background:#04070e; box-shadow:0 40px 120px -50px #000, 0 0 0 9px #14141b, 0 0 0 10px #2b2b34;
+    transition:width .42s cubic-bezier(.16,.8,.28,1); }
+  .device.tablet{ width:760px; }
+  .toggle-w{ font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--dim); cursor:pointer; }
+  .toggle-w:hover{ color:var(--cool-hi); }
+
+  .atmo{ position:absolute; inset:0; z-index:0; width:100%; height:100%; }
+  .atmo-veil{ position:absolute; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(120% 70% at 50% 6%, rgba(143,214,160,.07), transparent 42%),
+      radial-gradient(120% 92% at 50% 42%, transparent 30%, rgba(4,7,14,.6) 100%); }
+  .screen{ position:absolute; inset:0; z-index:2; overflow-y:auto; scrollbar-width:none; }
+  .screen::-webkit-scrollbar{ display:none; }
+  .pad{ padding:0 20px calc(46px + env(safe-area-inset-bottom)); }
+
+  /* ===== top bar ===== */
+  .topbar{ position:sticky; top:0; z-index:14; display:flex; align-items:center; gap:10px;
+    padding:15px 18px 11px; background:linear-gradient(to bottom, rgba(5,9,17,.9), rgba(5,9,17,.45) 68%, transparent);
+    backdrop-filter:blur(7px); }
+  .ibtn{ width:40px; height:40px; border-radius:12px; flex:0 0 auto; display:grid; place-items:center; cursor:pointer;
+    border:1px solid var(--hair); background:rgba(10,20,34,.55); color:var(--cream); transition:border-color .2s,background .2s; }
+  .ibtn:hover{ border-color:rgba(255,255,255,.34); }
+  .ibtn:focus-visible{ outline:2px solid var(--cool-hi); outline-offset:2px; }
+  .ibtn svg{ width:18px; height:18px; }
+  .ttl{ flex:1; min-width:0; text-align:center; }
+  .ttl .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.24em; text-transform:uppercase; color:var(--muted); }
+  .ttl .n{ font-family:'Newsreader',serif; font-size:17px; color:#fbf5e8; margin-top:1px; }
+  .rolechip{ display:inline-flex; align-items:center; gap:6px; font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.12em; text-transform:uppercase;
+    padding:5px 9px; border-radius:99px; cursor:pointer; border:1px solid rgba(201,162,255,.34); background:rgba(201,162,255,.1); color:var(--edit-hi); }
+
+  /* keeper reassurance ribbon */
+  .keeper-note{ display:flex; align-items:center; gap:9px; margin:2px 18px 0; padding:9px 13px; border-radius:11px;
+    background:rgba(201,162,255,.08); border:1px solid rgba(201,162,255,.26); }
+  .keeper-note svg{ width:15px; height:15px; color:var(--edit); flex:0 0 auto; }
+  .keeper-note span{ font-size:11.5px; color:#cbbce6; line-height:1.35; }
+
+  /* ===== HERO (variant A: face + ring anchor-map) ===== */
+  .hero{ position:relative; margin:30px auto 6px; width:308px; height:308px; }
+  .ring-svg{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; z-index:1; }
+  .facewrap{ position:absolute; inset:84px; z-index:3; border-radius:50%; }
+  .face{ width:100%; height:100%; border-radius:50%; overflow:hidden; position:relative;
+    border:1px solid rgba(255,244,214,.9);
+    box-shadow:0 0 28px -2px rgba(255,232,180,.6), 0 0 78px -14px rgba(243,205,132,.45), inset 0 0 0 4px rgba(4,7,14,.6); }
+  .face svg, .face img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .face .changef{ position:absolute; inset-inline-end:8px; inset-block-end:8px; z-index:4; width:38px; height:38px; border-radius:50%;
+    display:grid; place-items:center; cursor:pointer; color:#1a0f2e; border:2px solid #04070e;
+    background:linear-gradient(180deg,var(--edit-hi),var(--edit)); box-shadow:0 4px 12px -2px #000; }
+  .face .changef svg{ width:18px; height:18px; }
+  .hero .who{ position:absolute; z-index:4; inset-inline:0; bottom:-30px; text-align:center; pointer-events:none; }
+  .hero .who .nm{ font-family:'Newsreader',serif; font-size:26px; color:#fbf5e8; }
+  .hero .who .nm em{ font-style:italic; }
+
+  /* ring beads = the 8 facet icons */
+  .cat{ position:absolute; z-index:5; width:56px; transform:translate(-50%,-50%); text-align:center; cursor:pointer;
+    background:none; border:none; color:inherit; }
+  .cat .bead{ width:48px; height:48px; margin:0 auto; border-radius:50%; display:grid; place-items:center; position:relative;
+    background:rgba(12,22,38,.72); border:1px solid var(--hair); backdrop-filter:blur(4px);
+    transition:transform .22s cubic-bezier(.16,.8,.28,1), border-color .22s, box-shadow .22s; }
+  .cat .bead svg{ width:21px; height:21px; color:var(--gold-hi); position:relative; z-index:2; }
+  .cat.cool .bead svg{ color:var(--cool-hi); }
+  .cat .lab{ font-family:'Azeret Mono',monospace; font-size:8px; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--muted); margin-top:6px; line-height:1.1; }
+  /* kindling glow driven by --k (0..1) */
+  .cat .bead::after{ content:""; position:absolute; inset:-3px; border-radius:50%; opacity:calc(var(--k) * .95);
+    box-shadow:0 0 calc(6px + var(--k)*16px) calc(var(--k)*3px) rgba(243,205,132,.55); }
+  .cat.cool .bead::after{ box-shadow:0 0 calc(6px + var(--k)*16px) calc(var(--k)*3px) rgba(127,180,216,.55); }
+  .cat .bead{ border-color:rgba(243,205,132,calc(.18 + var(--k)*.5)); }
+  .cat.cool .bead{ border-color:rgba(127,180,216,calc(.18 + var(--k)*.5)); }
+  .cat:hover .bead, .cat.on .bead{ transform:scale(1.1); }
+  .cat.on .bead{ background:rgba(243,205,132,.18); }
+  .cat.cool.on .bead{ background:rgba(127,180,216,.18); }
+  .cat:focus-visible .bead{ outline:2px solid var(--gold-hi); outline-offset:3px; }
+  /* play marker for facets that hold a game */
+  .cat .play{ position:absolute; bottom:-2px; inset-inline-end:-1px; width:16px; height:16px; border-radius:50%; z-index:3;
+    display:grid; place-items:center; background:linear-gradient(180deg,#101d31,#0a1420); border:1px solid rgba(243,205,132,.55); }
+  .cat .play svg{ width:8px; height:8px; color:var(--gold-hi); }
+  /* pending violet pin */
+  .cat .pin{ position:absolute; top:-1px; inset-inline-start:0; width:13px; height:13px; border-radius:50%; z-index:3;
+    background:var(--edit); border:2px solid #04070e; }
+
+  /* ===== variant B: growing spine ===== */
+  .seed{ position:relative; margin:26px auto 4px; width:170px; height:196px; text-align:center; }
+  .seed .face{ width:150px; height:150px; margin:0 auto; }
+  .seed .changef{ inset-inline-end:2px; inset-block-end:2px; }
+  .seed .nm{ font-family:'Newsreader',serif; font-size:23px; color:#fbf5e8; margin-top:12px; }
+  .seed .nm em{ font-style:italic; }
+  .spine{ position:relative; margin-top:6px; }
+  .node-row{ position:relative; display:flex; gap:15px; align-items:stretch; padding-inline-start:6px; }
+  .node-col{ position:relative; width:48px; flex:0 0 auto; display:flex; flex-direction:column; align-items:center; }
+  .node-col::before{ content:""; position:absolute; top:0; bottom:-22px; inset-inline-start:calc(50% - 1px); width:2px;
+    background:linear-gradient(to bottom, rgba(143,214,160,.5), rgba(143,214,160,.14)); }
+  .node-row:last-child .node-col::before{ bottom:auto; height:26px; }
+  .node{ position:relative; z-index:2; margin-top:22px; width:46px; height:46px; border-radius:50%; display:grid; place-items:center; cursor:pointer;
+    background:rgba(12,22,38,.82); border:1px solid rgba(243,205,132,calc(.2 + var(--k)*.5));
+    box-shadow:0 0 calc(4px + var(--k)*18px) calc(var(--k)*3px) rgba(243,205,132,.5); }
+  .node.cool{ border-color:rgba(127,180,216,calc(.2 + var(--k)*.5)); box-shadow:0 0 calc(4px + var(--k)*18px) calc(var(--k)*3px) rgba(127,180,216,.5); }
+  .node svg{ width:20px; height:20px; color:var(--gold-hi); }
+  .node.cool svg{ color:var(--cool-hi); }
+  .node .play{ position:absolute; bottom:-2px; inset-inline-end:-2px; width:16px; height:16px; border-radius:50%; display:grid; place-items:center;
+    background:linear-gradient(180deg,#101d31,#0a1420); border:1px solid rgba(243,205,132,.55); }
+  .node .play svg{ width:8px; height:8px; color:var(--gold-hi); }
+  .node .pin{ position:absolute; top:-2px; inset-inline-start:-2px; width:13px; height:13px; border-radius:50%; background:var(--edit); border:2px solid #04070e; }
+  .node-body{ flex:1; min-width:0; padding-bottom:14px; }
+
+  /* ===== facet card (shared) ===== */
+  .facets{ margin-top:34px; display:flex; flex-direction:column; gap:16px; }
+  .device.tablet .variantA .facets{ display:grid; grid-template-columns:1fr 1fr; align-items:start; }
+  .device.tablet .variantA .facets .facet.wide{ grid-column:1 / -1; }
+  .facet{ border:1px solid var(--hair); border-radius:18px; background:rgba(9,17,29,.5); overflow:hidden;
+    scroll-margin-top:14px; }
+  .facet.b{ border:none; border-radius:16px; background:rgba(9,17,29,.44); }
+  .fhead{ display:flex; align-items:center; gap:11px; padding:15px 16px 12px; }
+  .fhead .fic{ width:36px; height:36px; border-radius:11px; display:grid; place-items:center; flex:0 0 auto;
+    background:rgba(243,205,132,.12); border:1px solid rgba(243,205,132,.3); }
+  .fhead .fic svg{ width:18px; height:18px; color:var(--gold-hi); }
+  .fhead.cool .fic{ background:rgba(127,180,216,.12); border-color:rgba(127,180,216,.3); }
+  .fhead.cool .fic svg{ color:var(--cool-hi); }
+  .fhead .ft{ flex:1; min-width:0; }
+  .fhead .ft .h{ font-family:'Newsreader',serif; font-size:20px; color:#fbf5e8; line-height:1.1; }
+  .fhead .ft .s{ display:inline-flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); margin-top:2px; }
+  .fhead .ft .s .src-dot{ width:6px; height:6px; border-radius:50%; }
+  .fbody{ padding:0 16px 17px; }
+
+  /* fields */
+  .field{ margin-bottom:13px; }
+  .field > label{ display:block; font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--muted); margin-bottom:7px; }
+  .inp{ width:100%; background:rgba(8,16,28,.66); border:1px solid var(--hair); border-radius:12px; padding:12px 13px;
+    color:var(--cream); font-family:'Newsreader',serif; font-size:16px; transition:border-color .2s; }
+  .inp:focus{ outline:none; border-color:rgba(243,205,132,.55); }
+  .inp::placeholder{ color:#5f7089; }
+  textarea.inp{ resize:vertical; line-height:1.5; min-height:78px; }
+  .empty-inp{ border-style:dashed; border-color:rgba(243,205,132,.3); color:#8fa0ba; }
+
+  .mlrow{ display:flex; align-items:center; gap:8px; }
+  .mlrow .inp{ flex:1; }
+  .mladd{ flex:0 0 auto; height:44px; padding:0 11px; border-radius:11px; cursor:pointer; display:flex; align-items:center; gap:6px;
+    background:rgba(243,205,132,.1); border:1px solid rgba(243,205,132,.32); color:var(--gold-hi);
+    font-family:'Azeret Mono',monospace; font-size:11px; }
+  .mladd svg{ width:15px; height:15px; }
+  .mlvars{ margin-top:9px; display:none; flex-direction:column; gap:8px; padding-inline-start:12px;
+    border-inline-start:2px solid rgba(243,205,132,.25); }
+  .mlvars.open{ display:flex; }
+  .mlvar{ display:flex; align-items:center; gap:9px; }
+  .mlvar .tag{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.1em; color:var(--gold);
+    width:24px; flex:0 0 auto; text-transform:uppercase; }
+  .mlvar .inp{ font-size:14px; padding:9px 11px; }
+  .mlvar.rtl .inp{ direction:rtl; text-align:right; }
+  .autotr{ display:inline-flex; align-items:center; gap:6px; margin-top:7px; font-size:10.5px; color:#9a8bbd;
+    font-family:'Azeret Mono',monospace; letter-spacing:.04em; }
+  .autotr svg{ width:12px; height:12px; }
+  .autotr b{ color:var(--gold); font-weight:500; cursor:pointer; }
+
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; }
+  .chip{ display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:99px;
+    background:rgba(243,205,132,.09); border:1px solid rgba(243,205,132,.3); font-size:13.5px; color:var(--cream);
+    font-family:'Newsreader',serif; }
+  .chip .x{ width:15px; height:15px; color:var(--muted); cursor:pointer; }
+  .chip.add{ background:transparent; border-style:dashed; border-color:var(--hair); color:var(--muted); cursor:pointer; font-family:'Hanken Grotesk',sans-serif; font-size:12.5px; }
+  .chip.add:hover{ border-color:rgba(243,205,132,.5); color:var(--gold-hi); }
+  .chip.cool{ background:rgba(127,180,216,.09); border-color:rgba(127,180,216,.3); }
+  .chip.pending{ background:rgba(201,162,255,.1); border-color:rgba(201,162,255,.4); color:var(--edit-hi); }
+  .chip .ord{ font-family:'Azeret Mono',monospace; font-size:9px; color:var(--cool); }
+
+  .row2{ display:flex; gap:10px; } .row2 > *{ flex:1; }
+  .seg{ display:flex; gap:5px; background:rgba(8,16,28,.6); border:1px solid var(--hair); border-radius:11px; padding:4px; }
+  .seg button{ flex:1; border:none; background:transparent; color:var(--muted); cursor:pointer; padding:8px 4px; border-radius:8px;
+    font-family:'Hanken Grotesk',sans-serif; font-size:11px; transition:background .18s,color .18s; }
+  .seg button.on{ background:rgba(127,180,216,.18); color:var(--cool-hi); }
+  .seg.gold button.on{ background:rgba(243,205,132,.18); color:var(--gold-hi); }
+  .toggle{ display:flex; align-items:center; gap:10px; }
+  .sw{ width:42px; height:24px; border-radius:99px; background:rgba(255,255,255,.12); position:relative; cursor:pointer; transition:background .2s; flex:0 0 auto; }
+  .sw::after{ content:""; position:absolute; top:2px; inset-inline-start:2px; width:20px; height:20px; border-radius:50%; background:#dfe7f2; transition:transform .2s; }
+  .sw.on{ background:rgba(127,180,216,.5); } .sw.on::after{ transform:translateX(18px); }
+  .screen[dir="rtl"] .sw.on::after{ transform:translateX(-18px); }
+  .hint{ font-size:11.5px; color:var(--muted); margin-top:8px; line-height:1.45; }
+
+  /* pending + keeper */
+  .pending{ display:inline-flex; align-items:center; gap:8px; margin-top:11px; padding:8px 12px; border-radius:11px;
+    background:rgba(201,162,255,.1); border:1px solid rgba(201,162,255,.34); font-size:11.5px; color:var(--edit-hi); }
+  .pending .sp{ width:11px; height:11px; border-radius:50%; border:2px solid rgba(201,162,255,.35); border-top-color:var(--edit); animation:spin 1s linear infinite; flex:0 0 auto; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .keeperbar{ display:flex; align-items:center; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  .kbtn{ display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border-radius:9px; cursor:pointer; font-size:12px; font-weight:600;
+    font-family:'Hanken Grotesk',sans-serif; border:1px solid transparent; }
+  .kbtn.ok{ background:rgba(143,214,160,.16); border-color:rgba(143,214,160,.4); color:#a9e6ba; }
+  .kbtn.no{ background:transparent; border-color:var(--hair); color:var(--muted); }
+  .kbtn svg{ width:13px; height:13px; }
+  .was{ font-size:11px; color:var(--muted); }
+  .was b{ color:var(--edit-hi); font-weight:500; }
+
+  /* story memories */
+  .memory{ padding:13px 14px; border-radius:14px; background:rgba(243,205,132,.05); border:1px solid rgba(243,205,132,.16); margin-bottom:10px; }
+  .memory .words{ font-family:'Newsreader',serif; font-style:italic; font-weight:300; font-size:15px; line-height:1.5; color:#f6ecd7; }
+  .memory .told{ margin-top:10px; display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--gold); }
+  .memory .told .flame{ width:6px; height:6px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px 1px var(--gold); }
+  .memory .told b{ font-weight:600; }
+  .invite{ padding:14px; border-radius:14px; border:1px dashed rgba(243,205,132,.32); background:rgba(243,205,132,.04); }
+  .invite .words{ font-family:'Newsreader',serif; font-style:italic; font-size:14px; line-height:1.5; color:#efe0c2; }
+  .invite .cta{ margin-top:9px; font-size:12px; color:var(--gold); font-weight:600; display:inline-flex; align-items:center; gap:6px; cursor:pointer; }
+
+  /* cool app-assembled note */
+  .appfact{ margin-top:12px; border-top:1px solid var(--hair); padding-top:12px; display:flex; align-items:flex-start; gap:11px; }
+  .appfact .mark{ width:22px; height:22px; border-radius:6px; flex:0 0 auto; display:grid; place-items:center;
+    background:rgba(127,180,216,.12); border:1px solid rgba(127,180,216,.3); }
+  .appfact .mark svg{ width:12px; height:12px; color:var(--cool); }
+  .appfact .body{ font-size:12.5px; line-height:1.5; color:var(--cool); }
+  .appfact .body .src{ display:block; margin-top:4px; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:rgba(127,180,216,.55); font-family:'Azeret Mono',monospace; }
+
+  /* game strip */
+  .games{ margin-top:13px; display:flex; flex-direction:column; gap:9px; }
+  .game{ display:flex; align-items:center; gap:12px; padding:12px 13px; border-radius:14px; cursor:pointer;
+    background:linear-gradient(120deg, rgba(243,205,132,.1), rgba(127,180,216,.05)); border:1px solid rgba(243,205,132,.26);
+    transition:border-color .2s, transform .2s; }
+  .game:hover{ border-color:rgba(243,205,132,.5); transform:translateY(-1px); }
+  .game .gic{ width:38px; height:38px; border-radius:11px; flex:0 0 auto; display:grid; place-items:center;
+    background:rgba(4,7,14,.5); border:1px solid rgba(243,205,132,.3); color:var(--gold-hi); }
+  .game .gic svg{ width:18px; height:18px; }
+  .game .gt{ flex:1; min-width:0; }
+  .game .gt .gn{ font-family:'Newsreader',serif; font-size:16px; color:#fbf5e8; }
+  .game .gt .gs{ font-size:11.5px; color:var(--muted); margin-top:1px; }
+  .game .go{ font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:#0c1220;
+    background:linear-gradient(180deg,var(--gold-hi),var(--gold)); padding:8px 11px; border-radius:99px; font-weight:600; flex:0 0 auto; }
+  .game.locked{ background:rgba(255,255,255,.03); border-color:var(--hair); border-style:dashed; cursor:default; }
+  .game.locked:hover{ transform:none; border-color:var(--hair); }
+  .game.locked .gic{ color:var(--muted); border-color:var(--hair); }
+  .game.locked .gt .gn{ color:var(--muted); }
+  .game.locked .go{ background:transparent; color:var(--muted); border:1px solid var(--hair); }
+
+  /* face facet gallery */
+  .tagstrip{ display:flex; gap:9px; overflow-x:auto; margin:0 -16px; padding:2px 16px 8px; scrollbar-width:none; }
+  .tagstrip::-webkit-scrollbar{ display:none; }
+  .tagshot{ flex:0 0 auto; width:88px; }
+  .tagshot .im{ width:88px; height:88px; border-radius:12px; overflow:hidden; border:1px solid var(--hair); position:relative; }
+  .tagshot .im svg{ width:100%; height:100%; }
+  .tagshot .im .box{ position:absolute; border:1.5px solid var(--gold-hi); border-radius:4px; }
+  .tagshot .cap2{ font-size:10.5px; color:var(--muted); margin-top:5px; text-align:center; font-family:'Newsreader',serif; }
+
+  /* mini map (places) */
+  .minimap{ position:relative; height:150px; border-radius:14px; overflow:hidden; border:1px solid var(--hair); margin-top:2px;
+    background:linear-gradient(135deg,#0c1a2c,#0a1626); }
+  .minimap .grid{ position:absolute; inset:0; opacity:.5;
+    background-image:linear-gradient(rgba(127,180,216,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(127,180,216,.12) 1px,transparent 1px);
+    background-size:34px 34px; }
+  .minimap .thread{ position:absolute; inset:0; }
+  .minimap .mpin{ position:absolute; transform:translate(-50%,-50%); }
+  .minimap .mpin .dot{ width:11px; height:11px; border-radius:50%; background:var(--cool-hi); box-shadow:0 0 12px 2px rgba(127,180,216,.7); }
+  .minimap .mpin .ml{ font-family:'Newsreader',serif; font-size:12px; color:#dbe6f5; white-space:nowrap; margin-top:3px;
+    text-shadow:0 1px 4px #000; }
+  .minimap .badge{ position:absolute; inset-block-start:9px; inset-inline-start:10px; font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.14em;
+    text-transform:uppercase; color:rgba(127,180,216,.75); }
+
+  /* reel reward */
+  .reel{ position:relative; padding:16px; border-radius:16px; overflow:hidden;
+    background:linear-gradient(120deg, rgba(127,180,216,.1), rgba(243,205,132,.06)); border:1px solid rgba(127,180,216,.3); }
+  .reel .rrow{ display:flex; align-items:center; gap:14px; }
+  .reel .rimg{ width:58px; height:58px; border-radius:14px; overflow:hidden; flex:0 0 auto; border:1px solid var(--hair); }
+  .reel .rimg svg{ width:100%; height:100%; }
+  .reel .rt{ flex:1; } .reel .rt .rn{ font-family:'Newsreader',serif; font-size:18px; color:#fbf5e8; }
+  .reel .rt .rs{ font-size:12px; color:var(--muted); margin-top:2px; line-height:1.4; }
+  .reel .rgo{ font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:#0c1220;
+    background:linear-gradient(180deg,#a9d0ec,#7fb4d8); padding:9px 12px; border-radius:99px; font-weight:600; flex:0 0 auto; }
+  .reel .bar{ margin-top:13px; height:6px; border-radius:99px; background:rgba(255,255,255,.1); overflow:hidden; }
+  .reel .bar i{ display:block; height:100%; border-radius:99px; background:linear-gradient(90deg,var(--gold),var(--cool)); }
+  .reel .barlab{ margin-top:8px; font-size:11px; color:var(--muted); }
+
+  .adddetail{ margin-top:6px; }
+  .adddetail .plus{ width:100%; display:flex; align-items:center; justify-content:center; gap:9px; padding:13px; border-radius:14px;
+    background:rgba(201,162,255,.07); border:1px dashed rgba(201,162,255,.4); color:var(--edit-hi); cursor:pointer;
+    font-family:'Newsreader',serif; font-size:15px; }
+  .adddetail .plus svg{ width:18px; height:18px; }
+  .detailrow{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:12px 13px; border-radius:12px;
+    background:rgba(243,205,132,.07); border:1px solid rgba(243,205,132,.24); margin-bottom:9px; }
+  .detailrow .dl{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); }
+  .detailrow .dv{ font-family:'Newsreader',serif; font-size:16px; color:var(--cream); margin-top:3px; }
+  .detailrow .x{ width:15px; height:15px; color:var(--muted); cursor:pointer; flex:0 0 auto; }
+
+  .foot{ margin-top:26px; text-align:center; }
+  .foot .l{ font-family:'Newsreader',serif; font-style:italic; font-size:13.5px; color:rgba(143,214,160,.6); }
+
+  /* ===== overlays ===== */
+  .scrim{ position:absolute; inset:0; z-index:30; background:rgba(4,7,14,.66); backdrop-filter:blur(3px);
+    opacity:0; pointer-events:none; transition:opacity .28s ease; }
+  .scrim.show{ opacity:1; pointer-events:auto; }
+  .sheet{ position:absolute; z-index:31; inset-inline:0; bottom:0; background:linear-gradient(180deg,#0f1e33,#081120);
+    border:1px solid var(--hair); border-bottom:none; border-radius:22px 22px 0 0; padding:10px 20px calc(22px + env(safe-area-inset-bottom));
+    transform:translateY(103%); transition:transform .34s cubic-bezier(.16,.8,.28,1); box-shadow:0 -24px 70px -30px #000; max-height:90%; overflow-y:auto; scrollbar-width:none; }
+  .sheet::-webkit-scrollbar{ display:none; }
+  .sheet.show{ transform:translateY(0); }
+  .grip{ width:40px; height:4px; border-radius:99px; background:rgba(255,255,255,.2); margin:6px auto 15px; }
+  .sheet h3{ font-family:'Newsreader',serif; font-weight:400; font-size:21px; color:#fbf5e8; margin-bottom:4px; }
+  .sheet .sub{ font-size:12.5px; color:var(--muted); margin-bottom:16px; line-height:1.45; }
+
+  .lang-opt{ display:flex; align-items:center; gap:14px; width:100%; padding:14px 15px; border-radius:14px;
+    background:var(--panel); border:1px solid var(--hair); color:var(--cream); cursor:pointer; margin-bottom:9px; text-align:start; }
+  .lang-opt.on{ border-color:rgba(243,205,132,.55); background:rgba(243,205,132,.08); }
+  .lang-opt .native{ font-family:'Newsreader',serif; font-size:18px; } .lang-opt .en{ font-size:11.5px; color:var(--muted); margin-top:1px; }
+  .lang-opt .tick{ margin-inline-start:auto; color:var(--gold); opacity:0; } .lang-opt.on .tick{ opacity:1; } .lang-opt .tick svg{ width:18px; height:18px; }
+
+  .gal{ display:grid; grid-template-columns:repeat(4,1fr); gap:9px; margin-bottom:16px; }
+  .gal .g{ position:relative; aspect-ratio:1; border-radius:11px; overflow:hidden; cursor:pointer; border:2px solid transparent; }
+  .gal .g svg{ width:100%; height:100%; }
+  .gal .g.on{ border-color:var(--edit); }
+  .gal .g .tagbox{ position:absolute; border:2px solid var(--gold-hi); border-radius:4px; box-shadow:0 0 0 400px rgba(4,7,14,.4); }
+  .cropstage{ position:relative; width:100%; aspect-ratio:1; max-width:250px; margin:0 auto 8px; border-radius:16px; overflow:hidden; background:#0a1120; touch-action:none; }
+  .cropstage .cimg{ position:absolute; inset:0; }
+  .cropstage .cimg svg{ width:100%; height:100%; }
+  .cropstage .cmask{ position:absolute; inset:0; pointer-events:none; background:radial-gradient(circle at center, transparent 46%, rgba(4,7,14,.72) 47%); }
+  .cropstage .cring::after{ content:""; position:absolute; inset:calc(50% - 46%); border-radius:50%; border:1.5px solid rgba(255,244,214,.9); box-shadow:0 0 18px rgba(255,232,180,.5); }
+  .zoomrow{ display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+  .zoomrow svg{ width:16px; height:16px; color:var(--muted); flex:0 0 auto; }
+  input[type=range]{ -webkit-appearance:none; appearance:none; flex:1; height:4px; border-radius:99px; background:rgba(255,255,255,.16); }
+  input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:18px; height:18px; border-radius:50%; background:var(--edit-hi); cursor:pointer; box-shadow:0 0 10px rgba(201,162,255,.6); }
+  input[type=range]::-moz-range-thumb{ width:18px; height:18px; border:none; border-radius:50%; background:var(--edit-hi); cursor:pointer; }
+
+  .add-opt{ display:flex; align-items:center; gap:12px; width:100%; padding:13px 14px; border-radius:13px;
+    background:var(--panel); border:1px solid var(--hair); color:var(--cream); cursor:pointer; margin-bottom:8px; text-align:start; }
+  .add-opt:hover{ border-color:rgba(201,162,255,.45); }
+  .add-opt .ic{ width:32px; height:32px; border-radius:9px; background:rgba(201,162,255,.12); display:grid; place-items:center; flex:0 0 auto; }
+  .add-opt .ic svg{ width:16px; height:16px; color:var(--edit-hi); }
+  .add-opt .nm{ font-family:'Newsreader',serif; font-size:16px; } .add-opt .ds{ font-size:11.5px; color:var(--muted); margin-top:1px; }
+
+  /* game launch sheet */
+  .gamehero{ height:150px; border-radius:16px; overflow:hidden; position:relative; margin-bottom:15px; border:1px solid var(--hair);
+    background:linear-gradient(135deg,#12233c,#0a1626); display:grid; place-items:center; }
+  .gamehero svg{ width:74px; height:74px; color:var(--gold-hi); opacity:.9; }
+  .gamehero .tone{ position:absolute; inset:0; background:radial-gradient(80% 80% at 50% 30%, rgba(243,205,132,.14), transparent 70%); }
+  .btnrow{ display:flex; gap:10px; margin-top:6px; }
+  .btn{ flex:1; padding:14px; border-radius:13px; font-family:'Hanken Grotesk',sans-serif; font-size:14px; font-weight:600; cursor:pointer; border:1px solid transparent; text-align:center; }
+  .btn.ghost{ background:transparent; border-color:var(--hair); color:var(--cream); }
+  .btn.primary{ background:linear-gradient(180deg,var(--gold-hi),var(--gold)); color:#1a1206; }
+  .btn.violet{ background:linear-gradient(180deg,var(--edit-hi),var(--edit)); color:#1a0f2e; }
+
+  .toast{ position:absolute; z-index:40; left:50%; transform:translate(-50%,20px); bottom:24px; display:flex; align-items:center; gap:10px;
+    padding:12px 17px; border-radius:99px; background:rgba(28,18,46,.92); backdrop-filter:blur(12px); border:1px solid rgba(201,162,255,.45);
+    color:var(--edit-soft); font-size:13px; opacity:0; pointer-events:none; transition:opacity .3s, transform .3s; box-shadow:0 18px 44px -18px #000; max-width:88%; }
+  .toast.show{ opacity:1; transform:translate(-50%,0); }
+  .toast .fl{ width:8px; height:8px; border-radius:50%; background:var(--edit); box-shadow:0 0 10px 2px var(--edit); flex:0 0 auto; }
+
+  @media (prefers-reduced-motion: reduce){ .pending .sp{ animation:none; } }
+</style>
+</head>
+<body>
+  <template id="__bundler_thumbnail" data-bg-color="#081120">
+    <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="600" cy="400" r="150" fill="none" stroke="#f3cd84" stroke-width="8" stroke-dasharray="3 34" stroke-linecap="round"/>
+      <circle cx="600" cy="400" r="108" fill="#dcae82"/>
+      <path d="M600 500 Q600 440 552 430 Q560 380 600 380 Q640 380 648 430 Q600 440 600 500Z" fill="#eae5dd"/>
+      <circle cx="580" cy="398" r="7" fill="#3a2b22"/><circle cx="620" cy="398" r="7" fill="#3a2b22"/>
+    </svg>
+  </template>
+  <div class="lede">
+    <div class="k">The Living Forest · the person page</div>
+    <h1>One page. Everything about a person, open on the screen.</h1>
+    <p>Two architectures for the same rule &mdash; every one of the eight facets visible, nothing hidden one-at-a-time, everything editable in place. Tap a facet mark to travel to it; the face at the centre is what represents this person everywhere.</p>
+    <div class="badges">
+      <span class="badge"><b>Gold</b> &middot; told by a person</span>
+      <span class="badge" style="color:#a9d2ee"><b style="color:#7fb4d8">Blue</b> &middot; assembled by the app</span>
+      <span class="badge" style="color:#ddc6ff"><b style="color:#c9a2ff">Violet</b> &middot; pending the keeper</span>
+    </div>
+  </div>
+
+  <!-- OPTION 1 -->
+  <div class="stagewrap">
+    <div class="cap">
+      <span class="id"><span class="n">1</span> The light ring</span>
+      <div class="d">Face at the centre, the eight facets a living ring around it that kindles as it fills. Every facet is also open in the calm column below; the ring is a map, not a gate.</div>
+    </div>
+    <div class="device" data-variant="A" id="devA">
+      <canvas class="atmo" data-atmo="vines" aria-hidden="true"></canvas>
+      <div class="atmo-veil"></div>
+      <div class="screen">
+        <div class="topbar"></div>
+        <div class="keeper-note"></div>
+        <div class="pad"></div>
+      </div>
+      <div class="scrim"></div>
+      <section class="sheet" data-sheet="lang" role="dialog" aria-modal="true" aria-label="Language"></section>
+      <section class="sheet" data-sheet="face" role="dialog" aria-modal="true" aria-label="Change the face"></section>
+      <section class="sheet" data-sheet="add" role="dialog" aria-modal="true" aria-label="Add a detail"></section>
+      <section class="sheet" data-sheet="game" role="dialog" aria-modal="true" aria-label="Play"></section>
+      <div class="toast"><span class="fl"></span><span class="toastmsg"></span></div>
+    </div>
+    <div class="toggle-w" data-toggle>&#8596; preview tablet width</div>
+  </div>
+
+  <!-- OPTION 2 -->
+  <div class="stagewrap">
+    <div class="cap">
+      <span class="id"><span class="n">2</span> The growing branch</span>
+      <div class="d">The face is the seed at the crown; the eight facets are lit nodes on one stem that grows down the page, a life unfurling. All eight open in sequence &mdash; the same eight marks, walked as a path.</div>
+    </div>
+    <div class="device" data-variant="B" id="devB">
+      <canvas class="atmo" data-atmo="motes" aria-hidden="true"></canvas>
+      <div class="atmo-veil"></div>
+      <div class="screen">
+        <div class="topbar"></div>
+        <div class="keeper-note"></div>
+        <div class="pad"></div>
+      </div>
+      <div class="scrim"></div>
+      <section class="sheet" data-sheet="lang" role="dialog" aria-modal="true" aria-label="Language"></section>
+      <section class="sheet" data-sheet="face" role="dialog" aria-modal="true" aria-label="Change the face"></section>
+      <section class="sheet" data-sheet="add" role="dialog" aria-modal="true" aria-label="Add a detail"></section>
+      <section class="sheet" data-sheet="game" role="dialog" aria-modal="true" aria-label="Play"></section>
+      <div class="toast"><span class="fl"></span><span class="toastmsg"></span></div>
+    </div>
+    <div class="toggle-w" data-toggle>&#8596; preview tablet width</div>
+  </div>
+
+<script>
+'use strict';
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const esc = s => (s==null?'':String(s)).replace(/"/g,'&quot;');
+
+/* ---------- icons ---------- */
+const I = {
+  back:'<path d="M15 18l-6-6 6-6"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+  globe2:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/>',
+  keeper:'<path d="M12 3l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V6z"/><path d="M9 12l2 2 4-4"/>',
+  name:'<path d="M4 7V5h16v2M9 5v14M7 19h4"/><path d="M14 13h6M14 17h6M14 9h6" opacity=".5"/>',
+  face:'<circle cx="12" cy="9" r="4"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7"/>',
+  life:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/>',
+  places:'<path d="M12 21s-6-5.7-6-10a6 6 0 1112 0c0 4.3-6 10-6 10z"/><circle cx="12" cy="11" r="2"/>',
+  story:'<path d="M4 5h16v11H8l-4 4z"/>',
+  kin:'<circle cx="7" cy="8" r="2.4"/><circle cx="17" cy="8" r="2.4"/><circle cx="12" cy="17" r="2.4"/><path d="M7 10v2a2 2 0 002 2h6a2 2 0 002-2v-2M12 14v1"/>',
+  reel:'<circle cx="12" cy="12" r="9"/><path d="M10 8l6 4-6 4z"/>',
+  more:'<path d="M12 3l2.2 5.8L20 9l-4.5 3.8L17 19l-5-3.4L7 19l1.5-6.2L4 9l5.8-.2z"/>',
+  camera:'<path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3.2"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>', x:'<path d="M6 6l12 12M18 6L6 18"/>',
+  check:'<path d="M20 6L9 17l-5-5"/>', info:'<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/>',
+  play:'<path d="M8 5l12 7-12 7z"/>', lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>',
+  zoomout:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4M8 11h6"/>', zoomin:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4M11 8v6M8 11h6"/>',
+  chart:'<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 15l4-4 4 4 5-5 5 5"/>',
+  translate:'<path d="M4 5h9M8 3v2M6 5c0 5-2 8-4 9M5 9c0 3 2 5 5 6"/><path d="M13 19l4-9 4 9M14.5 15h5"/>',
+  quote:'<path d="M7 7h4v6H7zM13 7h4v6h-4z"/>', medal:'<circle cx="12" cy="15" r="5"/><path d="M9 3l3 6 3-6"/>',
+  book:'<path d="M9 7h6M9 11h6M9 15h4"/><rect x="5" y="3" width="14" height="18" rx="2"/>'
+};
+const sv = (p,w) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w||1.6}" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+
+/* ---------- placeholder art ---------- */
+function faceSVG(){ return `<svg viewBox="0 0 100 100"><defs><radialGradient id="fg" cx="42%" cy="34%" r="76%"><stop offset="0%" stop-color="#f0d3ad"/><stop offset="60%" stop-color="#dcae82"/><stop offset="100%" stop-color="#9c6f4c"/></radialGradient><linearGradient id="fb" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2a3a52"/><stop offset="100%" stop-color="#141f30"/></linearGradient></defs><rect width="100" height="100" fill="url(#fb)"/><path d="M50 98 Q50 70 24 66 Q28 40 50 40 Q72 40 76 66 Q50 70 50 98Z" fill="#c9c1b4"/><ellipse cx="50" cy="52" rx="25" ry="28" fill="url(#fg)"/><path d="M24 44 Q28 18 50 18 Q72 18 76 44 Q64 30 50 30 Q36 30 24 44Z" fill="#eae5dd"/><ellipse cx="41" cy="52" rx="2.7" ry="3.1" fill="#3a2b22"/><ellipse cx="59" cy="52" rx="2.7" ry="3.1" fill="#3a2b22"/><path d="M43 66 Q50 71 57 66" stroke="#a06b4c" stroke-width="1.9" fill="none" stroke-linecap="round"/></svg>`; }
+function galSVG(seed){ const s=['#c9a878','#8fa6b8','#b58a5c','#9fb0a0','#c08a70','#8a92b0','#a88f6e','#7f97ab'][seed%8];
+  return `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="${s}"/><rect y="60" width="100" height="40" fill="rgba(0,0,0,.16)"/><circle cx="50" cy="42" r="15" fill="#e6c49b"/><path d="M50 92 Q50 66 31 63 Q34 51 50 51 Q66 51 69 63 Q50 66 50 92Z" fill="#5a4636"/></svg>`; }
+/* ---------- person data (per-language variants) ---------- */
+const NAME = {
+  display:{en:'Rita Golnick', ru:'Рита Гольник', he:'ריטה גולניק'},
+  given:{en:'Rita', ru:'Рита', he:'ריטה'},
+  family:{en:'Golnick', ru:'Гольник', he:'גולניק'},
+  maiden:{en:'Tserlina', ru:'Церлина', he:'צרלינה'}
+};
+const NICKS = {en:['Ritochka','Grandma Rita'], ru:['Риточка','Бабушка Рита'], he:['ריטוצ׳קה','סבתא ריטה']};
+const ABOUT = {
+  en:'Kept the whole family fed from a tiny Holon kitchen — you never left her table hungry.',
+  ru:'Держала весь дом сытым из крохотной кухни в Холоне.',
+  he:'האכילה את כל המשפחה ממטבח קטן בחולון.'
+};
+
+/* the 8 facets. k = kindle level 0..1. kind gold|cool. game ids it holds. */
+const FACETS = [
+  { id:'name',   kind:'gold', k:1.0, games:[] },
+  { id:'face',   kind:'gold', k:1.0, games:['whoiswho','crowd'] },
+  { id:'life',   kind:'gold', k:0.6, games:['order'] },
+  { id:'places', kind:'cool', k:0.8, games:['wherewas','thread'] },
+  { id:'story',  kind:'gold', k:0.5, games:['whosememory','voice'] },
+  { id:'kin',    kind:'gold', k:0.7, games:[] },
+  { id:'reel',   kind:'cool', k:0.2, games:[] },
+  { id:'more',   kind:'gold', k:0.3, games:[] }
+];
+const GAMES = {
+  whoiswho:  { icon:'face' },
+  crowd:     { icon:'face' },
+  order:     { icon:'life' },
+  wherewas:  { icon:'places' },
+  thread:    { icon:'kin' },
+  whosememory:{ icon:'story' },
+  voice:     { icon:'story', locked:true }
+};
+/* ---------- i18n ---------- */
+const T = {};
+T.en = {
+  dir:'ltr', native:'English', label:'English',
+  eyebrow:'A person', title:'Rita Golnick',
+  keeper:'Nothing reaches the family until the keeper approves it.',
+  keeperRole:'You are the keeper', contribRole:'You are contributing',
+  who:['Rita','Golnick'],
+  facet:{ name:'Name', face:'Face', life:'Life', places:'Places', story:'Story', kin:'Kin', reel:'Reel', more:'More' },
+  toldby:'Told by the family', assembled:'Assembled by the app', bothpending:'Waiting for the keeper',
+  addlang:'other languages', addfield:'add in this language',
+  display:'Display name', given:'Given name', family:'Family name', maiden:'Maiden name',
+  nicks:'Nicknames & pet names', addnick:'add a nickname',
+  suggestedNick:'Ritaleh', pendingChip:'waiting',
+  familyWas:'was', familyOld:'Golnik', approve:'Approve', decline:'Decline', suggesting:'Suggested by Michael',
+  faceLine:'The photos she appears in — choose the crop that represents her everywhere.', changeface:'Change the face',
+  taggedIn:'Tagged in 6 photographs', shotCaps:['1998 · Holon','the 70s','1982 · Yafo','c.1955','1998','2003'],
+  about:'About', occupation:'Occupation', addoccupation:'add her work', langspoken:'Languages spoken',
+  born:'Born', precision:'Precision', prec:['exact','month','year','approx','unknown'], living:'Still living',
+  gender:'Gender', genderHint:'Helps translate her names correctly.', gopts:['She','He','They','—'],
+  pbirth:'Place of birth', lived:'Places lived', addplace:'add a home', mapBadge:'On the map · person view',
+  placesApp:'Rita is tied to 3 places; the route between them is drawn by the app.',
+  memories:'Memories told about her', addmemory:'add a memory', noStory:'No one has told the story of this afternoon yet.', askSomeone:'Ask someone who might remember →',
+  mem1:'She kept the whole family fed from a tiny Holon kitchen — you never left her table hungry.',
+  mem1by:'Michael Golnick', mem2:'Every Friday she walked us to the shore before the light went.', mem2by:'Leonid Golnick',
+  memPending:'A new memory, waiting for the keeper',
+  relations:'Relatives', addkin:'add a connection', kinApp:'The app works out how each of them connects back to you.',
+  howrelated:'How are you related?', rel:{spouse:'Partner', child:'Child', sibling:'Sibling'},
+  reelName:'Rita\u2019s reel', reelSub:'Her life, assembled from the rest. It opens as the facets fill.', watch:'Watch', reelBar:'Six of eight facets kindled',
+  detail:'Details & sources', dish:'Signature dish', dishVal:'Forshmak', adddetail:'Add a detail',
+  adddetailsub:'Record anything — a saying, a recipe, a medal — with where it came from.',
+  detailLabel:'Label', detailValue:'Value', source:'Source or note', sourceVal:'Family archive · Golnick box',
+  autotr:'auto-translated', tellReal:'tell it properly',
+  langtitle:'Language', langsub:'Names, labels and details all follow the language you choose.',
+  changefaceSub:'Pick a photo she\u2019s tagged in, then fine-tune the round crop. Saving sends it to the keeper.',
+  zoom:'Zoom', send:'Send to the keeper', cancel:'Cancel', sent:'Sent to the keeper — thank you', save:'Save',
+  playCta:'Play', gameLocked:'Add a story and this opens', gameScoped:'Scoped to Rita',
+  gameNames:{ whoiswho:'Who Is Who?', crowd:'Find Them in the Crowd', order:'Put Their Life in Order', wherewas:'Where Was This?', thread:'The Tangled Thread', whosememory:'Whose Memory Is This?', voice:'The Missing Voice' },
+  gameSubs:{ whoiswho:'Match her face to the right name.', crowd:'Find Rita among the gathering.', order:'Set the moments of her life in sequence.', wherewas:'Place her photographs on the map.', thread:'Trace how she connects to the family.', whosememory:'Guess who told each memory.', voice:'Not enough stories yet.' },
+  foot:'A life, told a little more fully.'
+};
+T.ru = {
+  dir:'ltr', native:'Русский', label:'Russian',
+  eyebrow:'Человек', title:'Рита Гольник',
+  keeper:'Ничто не дойдёт до семьи, пока хранитель не одобрит.',
+  keeperRole:'Вы хранитель', contribRole:'Вы предлагаете правку',
+  who:['Рита','Гольник'],
+  facet:{ name:'Имя', face:'Лицо', life:'Жизнь', places:'Места', story:'История', kin:'Родные', reel:'Плёнка', more:'Ещё' },
+  toldby:'Рассказано семьёй', assembled:'Собрано приложением', bothpending:'Ожидает хранителя',
+  addlang:'другие языки', addfield:'добавить на этом языке',
+  display:'Отображаемое имя', given:'Имя', family:'Фамилия', maiden:'Девичья фамилия',
+  nicks:'Прозвища и ласковые имена', addnick:'добавить прозвище',
+  suggestedNick:'Ритале', pendingChip:'ожидает',
+  familyWas:'было', familyOld:'Гольник', approve:'Одобрить', decline:'Отклонить', suggesting:'Предложил Михаил',
+  faceLine:'Фото, где она есть — выберите кадр, который представляет её везде.', changeface:'Сменить лицо',
+  taggedIn:'Отмечена на 6 фото', shotCaps:['1998 · Холон','70-е','1982 · Яффо','ок.1955','1998','2003'],
+  about:'О человеке', occupation:'Занятие', addoccupation:'добавить занятие', langspoken:'Языки',
+  born:'Родилась', precision:'Точность', prec:['точно','месяц','год','около','неизв.'], living:'Ещё жива',
+  gender:'Пол', genderHint:'Помогает правильно склонять имена.', gopts:['Она','Он','Они','—'],
+  pbirth:'Место рождения', lived:'Где жила', addplace:'добавить дом', mapBadge:'На карте · вид человека',
+  placesApp:'Рита связана с 3 местами; маршрут между ними строит приложение.',
+  memories:'Воспоминания о ней', addmemory:'добавить воспоминание', noStory:'Историю этого дня ещё никто не рассказал.', askSomeone:'Спросить того, кто помнит →',
+  mem1:'Держала весь дом сытым из крохотной кухни в Холоне — от её стола никто не уходил голодным.',
+  mem1by:'Михаил Гольник', mem2:'Каждую пятницу вела нас к морю, пока не ушёл свет.', mem2by:'Леонид Гольник',
+  memPending:'Новое воспоминание ждёт хранителя',
+  relations:'Родственники', addkin:'добавить связь', kinApp:'Приложение вычисляет, как каждый связан с вами.',
+  howrelated:'Как вы связаны?', rel:{spouse:'Супруг', child:'Ребёнок', sibling:'Сестра'},
+  reelName:'Плёнка Риты', reelSub:'Её жизнь, собранная из остального. Открывается по мере заполнения.', watch:'Смотреть', reelBar:'Шесть из восьми граней зажжены',
+  detail:'Детали и источники', dish:'Фирменное блюдо', dishVal:'Форшмак', adddetail:'Добавить деталь',
+  adddetailsub:'Запишите что угодно — поговорку, рецепт, награду — и откуда это.',
+  detailLabel:'Название', detailValue:'Значение', source:'Источник или заметка', sourceVal:'Семейный архив · коробка Гольник',
+  autotr:'автоперевод', tellReal:'рассказать по-настоящему',
+  langtitle:'Язык', langsub:'Имена, подписи и детали — на выбранном языке.',
+  changefaceSub:'Выберите фото, где она отмечена, и настройте круглую обрезку. Сохранение уйдёт хранителю.',
+  zoom:'Масштаб', send:'Отправить хранителю', cancel:'Отмена', sent:'Отправлено хранителю — спасибо', save:'Сохранить',
+  playCta:'Играть', gameLocked:'Добавьте историю — и откроется', gameScoped:'Только про Риту',
+  gameNames:{ whoiswho:'Кто есть кто?', crowd:'Найди в толпе', order:'Расставь жизнь по порядку', wherewas:'Где это было?', thread:'Запутанная нить', whosememory:'Чья это память?', voice:'Пропавший голос' },
+  gameSubs:{ whoiswho:'Сопоставьте лицо и имя.', crowd:'Найдите Риту среди собравшихся.', order:'Расставьте моменты её жизни.', wherewas:'Разместите фото на карте.', thread:'Проследите связь с семьёй.', whosememory:'Угадайте, кто рассказал.', voice:'Историй пока мало.' },
+  foot:'Жизнь, рассказанная чуть полнее.'
+};
+T.he = {
+  dir:'rtl', native:'עברית', label:'Hebrew',
+  eyebrow:'אדם', title:'ריטה גולניק',
+  keeper:'שום דבר לא יגיע למשפחה עד שהשומר יאשר.',
+  keeperRole:'אתם השומר', contribRole:'אתם מציעים עריכה',
+  who:['ריטה','גולניק'],
+  facet:{ name:'שם', face:'פנים', life:'חיים', places:'מקומות', story:'סיפור', kin:'קרובים', reel:'סרט', more:'עוד' },
+  toldby:'סופר על ידי המשפחה', assembled:'הורכב על ידי האפליקציה', bothpending:'ממתין לשומר',
+  addlang:'שפות נוספות', addfield:'הוספה בשפה הזו',
+  display:'שם לתצוגה', given:'שם פרטי', family:'שם משפחה', maiden:'שם נעורים',
+  nicks:'כינויים ושמות חיבה', addnick:'הוספת כינוי',
+  suggestedNick:'ריטהלה', pendingChip:'ממתין',
+  familyWas:'היה', familyOld:'גולניק', approve:'לאשר', decline:'לדחות', suggesting:'הוצע על ידי מיכאל',
+  faceLine:'התמונות שהיא מופיעה בהן — בחרו את החיתוך שמייצג אותה בכל מקום.', changeface:'החלפת התמונה',
+  taggedIn:'מתויגת ב-6 תמונות', shotCaps:['1998 · חולון','שנות ה-70','1982 · יפו','בערך 1955','1998','2003'],
+  about:'אודות', occupation:'עיסוק', addoccupation:'הוספת עיסוק', langspoken:'שפות',
+  born:'נולדה', precision:'דיוק', prec:['מדויק','חודש','שנה','בערך','לא ידוע'], living:'עדיין בחיים',
+  gender:'מגדר', genderHint:'עוזר לתרגם את שמותיה נכון.', gopts:['היא','הוא','הם','—'],
+  pbirth:'מקום לידה', lived:'מקומות מגורים', addplace:'הוספת בית', mapBadge:'על המפה · תצוגת אדם',
+  placesApp:'ריטה קשורה ל-3 מקומות; המסלול ביניהם משורטט על ידי האפליקציה.',
+  memories:'זיכרונות עליה', addmemory:'הוספת זיכרון', noStory:'עדיין אף אחד לא סיפר את סיפורו של האחר הצהריים הזה.', askSomeone:'שאלו מישהו שאולי זוכר ←',
+  mem1:'האכילה את כל המשפחה ממטבח קטן בחולון — משולחנה אף אחד לא קם רעב.',
+  mem1by:'מיכאל גולניק', mem2:'כל יום שישי לקחה אותנו לחוף לפני שהאור נעלם.', mem2by:'לאוניד גולניק',
+  memPending:'זיכרון חדש ממתין לשומר',
+  relations:'בני משפחה', addkin:'הוספת קשר', kinApp:'האפליקציה מחשבת כיצד כל אחד קשור אליכם.',
+  howrelated:'איך אתם קשורים?', rel:{spouse:'בן/בת זוג', child:'ילד', sibling:'אח/אחות'},
+  reelName:'הסרט של ריטה', reelSub:'חייה, מורכבים מן השאר. נפתח ככל שהפרטים מתמלאים.', watch:'צפייה', reelBar:'שש מתוך שמונה פנים הודלקו',
+  detail:'פרטים ומקורות', dish:'מנת הדגל', dishVal:'פורשמק', adddetail:'הוספת פרט',
+  adddetailsub:'תעדו כל דבר — פתגם, מתכון, עיטור — ומאיפה זה.',
+  detailLabel:'תווית', detailValue:'ערך', source:'מקור או הערה', sourceVal:'ארכיון משפחתי · קופסת גולניק',
+  autotr:'תרגום אוטומטי', tellReal:'לספר באמת',
+  langtitle:'שפה', langsub:'השמות, התוויות והפרטים — לפי השפה שתבחרו.',
+  changefaceSub:'בחרו תמונה שבה היא מתויגת וכווננו את החיתוך העגול. השמירה תישלח לשומר.',
+  zoom:'זום', send:'שליחה לשומר', cancel:'ביטול', sent:'נשלח לשומר — תודה', save:'שמירה',
+  playCta:'שחקו', gameLocked:'הוסיפו סיפור וזה ייפתח', gameScoped:'מותאם לריטה',
+  gameNames:{ whoiswho:'מי זה מי?', crowd:'מצאו אותה בקהל', order:'סדרו את חייה', wherewas:'איפה זה היה?', thread:'החוט הסבוך', whosememory:'של מי הזיכרון?', voice:'הקול החסר' },
+  gameSubs:{ whoiswho:'התאימו את פניה לשם הנכון.', crowd:'מצאו את ריטה בין הנאספים.', order:'סדרו את רגעי חייה.', wherewas:'מקמו את תמונותיה על המפה.', thread:'עקבו אחר הקשר שלה למשפחה.', whosememory:'נחשו מי סיפר כל זיכרון.', voice:'עדיין אין מספיק סיפורים.' },
+  foot:'חיים, מסופרים מעט יותר במלואם.'
+};
+/* ---------- field builders ---------- */
+function mlField(label, vals, L, opts){
+  opts = opts || {};
+  const cur = vals[opts.lang] || '';
+  const others = ['en','ru','he'].filter(l => l !== opts.lang);
+  const rows = others.map(l => `<div class="mlvar ${l==='he'?'rtl':''}"><span class="tag">${l}</span><input class="inp" value="${esc(vals[l]||'')}" placeholder="${L.addfield}"></div>`).join('');
+  const autotr = opts.autotr ? `<div class="autotr">${sv(I.translate,1.5)} ${L.autotr} · <b data-act="tell-real">${L.tellReal}</b></div>` : '';
+  return `<div class="field"><label>${label}</label>
+    <div class="mlrow"><input class="inp name-input" value="${esc(cur)}" ${opts.lang==='he'?'style="direction:rtl;text-align:right"':''} placeholder="${opts.ph||''}">
+      <button class="mladd" data-act="ml">${sv(I.globe2,1.5)} ${L.addlang}</button></div>
+    <div class="mlvars">${rows}</div>${autotr}</div>`;
+}
+function textField(label, val, ph, empty){
+  return `<div class="field"><label>${label}</label><input class="inp ${empty?'empty-inp':''}" value="${esc(val||'')}" placeholder="${esc(ph||'')}"></div>`;
+}
+function fhead(f, L){
+  const cool = f.kind==='cool';
+  const src = cool ? L.assembled : L.toldby;
+  const dot = cool ? 'background:var(--cool);box-shadow:0 0 7px 1px var(--cool)' : 'background:var(--gold);box-shadow:0 0 7px 1px var(--gold)';
+  return `<div class="fhead ${cool?'cool':''}"><span class="fic">${sv(I[f.id])}</span>
+    <div class="ft"><div class="h">${L.facet[f.id]}</div><div class="s"><span class="src-dot" style="${dot}"></span>${src}</div></div></div>`;
+}
+/* ---------- games strip ---------- */
+function gamesHTML(f, L){
+  if(!f.games.length) return '';
+  const rows = f.games.map(gid => {
+    const g = GAMES[gid], locked = g.locked;
+    return `<div class="game ${locked?'locked':''}" ${locked?'':`data-act="game" data-game="${gid}"`}>
+      <span class="gic">${sv(I[g.icon])}</span>
+      <div class="gt"><div class="gn">${L.gameNames[gid]}</div><div class="gs">${locked?L.gameLocked:L.gameSubs[gid]}</div></div>
+      <span class="go">${locked?sv(I.lock,1.7):L.playCta}</span></div>`;
+  }).join('');
+  return `<div class="games">${rows}</div>`;
+}
+
+/* ---------- per-facet bodies (resting-open; places fully expanded) ---------- */
+function bodyFor(f, L, S){
+  const id = f.id, lang = S.lang;
+  if(id==='name'){
+    const familyState = S.keeper
+      ? `<div class="keeperbar"><span class="pending">${sv(I.keeper,1.6)} ${L.suggesting}</span><button class="kbtn ok" data-act="approve">${sv(I.check,2)} ${L.approve}</button><button class="kbtn no" data-act="decline">${L.decline}</button><span class="was">${L.familyWas} <b>${L.familyOld}</b></span></div>`
+      : `<div class="pending"><span class="sp"></span>${L.bothpending}</div>`;
+    return mlField(L.display, NAME.display, L, {lang})
+      + `<div class="field"><label>${L.family}</label><input class="inp" value="${esc(NAME.family[lang])}" style="border-color:rgba(201,162,255,.5)">${familyState}</div>`
+      + mlField(L.given, NAME.given, L, {lang})
+      + `<div class="field"><label>${L.nicks}</label><div class="chips">
+          ${(NICKS[lang]||[]).map(n=>`<span class="chip">${n}<span class="x" data-act="chipx">${sv(I.x,2)}</span></span>`).join('')}
+          <span class="chip pending">${L.suggestedNick}<span class="mono" style="font-size:9px;opacity:.8">· ${L.pendingChip}</span></span>
+          <button class="chip add" data-act="addchip">${sv(I.plus,2)} ${L.addnick}</button></div></div>`;
+  }
+  if(id==='face'){
+    const shots = L.shotCaps.map((c,i)=>`<div class="tagshot"><div class="im">${galSVG(i)}${i===0?'<span class="box" style="left:30%;top:24%;width:34%;height:40%"></span>':''}</div><div class="cap2">${c}</div></div>`).join('');
+    return `<div class="hint" style="margin-top:0;margin-bottom:12px">${L.faceLine}</div>
+      <div class="tagstrip">${shots}</div>
+      <button class="chip add" data-act="changeface" style="margin-top:2px">${sv(I.camera,1.7)} ${L.changeface}</button>
+      ${gamesHTML(f,L)}`;
+  }
+  if(id==='life'){
+    return mlField(L.about, ABOUT, L, {lang, autotr:(lang!=='en')})
+      + textField(L.occupation, '', L.addoccupation, true)
+      + `<div class="row2"><div class="field"><label>${L.born}</label><input class="inp" value="1931"></div>
+         <div class="field"><label>${L.living}</label><div class="toggle" style="height:46px"><span class="sw on" data-act="sw"></span><span style="font-size:14px">${L.living}</span></div></div></div>
+      <div class="field"><label>${L.precision}</label><div class="seg">${L.prec.map((p,i)=>`<button class="${i===2?'on':''}" data-act="seg">${p}</button>`).join('')}</div></div>
+      <div class="field"><label>${L.gender} · <span style="text-transform:none;letter-spacing:0;color:#7f8fa8">${L.genderHint}</span></label>
+        <div class="seg gold">${L.gopts.map((g,i)=>`<button class="${i===0?'on':''}" data-act="seg">${g}</button>`).join('')}</div></div>
+      <div class="field"><label>${L.langspoken}</label><div class="chips"><span class="chip">Русский<span class="x" data-act="chipx">${sv(I.x,2)}</span></span><span class="chip">עברית<span class="x" data-act="chipx">${sv(I.x,2)}</span></span><button class="chip add" data-act="addchip">${sv(I.plus,2)}</button></div></div>
+      ${gamesHTML(f,L)}`;
+  }
+  if(id==='places'){
+    return `<div class="field"><label>${L.pbirth}</label><input class="inp" value="Rybinsk"></div>
+      <div class="field"><label>${L.lived}</label><div class="chips">
+        <span class="chip cool"><span class="ord">01</span>Rybinsk<span class="x" data-act="chipx">${sv(I.x,2)}</span></span>
+        <span class="chip cool"><span class="ord">02</span>Holon<span class="x" data-act="chipx">${sv(I.x,2)}</span></span>
+        <span class="chip cool"><span class="ord">03</span>Tel-Aviv-Yafo<span class="x" data-act="chipx">${sv(I.x,2)}</span></span>
+        <button class="chip add" data-act="addchip">${sv(I.plus,2)} ${L.addplace}</button></div></div>
+      <div class="minimap"><div class="grid"></div>
+        <svg class="thread" viewBox="0 0 320 150" preserveAspectRatio="none"><path d="M60 34 C120 60 150 40 210 96 S280 108 268 120" fill="none" stroke="rgba(243,205,132,.5)" stroke-width="1.5" stroke-dasharray="4 6" stroke-linecap="round"/></svg>
+        <div class="mpin" style="left:19%;top:23%"><div class="dot"></div><div class="ml">Rybinsk</div></div>
+        <div class="mpin" style="left:66%;top:64%"><div class="dot"></div><div class="ml">Holon</div></div>
+        <div class="mpin" style="left:84%;top:80%"><div class="dot"></div><div class="ml">Yafo</div></div>
+        <div class="badge">${L.mapBadge}</div></div>
+      <div class="appfact"><span class="mark">${sv(I.chart,2)}</span><div class="body">${L.placesApp}<span class="src">${L.assembled}</span></div></div>
+      ${gamesHTML(f,L)}`;
+  }
+  if(id==='story'){
+    return `<div class="memory"><div class="words">&ldquo;${L.mem1}&rdquo;</div><div class="told"><span class="flame"></span>${L.toldby.toLowerCase?'':''}<b>${L.mem1by}</b></div></div>
+      <div class="memory" style="border-color:rgba(201,162,255,.34);background:rgba(201,162,255,.06)"><div class="words">&ldquo;${L.mem2}&rdquo;</div>
+        <div class="pending" style="margin-top:10px"><span class="sp"></span>${L.memPending}</div></div>
+      <div class="invite"><div class="words">${L.noStory}</div><div class="cta" data-act="addmemory">${L.askSomeone}</div></div>
+      ${gamesHTML(f,L)}`;
+  }
+  if(id==='kin'){
+    return `<div class="chips">
+        <span class="chip">Efim · ${L.rel.spouse}<span class="x" data-act="chipx">${sv(I.x,2)}</span></span>
+        <span class="chip">Leonid · ${L.rel.child}<span class="x" data-act="chipx">${sv(I.x,2)}</span></span>
+        <span class="chip">Ida · ${L.rel.sibling}<span class="x" data-act="chipx">${sv(I.x,2)}</span></span>
+        <button class="chip add" data-act="addchip">${sv(I.plus,2)} ${L.addkin}</button></div>
+      <div class="appfact"><span class="mark">${sv(I.chart,2)}</span><div class="body">${L.kinApp}<span class="src">${L.assembled}</span></div></div>
+      <button class="chip add" data-act="howrelated" style="margin-top:12px;border-color:rgba(127,180,216,.4);color:var(--cool-hi)">${sv(I.kin,1.7)} ${L.howrelated}</button>`;
+  }
+  if(id==='reel'){
+    return `<div class="reel"><div class="rrow"><div class="rimg"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#0a1422"/><path d="M36 36 L64 50 L36 64 Z" fill="#ffe6ad"/><circle cx="50" cy="50" r="30" fill="none" stroke="#7fb4d8" stroke-width="2" opacity=".5"/></svg></div>
+        <div class="rt"><div class="rn">${L.reelName}</div><div class="rs">${L.reelSub}</div></div><span class="rgo" data-act="watch">${L.watch}</span></div>
+      <div class="bar"><i style="width:75%"></i></div><div class="barlab">${L.reelBar}</div></div>`;
+  }
+  /* more */
+  return `<div class="detailrow"><div><div class="dl">${L.dish}</div><div class="dv">${L.dishVal}</div></div><span class="x" data-act="chipx">${sv(I.x,2)}</span></div>
+    <div class="adddetail"><button class="plus" data-act="adddetail">${sv(I.plus,1.8)} ${L.adddetail}</button></div>
+    <div class="field" style="margin-top:14px"><label>${L.source}</label><input class="inp" value="${esc(L.sourceVal)}"></div>`;
+}
+/* ---------- shells ---------- */
+function facetCard(f, L, S, cls){
+  const wide = (f.id==='places' || f.id==='face' || f.id==='reel') ? ' wide' : '';
+  return `<div class="facet${cls||''}${wide}" data-facet="${f.id}">${fhead(f,L)}<div class="fbody">${bodyFor(f,L,S)}</div></div>`;
+}
+function bead(f, L, variant){
+  const cool = f.kind==='cool';
+  const play = f.games.length ? `<span class="play">${sv(I.play,0)}</span>` : '';
+  const pin = f.id==='name' ? `<span class="pin"></span>` : '';
+  if(variant==='A'){
+    return `<button class="cat ${cool?'cool':''}" data-jump="${f.id}" style="--k:${f.k}" aria-label="${L.facet[f.id]}">
+      <span class="bead">${sv(I[f.id])}${play}${pin}</span><span class="lab">${L.facet[f.id]}</span></button>`;
+  }
+  return `<button class="node ${cool?'cool':''}" data-jump="${f.id}" style="--k:${f.k}" aria-label="${L.facet[f.id]}">${sv(I[f.id])}${play}${pin}</button>`;
+}
+function ringShell(L, S){
+  const cx=154, cy=154, R=126;
+  const beads = FACETS.map((f,i)=>{
+    const a = -Math.PI/2 + i*(Math.PI*2/8);
+    const x = cx + R*Math.cos(a), y = cy + R*Math.sin(a);
+    return `<div style="position:absolute;left:${x}px;top:${y}px;transform:translate(-50%,-50%)">${bead(f,L,'A')}</div>`;
+  }).join('');
+  const cards = FACETS.map(f=>facetCard(f,L,S)).join('');
+  return `<div class="hero">
+      <svg class="ring-svg" viewBox="0 0 308 308"><circle cx="154" cy="154" r="126" fill="none" stroke="rgba(243,205,132,.12)" stroke-width="1"/>
+        <circle cx="154" cy="154" r="126" fill="none" stroke="rgba(243,205,132,.34)" stroke-width="2" stroke-dasharray="1 13" stroke-linecap="round"/></svg>
+      <div class="facewrap"><div class="face">${faceSVG()}<button class="changef" data-act="changeface" aria-label="${L.changeface}">${sv(I.camera,1.6)}</button></div></div>
+      ${beads}
+      <div class="who"><div class="nm serif">${L.who[0]} <em>${L.who[1]}</em></div></div>
+    </div>
+    <div class="variantA"><div class="facets" style="margin-top:52px">${cards}</div></div>
+    <div class="foot"><div class="l">${L.foot}</div></div>`;
+}
+function spineShell(L, S){
+  const rows = FACETS.map(f=>`<div class="node-row"><div class="node-col">${bead(f,L,'B')}</div><div class="node-body">${facetCard(f,L,S,' b')}</div></div>`).join('');
+  return `<div class="seed"><div class="face">${faceSVG()}<button class="changef" data-act="changeface" aria-label="${L.changeface}">${sv(I.camera,1.6)}</button></div>
+      <div class="nm serif">${L.who[0]} <em>${L.who[1]}</em></div></div>
+    <div class="variantB"><div class="spine">${rows}</div></div>
+    <div class="foot"><div class="l">${L.foot}</div></div>`;
+}
+/* ---------- overlays ---------- */
+function toast(inst, msg){
+  const t = inst.root.querySelector('.toast');
+  inst.root.querySelector('.toastmsg').textContent = msg;
+  t.classList.add('show'); clearTimeout(inst._t); inst._t = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+function showSheet(inst, name){
+  inst.root.querySelector('.scrim').classList.add('show');
+  inst.root.querySelector(`[data-sheet="${name}"]`).classList.add('show');
+}
+function hideSheets(inst){
+  inst.root.querySelector('.scrim').classList.remove('show');
+  inst.root.querySelectorAll('.sheet').forEach(s=>s.classList.remove('show'));
+}
+function openLang(inst){ const L=T[inst.state.lang];
+  const sh = inst.root.querySelector('[data-sheet="lang"]');
+  sh.innerHTML = `<div class="grip"></div><h3>${L.langtitle}</h3><div class="sub">${L.langsub}</div>
+    ${Object.keys(T).map(k=>`<button class="lang-opt ${k===inst.state.lang?'on':''}" data-lang="${k}"><span><span class="native">${T[k].native}</span><span class="en" style="display:block">${T[k].label}</span></span><span class="tick">${sv(I.check,2)}</span></button>`).join('')}`;
+  sh.querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>{ inst.state.lang=b.dataset.lang; hideSheets(inst); render(inst); });
+  showSheet(inst,'lang');
+}
+function openFace(inst){ const L=T[inst.state.lang];
+  const sh = inst.root.querySelector('[data-sheet="face"]');
+  const gals = Array.from({length:8},(_,i)=>`<div class="g ${i===0?'on':''}" data-g="${i}">${galSVG(i)}${i===0?'<span class="tagbox" style="left:32%;top:24%;width:34%;height:40%"></span>':''}</div>`).join('');
+  sh.innerHTML = `<div class="grip"></div><h3>${L.changeface}</h3><div class="sub">${L.changefaceSub}</div>
+    <div class="gal">${gals}</div>
+    <div class="cropstage" data-crop><div class="cimg">${galSVG(0)}</div><div class="cmask"></div><div class="cring"></div></div>
+    <div class="zoomrow">${sv(I.zoomout,1.6)}<input type="range" min="100" max="260" value="145" data-zoom>${sv(I.zoomin,1.6)}</div>
+    <div class="btnrow"><button class="btn ghost" data-act="close">${L.cancel}</button><button class="btn violet" data-act="facesave">${L.send}</button></div>`;
+  let z=145,px=50,py=44,drag=false,sx,sy,bx,by;
+  const img = sh.querySelector('.cimg'), st = sh.querySelector('[data-crop]');
+  const apply=()=>{ img.style.position='absolute'; img.style.width='100%'; img.style.height='100%'; img.style.left=px+'%'; img.style.top=py+'%'; img.style.transformOrigin='center'; img.style.transform=`translate(-50%,-50%) scale(${z/100})`; };
+  apply();
+  sh.querySelector('[data-zoom]').oninput=e=>{ z=+e.target.value; apply(); };
+  st.addEventListener('pointerdown',e=>{ drag=true; sx=e.clientX; sy=e.clientY; bx=px; by=py; st.setPointerCapture(e.pointerId); });
+  st.addEventListener('pointermove',e=>{ if(!drag)return; px=bx+(e.clientX-sx)/st.clientWidth*100; py=by+(e.clientY-sy)/st.clientHeight*100; apply(); });
+  st.addEventListener('pointerup',()=>drag=false);
+  sh.querySelectorAll('[data-g]').forEach(g=>g.onclick=()=>{ sh.querySelectorAll('.g').forEach(x=>x.classList.remove('on')); g.classList.add('on'); img.innerHTML=galSVG(+g.dataset.g); apply(); });
+  showSheet(inst,'face');
+}
+function openAdd(inst){ const L=T[inst.state.lang];
+  const sh = inst.root.querySelector('[data-sheet="add"]');
+  const opts=[[I.quote,'“You never left her table hungry.”'],[I.medal,'A medal or honour'],[I.book,'A document or record'],[I.more,'Anything else']];
+  sh.innerHTML = `<div class="grip"></div><h3>${L.adddetail}</h3><div class="sub">${L.adddetailsub}</div>
+    ${opts.map((o,i)=>`<button class="add-opt" data-addopt="${i}"><span class="ic">${sv(o[0],1.6)}</span><span><span class="nm">${o[1]}</span></span></button>`).join('')}
+    <div class="field" data-custom style="display:none;margin-top:8px"><label>${L.detailLabel}</label><input class="inp" placeholder="${L.detailLabel}" style="margin-bottom:10px"><label>${L.detailValue}</label><input class="inp" placeholder="${L.detailValue}">
+      <div class="btnrow"><button class="btn ghost" data-act="close">${L.cancel}</button><button class="btn violet" data-act="addsend">${L.send}</button></div></div>`;
+  sh.querySelectorAll('[data-addopt]').forEach(b=>b.onclick=()=>{ sh.querySelector('[data-custom]').style.display='block'; });
+  showSheet(inst,'add');
+}
+function openGame(inst, gid){ const L=T[inst.state.lang];
+  const g = GAMES[gid], sh = inst.root.querySelector('[data-sheet="game"]');
+  sh.innerHTML = `<div class="grip"></div><div class="gamehero"><div class="tone"></div>${sv(I[g.icon],1.4)}</div>
+    <h3>${L.gameNames[gid]}</h3><div class="sub">${L.gameSubs[gid]}</div>
+    <div class="pending" style="margin-top:0;margin-bottom:14px;background:rgba(243,205,132,.08);border-color:rgba(243,205,132,.3);color:var(--gold-hi)">${sv(I.play,0)} ${L.gameScoped}</div>
+    <div class="btnrow"><button class="btn ghost" data-act="close">${L.cancel}</button><button class="btn primary" data-act="close">${L.playCta}</button></div>`;
+  showSheet(inst,'game');
+}
+/* ---------- render + wiring ---------- */
+function render(inst){
+  const L = T[inst.state.lang];
+  const screen = inst.root.querySelector('.screen');
+  screen.setAttribute('dir', L.dir);
+  inst.root.querySelector('.topbar').innerHTML = `<button class="ibtn" aria-label="Back">${sv(I.back)}</button>
+    <div class="ttl"><div class="k">${L.eyebrow}</div><div class="n serif">${NAME.display[inst.state.lang]}</div></div>
+    <button class="rolechip" data-act="role">${sv(I.keeper,1.6)} ${inst.state.keeper?L.keeperRole:L.contribRole}</button>
+    <button class="ibtn" data-act="lang" aria-label="${L.langtitle}">${sv(I.globe,1.5)}</button>`;
+  inst.root.querySelector('.keeper-note').innerHTML = `${sv(I.keeper,1.5)}<span>${L.keeper}</span>`;
+  inst.root.querySelector('.pad').innerHTML = inst.variant==='A' ? ringShell(L, inst.state) : spineShell(L, inst.state);
+}
+
+function jump(inst, fid){
+  const screen = inst.root.querySelector('.screen');
+  const card = inst.root.querySelector(`.facet[data-facet="${fid}"]`);
+  if(!card) return;
+  const top = card.getBoundingClientRect().top - screen.getBoundingClientRect().top + screen.scrollTop - 12;
+  screen.scrollTo({ top, behavior: reduceMotion?'auto':'smooth' });
+  card.querySelectorAll('.fhead').forEach(()=>{});
+  card.style.transition='box-shadow .5s'; card.style.boxShadow='0 0 0 1px rgba(243,205,132,.5), 0 0 34px -8px rgba(243,205,132,.5)';
+  setTimeout(()=>card.style.boxShadow='', 1100);
+}
+
+function wire(inst){
+  inst.root.addEventListener('click', e=>{
+    const L = T[inst.state.lang];
+    const jt = e.target.closest('[data-jump]'); if(jt){ jump(inst, jt.dataset.jump); return; }
+    const a = e.target.closest('[data-act]'); if(!a) return;
+    const act = a.dataset.act;
+    if(act==='lang') return openLang(inst);
+    if(act==='role'){ inst.state.keeper=!inst.state.keeper; render(inst); return; }
+    if(act==='changeface') return openFace(inst);
+    if(act==='adddetail') return openAdd(inst);
+    if(act==='game') return openGame(inst, a.dataset.game);
+    if(act==='close'){ hideSheets(inst); return; }
+    if(act==='facesave'){ hideSheets(inst); toast(inst, L.sent); return; }
+    if(act==='addsend'){ hideSheets(inst); toast(inst, L.sent); return; }
+    if(act==='ml'){ const v=a.parentElement.parentElement.querySelector('.mlvars'); if(v) v.classList.toggle('open'); return; }
+    if(act==='sw'){ a.classList.toggle('on'); return; }
+    if(act==='seg'){ [...a.parentElement.children].forEach(x=>x.classList.remove('on')); a.classList.add('on'); return; }
+    if(act==='chipx'){ const c=a.closest('.chip,.detailrow'); if(c){ c.style.transition='opacity .2s,transform .2s'; c.style.opacity='0'; c.style.transform='scale(.9)'; setTimeout(()=>c.remove(),200);} return; }
+    if(act==='approve'){ const fld=a.closest('.field'); if(fld){ const inp=fld.querySelector('.inp'); if(inp) inp.style.borderColor='rgba(243,205,132,.55)'; const kb=fld.querySelector('.keeperbar'); if(kb) kb.remove(); } toast(inst, L.approve+' ✓'); return; }
+    if(act==='decline'){ const kb=a.closest('.keeperbar'); if(kb) kb.remove(); toast(inst, L.decline); return; }
+    if(act==='addchip'||act==='addmemory'||act==='watch'||act==='howrelated'||act==='tell-real'){ toast(inst, act==='tell-real'?L.tellReal:(act==='watch'?L.watch:L.sent)); return; }
+  });
+  inst.root.querySelector('.scrim').addEventListener('click', ()=>hideSheets(inst));
+  inst.toggleBtn.addEventListener('click', ()=>{
+    inst.tablet=!inst.tablet; inst.root.classList.toggle('tablet',inst.tablet);
+    inst.toggleBtn.innerHTML = inst.tablet ? '&#8596; preview mobile width' : '&#8596; preview tablet width';
+  });
+}
+
+/* ---------- atmosphere ---------- */
+function atmosphere(canvas){
+  const kind = canvas.dataset.atmo, ctx = canvas.getContext('2d');
+  let W,H,DPR=Math.min(2,window.devicePixelRatio||1);
+  const COL=[[143,214,160],[243,205,132],[127,180,216],[201,162,255]];
+  let items=[];
+  function build(){
+    items=[];
+    if(kind==='vines'){
+      const k=Math.max(3,Math.round(W/120));
+      for(let i=0;i<k;i++){ const pts=[]; let x=(i+.5)/k+(Math.random()-.5)*.12, y=1.05, ang=-Math.PI/2+(Math.random()-.5)*.4; const n=(Math.random()*5|0)+7;
+        for(let j=0;j<n;j++){ pts.push({x,y}); ang+=(Math.random()-.5)*.6; const st=.07+Math.random()*.05; x+=Math.cos(ang)*st*.5; y+=Math.sin(ang)*st; }
+        items.push({pts, c:COL[Math.random()*COL.length|0], grow:0, gspd:.0009+Math.random()*.0008, sway:Math.random()*6.28, buds:pts.map(()=>Math.random()>.55)}); }
+    } else {
+      const k=Math.max(24,Math.round(W*H/9000));
+      for(let i=0;i<k;i++) items.push({x:Math.random(),y:Math.random(),r:Math.random()*1.6+.6,c:COL[Math.random()*COL.length|0],sp:.008+Math.random()*.02,drift:Math.random()*6.28,amp:.01+Math.random()*.03,ph:Math.random()*6.28});
+    }
+  }
+  function resize(){ W=canvas.clientWidth; H=canvas.clientHeight; canvas.width=W*DPR; canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); build(); }
+  new ResizeObserver(resize).observe(canvas); resize();
+  function frame(now){ const t=(now||0)/1000; ctx.clearRect(0,0,W,H); ctx.globalCompositeOperation='lighter';
+    if(kind==='vines'){
+      items.forEach(v=>{ if(!reduceMotion && v.grow<1) v.grow+=v.gspd; const g=reduceMotion?1:v.grow, seg=(v.pts.length-1)*g, last=Math.floor(seg), frac=seg-last;
+        const P=k=>({x:(v.pts[k].x+(reduceMotion?0:Math.sin(t*.2+k*.5+v.sway)*.006*(k/v.pts.length)))*W, y:v.pts[k].y*H});
+        ctx.strokeStyle=`rgba(${v.c[0]},${v.c[1]},${v.c[2]},.16)`; ctx.lineWidth=1.4; ctx.beginPath();
+        for(let i=0;i<=last;i++){ const p=P(i); i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y); }
+        if(last<v.pts.length-1){ const a=P(last),b=P(last+1); ctx.lineTo(a.x+(b.x-a.x)*frac,a.y+(b.y-a.y)*frac); } ctx.stroke();
+        for(let i=0;i<=last;i++){ if(!v.buds[i])continue; const p=P(i); const tw=reduceMotion?.7:.4+.6*(.5+.5*Math.sin(t*1.2+i+v.sway)); const R=6+(i===v.pts.length-1?4:0);
+          const gr=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,R); gr.addColorStop(0,`rgba(${v.c[0]},${v.c[1]},${v.c[2]},${.5*tw})`); gr.addColorStop(1,`rgba(${v.c[0]},${v.c[1]},${v.c[2]},0)`);
+          ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(p.x,p.y,R,0,6.283); ctx.fill();
+          ctx.fillStyle=`rgba(255,250,236,${.7*tw})`; ctx.beginPath(); ctx.arc(p.x,p.y,1.3,0,6.283); ctx.fill(); } });
+    } else {
+      items.forEach(m=>{ if(!reduceMotion) m.y-=m.sp/60*3; if(m.y<-.05) m.y=1.05;
+        const x=(m.x + (reduceMotion?0:Math.sin(t*.4+m.drift)*m.amp))*W, y=m.y*H;
+        const tw=reduceMotion?.7:.45+.55*(.5+.5*Math.sin(t*1.1+m.ph)); const R=m.r*4;
+        const gr=ctx.createRadialGradient(x,y,0,x,y,R); gr.addColorStop(0,`rgba(${m.c[0]},${m.c[1]},${m.c[2]},${.5*tw})`); gr.addColorStop(1,`rgba(${m.c[0]},${m.c[1]},${m.c[2]},0)`);
+        ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(x,y,R,0,6.283); ctx.fill();
+        ctx.fillStyle=`rgba(255,250,236,${.6*tw})`; ctx.beginPath(); ctx.arc(x,y,m.r,0,6.283); ctx.fill(); });
+    }
+    ctx.globalCompositeOperation='source-over'; if(!reduceMotion) requestAnimationFrame(frame);
+  }
+  if(!reduceMotion) requestAnimationFrame(frame); else frame(0);
+}
+
+/* ---------- mount ---------- */
+function mount(rootId, variant){
+  const root = document.getElementById(rootId);
+  const inst = { root, variant, tablet:false, state:{ lang:'en', keeper:true } };
+  inst.toggleBtn = root.parentElement.querySelector('[data-toggle]');
+  render(inst); wire(inst); atmosphere(root.querySelector('.atmo'));
+}
+mount('devA','A');
+mount('devB','B');
+/*__APP__*/
+</script>
+</body>
+</html>

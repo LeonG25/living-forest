@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>A Moment — The Living Forest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="image-slot.js"></script>
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body{ background:#04070e; }
+  :root{
+    --cream:#f4ecdb; --muted:#9db0cc; --hair:#ffffff1c; --panel:#ffffff0d;
+    --gold:#f3cd84; --gold-hi:#ffe6ad; --cool:#7fb4d8; --cool-hi:#a9d2ee;
+    --edit:#c9a2ff;                          /* suggestion / pending accent */
+  }
+  body{
+    font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--cream);
+    min-height:100dvh; overflow-x:hidden;
+    background:radial-gradient(130% 100% at 50% 0%, #0d1a2f 0%, #081120 48%, #04070e 100%);
+    -webkit-user-select:none; user-select:none;
+  }
+  .serif{ font-family:'Newsreader',Georgia,serif; }
+  .mono{ font-family:'Azeret Mono',ui-monospace,monospace; }
+  [dir="rtl"] .serif, [dir="rtl"] .story-words{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
+
+  /* ===== the moving colour: aurora + bokeh field ===== */
+  #atmo{ position:fixed; inset:0; z-index:0; width:100%; height:100%; display:block; }
+  .atmo-veil{ position:fixed; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(115% 80% at 50% 34%, transparent 30%, rgba(4,7,14,.55) 100%),
+              linear-gradient(to bottom, rgba(4,7,14,.28), transparent 26%, transparent 62%, rgba(4,7,14,.82)); }
+
+  .wrap{ position:relative; z-index:2; width:100%; max-width:440px; margin:0 auto;
+    padding:0 22px calc(60px + env(safe-area-inset-bottom)); }
+
+  /* ===== top bar ===== */
+  .topbar{ display:flex; align-items:center; gap:10px; padding:max(14px,env(safe-area-inset-top)) 0 8px; }
+  .icon-btn{ width:42px; height:42px; border-radius:13px; border:1px solid var(--hair);
+    background:rgba(8,17,30,.5); backdrop-filter:blur(10px); color:var(--cream);
+    display:grid; place-items:center; cursor:pointer; flex:0 0 auto; transition:border-color .2s,background .2s; }
+  .icon-btn:hover{ border-color:rgba(255,255,255,.32); }
+  .icon-btn:focus-visible{ outline:2px solid var(--cool-hi); outline-offset:2px; }
+  .icon-btn svg{ width:19px; height:19px; }
+  .crumb{ flex:1; min-width:0; text-align:center; }
+  .crumb .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.28em; text-transform:uppercase; color:var(--muted); }
+
+  /* ===== HERO: the held, surfacing photograph ===== */
+  .stage{ margin-top:12px; position:relative; }
+  .frame{ position:relative; border-radius:13px; padding:0;
+    background:none;
+    border:1px solid rgba(255,244,214,.92);
+    box-shadow:0 0 22px -2px rgba(255,232,180,.65), 0 0 60px -8px rgba(243,205,132,.5), 0 30px 90px -46px #000; }
+  /* candlelight pooling from behind the frame */
+  .frame::before{ content:""; position:absolute; inset:-14% -8% -20% -8%; z-index:-1; border-radius:40px;
+    background:radial-gradient(60% 55% at 50% 44%, rgba(243,205,132,.5), rgba(243,205,132,.12) 45%, transparent 72%);
+    filter:blur(26px); opacity:.9; animation:breathe 7s ease-in-out infinite; }
+  @keyframes breathe{ 0%,100%{opacity:.62; transform:scale(1);} 50%{opacity:1; transform:scale(1.05);} }
+  .photo{ position:relative; border-radius:12px; overflow:hidden; background:#0a1120;
+    /* natural shape: never crop a portrait — height led by the image, capped to viewport */
+    display:block; }
+  .photo image-slot{ display:block; width:100%; }
+  .yearstamp{ position:absolute; top:20px; z-index:4; inset-inline-end:20px;
+    display:inline-flex; align-items:center; gap:7px; padding:6px 11px; border-radius:9px;
+    background:rgba(6,16,28,.62); backdrop-filter:blur(8px); border:1px solid rgba(127,180,216,.4); }
+  .yearstamp .d{ width:5px; height:5px; border-radius:50%; background:var(--cool); box-shadow:0 0 8px 1px var(--cool); }
+  .yearstamp .y{ font-family:'Azeret Mono',monospace; font-size:12px; letter-spacing:.12em; color:var(--cool-hi); }
+
+  /* the surfacing reveal — image resolves out of the dark, like remembering */
+  .surface{ opacity:0; filter:blur(16px) brightness(.5) saturate(.6); transform:scale(1.04);
+    transition:opacity 1.5s ease, filter 1.9s ease, transform 2.1s cubic-bezier(.16,.8,.28,1); }
+  .surface.up{ opacity:1; filter:blur(0) brightness(1) saturate(1); transform:scale(1); }
+  .reveal{ opacity:0; transform:translateY(14px); transition:opacity .9s ease, transform 1s cubic-bezier(.16,.8,.28,1); }
+  .reveal.up{ opacity:1; transform:none; }
+
+  /* ===== section rhythm ===== */
+  .sec{ margin-top:34px; }
+  .sec-h{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .sec-h .lp{ width:7px; height:7px; border-radius:2px; transform:rotate(45deg); flex:0 0 auto; }
+  .sec-h .t{ font-family:'Azeret Mono',monospace; font-size:10.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); }
+
+  /* ===== IN THIS MOMENT — faces (gold, human) ===== */
+  .faces{ display:flex; gap:15px; overflow-x:auto; padding-bottom:6px; margin-inline:-22px; padding-inline:22px; scrollbar-width:none; }
+  .faces::-webkit-scrollbar{ display:none; }
+  .face{ flex:0 0 auto; width:74px; text-align:center; cursor:pointer; background:none; border:none; color:inherit; }
+  .face .node{ position:relative; width:66px; height:66px; margin:0 auto; }
+  .face .crop{ position:absolute; inset:4px; border-radius:50%; overflow:hidden;
+    border:1.5px solid rgba(243,205,132,.6); box-shadow:0 0 16px -2px rgba(243,205,132,.5); }
+  .face .crop svg{ width:100%; height:100%; display:block; }
+  .face .fn{ font-family:'Newsreader',serif; font-size:13.5px; margin-top:8px; color:var(--cream); line-height:1.12; }
+  .face:focus-visible .crop{ outline:2px solid var(--gold-hi); outline-offset:2px; }
+  .face.unnamed .crop{ border-style:dashed; border-color:rgba(243,205,132,.5); box-shadow:none; }
+  .face.unnamed .fn{ color:var(--gold); font-style:italic; font-family:'Newsreader',serif; }
+  .face .editdot{ position:absolute; inset-block-start:-2px; inset-inline-end:-2px; width:20px; height:20px; border-radius:50%;
+    background:var(--edit); color:#1a0f2e; display:none; place-items:center; box-shadow:0 0 0 3px #081120; }
+  .face .editdot svg{ width:11px; height:11px; }
+  body.editing .face .editdot{ display:grid; }
+  body.editing .face .crop{ border-color:var(--edit); }
+
+  /* ===== THE STORY — the heart (gold, human) ===== */
+  .story{ position:relative; }
+  .quotemark{ font-family:'Newsreader',serif; font-size:70px; line-height:.6; color:rgba(243,205,132,.4);
+    display:block; height:34px; }
+  .story-words{ font-family:'Newsreader',serif; font-weight:300; font-style:italic; font-size:24px; line-height:1.42;
+    color:#f7edda; text-wrap:pretty; }
+  .story-words .word{ display:inline; opacity:0; filter:blur(6px); transition:opacity .5s ease, filter .6s ease; }
+  .story-words.lit .word{ opacity:1; filter:blur(0); }
+  .told{ margin-top:18px; display:flex; align-items:center; gap:9px; }
+  .told .flame{ width:8px; height:8px; border-radius:50%; background:var(--gold);
+    box-shadow:0 0 10px 2px rgba(243,205,132,.8); flex:0 0 auto; animation:flick 3.4s ease-in-out infinite; }
+  @keyframes flick{ 0%,100%{opacity:.7; transform:scale(.9);} 45%{opacity:1; transform:scale(1.12);} 70%{opacity:.85;} }
+  .told .txt{ font-size:13px; color:var(--gold); }
+  .told .txt b{ font-weight:600; color:var(--gold-hi); }
+
+  /* machine-translation banner — visually distinct, never dressed as a human voice */
+  .autobar{ margin-top:16px; border-radius:13px; padding:13px 15px;
+    background:repeating-linear-gradient(135deg, rgba(127,180,216,.10) 0 10px, rgba(127,180,216,.05) 10px 20px);
+    border:1px dashed rgba(127,180,216,.5); }
+  .autobar .h{ display:flex; align-items:center; gap:8px; font-family:'Azeret Mono',monospace; font-size:9.5px;
+    letter-spacing:.18em; text-transform:uppercase; color:var(--cool-hi); }
+  .autobar .h svg{ width:13px; height:13px; }
+  .autobar .m{ margin-top:9px; font-family:'Hanken Grotesk',sans-serif; font-style:normal; font-weight:400;
+    font-size:16px; line-height:1.5; color:#cfe0f2; }
+  [dir="rtl"] .autobar .m{ font-family:'Hanken Grotesk',sans-serif; }
+  .autobar .cta{ margin-top:11px; display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:var(--gold); font-weight:600; cursor:pointer; }
+
+  /* ===== THE FACTS (cool blue, app-assembled) ===== */
+  .facts{ display:flex; flex-direction:column; gap:10px; }
+  .fact{ display:flex; align-items:center; gap:13px; padding:14px 15px; border-radius:14px;
+    background:rgba(10,20,34,.5); border:1px solid var(--hair); text-align:start; width:100%;
+    color:inherit; cursor:default; }
+  .fact.link{ cursor:pointer; }
+  .fact .fi{ width:34px; height:34px; border-radius:9px; flex:0 0 auto; display:grid; place-items:center;
+    background:rgba(127,180,216,.12); border:1px solid rgba(127,180,216,.3); }
+  .fact .fi svg{ width:16px; height:16px; color:var(--cool); }
+  .fact .fk{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:rgba(127,180,216,.7); }
+  .fact .fv{ font-family:'Newsreader',serif; font-size:18px; color:#e7f0fa; margin-top:2px; }
+  .fact .chev{ margin-inline-start:auto; color:rgba(127,180,216,.6); }
+  .fact .chev svg{ width:16px; height:16px; }
+  [dir="rtl"] .fact .chev svg{ transform:scaleX(-1); }
+  .facts-src{ margin-top:10px; display:flex; align-items:center; gap:7px; font-family:'Azeret Mono',monospace;
+    font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:rgba(127,180,216,.45); }
+  .facts-src::before{ content:""; width:5px; height:5px; border-radius:50%; background:var(--cool); box-shadow:0 0 7px 1px var(--cool); }
+  body.editing .fact{ border-color:var(--edit); cursor:pointer; }
+  body.editing .fact .chev{ color:var(--edit); }
+  body.editing .fact.link .chev svg,
+  body.editing .fact:not(.link) .chev{ }
+
+  /* pending "waiting for the keeper" chip */
+  .pending{ margin-top:9px; display:none; align-items:center; gap:8px; font-size:12px; color:var(--edit);
+    padding:7px 11px; border-radius:9px; background:rgba(201,162,255,.1); border:1px solid rgba(201,162,255,.32); }
+  .pending.show{ display:inline-flex; }
+  .pending .sp{ width:12px; height:12px; border-radius:50%; border:2px solid rgba(201,162,255,.35); border-top-color:var(--edit); animation:spin 1s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  /* ===== "suggest an edit" ribbon in edit mode ===== */
+  .editbanner{ position:sticky; top:8px; z-index:6; margin-top:8px; display:none; align-items:center; gap:11px;
+    padding:12px 15px; border-radius:14px; background:rgba(28,18,46,.72); backdrop-filter:blur(12px);
+    border:1px solid rgba(201,162,255,.4); box-shadow:0 16px 40px -20px #000; }
+  body.editing .editbanner{ display:flex; }
+  .editbanner .ei{ width:30px; height:30px; border-radius:8px; background:rgba(201,162,255,.16); display:grid; place-items:center; flex:0 0 auto; }
+  .editbanner .ei svg{ width:16px; height:16px; color:var(--edit); }
+  .editbanner .et{ flex:1; min-width:0; }
+  .editbanner .et .a{ font-family:'Newsreader',serif; font-size:15px; color:#efe6ff; }
+  .editbanner .et .b{ font-size:11.5px; color:#b6a8cf; margin-top:1px; }
+  .editbanner .done{ font-family:'Hanken Grotesk',sans-serif; font-size:12px; font-weight:600; color:#1a0f2e;
+    background:linear-gradient(180deg,#ddc6ff,var(--edit)); border:none; border-radius:99px; padding:9px 15px; cursor:pointer; }
+
+  .foot{ margin-top:40px; text-align:center; }
+  .foot .leaf{ font-family:'Newsreader',serif; font-style:italic; font-size:14px; color:rgba(127,180,216,.6); }
+
+  /* ===== overlays (language menu, editor sheet) ===== */
+  .scrim{ position:fixed; inset:0; z-index:30; background:rgba(4,7,14,.62); backdrop-filter:blur(4px);
+    opacity:0; pointer-events:none; transition:opacity .28s ease; }
+  .scrim.show{ opacity:1; pointer-events:auto; }
+  .sheet{ position:fixed; z-index:31; inset-inline:0; bottom:0; margin:0 auto; width:100%; max-width:440px;
+    background:linear-gradient(180deg, #0e1c31, #081120); border:1px solid var(--hair); border-bottom:none;
+    border-radius:22px 22px 0 0; padding:10px 20px calc(24px + env(safe-area-inset-bottom));
+    transform:translateY(102%); transition:transform .34s cubic-bezier(.16,.8,.28,1);
+    box-shadow:0 -24px 70px -30px #000; }
+  .sheet.show{ transform:translateY(0); }
+  .sheet .grip{ width:40px; height:4px; border-radius:99px; background:rgba(255,255,255,.2); margin:6px auto 16px; }
+  .sheet h3{ font-family:'Newsreader',serif; font-weight:400; font-size:21px; color:#fbf5e8; margin-bottom:4px; }
+  .sheet .sub{ font-size:12.5px; color:var(--muted); margin-bottom:16px; line-height:1.45; }
+
+  .lang-opt{ display:flex; align-items:center; gap:14px; width:100%; padding:14px 15px; border-radius:14px;
+    background:var(--panel); border:1px solid var(--hair); color:var(--cream); cursor:pointer; margin-bottom:9px; text-align:start; }
+  .lang-opt:hover{ border-color:rgba(255,255,255,.3); }
+  .lang-opt.on{ border-color:rgba(243,205,132,.55); background:rgba(243,205,132,.08); }
+  .lang-opt .native{ font-family:'Newsreader',serif; font-size:18px; }
+  .lang-opt .en{ font-size:11.5px; color:var(--muted); margin-top:1px; }
+  .lang-opt .tick{ margin-inline-start:auto; color:var(--gold); opacity:0; }
+  .lang-opt.on .tick{ opacity:1; }
+  .lang-opt .tick svg{ width:18px; height:18px; }
+
+  /* editor sheet fields */
+  .ed-field label{ display:block; font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+  .ed-field textarea, .ed-field input{ width:100%; background:rgba(6,14,26,.7); border:1px solid var(--hair);
+    border-radius:13px; padding:14px; color:var(--cream); font-family:'Newsreader',serif; font-size:17px; line-height:1.45;
+    resize:vertical; }
+  .ed-field textarea:focus, .ed-field input:focus{ outline:none; border-color:rgba(201,162,255,.6); }
+  .ed-langtag{ display:inline-flex; align-items:center; gap:7px; font-family:'Azeret Mono',monospace; font-size:9px;
+    letter-spacing:.16em; text-transform:uppercase; color:var(--edit); margin-bottom:14px;
+    padding:5px 9px; border-radius:8px; background:rgba(201,162,255,.1); border:1px solid rgba(201,162,255,.3); }
+  .ed-note{ margin-top:14px; font-size:12px; color:var(--muted); line-height:1.5; display:flex; gap:9px; }
+  .ed-note svg{ width:15px; height:15px; color:var(--edit); flex:0 0 auto; margin-top:1px; }
+  .ed-actions{ margin-top:18px; display:flex; gap:10px; }
+  .btn{ flex:1; padding:14px; border-radius:13px; font-family:'Hanken Grotesk',sans-serif; font-size:14px; font-weight:600; cursor:pointer; border:1px solid transparent; }
+  .btn.ghost{ background:transparent; border-color:var(--hair); color:var(--cream); }
+  .btn.primary{ background:linear-gradient(180deg,#ddc6ff,var(--edit)); color:#1a0f2e; }
+  .btn:focus-visible{ outline:2px solid var(--cool-hi); outline-offset:2px; }
+
+  /* toast */
+  .toast{ position:fixed; z-index:40; left:50%; transform:translate(-50%,20px); bottom:calc(22px + env(safe-area-inset-bottom));
+    display:flex; align-items:center; gap:10px; padding:13px 18px; border-radius:99px;
+    background:rgba(28,18,46,.9); backdrop-filter:blur(12px); border:1px solid rgba(201,162,255,.45);
+    color:#efe6ff; font-size:13.5px; opacity:0; pointer-events:none; transition:opacity .3s ease, transform .3s ease;
+    box-shadow:0 18px 44px -18px #000; max-width:calc(100% - 36px); }
+  .toast.show{ opacity:1; transform:translate(-50%,0); }
+  .toast .flame{ width:8px; height:8px; border-radius:50%; background:var(--edit); box-shadow:0 0 10px 2px var(--edit); flex:0 0 auto; }
+
+  @media (prefers-reduced-motion: reduce){
+    .frame::before,.told .flame{ animation:none !important; }
+    .surface{ transition:opacity .01s; filter:none !important; transform:none !important; }
+    .story-words .word{ transition:none; }
+  }
+</style>
+</head>
+<body>
+  <template id="__bundler_thumbnail" data-bg-color="#04070e">
+    <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+      <rect x="360" y="180" width="480" height="440" rx="18" fill="#0a1120" stroke="#ffe6ad" stroke-width="4"/>
+      <circle cx="300" cy="260" r="7" fill="#67c7d8"/>
+      <circle cx="920" cy="360" r="7" fill="#ffcf7e"/>
+      <circle cx="820" cy="600" r="6" fill="#67c7d8"/>
+      <path d="M300 260 Q560 120 920 360" fill="none" stroke="#67c7d8" stroke-opacity=".3" stroke-width="2"/>
+      <path d="M920 360 Q900 520 820 600" fill="none" stroke="#ffcf7e" stroke-opacity=".3" stroke-width="2"/>
+    </svg>
+  </template>
+  <canvas id="atmo" aria-hidden="true"></canvas>
+  <div class="atmo-veil"></div>
+
+  <main class="wrap" id="wrap"><!--PAGE--></main>
+
+  <!-- overlays -->
+  <div class="scrim" id="scrim"></div>
+  <section class="sheet" id="langSheet" role="dialog" aria-modal="true" aria-label="Language"><!--LANG--></section>
+  <section class="sheet" id="editSheet" role="dialog" aria-modal="true" aria-label="Suggest an edit"><!--EDIT--></section>
+  <div class="toast" id="toast"><span class="flame"></span><span id="toastMsg"></span></div>
+
+  <script>
+  (function(){
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const $=s=>document.querySelector(s);
+
+    /* =========================================================
+       THE MOMENT — content authored per language.
+       story.kind: 'human'  -> gold, someone's own words (+ told by)
+                   'machine'-> cool, clearly auto-translated, invites a human telling
+       ========================================================= */
+    const PEOPLE = [
+      { id:'rita',    en:'Rita',    ru:'Рита',    he:'ריטה',    seed:'Rita Golnick' },
+      { id:'efim',    en:'Efim',    ru:'Ефим',    he:'אפים',    seed:'Efim Golnick' },
+      { id:'leonid',  en:'Leonid',  ru:'Леонид',  he:'לאוניד',  seed:'Leonid Golnick' },
+      { id:'ida',     en:'Ida',     ru:'Ида',     he:'אידה',    seed:'Ida Tserlina' },
+      { id:'unknown', en:null,      ru:null,      he:null,      seed:'Unknown Face' },
+    ];
+    const DATA = {
+      en:{ dir:'ltr', label:'English', native:'English',
+        crumb:'A moment', region:'Tel-Aviv-Yafo · the summer of 1992',
+        inMoment:'In this moment', addName:'Add a name',
+        storyH:'The story', factsH:'Where & when',
+        story:{ kind:'human', teller:'Leonid Golnick',
+          text:'We\u2019d walk down to the sea after Shabbat lunch \u2014 the whole family, sandals slapping the hot pavement. Grandmother Rita always walked last, so that no one would be left behind.' },
+        toldBy:'told by', whereK:'Where', whenK:'When', where:'Tel-Aviv-Yafo', when:'The summer of 1992',
+        factsSrc:'Assembled by The Living Forest',
+        suggest:'Suggest an edit', edA:'You\u2019re suggesting an edit',
+        edB:'Tap anything to change it. Nothing reaches the family until the keeper approves.', done:'Done',
+        langTitle:'Language', langSub:'Names, labels, and the story all follow the language you choose.',
+        autoHdr:'Auto-translated · not a person\u2019s words', autoCta:'Add the telling in English \u2192',
+        sendKeeper:'Send to the keeper', cancel:'Cancel', waiting:'Waiting for the keeper',
+        sent:'Sent to the keeper', keeperNote:'Nothing reaches the family until the keeper approves it.',
+        edStory:'The story, in your words', edName:'The person\u2019s name', edWhere:'Where it happened', edWhen:'When it happened',
+        edPhotoT:'Replace the photograph', edPhotoN:'Drag a new photo onto the frame to suggest it in place of this one.',
+        leaf:'One afternoon, kept.' },
+      ru:{ dir:'ltr', label:'Russian', native:'Русский',
+        crumb:'Момент', region:'Тель-Авив-Яффо · лето 1992 года',
+        inMoment:'В этот момент', addName:'Добавить имя',
+        storyH:'История', factsH:'Где и когда',
+        story:{ kind:'human', teller:'Леонид Гольник',
+          text:'После субботнего обеда мы всей семьёй шли к морю \u2014 сандалии шлёпали по горячему асфальту. Бабушка Рита всегда шла последней, чтобы никто не потерялся.' },
+        toldBy:'рассказал', whereK:'Где', whenK:'Когда', where:'Тель-Авив-Яффо', when:'Лето 1992 года',
+        factsSrc:'Собрано приложением The Living Forest',
+        suggest:'Предложить правку', edA:'Вы предлагаете правку',
+        edB:'Коснитесь чего угодно, чтобы изменить. Ничто не дойдёт до семьи, пока хранитель не одобрит.', done:'Готово',
+        langTitle:'Язык', langSub:'Имена, подписи и история — всё на выбранном вами языке.',
+        autoHdr:'Автоперевод · не слова человека', autoCta:'Добавить рассказ по-русски \u2192',
+        sendKeeper:'Отправить хранителю', cancel:'Отмена', waiting:'Ожидает хранителя',
+        sent:'Отправлено хранителю', keeperNote:'Ничто не дойдёт до семьи, пока хранитель не одобрит.',
+        edStory:'История, вашими словами', edName:'Имя человека', edWhere:'Где это было', edWhen:'Когда это было',
+        edPhotoT:'Заменить фотографию', edPhotoN:'Перетащите новое фото на рамку, чтобы предложить его вместо этого.',
+        leaf:'Один сохранённый день.' },
+      he:{ dir:'rtl', label:'Hebrew', native:'עברית',
+        crumb:'רגע', region:'תל אביב-יפו · קיץ 1992',
+        inMoment:'ברגע הזה', addName:'הוספת שם',
+        storyH:'הסיפור', factsH:'איפה ומתי',
+        story:{ kind:'machine',
+          text:'אחרי ארוחת הצהריים של שבת היינו הולכים אל הים \u2014 כל המשפחה, הסנדלים מכים על המדרכה החמה. סבתא ריטה תמיד הלכה אחרונה, כדי שאף אחד לא יישאר מאחור.' },
+        toldBy:'מפי', whereK:'איפה', whenK:'מתי', where:'תל אביב-יפו', when:'קיץ 1992',
+        factsSrc:'נאסף על ידי היער החי',
+        suggest:'הצעת עריכה', edA:'אתם מציעים עריכה',
+        edB:'געו בכל דבר כדי לשנות אותו. שום דבר לא יגיע למשפחה עד שהשומר יאשר.', done:'סיום',
+        langTitle:'שפה', langSub:'השמות, התוויות והסיפור — הכול לפי השפה שתבחרו.',
+        autoHdr:'תרגום אוטומטי · לא מילים של אדם', autoCta:'הוסיפו את הסיפור בעברית \u2192',
+        sendKeeper:'שליחה לשומר', cancel:'ביטול', waiting:'ממתין לשומר',
+        sent:'נשלח לשומר', keeperNote:'שום דבר לא יגיע למשפחה עד שהשומר יאשר.',
+        edStory:'הסיפור, במילים שלכם', edName:'שם האדם', edWhere:'איפה זה קרה', edWhen:'מתי זה קרה',
+        edPhotoT:'החלפת התצלום', edPhotoN:'גררו תצלום חדש אל המסגרת כדי להציע אותו במקום זה.',
+        leaf:'אחר צהריים אחד, שנשמר.' },
+    };
+    let lang='en';
+    const t=()=>DATA[lang];
+    const pname=p=> p[lang] || t().addName;
+
+    /* ---------- procedural face crop ---------- */
+    const SKIN=['#e6c49b','#d9b083','#e0b98d','#eac6a0','#dcb58c'];
+    const HAIRC=['#8a6a4a','#3a3a3a','#4a3a2a','#b8b0a4','#5a4030','#cfc7bb'];
+    const BGC=['#3a2a1e','#2a3446','#243449','#2c2a1e'];
+    function h32(s){ let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))|0; return Math.abs(h); }
+    function faceSVG(seed){ const h=h32(seed), sk=SKIN[h%5], hr=HAIRC[(h>>3)%6], bg=BGC[(h>>5)%4], g=(h>>7)%3===0;
+      return `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="${bg}"/><ellipse cx="50" cy="47" rx="23" ry="26" fill="${sk}"/><path d="M50 96 Q50 70 27 66 Q31 42 50 42 Q69 42 73 66 Q50 70 50 96Z" fill="${hr}"/><path d="M27 44 Q31 23 50 23 Q69 23 73 44 Q61 33 50 33 Q39 33 27 44Z" fill="${g?'#cfc7bb':hr}"/></svg>`;
+    }
+    function unnamedSVG(){ return `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#141f30"/><ellipse cx="50" cy="47" rx="23" ry="26" fill="#26344a" opacity=".7"/><path d="M50 96 Q50 70 27 66 Q31 46 50 46 Q69 46 73 66 Q50 70 50 96Z" fill="#26344a" opacity=".7"/><circle cx="50" cy="50" r="15" fill="none" stroke="#f3cd84" stroke-width="2" stroke-dasharray="3 4" opacity=".8"/><path d="M50 44v12M44 50h12" stroke="#f3cd84" stroke-width="2" stroke-linecap="round"/></svg>`;
+    }
+
+    const ICON={
+      back:'<path d="M15 18l-6-6 6-6"/>',
+      lang:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+      pencil:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>',
+      pin:'<path d="M12 21s-6-5.7-6-10a6 6 0 1112 0c0 4.3-6 10-6 10z"/><circle cx="12" cy="11" r="2"/>',
+      clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+      chev:'<path d="M9 6l6 6-6 6"/>',
+      auto:'<path d="M4 5h7M7 5v3c0 3-1.5 5-4 6"/><path d="M6 11c1.5 2.5 3.5 3.5 5 4"/><path d="M13 19l4-9 4 9M14.4 16h5.2"/>',
+      spark:'<path d="M12 3l1.6 5.4L19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6z"/>',
+      check:'<path d="M20 6L9 17l-5-5"/>',
+      info:'<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/>',
+      plus:'<path d="M12 5v14M5 12h14"/>',
+    };
+    const sv=(p,w)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w||1.6}" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+
+    /* ---------- render the page ---------- */
+    let firstLoad=true;
+    function render(){
+      const d=t();
+      document.documentElement.lang=lang; document.documentElement.dir=d.dir;
+
+      // top bar + hero + sections
+      const facesHTML = PEOPLE.map(p=>{
+        const named = !!p[lang];
+        const nm = named ? pname(p) : d.addName;
+        return `<button class="face ${named?'':'unnamed'}" data-person="${p.id}">
+          <span class="node"><span class="crop">${named?faceSVG(p.seed):unnamedSVG()}</span>
+          <span class="editdot">${sv(named?ICON.pencil:ICON.plus,2)}</span></span>
+          <span class="fn">${nm}</span></button>`;
+      }).join('');
+
+      let storyBlock;
+      if(d.story.kind==='human'){
+        const words=d.story.text.split(' ').map(w=>`<span class="word">${w}</span>`).join(' ');
+        storyBlock = `<div class="story" data-edit="story">
+          <span class="quotemark">&ldquo;</span>
+          <p class="story-words" id="storyWords">${words}</p>
+          <div class="told"><span class="flame"></span><span class="txt">${d.toldBy} <b>${d.story.teller}</b></span></div>
+          <div class="pending" data-pending="story"><span class="sp"></span>${d.waiting}</div>
+        </div>`;
+      } else {
+        storyBlock = `<div class="story" data-edit="story">
+          <div class="autobar">
+            <div class="h">${sv(ICON.auto,1.7)} ${d.autoHdr}</div>
+            <div class="m">${d.story.text}</div>
+            <div class="cta" data-edit-open="story">${sv(ICON.spark,1.7)} ${d.autoCta}</div>
+          </div>
+          <div class="pending" data-pending="story"><span class="sp"></span>${d.waiting}</div>
+        </div>`;
+      }
+
+      $('#wrap').innerHTML = `
+        <div class="topbar">
+          <button class="icon-btn" aria-label="Back">${sv(ICON.back)}</button>
+          <div class="crumb"><span class="k">${d.crumb}</span></div>
+          <button class="icon-btn" id="langBtn" aria-label="${d.langTitle}">${sv(ICON.lang,1.5)}</button>
+          <button class="icon-btn" id="editBtn" aria-label="${d.suggest}">${sv(ICON.pencil)}</button>
+        </div>
+
+        <div class="editbanner">
+          <span class="ei">${sv(ICON.pencil)}</span>
+          <span class="et"><span class="a">${d.edA}</span><span class="b">${d.edB}</span></span>
+          <button class="done" id="doneBtn">${d.done}</button>
+        </div>
+
+        <div class="stage reveal" data-edit="photo">
+          <div class="frame">
+            <div class="photo surface" id="photoWrap">
+              <image-slot id="momentPhoto" shape="rect" fit="contain"
+                placeholder="Drag the family photograph here"></image-slot>
+            </div>
+            <div class="yearstamp"><span class="d"></span><span class="y">1992</span></div>
+          </div>
+          <div class="pending" data-pending="photo" style="margin-inline:4px;"><span class="sp"></span>${d.waiting}</div>
+        </div>
+
+        <div class="sec reveal">
+          <div class="sec-h"><span class="lp" style="background:var(--gold);box-shadow:0 0 8px 1px var(--gold);"></span><span class="t">${d.inMoment}</span></div>
+          <div class="faces">${facesHTML}</div>
+        </div>
+
+        <div class="sec reveal">
+          <div class="sec-h"><span class="lp" style="background:var(--gold);box-shadow:0 0 8px 1px var(--gold);"></span><span class="t">${d.storyH}</span></div>
+          ${storyBlock}
+        </div>
+
+        <div class="sec reveal">
+          <div class="sec-h"><span class="lp" style="background:var(--cool);box-shadow:0 0 8px 1px var(--cool);"></span><span class="t">${d.factsH}</span></div>
+          <div class="facts">
+            <button class="fact link" data-edit="where">
+              <span class="fi">${sv(ICON.pin)}</span>
+              <span><span class="fk">${d.whereK}</span><span class="fv">${d.where}</span></span>
+              <span class="chev">${sv(ICON.chev)}</span>
+            </button>
+            <button class="fact" data-edit="when">
+              <span class="fi">${sv(ICON.clock,1.5)}</span>
+              <span><span class="fk">${d.whenK}</span><span class="fv">${d.when}</span></span>
+              <span class="chev" style="visibility:hidden">${sv(ICON.chev)}</span>
+            </button>
+          </div>
+          <div class="pending" data-pending="where"><span class="sp"></span>${d.waiting}</div>
+          <div class="pending" data-pending="when"><span class="sp"></span>${d.waiting}</div>
+          <div class="facts-src">${d.factsSrc}</div>
+        </div>
+
+        <div class="foot reveal"><span class="leaf">${d.leaf}</span></div>
+      `;
+
+      // language sheet
+      $('#langSheet').innerHTML = `<div class="grip"></div>
+        <h3>${d.langTitle}</h3><div class="sub">${d.langSub}</div>
+        ${Object.keys(DATA).map(k=>`<button class="lang-opt ${k===lang?'on':''}" data-lang="${k}">
+          <span><span class="native">${DATA[k].native}</span><span class="en" style="display:block">${DATA[k].label}</span></span>
+          <span class="tick">${sv(ICON.check,2)}</span></button>`).join('')}`;
+
+      wire();
+      runReveal();
+    }
+
+    /* ---------- reveal choreography (memory surfacing) ---------- */
+    function runReveal(){
+      const photo=$('#photoWrap'), words=$('#storyWords');
+      const revs=[...document.querySelectorAll('.reveal')];
+      if(reduce){ photo&&photo.classList.add('up'); revs.forEach(r=>r.classList.add('up')); words&&words.classList.add('lit'); return; }
+      requestAnimationFrame(()=>{ setTimeout(()=>photo&&photo.classList.add('up'), 120); });
+      revs.forEach((r,i)=> setTimeout(()=>r.classList.add('up'), 260 + i*150));
+      if(words){ setTimeout(()=>words.classList.add('lit'), 900); }
+    }
+
+    /* ---------- overlays ---------- */
+    const scrim=$('#scrim'), langSheet=$('#langSheet'), editSheet=$('#editSheet');
+    let openSheet=null;
+    function show(sheet){ openSheet=sheet; scrim.classList.add('show'); sheet.classList.add('show'); }
+    function hide(){ scrim.classList.remove('show'); langSheet.classList.remove('show'); editSheet.classList.remove('show'); openSheet=null; }
+    scrim.addEventListener('click', hide);
+
+    function toast(msg){ $('#toastMsg').textContent=msg; const el=$('#toast'); el.classList.add('show');
+      clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('show'), 2600); }
+
+    /* ---------- edit / keeper flow ---------- */
+    function openEditor(target){
+      const d=t(); let label, value, multiline=false, note=d.keeperNote, photo=false, tag=null;
+      if(target==='story'){ label=d.edStory; value=d.story.kind==='human'?d.story.text:''; multiline=true; tag=`${d.langTitle}: ${d.native}`; }
+      else if(target==='where'){ label=d.edWhere; value=d.where; }
+      else if(target==='when'){ label=d.edWhen; value=d.when; }
+      else if(target==='photo'){ label=d.edPhotoT; note=d.edPhotoN; photo=true; }
+      else if(target.startsWith('person:')){ const p=PEOPLE.find(x=>x.id===target.split(':')[1]); label=d.edName; value=p[lang]||''; }
+      const inputHTML = photo ? '' : (multiline
+        ? `<div class="ed-field"><label>${label}</label>${tag?`<div class="ed-langtag">${sv(ICON.info,1.7)} ${tag}</div>`:''}<textarea rows="5" id="edInput">${value}</textarea></div>`
+        : `<div class="ed-field"><label>${label}</label><input id="edInput" value="${value.replace(/"/g,'&quot;')}"></div>`);
+      editSheet.innerHTML = `<div class="grip"></div>
+        <h3>${photo?d.edPhotoT:label}</h3>
+        ${inputHTML}
+        <div class="ed-note">${sv(ICON.info,1.7)} <span>${note}</span></div>
+        <div class="ed-actions">
+          <button class="btn ghost" id="edCancel">${d.cancel}</button>
+          <button class="btn primary" id="edSend">${d.sendKeeper}</button>
+        </div>`;
+      show(editSheet);
+      const inp=editSheet.querySelector('#edInput'); if(inp) setTimeout(()=>inp.focus(),340);
+      editSheet.querySelector('#edCancel').onclick=hide;
+      editSheet.querySelector('#edSend').onclick=()=>{
+        hide();
+        const key = target.startsWith('person:')?'people':target;
+        const chip=document.querySelector(`[data-pending="${key}"]`); if(chip) chip.classList.add('show');
+        toast(d.sent);
+      };
+    }
+
+    function wire(){
+      const d=t();
+      $('#langBtn').onclick=()=>show(langSheet);
+      $('#editBtn').onclick=()=>{ document.body.classList.toggle('editing'); };
+      const doneBtn=$('#doneBtn'); if(doneBtn) doneBtn.onclick=()=>document.body.classList.remove('editing');
+
+      langSheet.querySelectorAll('[data-lang]').forEach(b=> b.onclick=()=>{ lang=b.dataset.lang; hide(); render(); });
+
+      // machine-translation "add the telling" CTA always available
+      document.querySelectorAll('[data-edit-open="story"]').forEach(el=> el.onclick=()=>openEditor('story'));
+
+      // in edit mode, editable regions open the editor
+      document.querySelectorAll('[data-edit]').forEach(el=>{
+        el.addEventListener('click', e=>{
+          if(!document.body.classList.contains('editing')) return;
+          if(e.target.closest('[data-edit-open]')) return;
+          e.preventDefault();
+          openEditor(el.getAttribute('data-edit'));
+        });
+      });
+      document.querySelectorAll('.face').forEach(f=>{
+        f.addEventListener('click', e=>{
+          if(!document.body.classList.contains('editing')) return;
+          e.preventDefault(); openEditor('person:'+f.dataset.person);
+        });
+      });
+    }
+
+    /* =========================================================
+       ATMOSPHERE — drifting colourful lights (aurora + bokeh).
+       Colour freely here; the foreground keeps the two truths clear.
+       ========================================================= */
+    (function atmosphere(){
+      const cv=$('#atmo'), ctx=cv.getContext('2d');
+      let W,H,DPR=Math.min(2,window.devicePixelRatio||1);
+      function resize(){ W=cv.clientWidth; H=cv.clientHeight; cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+      window.addEventListener('resize', resize); resize();
+      // palette: vivid enchanted hues — emerald, violet, magenta, gold, cyan, rose, amber
+      const HUES=[[86,214,196],[150,120,236],[236,110,200],[255,214,120],[95,200,236],[255,140,170],[255,176,90],[130,236,180]];
+      const N=15, blobs=[];
+      for(let i=0;i<N;i++){ const c=HUES[i%HUES.length];
+        blobs.push({ x:Math.random(), y:Math.random(), r:Math.random()*130+90, c,
+          vx:(Math.random()-.5)*0.00013, vy:(Math.random()-.5)*0.00010, ph:Math.random()*6.28, sp:Math.random()*0.5+0.3 }); }
+      // aurora bands
+      const bands=[ {y:0.30,c:[86,214,196],amp:60,ph:0}, {y:0.5,c:[150,120,236],amp:80,ph:2}, {y:0.68,c:[236,110,200],amp:70,ph:4} ];
+      // LIGHT LINES + MOVING STARS — reused from the globe: faint curved arc
+      // "rays" with a bright glowing point that travels along each, and a soft
+      // node glow at the ends. Globe palette: cool cyan with a few warm gold.
+      const COOL=[103,199,216], GOLD=[255,207,126];
+      const ARCS=reduce?6:9, arcs=[];
+      function seedArc(a){
+        a.x0=Math.random(); a.y0=Math.random();
+        const ang=Math.random()*6.28, len=Math.random()*0.5+0.35;
+        a.x1=a.x0+Math.cos(ang)*len; a.y1=a.y0+Math.sin(ang)*len;
+        // control point lifted perpendicular for the arc bow
+        const mx=(a.x0+a.x1)/2, my=(a.y0+a.y1)/2, nx=-(a.y1-a.y0), ny=(a.x1-a.x0);
+        const lift=(Math.random()*0.3+0.12)*(Math.random()>.5?1:-1);
+        a.cx=mx+nx*lift; a.cy=my+ny*lift;
+        a.c = Math.random()<0.3 ? GOLD : COOL;
+        a.t=Math.random(); a.spd=Math.random()*0.0011+0.0006; a.dur=1;
+        return a;
+      }
+      for(let i=0;i<ARCS;i++) arcs.push(seedArc({}));
+      const bez=(p0,p1,p2,t)=>{ const u=1-t; return u*u*p0 + 2*u*t*p1 + t*t*p2; };
+      const INT=0.85; // atmosphere intensity
+      function frame(now){
+        const t=(now||0)/1000;
+        ctx.clearRect(0,0,W,H);
+        ctx.globalCompositeOperation='lighter';
+        // aurora
+        bands.forEach(b=>{
+          const yy=b.y*H + (reduce?0:Math.sin(t*0.2+b.ph)*18);
+          const g=ctx.createLinearGradient(0,yy-b.amp,0,yy+b.amp);
+          g.addColorStop(0,`rgba(${b.c[0]},${b.c[1]},${b.c[2]},0)`);
+          g.addColorStop(.5,`rgba(${b.c[0]},${b.c[1]},${b.c[2]},${0.14*INT})`);
+          g.addColorStop(1,`rgba(${b.c[0]},${b.c[1]},${b.c[2]},0)`);
+          ctx.fillStyle=g;
+          ctx.beginPath(); ctx.moveTo(0,yy);
+          for(let x=0;x<=W;x+=24){ const yo=Math.sin(x*0.006 + t*(reduce?0:0.3)+b.ph)*b.amp*0.5; ctx.lineTo(x, yy+yo); }
+          ctx.lineTo(W,yy+b.amp*2); ctx.lineTo(0,yy+b.amp*2); ctx.closePath(); ctx.fill();
+        });
+        // bokeh blobs
+        blobs.forEach(bl=>{
+          if(!reduce){ bl.x+=bl.vx; bl.y+=bl.vy; if(bl.x<-.2)bl.x=1.2; if(bl.x>1.2)bl.x=-.2; if(bl.y<-.2)bl.y=1.2; if(bl.y>1.2)bl.y=-.2; }
+          const px=bl.x*W, py=bl.y*H, pulse=reduce?1:(0.75+0.25*Math.sin(t*bl.sp+bl.ph));
+          const r=bl.r*pulse, g=ctx.createRadialGradient(px,py,0,px,py,r);
+          const a=0.18*INT*pulse;
+          g.addColorStop(0,`rgba(${bl.c[0]},${bl.c[1]},${bl.c[2]},${a})`);
+          g.addColorStop(1,`rgba(${bl.c[0]},${bl.c[1]},${bl.c[2]},0)`);
+          ctx.fillStyle=g; ctx.beginPath(); ctx.arc(px,py,r,0,6.2832); ctx.fill();
+        });
+        // light lines + moving stars (reused from the globe)
+        arcs.forEach(a=>{
+          if(!reduce){ a.t+=a.spd; if(a.t>1){ seedArc(a); a.t=0; } }
+          const [r,g2,b2]=a.c;
+          const x0=a.x0*W,y0=a.y0*H, x1=a.x1*W,y1=a.y1*H, cx=a.cx*W,cy=a.cy*H;
+          // the faint ray line
+          ctx.strokeStyle=`rgba(${r},${g2},${b2},0.13)`; ctx.lineWidth=1;
+          ctx.beginPath(); ctx.moveTo(x0,y0); ctx.quadraticCurveTo(cx,cy,x1,y1); ctx.stroke();
+          // soft node glow at each end
+          [[x0,y0],[x1,y1]].forEach(([nx,ny])=>{
+            const ng=ctx.createRadialGradient(nx,ny,0,nx,ny,7);
+            ng.addColorStop(0,`rgba(${r},${g2},${b2},0.5)`); ng.addColorStop(1,`rgba(${r},${g2},${b2},0)`);
+            ctx.fillStyle=ng; ctx.beginPath(); ctx.arc(nx,ny,7,0,6.2832); ctx.fill();
+          });
+          // the travelling star along the ray
+          const px=bez(x0,cx,x1,a.t), py=bez(y0,cy,y1,a.t);
+          const fade=Math.sin(a.t*Math.PI); // fade in/out at the ends
+          const R=5.5, gr=ctx.createRadialGradient(px,py,0,px,py,R);
+          gr.addColorStop(0,`rgba(255,248,232,${0.95*fade})`);
+          gr.addColorStop(0.45,`rgba(${r},${g2},${b2},${0.6*fade})`);
+          gr.addColorStop(1,`rgba(${r},${g2},${b2},0)`);
+          ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(px,py,R,0,6.2832); ctx.fill();
+          ctx.fillStyle=`rgba(255,252,244,${0.9*fade})`; ctx.beginPath(); ctx.arc(px,py,1.4,0,6.2832); ctx.fill();
+        });
+        ctx.globalCompositeOperation='source-over';
+        if(!reduce) requestAnimationFrame(frame);
+      }
+      if(!reduce) requestAnimationFrame(frame); else frame(0);
+    })();
+
+    render();
+  })();
+  </script>
+</body>
+</html>

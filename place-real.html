@@ -599,7 +599,7 @@ function gateError(msg){ $('#gate').style.display='flex'; $('#gateBox').innerHTM
 
 load();
 </script>
-  <script src="lf-nav.js" data-here="map" data-parent="home-real.html"></script>
+  <script src="lf-nav.js" data-here="" data-parent="index.html"></script>
 <div id="placeSheet"><div id="placeHandle"><span class="grip"></span><span class="chevs"><svg viewBox="0 0 32 14"><path d="M2 11.5 L16 3 L30 11.5" fill="none" stroke="#f3cd84" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><svg viewBox="0 0 32 14"><path d="M2 11.5 L16 3 L30 11.5" fill="none" stroke="#f3cd84" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lbl">Pull up for photographs, people &amp; stories</span><div class="hd"><span class="ttl"></span><span class="x">&#10005;</span></div></div><div id="placeBody"><div class="ph-loading">Gathering the photographs&#8230;</div></div></div>
 <div id="lightbox"><div class="lx-top"><span class="lx-x">&#10005;</span></div><div class="lx-img"></div><div class="lx-meta"><div class="lx-yr"></div><div class="lx-ppl"></div><div class="lx-story"></div><div class="lx-told"></div><div class="lx-note" id="lxNote"></div></div></div>
 <script>
@@ -707,7 +707,7 @@ load();
     document.querySelectorAll('#placeBody .moment .img[data-m]').forEach(async el=>{ const m=moments[+el.getAttribute('data-m')]; if(m&&m.path){ const u=await signedUrl(m.path); if(u){ const im=document.createElement('img'); im.alt=''; im.src=u; el.insertBefore(im, el.firstChild); } } });
     document.querySelectorAll('#placeBody .moment .img[data-m]').forEach(el=>el.addEventListener('click',()=>openLb(moments[+el.getAttribute('data-m')])));
     document.querySelectorAll('#placeBody .face[data-id]').forEach(el=>el.addEventListener('click',()=>{const id=el.getAttribute('data-id');if(id)location.href='person-real.html?id='+encodeURIComponent(id);}));
-    document.querySelectorAll('#placeBody .door[data-go]').forEach(el=>el.addEventListener('click',()=>{const g=el.getAttribute('data-go'); if(g==='globe')location.href='globe-real.html'; else {const t=document.getElementById(g);if(t)t.scrollIntoView({behavior:'smooth',block:'start'});}}));
+    document.querySelectorAll('#placeBody .door[data-go]').forEach(el=>el.addEventListener('click',()=>{const g=el.getAttribute('data-go'); if(g==='globe')location.href='index.html'; else {const t=document.getElementById(g);if(t)t.scrollIntoView({behavior:'smooth',block:'start'});}}));
   }
   render();
 })();

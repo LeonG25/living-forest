@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Edit details — The Living Forest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body{ background:#05080f; }
+  :root{
+    --cream:#f4ecdb; --muted:#9db0cc; --hair:#ffffff18; --panel:#ffffff0b;
+    --gold:#f3cd84; --gold-hi:#ffe6ad; --cool:#7fb4d8; --cool-hi:#a9d2ee;
+    --edit:#c9a2ff; --edit-hi:#ddc6ff; --edit-soft:#efe6ff;
+    --leaf:#8fd6a0;
+  }
+  body{ font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--cream); min-height:100dvh;
+    display:flex; align-items:flex-start; justify-content:center; gap:34px; padding:30px 16px 70px;
+    background:radial-gradient(140% 100% at 50% 0%, #12233c 0%, #0a1526 44%, #05080f 100%);
+    -webkit-user-select:none; user-select:none; flex-wrap:wrap; }
+  .serif{ font-family:'Newsreader',Georgia,serif; }
+  .mono{ font-family:'Azeret Mono',monospace; }
+  [dir="rtl"] .serif, [dir="rtl"] .name-input, [dir="rtl"] .disp{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
+
+  /* device viewport control */
+  .stagewrap{ display:flex; flex-direction:column; align-items:center; gap:12px; }
+  .stagewrap .lbl{ font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:#6f83a3; }
+  .device{ position:relative; width:390px; height:800px; border-radius:40px; overflow:hidden; flex:0 0 auto;
+    background:#05080f; box-shadow:0 40px 110px -50px #000, 0 0 0 9px #14141b, 0 0 0 10px #2b2b34;
+    transition:width .4s cubic-bezier(.16,.8,.28,1); }
+  .device.tablet{ width:720px; height:800px; }
+
+  /* ===== growing-vine atmosphere ===== */
+  .atmo{ position:absolute; inset:0; z-index:0; width:100%; height:100%; }
+  .atmo-veil{ position:absolute; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(120% 75% at 50% 8%, rgba(143,214,160,.08), transparent 42%),
+      radial-gradient(120% 90% at 50% 40%, transparent 34%, rgba(5,8,15,.62) 100%); }
+
+  .screen{ position:absolute; inset:0; z-index:2; overflow-y:auto; scrollbar-width:none; }
+  .screen::-webkit-scrollbar{ display:none; }
+  .pad{ padding:0 20px calc(40px + env(safe-area-inset-bottom)); }
+
+  /* ===== top bar ===== */
+  .topbar{ position:sticky; top:0; z-index:8; display:flex; align-items:center; gap:10px;
+    padding:16px 20px 12px; background:linear-gradient(to bottom, rgba(6,11,20,.86), rgba(6,11,20,.4) 70%, transparent);
+    backdrop-filter:blur(6px); }
+  .ibtn{ width:40px; height:40px; border-radius:12px; flex:0 0 auto; display:grid; place-items:center; cursor:pointer;
+    border:1px solid var(--hair); background:rgba(10,20,34,.55); color:var(--cream); transition:border-color .2s,background .2s; }
+  .ibtn:hover{ border-color:rgba(255,255,255,.34); }
+  .ibtn:focus-visible{ outline:2px solid var(--cool-hi); outline-offset:2px; }
+  .ibtn svg{ width:18px; height:18px; }
+  .ttl{ flex:1; min-width:0; text-align:center; }
+  .ttl .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.26em; text-transform:uppercase; color:var(--muted); }
+  .ttl .n{ font-family:'Newsreader',serif; font-size:16px; color:#fbf5e8; margin-top:1px; }
+
+  /* keeper reassurance ribbon */
+  .keeper-note{ display:flex; align-items:center; gap:9px; margin:2px 20px 0; padding:9px 13px; border-radius:11px;
+    background:rgba(201,162,255,.09); border:1px solid rgba(201,162,255,.28); }
+  .keeper-note svg{ width:15px; height:15px; color:var(--edit); flex:0 0 auto; }
+  .keeper-note span{ font-size:11.5px; color:#cbbce6; line-height:1.35; }
+
+  /* ===== HERO: face + light ring of categories ===== */
+  .hero{ position:relative; margin:40px auto 0; width:300px; height:300px; }
+  .ring-svg{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; z-index:1; }
+  .facewrap{ position:absolute; inset:78px; z-index:3; border-radius:50%; }
+  .face{ width:100%; height:100%; border-radius:50%; overflow:hidden; position:relative;
+    border:1px solid rgba(255,244,214,.9);
+    box-shadow:0 0 26px -2px rgba(255,232,180,.6), 0 0 70px -12px rgba(243,205,132,.45), inset 0 0 0 4px rgba(5,8,15,.6); }
+  .face svg, .face img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .face .changef{ position:absolute; inset-inline-end:6px; inset-block-end:6px; z-index:4; width:36px; height:36px; border-radius:50%;
+    display:grid; place-items:center; cursor:pointer; color:#1a0f2e; border:2px solid #05080f;
+    background:linear-gradient(180deg,var(--edit-hi),var(--edit)); box-shadow:0 4px 12px -2px #000; }
+  .face .changef svg{ width:17px; height:17px; }
+  .hero .who{ position:absolute; z-index:4; inset-inline:0; bottom:-8px; text-align:center; pointer-events:none; }
+
+  /* category points around the ring */
+  .cat{ position:absolute; z-index:5; width:52px; transform:translate(-50%,-50%); text-align:center; cursor:pointer;
+    background:none; border:none; color:inherit; }
+  .cat .bead{ width:46px; height:46px; margin:0 auto; border-radius:50%; display:grid; place-items:center; position:relative;
+    background:rgba(12,22,38,.72); border:1px solid var(--hair); backdrop-filter:blur(4px);
+    transition:transform .22s cubic-bezier(.16,.8,.28,1), border-color .22s, box-shadow .22s; }
+  .cat .bead svg{ width:20px; height:20px; color:var(--gold-hi); }
+  .cat .bead::after{ content:""; position:absolute; inset:-3px; border-radius:50%; opacity:0;
+    box-shadow:0 0 16px 2px rgba(243,205,132,.6); transition:opacity .22s; }
+  .cat .lab{ font-family:'Azeret Mono',monospace; font-size:8px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--muted); margin-top:6px; line-height:1.1; }
+  .cat:hover .bead, .cat.on .bead{ transform:scale(1.09); border-color:rgba(243,205,132,.6); }
+  .cat.on .bead{ background:rgba(243,205,132,.16); }
+  .cat:hover .bead::after, .cat.on .bead::after{ opacity:1; }
+  .cat:focus-visible .bead{ outline:2px solid var(--gold-hi); outline-offset:3px; }
+  .cat.cool .bead svg{ color:var(--cool-hi); }
+  .cat.cool:hover .bead, .cat.cool.on .bead{ border-color:rgba(127,180,216,.6); }
+  .cat.cool.on .bead{ background:rgba(127,180,216,.16); }
+  .cat.cool .bead::after{ box-shadow:0 0 16px 2px rgba(127,180,216,.6); }
+  /* pending dot on a category */
+  .cat .pin{ position:absolute; top:-1px; inset-inline-end:2px; width:13px; height:13px; border-radius:50%;
+    background:var(--edit); border:2px solid #05080f; display:none; }
+  .cat.has-pending .pin{ display:block; }
+
+  /* ===== the open editor panel ===== */
+  .editor{ margin-top:26px; }
+  .ed-head{ display:flex; align-items:center; gap:11px; margin-bottom:14px; }
+  .ed-head .ic{ width:34px; height:34px; border-radius:10px; display:grid; place-items:center; flex:0 0 auto;
+    background:rgba(243,205,132,.12); border:1px solid rgba(243,205,132,.3); }
+  .ed-head .ic svg{ width:17px; height:17px; color:var(--gold-hi); }
+  .ed-head.cool .ic{ background:rgba(127,180,216,.12); border-color:rgba(127,180,216,.3); }
+  .ed-head.cool .ic svg{ color:var(--cool-hi); }
+  .ed-head .tt{ flex:1; }
+  .ed-head .tt .h{ font-family:'Newsreader',serif; font-size:20px; color:#fbf5e8; }
+  .ed-head .tt .s{ font-size:11.5px; color:var(--muted); margin-top:1px; }
+
+  /* a field block */
+  .field{ margin-bottom:14px; }
+  .field > label{ display:block; font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--muted); margin-bottom:7px; }
+  .inp{ width:100%; background:rgba(8,16,28,.66); border:1px solid var(--hair); border-radius:12px; padding:13px 14px;
+    color:var(--cream); font-family:'Newsreader',serif; font-size:17px; transition:border-color .2s; }
+  .inp:focus{ outline:none; border-color:rgba(243,205,132,.55); }
+  .inp::placeholder{ color:#5f7089; }
+  textarea.inp{ resize:vertical; line-height:1.5; min-height:84px; }
+
+  /* multilingual reveal */
+  .mlrow{ display:flex; align-items:center; gap:8px; }
+  .mlrow .inp{ flex:1; }
+  .mladd{ flex:0 0 auto; height:44px; padding:0 11px; border-radius:11px; cursor:pointer; display:flex; align-items:center; gap:6px;
+    background:rgba(243,205,132,.1); border:1px solid rgba(243,205,132,.32); color:var(--gold-hi);
+    font-family:'Azeret Mono',monospace; font-size:11px; }
+  .mladd svg{ width:15px; height:15px; }
+  .mlvars{ margin-top:9px; display:none; flex-direction:column; gap:8px; padding-inline-start:12px;
+    border-inline-start:2px solid rgba(243,205,132,.25); }
+  .mlvars.open{ display:flex; }
+  .mlvar{ display:flex; align-items:center; gap:9px; }
+  .mlvar .tag{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.1em; color:var(--gold);
+    width:26px; flex:0 0 auto; text-transform:uppercase; }
+  .mlvar .inp{ font-size:15px; padding:10px 12px; }
+  .mlvar.rtl .inp{ direction:rtl; text-align:right; }
+
+  /* chip lists (nicknames, places, custom) */
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; }
+  .chip{ display:inline-flex; align-items:center; gap:8px; padding:9px 12px; border-radius:99px;
+    background:rgba(243,205,132,.09); border:1px solid rgba(243,205,132,.3); font-size:13.5px; color:var(--cream);
+    font-family:'Newsreader',serif; }
+  .chip .x{ width:15px; height:15px; color:var(--muted); cursor:pointer; }
+  .chip.add{ background:transparent; border-style:dashed; border-color:var(--hair); color:var(--muted); cursor:pointer; font-family:'Hanken Grotesk',sans-serif; font-size:12.5px; }
+  .chip.add:hover{ border-color:rgba(243,205,132,.5); color:var(--gold-hi); }
+  .chip.cool{ background:rgba(127,180,216,.09); border-color:rgba(127,180,216,.3); }
+  .chip .ord{ font-family:'Azeret Mono',monospace; font-size:9px; color:var(--cool); }
+
+  /* dates row */
+  .row2{ display:flex; gap:10px; } .row2 > *{ flex:1; }
+  .seg{ display:flex; gap:5px; background:rgba(8,16,28,.6); border:1px solid var(--hair); border-radius:11px; padding:4px; }
+  .seg button{ flex:1; border:none; background:transparent; color:var(--muted); cursor:pointer; padding:8px 4px; border-radius:8px;
+    font-family:'Hanken Grotesk',sans-serif; font-size:11px; }
+  .seg button.on{ background:rgba(127,180,216,.18); color:var(--cool-hi); }
+  .toggle{ display:flex; align-items:center; gap:10px; }
+  .sw{ width:42px; height:24px; border-radius:99px; background:rgba(255,255,255,.12); position:relative; cursor:pointer; transition:background .2s; flex:0 0 auto; }
+  .sw::after{ content:""; position:absolute; top:2px; inset-inline-start:2px; width:20px; height:20px; border-radius:50%; background:#dfe7f2; transition:transform .2s; }
+  .sw.on{ background:rgba(127,180,216,.5); } .sw.on::after{ transform:translateX(18px); }
+  [dir="rtl"] .sw.on::after{ transform:translateX(-18px); }
+
+  /* pending chip */
+  .pending{ display:none; align-items:center; gap:8px; margin-top:12px; padding:9px 12px; border-radius:11px;
+    background:rgba(201,162,255,.1); border:1px solid rgba(201,162,255,.34); font-size:12px; color:var(--edit-hi); }
+  .pending.show{ display:inline-flex; }
+  .pending .sp{ width:12px; height:12px; border-radius:50%; border:2px solid rgba(201,162,255,.35); border-top-color:var(--edit); animation:spin 1s linear infinite; flex:0 0 auto; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  /* keeper inline approve/decline (shown when viewer is keeper) */
+  .keeperbar{ display:none; align-items:center; gap:8px; margin-top:10px; }
+  body.is-keeper .pending.show + .keeperbar{ display:flex; }
+  .kbtn{ display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border-radius:9px; cursor:pointer; font-size:12px; font-weight:600;
+    font-family:'Hanken Grotesk',sans-serif; border:1px solid transparent; }
+  .kbtn.ok{ background:rgba(143,214,160,.16); border-color:rgba(143,214,160,.4); color:#a9e6ba; }
+  .kbtn.no{ background:transparent; border-color:var(--hair); color:var(--muted); }
+  .kbtn svg{ width:13px; height:13px; }
+  .was{ font-size:11px; color:var(--muted); margin-inline-start:auto; }
+  .was b{ color:var(--edit-hi); font-weight:500; }
+
+  .savebar{ margin-top:20px; display:flex; gap:10px; }
+  .btn{ flex:1; padding:14px; border-radius:13px; font-family:'Hanken Grotesk',sans-serif; font-size:14px; font-weight:600; cursor:pointer; border:1px solid transparent; }
+  .btn.ghost{ background:transparent; border-color:var(--hair); color:var(--cream); }
+  .btn.primary{ background:linear-gradient(180deg,var(--edit-hi),var(--edit)); color:#1a0f2e; }
+  .btn:focus-visible{ outline:2px solid var(--cool-hi); outline-offset:2px; }
+
+  /* add-a-detail picker */
+  .adddetail{ margin-top:24px; }
+  .adddetail .plus{ width:100%; display:flex; align-items:center; justify-content:center; gap:9px; padding:14px; border-radius:14px;
+    background:rgba(201,162,255,.07); border:1px dashed rgba(201,162,255,.4); color:var(--edit-hi); cursor:pointer;
+    font-family:'Newsreader',serif; font-size:16px; }
+  .adddetail .plus svg{ width:18px; height:18px; }
+
+  .foot{ margin-top:26px; text-align:center; }
+  .foot .l{ font-family:'Newsreader',serif; font-style:italic; font-size:13.5px; color:rgba(143,214,160,.6); }
+
+  /* ===== overlays ===== */
+  .scrim{ position:absolute; inset:0; z-index:30; background:rgba(4,7,14,.66); backdrop-filter:blur(3px);
+    opacity:0; pointer-events:none; transition:opacity .28s ease; }
+  .scrim.show{ opacity:1; pointer-events:auto; }
+  .sheet{ position:absolute; z-index:31; inset-inline:0; bottom:0; background:linear-gradient(180deg,#0f1e33,#081120);
+    border:1px solid var(--hair); border-bottom:none; border-radius:22px 22px 0 0; padding:10px 20px calc(22px + env(safe-area-inset-bottom));
+    transform:translateY(103%); transition:transform .34s cubic-bezier(.16,.8,.28,1); box-shadow:0 -24px 70px -30px #000; max-height:88%; overflow-y:auto; scrollbar-width:none; }
+  .sheet::-webkit-scrollbar{ display:none; }
+  .sheet.show{ transform:translateY(0); }
+  .grip{ width:40px; height:4px; border-radius:99px; background:rgba(255,255,255,.2); margin:6px auto 15px; }
+  .sheet h3{ font-family:'Newsreader',serif; font-weight:400; font-size:21px; color:#fbf5e8; margin-bottom:4px; }
+  .sheet .sub{ font-size:12.5px; color:var(--muted); margin-bottom:16px; line-height:1.45; }
+
+  .lang-opt{ display:flex; align-items:center; gap:14px; width:100%; padding:14px 15px; border-radius:14px;
+    background:var(--panel); border:1px solid var(--hair); color:var(--cream); cursor:pointer; margin-bottom:9px; text-align:start; }
+  .lang-opt.on{ border-color:rgba(243,205,132,.55); background:rgba(243,205,132,.08); }
+  .lang-opt .native{ font-family:'Newsreader',serif; font-size:18px; } .lang-opt .en{ font-size:11.5px; color:var(--muted); margin-top:1px; }
+  .lang-opt .tick{ margin-inline-start:auto; color:var(--gold); opacity:0; } .lang-opt.on .tick{ opacity:1; } .lang-opt .tick svg{ width:18px; height:18px; }
+
+  /* change-face gallery + crop */
+  .gal{ display:grid; grid-template-columns:repeat(4,1fr); gap:9px; margin-bottom:16px; }
+  .gal .g{ position:relative; aspect-ratio:1; border-radius:11px; overflow:hidden; cursor:pointer; border:2px solid transparent; }
+  .gal .g svg{ width:100%; height:100%; }
+  .gal .g.on{ border-color:var(--edit); }
+  .gal .g .tagbox{ position:absolute; border:2px solid var(--gold-hi); border-radius:4px; box-shadow:0 0 0 400px rgba(5,8,15,.4); }
+  .cropstage{ position:relative; width:100%; aspect-ratio:1; max-width:260px; margin:0 auto 8px; border-radius:16px; overflow:hidden;
+    background:#0a1120; touch-action:none; }
+  .cropstage .cimg{ position:absolute; inset:0; }
+  .cropstage .cimg svg{ width:100%; height:100%; }
+  .cropstage .cmask{ position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(circle at center, transparent 46%, rgba(5,8,15,.72) 47%);
+    box-shadow:none; }
+  .cropstage .cring{ position:absolute; inset:0; pointer-events:none; }
+  .cropstage .cring::after{ content:""; position:absolute; inset:calc(50% - 46%); border-radius:50%; border:1.5px solid rgba(255,244,214,.9); box-shadow:0 0 18px rgba(255,232,180,.5); }
+  .zoomrow{ display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+  .zoomrow svg{ width:16px; height:16px; color:var(--muted); flex:0 0 auto; }
+  input[type=range]{ -webkit-appearance:none; appearance:none; flex:1; height:4px; border-radius:99px; background:rgba(255,255,255,.16); }
+  input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:18px; height:18px; border-radius:50%; background:var(--edit-hi); cursor:pointer; box-shadow:0 0 10px rgba(201,162,255,.6); }
+  input[type=range]::-moz-range-thumb{ width:18px; height:18px; border:none; border-radius:50%; background:var(--edit-hi); cursor:pointer; }
+
+  .add-opt{ display:flex; align-items:center; gap:12px; width:100%; padding:13px 14px; border-radius:13px;
+    background:var(--panel); border:1px solid var(--hair); color:var(--cream); cursor:pointer; margin-bottom:8px; text-align:start; }
+  .add-opt:hover{ border-color:rgba(201,162,255,.45); }
+  .add-opt .ic{ width:32px; height:32px; border-radius:9px; background:rgba(201,162,255,.12); display:grid; place-items:center; flex:0 0 auto; }
+  .add-opt .ic svg{ width:16px; height:16px; color:var(--edit-hi); }
+  .add-opt .nm{ font-family:'Newsreader',serif; font-size:16px; } .add-opt .ds{ font-size:11.5px; color:var(--muted); margin-top:1px; }
+
+  /* toast */
+  .toast{ position:absolute; z-index:40; left:50%; transform:translate(-50%,20px); bottom:24px; display:flex; align-items:center; gap:10px;
+    padding:12px 17px; border-radius:99px; background:rgba(28,18,46,.92); backdrop-filter:blur(12px); border:1px solid rgba(201,162,255,.45);
+    color:var(--edit-soft); font-size:13px; opacity:0; pointer-events:none; transition:opacity .3s, transform .3s; box-shadow:0 18px 44px -18px #000; max-width:88%; }
+  .toast.show{ opacity:1; transform:translate(-50%,0); }
+  .toast .fl{ width:8px; height:8px; border-radius:50%; background:var(--edit); box-shadow:0 0 10px 2px var(--edit); flex:0 0 auto; }
+
+  @media (prefers-reduced-motion: reduce){ .pending .sp{ animation:none; } }
+</style>
+</head>
+<body class="is-keeper">
+  <!-- MOBILE -->
+  <div class="stagewrap">
+    <div class="lbl" id="lblM">Mobile · 390</div>
+    <div class="device" id="device">
+      <canvas class="atmo" aria-hidden="true"></canvas>
+      <div class="atmo-veil"></div>
+      <div class="screen">
+        <div class="topbar" id="topbar"></div>
+        <div class="keeper-note" id="keeperNote"></div>
+        <div class="pad" id="pad"></div>
+      </div>
+      <div class="scrim" id="scrim"></div>
+      <section class="sheet" id="langSheet" role="dialog" aria-modal="true" aria-label="Language"></section>
+      <section class="sheet" id="faceSheet" role="dialog" aria-modal="true" aria-label="Change the face"></section>
+      <section class="sheet" id="addSheet" role="dialog" aria-modal="true" aria-label="Add a detail"></section>
+      <div class="toast" id="toast"><span class="fl"></span><span id="toastMsg"></span></div>
+    </div>
+    <div class="lbl" style="cursor:pointer" id="toTablet">↔ preview tablet width</div>
+  </div>
+
+  <script>
+  (function(){
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+
+    /* ---------- per-language UI strings ---------- */
+    const T={
+      en:{ dir:'ltr', native:'English', label:'English',
+        eyebrow:'Edit details', title:'Rita Golnick',
+        keeper:'Nothing reaches the family until the keeper approves it.',
+        cats:{ names:'Names', dates:'Dates', places:'Places', kin:'Relations', life:'Life', gender:'Gender', custom:'Details', sources:'Sources' },
+        display:'Display name', addlang:'other languages', given:'Given', family:'Family', patronymic:'Patronymic',
+        nicks:'Nicknames & pet names', addnick:'add a nickname',
+        birth:'Born', death:'Died', living:'Still living', precise:'Precision',
+        prec:['exact','month','year','approx','unknown'],
+        pbirth:'Place of birth', lived:'Places lived', addplace:'add a home',
+        addkin:'Add a connection', kinsub:'Feeds the family graph — kept light.',
+        about:'About', occupation:'Occupation', langspoken:'Languages spoken',
+        genderq:'Gender', gendersub:'Helps translate names correctly.',
+        gopts:['She','He','They','Prefer not to say'],
+        adddetail:'Add a detail', adddetailsub:'Record anything — a saying, a recipe, a medal.',
+        source:'Add a source or note',
+        send:'Send to the keeper', cancel:'Cancel', waiting:'Waiting for the keeper', sent:'Sent to the keeper',
+        changeface:'Change the face', facesub:'Pick a photo they\u2019re tagged in, then fine-tune the round crop.',
+        zoom:'Zoom', preview:'Preview', save:'Save', suggesting:'You\u2019re suggesting an edit',
+        approve:'Approve', decline:'Decline', wasnow:'was',
+        langtitle:'Language', langsub:'Names, labels and details all follow the language you choose.',
+        foot:'A life, told a little more fully.', addfield:'Add this in another language',
+        detailLabel:'Label', detailValue:'Value', keeperView:'You are the keeper' },
+      ru:{ dir:'ltr', native:'Русский', label:'Russian',
+        eyebrow:'Изменить данные', title:'Рита Гольник',
+        keeper:'Ничто не дойдёт до семьи, пока хранитель не одобрит.',
+        cats:{ names:'Имена', dates:'Даты', places:'Места', kin:'Родство', life:'Жизнь', gender:'Пол', custom:'Детали', sources:'Источники' },
+        display:'Отображаемое имя', addlang:'другие языки', given:'Имя', family:'Фамилия', patronymic:'Отчество',
+        nicks:'Прозвища и ласковые имена', addnick:'добавить прозвище',
+        birth:'Родилась', death:'Умерла', living:'Ещё жива', precise:'Точность',
+        prec:['точно','месяц','год','около','неизвестно'],
+        pbirth:'Место рождения', lived:'Где жила', addplace:'добавить дом',
+        addkin:'Добавить связь', kinsub:'Пополняет семейный граф — коротко.',
+        about:'О человеке', occupation:'Занятие', langspoken:'Языки',
+        genderq:'Пол', gendersub:'Помогает правильно склонять имена.',
+        gopts:['Она','Он','Они','Не указывать'],
+        adddetail:'Добавить деталь', adddetailsub:'Запишите что угодно — поговорку, рецепт, награду.',
+        source:'Добавить источник или заметку',
+        send:'Отправить хранителю', cancel:'Отмена', waiting:'Ожидает хранителя', sent:'Отправлено хранителю',
+        changeface:'Сменить лицо', facesub:'Выберите фото, где она отмечена, и настройте круглую обрезку.',
+        zoom:'Масштаб', preview:'Просмотр', save:'Сохранить', suggesting:'Вы предлагаете правку',
+        approve:'Одобрить', decline:'Отклонить', wasnow:'было',
+        langtitle:'Язык', langsub:'Имена, подписи и детали — на выбранном языке.',
+        foot:'Жизнь, рассказанная чуть полнее.', addfield:'Добавить на другом языке',
+        detailLabel:'Название', detailValue:'Значение', keeperView:'Вы хранитель' },
+      he:{ dir:'rtl', native:'עברית', label:'Hebrew',
+        eyebrow:'עריכת פרטים', title:'ריטה גולניק',
+        keeper:'שום דבר לא יגיע למשפחה עד שהשומר יאשר.',
+        cats:{ names:'שמות', dates:'תאריכים', places:'מקומות', kin:'קרבה', life:'חיים', gender:'מגדר', custom:'פרטים', sources:'מקורות' },
+        display:'שם לתצוגה', addlang:'שפות נוספות', given:'שם פרטי', family:'שם משפחה', patronymic:'שם האב',
+        nicks:'כינויים ושמות חיבה', addnick:'הוספת כינוי',
+        birth:'נולדה', death:'נפטרה', living:'עדיין בחיים', precise:'דיוק',
+        prec:['מדויק','חודש','שנה','בערך','לא ידוע'],
+        pbirth:'מקום לידה', lived:'מקומות מגורים', addplace:'הוספת בית',
+        addkin:'הוספת קשר', kinsub:'מזין את עץ המשפחה — בקצרה.',
+        about:'אודות', occupation:'עיסוק', langspoken:'שפות',
+        genderq:'מגדר', gendersub:'עוזר לתרגם שמות נכון.',
+        gopts:['היא','הוא','הם','מעדיפה לא לומר'],
+        adddetail:'הוספת פרט', adddetailsub:'תעדו כל דבר — פתגם, מתכון, עיטור.',
+        source:'הוספת מקור או הערה',
+        send:'שליחה לשומר', cancel:'ביטול', waiting:'ממתין לשומר', sent:'נשלח לשומר',
+        changeface:'החלפת התמונה', facesub:'בחרו תמונה שבה היא מתויגת, וכווננו את החיתוך העגול.',
+        zoom:'זום', preview:'תצוגה', save:'שמירה', suggesting:'אתם מציעים עריכה',
+        approve:'לאשר', decline:'לדחות', wasnow:'היה',
+        langtitle:'שפה', langsub:'השמות, התוויות והפרטים — לפי השפה שתבחרו.',
+        foot:'חיים, מסופרים מעט יותר במלואם.', addfield:'הוספה בשפה אחרת',
+        detailLabel:'תווית', detailValue:'ערך', keeperView:'אתם השומר' }
+    };
+    let lang='en';
+    const d=()=>T[lang];
+
+    /* person data (per-language name variants) */
+    const NAME={ display:{en:'Rita Golnick',ru:'Рита Гольник',he:'ריטה גולניק'},
+      given:{en:'Rita',ru:'Рита',he:'ריטה'}, family:{en:'Golnick',ru:'Гольник',he:'גולניק'},
+      maiden:{en:'Tserlina',ru:'Церлина',he:'צרלינה'} };
+    const NICKS={en:['Ritochka','Grandma Rita'],ru:['Риточка','Бабушка Рита'],he:['ריטוצ׳קה','סבתא ריטה']};
+
+    /* ---------- icons ---------- */
+    const I={
+      back:'<path d="M15 18l-6-6 6-6"/>', globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+      keeper:'<path d="M12 3l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V6z"/><path d="M9 12l2 2 4-4"/>',
+      names:'<path d="M4 7V5h16v2M9 5v14M7 19h4"/><path d="M14 13h6M14 17h6M14 9h6" opacity=".5"/>',
+      dates:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/>',
+      places:'<path d="M12 21s-6-5.7-6-10a6 6 0 1112 0c0 4.3-6 10-6 10z"/><circle cx="12" cy="11" r="2"/>',
+      kin:'<circle cx="7" cy="8" r="2.4"/><circle cx="17" cy="8" r="2.4"/><circle cx="12" cy="17" r="2.4"/><path d="M7 10v2a2 2 0 002 2h6a2 2 0 002-2v-2M12 14v1"/>',
+      life:'<path d="M4 5h13l3 3v11H4z"/><path d="M8 10h8M8 14h6" opacity=".6"/>',
+      gender:'<circle cx="12" cy="9" r="4"/><path d="M12 13v8M9 18h6"/>',
+      custom:'<path d="M12 3l2.2 5.8L20 9l-4.5 3.8L17 19l-5-3.4L7 19l1.5-6.2L4 9l5.8-.2z"/>',
+      sources:'<path d="M9 7h6M9 11h6M9 15h4"/><rect x="5" y="3" width="14" height="18" rx="2"/>',
+      pencil:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>',
+      camera:'<path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3.2"/>',
+      plus:'<path d="M12 5v14M5 12h14"/>', x:'<path d="M6 6l12 12M18 6L6 18"/>',
+      check:'<path d="M20 6L9 17l-5-5"/>', info:'<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/>',
+      globe2:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/>',
+      zoomout:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4M8 11h6"/>', zoomin:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4M11 8v6M8 11h6"/>',
+      quote:'<path d="M7 7h4v6H7zM13 7h4v6h-4z"/>', medal:'<circle cx="12" cy="15" r="5"/><path d="M9 3l3 6 3-6"/>', phone:'<path d="M5 4h4l2 5-2 1a11 11 0 005 5l1-2 5 2v4a2 2 0 01-2 2A17 17 0 013 6a2 2 0 012-2z"/>'
+    };
+    const sv=(p,w)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w||1.6}" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+
+    /* face crop */
+    function faceSVG(){ return `<svg viewBox="0 0 100 100"><defs><radialGradient id="fg" cx="42%" cy="34%" r="76%"><stop offset="0%" stop-color="#f0d3ad"/><stop offset="60%" stop-color="#dcae82"/><stop offset="100%" stop-color="#9c6f4c"/></radialGradient><linearGradient id="fb" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2a3a52"/><stop offset="100%" stop-color="#141f30"/></linearGradient></defs><rect width="100" height="100" fill="url(#fb)"/><path d="M50 98 Q50 70 24 66 Q28 40 50 40 Q72 40 76 66 Q50 70 50 98Z" fill="#7a5a44"/><ellipse cx="50" cy="52" rx="25" ry="28" fill="url(#fg)"/><path d="M24 44 Q28 18 50 18 Q72 18 76 44 Q64 30 50 30 Q36 30 24 44Z" fill="#e9e4dc"/><ellipse cx="41" cy="52" rx="2.7" ry="3.1" fill="#3a2b22"/><ellipse cx="59" cy="52" rx="2.7" ry="3.1" fill="#3a2b22"/><path d="M43 66 Q50 71 57 66" stroke="#a06b4c" stroke-width="1.9" fill="none" stroke-linecap="round"/></svg>`; }
+    function galSVG(seed){ const s=['#c9a878','#8fa6b8','#b58a5c','#9fb0a0','#c08a70','#8a92b0'][seed%6];
+      return `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="${s}"/><rect y="58" width="100" height="42" fill="rgba(0,0,0,.18)"/><circle cx="50" cy="42" r="16" fill="#e6c49b"/><path d="M50 92 Q50 66 30 63 Q34 50 50 50 Q66 50 70 63 Q50 66 50 92Z" fill="#5a4030"/></svg>`; }
+
+    /* ---------- the 8 detail categories ---------- */
+    const CATS=[
+      { id:'names', kind:'gold', sub:'name' , pending:true },
+      { id:'dates', kind:'cool', sub:'when' },
+      { id:'places',kind:'cool', sub:'where' },
+      { id:'kin',   kind:'gold', sub:'family' },
+      { id:'life',  kind:'gold', sub:'bio' },
+      { id:'gender',kind:'gold', sub:'grammar' },
+      { id:'custom',kind:'gold', sub:'anything' },
+      { id:'sources',kind:'cool',sub:'provenance' },
+    ];
+    let openCat='names';
+
+    /* editor bodies per category (representative open states) */
+    function ml(fieldLabel, valsByLang, opts){ opts=opts||{};
+      const cur=valsByLang[lang]||''; const others=['en','ru','he'].filter(l=>l!==lang);
+      const varsId='ml'+Math.random().toString(36).slice(2,7);
+      const varRows=others.map(l=>`<div class="mlvar ${l==='he'?'rtl':''}"><span class="tag">${l}</span><input class="inp" value="${(valsByLang[l]||'').replace(/"/g,'&quot;')}" placeholder="${d().addfield}"></div>`).join('');
+      return `<div class="field"><label>${fieldLabel}</label>
+        <div class="mlrow"><input class="inp ${opts.rtlNow?'':''} name-input" value="${cur.replace(/"/g,'&quot;')}" ${lang==='he'?'style="direction:rtl;text-align:right"':''}>
+          <button class="mladd" data-ml="${varsId}">${sv(I.globe2,1.5)} ${d().addlang}</button></div>
+        <div class="mlvars" id="${varsId}">${varRows}</div></div>`;
+    }
+    function bodyFor(id){
+      const L=d();
+      if(id==='names'){ return ml(L.display, NAME.display)
+        + ml(L.given, NAME.given) + ml(L.family, NAME.family)
+        + `<div class="field"><label>${L.nicks}</label><div class="chips">${(NICKS[lang]||[]).map(n=>`<span class="chip">${n}<span class="x">${sv(I.x,2)}</span></span>`).join('')}<button class="chip add">${sv(I.plus,2)} ${L.addnick}</button></div></div>`;
+      }
+      if(id==='dates'){ return `<div class="field"><label>${L.birth}</label><input class="inp" value="1931"></div>
+        <div class="field"><label>${L.precise}</label><div class="seg">${L.prec.map((p,i)=>`<button class="${i===2?'on':''}">${p}</button>`).join('')}</div></div>
+        <div class="field"><div class="toggle"><span class="sw on" data-sw></span><span style="font-size:14px">${L.living}</span></div></div>`;
+      }
+      if(id==='places'){ return `<div class="field"><label>${L.pbirth}</label><input class="inp" value="Rybinsk"></div>
+        <div class="field"><label>${L.lived}</label><div class="chips">
+          <span class="chip cool"><span class="ord">01</span>Rybinsk<span class="x">${sv(I.x,2)}</span></span>
+          <span class="chip cool"><span class="ord">02</span>Holon<span class="x">${sv(I.x,2)}</span></span>
+          <span class="chip cool"><span class="ord">03</span>Tel-Aviv-Yafo<span class="x">${sv(I.x,2)}</span></span>
+          <button class="chip add">${sv(I.plus,2)} ${L.addplace}</button></div></div>`;
+      }
+      if(id==='kin'){ return `<div class="field"><div class="chips">
+          <span class="chip">Efim · partner<span class="x">${sv(I.x,2)}</span></span>
+          <span class="chip">Leonid · child<span class="x">${sv(I.x,2)}</span></span>
+          <span class="chip">Ida · sibling<span class="x">${sv(I.x,2)}</span></span>
+          <button class="chip add">${sv(I.plus,2)} ${L.addkin}</button></div>
+          <div style="font-size:11.5px;color:var(--muted);margin-top:9px">${L.kinsub}</div></div>`;
+      }
+      if(id==='life'){ return `<div class="field"><label>${L.about}</label><textarea class="inp">${lang==='ru'?'Держала весь дом на маленькой кухне в Холоне.':lang==='he'?'החזיקה בית שלם ממטבח קטן בחולון.':'Kept the whole family fed from a tiny Holon kitchen.'}</textarea></div>
+        <div class="field"><label>${L.occupation}</label><input class="inp" placeholder="—"></div>
+        <div class="field"><label>${L.langspoken}</label><div class="chips"><span class="chip">Русский<span class="x">${sv(I.x,2)}</span></span><span class="chip">עברית<span class="x">${sv(I.x,2)}</span></span><button class="chip add">${sv(I.plus,2)}</button></div></div>`;
+      }
+      if(id==='gender'){ return `<div class="field"><label>${L.genderq} — <span style="text-transform:none;letter-spacing:0;color:#7f8fa8">${L.gendersub}</span></label>
+        <div class="seg">${L.gopts.map((g,i)=>`<button class="${i===0?'on':''}">${g}</button>`).join('')}</div></div>`;
+      }
+      if(id==='custom'){ return `<div class="field"><div class="chips" style="flex-direction:column;align-items:stretch;gap:9px">
+          <div class="chip" style="justify-content:space-between;border-radius:12px"><span><b style="font-family:'Azeret Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:2px">${lang==='ru'?'Фирменное блюдо':lang==='he'?'מנת הדגל':'Signature dish'}</b>${lang==='ru'?'Форшмак':lang==='he'?'פורשמק':'Forshmak'}</span><span class="x">${sv(I.x,2)}</span></div>
+        </div></div>
+        <div class="adddetail"><button class="plus" data-add>${sv(I.plus,1.8)} ${L.adddetail}</button></div>`;
+      }
+      return `<div class="field"><label>${L.source}</label><input class="inp" placeholder="https:// …  ·  ${lang==='ru'?'семейный архив':lang==='he'?'ארכיון משפחתי':'family archive'}"></div>`;
+    }
+
+    /* ---------- ring geometry ---------- */
+    function ringHTML(){
+      const cx=150, cy=150, R=130;
+      const beads = CATS.map((c,i)=>{
+        const a = -Math.PI/2 + i*(Math.PI*2/CATS.length);
+        const x = cx + R*Math.cos(a), y = cy + R*Math.sin(a);
+        return `<button class="cat ${c.kind==='cool'?'cool':''} ${c.id===openCat?'on':''} ${c.pending?'has-pending':''}" data-cat="${c.id}" style="left:${x}px;top:${y}px" aria-label="${d().cats[c.id]}">
+          <span class="bead">${sv(I[c.id])}<span class="pin"></span></span><span class="lab">${d().cats[c.id]}</span></button>`;
+      }).join('');
+      // faint connecting ring arc
+      return `<svg class="ring-svg" viewBox="0 0 300 300"><circle cx="150" cy="150" r="130" fill="none" stroke="rgba(243,205,132,.14)" stroke-width="1"/>
+        <circle cx="150" cy="150" r="130" fill="none" stroke="rgba(243,205,132,.4)" stroke-width="2" stroke-dasharray="1 13" stroke-linecap="round"/></svg>
+        <div class="facewrap"><div class="face">${faceSVG()}<button class="changef" id="changeFace" aria-label="${d().changeface}">${sv(I.camera,1.6)}</button></div></div>
+        ${beads}`;
+    }
+
+    /* ---------- render ---------- */
+    function render(){
+      const L=d(); document.documentElement.lang=lang; document.documentElement.dir=L.dir;
+      $('#topbar').innerHTML=`<button class="ibtn" aria-label="Back">${sv(I.back)}</button>
+        <div class="ttl"><div class="k">${L.eyebrow}</div><div class="n serif">${NAME.display[lang]}</div></div>
+        <button class="ibtn" id="langBtn" aria-label="${L.langtitle}">${sv(I.globe,1.5)}</button>`;
+      $('#keeperNote').innerHTML=`${sv(I.keeper,1.5)}<span>${L.keeper}</span>`;
+
+      const cat=CATS.find(c=>c.id===openCat);
+      const pendingOpen = cat.pending;
+      $('#pad').innerHTML=`
+        <div class="hero">${ringHTML()}</div>
+        <div class="editor">
+          <div class="ed-head ${cat.kind==='cool'?'cool':''}">
+            <span class="ic">${sv(I[cat.id])}</span>
+            <div class="tt"><div class="h">${L.cats[cat.id]}</div><div class="s">${cat.kind==='cool'?'App-assembled fact':'Told by the family'}</div></div>
+          </div>
+          ${bodyFor(cat.id)}
+          <div class="pending ${pendingOpen?'show':''}" id="pend"><span class="sp"></span>${L.waiting}</div>
+          <div class="keeperbar"><button class="kbtn ok">${sv(I.check,2)} ${L.approve}</button><button class="kbtn no">${L.decline}</button><span class="was">${L.wasnow} <b>Golnik</b></span></div>
+          <div class="savebar"><button class="btn ghost" id="revert">${L.cancel}</button><button class="btn primary" id="send">${L.send}</button></div>
+        </div>
+        <div class="foot"><div class="l">${L.foot}</div></div>`;
+      wire();
+    }
+
+    /* ---------- overlays ---------- */
+    const scrim=$('#scrim');
+    function show(sh){ scrim.classList.add('show'); sh.classList.add('show'); }
+    function hide(){ scrim.classList.remove('show'); $$('.sheet').forEach(s=>s.classList.remove('show')); }
+    scrim.addEventListener('click', hide);
+    function toast(m){ $('#toastMsg').textContent=m; const el=$('#toast'); el.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('show'),2500); }
+
+    function openLang(){ const L=d();
+      $('#langSheet').innerHTML=`<div class="grip"></div><h3>${L.langtitle}</h3><div class="sub">${L.langsub}</div>
+        ${Object.keys(T).map(k=>`<button class="lang-opt ${k===lang?'on':''}" data-lang="${k}"><span><span class="native">${T[k].native}</span><span class="en" style="display:block">${T[k].label}</span></span><span class="tick">${sv(I.check,2)}</span></button>`).join('')}`;
+      $$('#langSheet [data-lang]').forEach(b=>b.onclick=()=>{ lang=b.dataset.lang; hide(); render(); });
+      show($('#langSheet'));
+    }
+    function openFace(){ const L=d();
+      const gals=Array.from({length:8},(_,i)=>`<div class="g ${i===2?'on':''}" data-g="${i}">${galSVG(i)}${i===2?'<span class="tagbox" style="left:34%;top:26%;width:32%;height:38%"></span>':''}</div>`).join('');
+      $('#faceSheet').innerHTML=`<div class="grip"></div><h3>${L.changeface}</h3><div class="sub">${L.facesub}</div>
+        <div class="gal">${gals}</div>
+        <div class="cropstage" id="cropStage"><div class="cimg" id="cimg">${galSVG(2)}</div><div class="cmask"></div><div class="cring"></div></div>
+        <div class="zoomrow">${sv(I.zoomout,1.6)}<input type="range" min="100" max="260" value="140" id="zoom">${sv(I.zoomin,1.6)}</div>
+        <div class="ed-note" style="display:flex;gap:9px;margin:10px 0 0;font-size:12px;color:var(--muted)">${sv(I.info,1.7)}<span>${L.keeper}</span></div>
+        <div class="savebar"><button class="btn ghost" data-close>${L.cancel}</button><button class="btn primary" id="faceSave">${L.send}</button></div>`;
+      // crop interactions
+      let z=140,px=50,py=44,drag=false,sx,sy,bx,by; const img=$('#cimg'); const st=$('#cropStage');
+      function apply(){ img.style.transform=`translate(-50%,-50%) scale(${z/100})`; img.style.left=px+'%'; img.style.top=py+'%'; img.style.position='absolute'; img.style.width='100%'; img.style.height='100%'; }
+      img.style.transformOrigin='center'; apply();
+      $('#zoom').oninput=e=>{ z=+e.target.value; apply(); };
+      st.addEventListener('pointerdown',e=>{ drag=true; sx=e.clientX; sy=e.clientY; bx=px; by=py; st.setPointerCapture(e.pointerId); });
+      st.addEventListener('pointermove',e=>{ if(!drag)return; px=bx+(e.clientX-sx)/st.clientWidth*100; py=by+(e.clientY-sy)/st.clientHeight*100; apply(); });
+      st.addEventListener('pointerup',()=>drag=false);
+      $$('#faceSheet [data-g]').forEach(g=>g.onclick=()=>{ $$('#faceSheet .g').forEach(x=>x.classList.remove('on')); g.classList.add('on'); img.innerHTML=galSVG(+g.dataset.g); apply(); });
+      $('#faceSheet [data-close]').onclick=hide;
+      $('#faceSave').onclick=()=>{ hide(); markPending('names'); toast(L.sent); };
+      show($('#faceSheet'));
+    }
+    function openAdd(){ const L=d();
+      const opts=[[I.quote,L.detailLabel==='Label'?'A saying':L.adddetail,'“You never left her table hungry.”'],[I.medal,'A medal or honour','—'],[I.phone,'A phone number','for the living'],[I.custom,'Anything else','label + value']];
+      $('#addSheet').innerHTML=`<div class="grip"></div><h3>${L.adddetail}</h3><div class="sub">${L.adddetailsub}</div>
+        ${opts.map((o,i)=>`<button class="add-opt" data-addopt="${i}"><span class="ic">${sv(o[0],1.6)}</span><span><span class="nm">${o[1]}</span><span class="ds">${o[2]}</span></span></button>`).join('')}
+        <div style="height:6px"></div>
+        <div class="field" id="customFields" style="display:none">
+          <label>${L.detailLabel}</label><input class="inp" placeholder="${L.detailLabel}" style="margin-bottom:10px">
+          <label>${L.detailValue}</label><input class="inp" placeholder="${L.detailValue}">
+          <div class="savebar"><button class="btn ghost" data-close>${L.cancel}</button><button class="btn primary" data-addsend>${L.send}</button></div>
+        </div>`;
+      $$('#addSheet [data-addopt]').forEach(b=>b.onclick=()=>{ $('#customFields').style.display='block'; b.style.borderColor='rgba(201,162,255,.5)'; });
+      const cl=$('#addSheet [data-close]'); if(cl) cl.onclick=hide;
+      const as=$('#addSheet [data-addsend]'); if(as) as.onclick=()=>{ hide(); markPending('custom'); toast(L.sent); };
+      show($('#addSheet'));
+    }
+
+    function markPending(catId){ const c=CATS.find(x=>x.id===catId); if(c) c.pending=true; if(openCat===catId){ const p=$('#pend'); if(p) p.classList.add('show'); } render(); }
+
+    /* ---------- wire ---------- */
+    function wire(){
+      $('#langBtn').onclick=openLang;
+      const cf=$('#changeFace'); if(cf) cf.onclick=openFace;
+      $$('.cat').forEach(c=>c.onclick=()=>{ openCat=c.dataset.cat; render(); });
+      $$('.mladd').forEach(b=>b.onclick=()=>{ const v=document.getElementById(b.dataset.ml); if(v) v.classList.toggle('open'); });
+      $$('[data-sw]').forEach(s=>s.onclick=()=>s.classList.toggle('on'));
+      $$('.seg button').forEach(b=>b.onclick=()=>{ [...b.parentElement.children].forEach(x=>x.classList.remove('on')); b.classList.add('on'); });
+      const add=$('[data-add]'); if(add) add.onclick=openAdd;
+      const send=$('#send'); if(send) send.onclick=()=>{ markPending(openCat); toast(d().sent); };
+      const rev=$('#revert'); if(rev) rev.onclick=()=>toast(d().cancel);
+      $$('.kbtn.ok').forEach(b=>b.onclick=()=>{ const c=CATS.find(x=>x.id===openCat); if(c) c.pending=false; toast(d().approve+' ✓'); render(); });
+      $$('.kbtn.no').forEach(b=>b.onclick=()=>{ const c=CATS.find(x=>x.id===openCat); if(c) c.pending=false; toast(d().decline); render(); });
+    }
+
+    /* ---------- tablet toggle ---------- */
+    let tablet=false;
+    $('#toTablet').onclick=()=>{ tablet=!tablet; $('#device').classList.toggle('tablet',tablet);
+      $('#lblM').textContent=tablet?'Tablet · 720':'Mobile · 390'; $('#toTablet').textContent=tablet?'↔ preview mobile width':'↔ preview tablet width'; };
+
+    /* ========== GROWING-VINE ATMOSPHERE ========== */
+    (function vines(){
+      const cv=$('.atmo'), ctx=cv.getContext('2d'); let W,H,DPR=Math.min(2,window.devicePixelRatio||1);
+      function resize(){ W=cv.clientWidth; H=cv.clientHeight; cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); build(); }
+      new ResizeObserver(resize).observe(cv);
+      // build a set of vines: each a path of points growing upward with side branches + glowing nodes
+      let vines=[];
+      const COL=[[143,214,160],[243,205,132],[127,180,216],[201,162,255]];
+      function makeVine(x0){ const pts=[]; let x=x0,y=1.05, ang=-Math.PI/2+(Math.random()-.5)*.4;
+        const n=Math.floor(Math.random()*5)+7;
+        for(let i=0;i<n;i++){ pts.push({x,y}); ang+=(Math.random()-.5)*.6; const step=0.07+Math.random()*0.05; x+=Math.cos(ang)*step*0.5; y+=Math.sin(ang)*step; }
+        return { pts, c:COL[(Math.random()*COL.length)|0], grow:0, gspd:0.0009+Math.random()*0.0008, sway:Math.random()*6.28, buds:pts.map(()=>Math.random()>.55) };
+      }
+      function build(){ vines=[]; const k=Math.max(3,Math.round(W/120)); for(let i=0;i<k;i++) vines.push(makeVine((i+0.5)/k + (Math.random()-.5)*0.12)); }
+      resize();
+      function frame(now){ const t=(now||0)/1000; ctx.clearRect(0,0,W,H); ctx.globalCompositeOperation='lighter';
+        vines.forEach(v=>{ if(!reduce && v.grow<1) v.grow+=v.gspd;
+          const g=reduce?1:v.grow, seg=(v.pts.length-1)*g, last=Math.floor(seg), frac=seg-last;
+          const sway=reduce?0:Math.sin(t*0.25+v.sway)*0.012;
+          const P=k=> ({ x:(v.pts[k].x+ (reduce?0:Math.sin(t*0.2+k*0.5+v.sway)*0.006*(k/ v.pts.length)))*W, y:v.pts[k].y*H });
+          // stem
+          ctx.strokeStyle=`rgba(${v.c[0]},${v.c[1]},${v.c[2]},0.16)`; ctx.lineWidth=1.4; ctx.beginPath();
+          for(let i=0;i<=last;i++){ const p=P(i); i?ctx.lineTo(p.x,p.y+sway*H):ctx.moveTo(p.x,p.y); }
+          if(last<v.pts.length-1){ const a=P(last), b=P(last+1); ctx.lineTo(a.x+(b.x-a.x)*frac, a.y+(b.y-a.y)*frac); } ctx.stroke();
+          // glowing buds along grown part
+          for(let i=0;i<=last;i++){ if(!v.buds[i]) continue; const p=P(i); const tw=reduce?0.7:(0.4+0.6*(0.5+0.5*Math.sin(t*1.2+i+v.sway)));
+            const R=6+ (i===v.pts.length-1?4:0); const gr=ctx.createRadialGradient(p.x,p.y+sway*H,0,p.x,p.y+sway*H,R);
+            gr.addColorStop(0,`rgba(${v.c[0]},${v.c[1]},${v.c[2]},${0.5*tw})`); gr.addColorStop(1,`rgba(${v.c[0]},${v.c[1]},${v.c[2]},0)`);
+            ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(p.x,p.y+sway*H,R,0,6.2832); ctx.fill();
+            ctx.fillStyle=`rgba(255,250,236,${0.7*tw})`; ctx.beginPath(); ctx.arc(p.x,p.y+sway*H,1.3,0,6.2832); ctx.fill(); }
+        });
+        ctx.globalCompositeOperation='source-over';
+        if(!reduce) requestAnimationFrame(frame);
+      }
+      if(!reduce) requestAnimationFrame(frame); else frame(0);
+    })();
+
+    render();
+  })();
+  </script>
+</body>
+</html>

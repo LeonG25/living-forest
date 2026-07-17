@@ -586,7 +586,7 @@ html,body{background:#04070e;margin:0}
 
   /* ---------- wire ---------- */
   function wire(){ const L=d();
-    $('#backBtn').onclick=()=>{ if(history.length>1) history.back(); else location.href='globe-real.html'; };
+    $('#backBtn').onclick=()=>{ if(history.length>1) history.back(); else location.href='index.html'; };
     $('#langBtn').onclick=openLang;
     const cf=$('#changeFace'); if(cf) cf.onclick=openFace;
     $$('.cat').forEach(c=>c.onclick=()=>{ openCat=c.dataset.cat; render(); });
@@ -681,5 +681,5 @@ html,body{background:#04070e;margin:0}
 })();
 
 </script>
-<script src="lf-nav.js" data-here="" data-parent="home-real.html"></script>
+<script src="lf-nav.js" data-here="" data-parent="index.html"></script>
 </body></html>
