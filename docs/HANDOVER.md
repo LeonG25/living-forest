@@ -389,6 +389,60 @@ So a Russian- or Hebrew-speaking relative now lands in English.
 i18n is still owed on `index.html` (the globe), `home-real.html` and `crowd-real.html`
 (HANDOVER §1). Front door first when this comes off the lot.
 
+### Moment page — redesign, parked 2026-07-17, Leon's call
+`screens/Moment - Photoless.html` (Batch A brief 2) was accepted as **good enough for now,
+not good enough to keep**. Leon: *"Design is too simple, but ok for now."* The Moment page
+gets a proper redesign later. Three notes to carry into it:
+
+1. **Content appears once, in the selected UI language** — not the same story in EN, RU and
+   HE side by side. That is a translation demo, not the page. (Now house rules §8.)
+2. **No brief, no page description, nothing explanatory on the canvas.** (Now house rules §8.)
+3. **Any content can be part of a Moment — photographs included.** A Moment is not
+   "a photo, or else a story". It is a memory that may hold a photograph, a telling, a
+   voice, or several at once. The photoless case is not a variant hero on a photo page —
+   **the photo is one kind of content among others.** This reframes D4: the question was
+   never "what replaces the photo", it was "what is a Moment made of".
+
+### Maiden name — parked 2026-07-17, Leon's call
+`maiden` has **0 rows** across all 45 people. The field carries no data anywhere.
+Leon: *"Maiden name is an optional field, but most of the women may have maiden
+names. Let's do it later."*
+
+Why it matters when it comes off the lot:
+- Design #1 already draws a `was Golnik` chip in the Name facet — against a field
+  that has never held a value. **Design #1 also has it backwards**: it shows
+  `family/ru = Гольник` as current. Гольник is Rita's *maiden* name. She married
+  Dudi Betito and took Бетито-Гольник, which is what the database holds, published.
+  The design shows the maiden name in the married name's place.
+- `person-name-delta.md` adds `called`, `patronymic`, `honorific` — **not** `maiden`.
+  So the Batch A draw of the Name facet is knowingly incomplete on this point.
+- The transliteration engine already handles feminine surname forms
+  (Tserlin → Церлина / צרלינה), which is the same machinery maiden names need.
+- Most women in this tree will have one. This is not an edge case; it is half the family.
+
+### Familiar-vs-formal given names — swept 2026-07-17, no longer open
+Four `given/ru` rows held the familiar form in the formal slot. Leon gave the formal
+names per person (the rule says never bulk-fix, never guess — he was asked, one by one):
+Лёня → Леонид · Женя → Евгений · Зина → Зинаида · Надя → Надежда.
+Each familiar form moved to `called/ru`, published. `called` went 1 row → 5.
+Remaining `given/ru` values were left alone. If more turn up, ask per person.
+
+### Place names as rows — parked 2026-07-17, technical
+Historical place names (Saint Petersburg → Petrograd 1914 → Leningrad 1924 →
+Saint Petersburg 1991) need a store this app does not have. Leon: *"I don't know,
+I think this is related to the internal database structure."* — so this is a build
+decision, not a values one.
+
+Proposed shape, mirroring what `name_variants` → `person_facts` already taught us
+(**the unit of a row is the unit of approval**):
+`place_facts(place_id, field, lang, value, valid_from, valid_to, ord, status,
+created_by, reviewed_by, created_at, published_at)`
+Same `pub_status` gate. Same per-field approval. `valid_from`/`valid_to` are the
+only new idea, and they are what binds a name to the time dial.
+
+Design v3 already draws this against the existing dial — the design is ahead of the
+schema. Do not build the page until the store exists, or the design will be faked.
+
 ### Phase 6 — parked big ideas
 The globe placement game (a year + names → drop them on the map); the world & family events layer on the globe; the escape-room quest chain. Each needs its own design pass.
 

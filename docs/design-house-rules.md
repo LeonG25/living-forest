@@ -139,9 +139,17 @@ box-shadow: 0 0 calc(4px + var(--k)*18px) calc(var(--k)*3px) …
 
 If flat HTML is impossible: **screenshots** are the next best thing, then a **hosted URL**.
 
+**Deliver the page, never a piece of it.** The unit of delivery is a whole screen exactly as it will look in the app — not a facet, not a component board, not a specimen sheet. If a brief says *"a delta, not a redraw"*, that limits **what you change**, not **what you draw**: redraw the whole page with the change in it, and leave everything else byte-identical. We reproduce handoffs verbatim; we never hand-fuse a fragment into an existing page, because that is how two visual languages get welded together badly (§2, the failure we are afraid of).
+
+**Nothing on the canvas that will not ship.** No titles naming the deliverable, no annotation, no rationale, no "design decisions" panel, no open-questions list. Those go in the accompanying message, not painted onto the artboard. **A person who has never read the brief should be unable to tell the design from a screenshot of the running app.**
+
+**The page is a template; the person in it is data.** There is no "Rita Golnick page" and no "Tel-Aviv page" — there is a **Person page** and a **Place page**. Rita and Tel-Aviv are example content standing inside them. Every person gets the same page with their own information. Design the page, not the example.
+
+**Several states may sit side by side as separate whole phone frames** (see `2026-07-13--moment-directions--v1.html`). Each frame must still be a complete page. A board of fragments is not a delivery.
+
 **Show every state.** Published, suggested (violet + author + waiting chip), auto-translated, empty, locked. A design that only draws the happy path is not finished — the empty and waiting states are most of the real app's life.
 
-**All three languages**, including RTL Hebrew.
+**All three languages — through the switch, not by triplication.** The app shows a given piece of content **once**, in the reader's selected language. So does the design: one page, one language on screen, a working language control that flips it (EN · RU · HE, Hebrew mirroring to RTL). Do **not** draw the same story three times side by side — that is a translation demo, not the app. The point of RU and HE is to prove the layout survives them (Russian runs ~20% longer; Hebrew mirrors completely), and the switch proves that better than three copies do.
 
 ---
 
