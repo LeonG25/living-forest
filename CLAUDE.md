@@ -138,6 +138,10 @@ be visibly mid-construction if Leon peeks early — accepted.
    Precedent: the facet decision retro-invalidated every game's design status.
 8. **Challenges are engine-generated, never hard-coded** (§1). No game bakes in a snapshot
    of current data.
+9. **Every new page goes through a Claude Design (the designer) pass BEFORE it is built**
+   (Leon, 2026-07-18, firm rule). No page is engineered from scratch without a designer
+   handoff first — not Search, Tree, Contribute, Manage curators, game play-screens, or any
+   future page. Design → then build to the handoff (rule 1). This reinforces rule 7.
 
 ---
 
