@@ -80,6 +80,8 @@
   #gate button{width:100%;margin-top:14px;background:linear-gradient(180deg,#ffe6ad,#f3cd84);color:#3a2a05;font-weight:700;font-family:inherit;font-size:15px;padding:13px;border:none;border-radius:13px;cursor:pointer;}
   #gate .msg{margin-top:12px;font-size:12.5px;color:#ff9a8f;min-height:16px;}
   #gate .spin{display:inline-block;width:34px;height:34px;border:3px solid rgba(243,205,132,.25);border-top-color:#f3cd84;border-radius:50%;animation:sp 1s linear infinite;}
+  #gate .alt{margin-top:15px;font-size:12.5px;color:rgba(206,221,240,.6);}
+  #gate .alt a{color:#f3cd84;cursor:pointer;text-decoration:underline;text-underline-offset:2px;}
   @keyframes sp{to{transform:rotate(360deg)}}
 
   @media (max-width:560px){ #tl p{display:none;} #br{display:none;} }
@@ -251,6 +253,7 @@ const dialSvg=$('#dial svg'), handleEl=$('#handle'), ticksEl=$('#ticks');
 async function load(){
   const { data:{ session } } = await sb.auth.getSession();
   if(!session){ showSignIn(); return; }
+  await ensureProfile(session.user);
   try{
     const [ppl, rels, arts, subs] = await Promise.all([
       sb.from('people').select('id,display_name,called_name'),
@@ -484,16 +487,78 @@ tick();
 /* ---- sign-in gate (shares the app's session; same origin) ---- */
 function showSignIn(){
   const box=$('#gateBox');
-  box.innerHTML='<h2 class="serif">Your forest</h2><p>Sign in with your keeper account to see your real family on the globe.</p>'+
-    '<input id="gEmail" type="email" placeholder="you@example.com" autocomplete="email"/>'+
-    '<input id="gPw" type="password" placeholder="password" autocomplete="current-password"/>'+
-    '<button id="gGo">Sign in</button><div class="msg" id="gMsg"></div>';
-  $('#gGo').onclick=async()=>{ const email=$('#gEmail').value.trim(), password=$('#gPw').value; const m=$('#gMsg');
-    if(!email||!password){ m.textContent='Enter your email and password.'; return; }
+  let mode='in';                                // 'in' = sign in · 'up' = create account
+  function loading(t){ box.innerHTML='<div class="spin"></div><p style="margin-top:16px">'+t+'</p>'; }
+  function render(){
+    if(mode==='in'){
+      box.innerHTML='<h2 class="serif">Your forest</h2>'+
+        '<p>Sign in to see your family on the globe — or create an account, everyone is welcome.</p>'+
+        '<input id="gEmail" type="email" placeholder="you@example.com" autocomplete="email"/>'+
+        '<input id="gPw" type="password" placeholder="password" autocomplete="current-password"/>'+
+        '<button id="gGo">Sign in</button>'+
+        '<div class="msg" id="gMsg"></div>'+
+        '<div class="alt">New here? <a id="gToUp">Create an account</a></div>';
+      $('#gGo').onclick=doSignIn;
+      $('#gToUp').onclick=()=>{ mode='up'; render(); };
+    } else {
+      box.innerHTML='<h2 class="serif">Join the forest</h2>'+
+        '<p>Create an account and land straight on the globe.</p>'+
+        '<input id="gName" type="text" placeholder="Your name" autocomplete="name"/>'+
+        '<input id="gEmail" type="email" placeholder="you@example.com" autocomplete="email"/>'+
+        '<input id="gPw" type="password" placeholder="choose a password" autocomplete="new-password"/>'+
+        '<button id="gGo">Create account</button>'+
+        '<div class="msg" id="gMsg"></div>'+
+        '<div class="alt">Already have an account? <a id="gToIn">Sign in</a></div>';
+      $('#gGo').onclick=doRegister;
+      $('#gToIn').onclick=()=>{ mode='in'; render(); };
+    }
+  }
+  async function doSignIn(){
+    const email=$('#gEmail').value.trim(), password=$('#gPw').value, m=$('#gMsg');
+    if(!email||!password){ m.style.color='#ff9a8f'; m.textContent='Enter your email and password.'; return; }
     m.style.color='rgba(206,221,240,.65)'; m.textContent='Signing in…';
     const { error }=await sb.auth.signInWithPassword({email,password});
-    if(error){ m.style.color='#ff9a8f'; m.textContent=error.message; }
-    else { box.innerHTML='<div class="spin"></div><p style="margin-top:16px">Reading your forest…</p>'; load(); } };
+    if(error){ m.style.color='#ff9a8f'; m.textContent=error.message; return; }
+    loading('Reading your forest…'); load();
+  }
+  async function doRegister(){
+    const name=$('#gName').value.trim(), email=$('#gEmail').value.trim(), password=$('#gPw').value, m=$('#gMsg');
+    if(!name||!email||!password){ m.style.color='#ff9a8f'; m.textContent='Enter your name, email and a password.'; return; }
+    if(password.length<6){ m.style.color='#ff9a8f'; m.textContent='Use at least 6 characters for your password.'; return; }
+    m.style.color='rgba(206,221,240,.65)'; m.textContent='Creating your account…';
+    const { data, error }=await sb.auth.signUp({ email, password, options:{ data:{ display_name:name } } });
+    if(error){ m.style.color='#ff9a8f'; m.textContent=error.message; return; }
+    if(data && data.session){ loading('Planting you in the forest…'); load(); return; }
+    // Open registration: no approval gate. If no session came back the project may want
+    // email confirmation — try an immediate sign-in in case it isn't actually enforced.
+    const { data:si }=await sb.auth.signInWithPassword({ email, password });
+    if(si && si.session){ loading('Planting you in the forest…'); load(); return; }
+    // Confirmation genuinely required — still open, just point the way (no keeper step).
+    m.style.color='rgba(206,221,240,.8)';
+    m.textContent='Account created. Please confirm via the email we sent, then sign in.';
+  }
+  render();
+}
+
+/* ---- ensure a profiles row exists for this account (open registration; never overwrite) ---- */
+async function ensureProfile(user){
+  if(!user||!user.id) return;
+  try{
+    const { data:existing }=await sb.from('profiles').select('id').eq('id',user.id).maybeSingle();
+    if(existing) return;                        // never overwrite an existing profile
+    const displayName=(user.user_metadata&&user.user_metadata.display_name)||(user.email||'').split('@')[0]||'Someone';
+    const lang=(navigator.language||'en').slice(0,2).toLowerCase();
+    let row={ id:user.id, display_name:displayName, preferred_lang:lang };
+    // Optimistic insert; the live schema decides which columns hold. Drop any column
+    // PostgREST doesn't recognise and retry, so we never assume column names.
+    for(let i=0;i<4;i++){
+      const { error }=await sb.from('profiles').upsert(row,{ onConflict:'id', ignoreDuplicates:true });
+      if(!error) return;
+      const mm=/'([a-z_]+)'/i.exec(error.message||'');
+      if(mm&&mm[1]&&mm[1]!=='id'&&(mm[1] in row)){ delete row[mm[1]]; continue; }
+      return;                                   // RLS or other — auth still succeeded; land anyway
+    }
+  }catch(e){ /* profile is best-effort; never block entry to the globe */ }
 }
 function gateError(msg){ $('#gate').style.display='flex'; $('#gateBox').innerHTML='<h2 class="serif">Hmm</h2><p>'+msg+'</p><button onclick="location.reload()">Try again</button>'; }
 
