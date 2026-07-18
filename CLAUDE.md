@@ -477,3 +477,10 @@ Then ping Leon once: design + build + QC done, here is the link.
   already does feminine surname forms. Half the family will have one — not an edge case.
 - **Globe placement game / events layer / escape-room chain** (Phase 6) — each needs its
   own design pass.
+- **Keeper authorization to view branches or trees** — a keeper grants/denies a given
+  account access to specific branches or whole trees, so not every registered member sees
+  every family. **Deliberately parked (Leon, 2026-07-18).** Note the contrast: registration
+  today is fully open — anyone who signs up sees the real family immediately (Leon chose
+  open + immediate over an approval gate). This idea is the future refinement of that: keep
+  open sign-up, but let keepers scope what each account can see. Needs a per-account ↔
+  branch/tree grant store and a keeper UI to manage grants.
