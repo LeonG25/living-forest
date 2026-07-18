@@ -1,6 +1,6 @@
 # The Living Forest — design house rules
 
-> **Revision:** 2026-07-15 20:15 (UTC+2) · authority: `docs/HANDOVER.md`
+> **Revision:** 2026-07-15 20:15 (UTC+2) · authority: `CLAUDE.md` (root)
 > **Extracted from the verified Design #1** (`docs/designs/2026-07-15--person--v1.html`, QC passed 2026-07-15), not written from memory. Where this document and that file disagree, **the file wins** — and tell us.
 
 **How to use this:** paste this whole file at the end of every Claude Design brief. The brief above it should describe **only that one page**. This appendix carries everything shared, so briefs stay ~3KB instead of ~11KB.

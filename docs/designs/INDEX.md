@@ -1,8 +1,8 @@
 # Design deliveries — catalogue
 
-> **Revision:** 2026-07-17 10:24 (UTC+2) · commit `e566a08` · authority: `docs/HANDOVER.md`
+> **Revision:** 2026-07-17 10:24 (UTC+2) · commit `e566a08` · authority: `CLAUDE.md` (root)
 
-**Naming — dated on purpose.** Unlike text documents (which are single, stable-named files — see HANDOVER §0), design deliveries **are** dated: they are immutable artefacts, several versions legitimately coexist, and we must always know which one a build was made from.
+**Naming — dated on purpose.** Unlike text documents (which are single, stable-named files — see CLAUDE.md §0), design deliveries **are** dated: they are immutable artefacts, several versions legitimately coexist, and we must always know which one a build was made from.
 
 ```
 docs/designs/YYYY-MM-DD--<page>--v<N>.html
@@ -34,14 +34,14 @@ bundle, not Design #1, and the resemblance to the Design #1 name is a trap.
 
 | File | Design # | Page | Delivered | Filed | QC | Notes |
 |---|---|---|---|---|---|---|
-| `2026-07-15--person--v1.html` | **1** | Person (8 facets) | **2026-07-15 09:18** ‡ | ✅ **78,814 b, verified** | ✅ **PASSED** 2026-07-15 17:41 | Flat source `The Person Page.html`. Brief: `person-page-brief-for-claude-design.md`. **QC: passes — invents nothing the schema cannot hold** (HANDOVER §9b). Two follow-ups: patronymic + honorific are specified in the facet model but **not drawn**; the Story facet needs `contributor_id` backfilled or it renders without a narrator. |
+| `2026-07-15--person--v1.html` | **1** | Person (8 facets) | **2026-07-15 09:18** ‡ | ✅ **78,814 b, verified** | ✅ **PASSED** 2026-07-15 17:41 | Flat source `The Person Page.html`. Brief: `person-page-brief-for-claude-design.md`. **QC: passes — invents nothing the schema cannot hold** (CLAUDE.md §7). Two follow-ups: patronymic + honorific are specified in the facet model but **not drawn**; the Story facet needs `contributor_id` backfilled or it renders without a narrator. |
 | `2026-07-12--place-tel-aviv--v2.html` | **2** | Place | **2026-07-12 02:28** ‡ | ✅ **42,328 b, verified** | ❌ pending | Flat source `screens/Place v2.html`, 42,328 b. **Design #2 = this file — Leon, 2026-07-17: *"The one with globe."*** The globe is the identifying feature and it is unambiguous: v2 loads `three.min.js` + `topojson-client` (`:10–11`) and renders a live WebGL globe as the page's fixed background (`<canvas id="globe">`, `:173`); v1 loads no JS libraries at all. **Build gap vs. v2 — see below.** Predates keeper / i18n / in-place-edit decisions. |
 | `2026-07-11--place-tel-aviv--v1.html` | — | Place | **2026-07-11 23:12** ‡ | ✅ **24,693 b, verified** | — | Flat source `screens/Place.html`, 24,693 b. **Superseded** by v2 above, 3h16m later. Reference only — **do not build from it.** Its distinct idea, not carried into v2: the **time-of-day place-scape** (`--sky-top`/`--sun`/`--haze` interpolated by scroll through morning → golden hour → dusk, `:339–357`), and the cool cartographic strip (`.cartostrip`, `:197`). v2 replaces both with the globe. |
 | `2026-07-13--moment--v1.html` | **3** | Moment | **2026-07-13 23:48** ‡ | ✅ **41,600 b, verified** | ✅ | Flat source `screens/Moment.html`, 41,600 b. Built and live: `moment-real.html`, commit `30ebd89`. The design itself had never been filed. |
 | `2026-07-13--moment-directions--v1.html` | — | Moment — Directions | **2026-07-13 22:43** ‡ | ✅ **23,310 b, verified** | — | Flat source `screens/Moment - Directions.html`, 23,310 b. **Was not in this catalogue before 2026-07-17.** |
 | `2026-07-13--moment-reliquary--v1.html` | — | Moment — Reliquary | **2026-07-13 22:53** ‡ | ✅ **19,016 b, verified** | — | Flat source `screens/Moment - Reliquary.html`, 19,016 b. **Was not in this catalogue before 2026-07-17.** |
 | `2026-07-11--person-rita--v0.html` | — | Person (old five-light hub) | **2026-07-11 17:54** ‡ | ✅ **28,415 b, verified** | — | Flat source `screens/Person.html`, 28,415 b. **Superseded** by the facet model. Reference only. Live version recoverable at commit `75defd8`. See the warning box above. |
-| `2026-07-14--person-edit--v1.html` | — | Person Edit | **2026-07-14 17:34** ‡ | ✅ **47,771 b, verified** | — | Flat source `screens/Person Edit.html`, 47,771 b. **Was not in this catalogue before 2026-07-17.** **The page it designs is retired** (HANDOVER: `person-edit-real.html` is a 404; everything is edited in place). Filed for the record only — **do not build from it.** |
+| `2026-07-14--person-edit--v1.html` | — | Person Edit | **2026-07-14 17:34** ‡ | ✅ **47,771 b, verified** | — | Flat source `screens/Person Edit.html`, 47,771 b. **Was not in this catalogue before 2026-07-17.** **The page it designs is retired** (CLAUDE.md: `person-edit-real.html` is a 404; everything is edited in place). Filed for the record only — **do not build from it.** |
 | `2026-07-09--crowd--v1.html` | — | Find Them in the Crowd | **2026-07-09 22:01** ‡ | ✅ **32,204 b, verified** | — | Flat source `Find Them in the Crowd.html` (project root), 32,204 b. **Was not in this catalogue before 2026-07-17.** The earliest delivery we hold. |
 
 ### Design #2 (Place v2) vs `place-real.html` — the gap, restated 2026-07-17
@@ -117,7 +117,7 @@ Verified on this run, beyond the byte counts:
 - **Zero residual `&lt;`/`&gt;`** in any of the nine files; all open `<!DOCTYPE html>` and close `</html>`.
 
 The standing rule that produced this outcome holds: **a wrong file here is worse than a missing one.** This
-directory is the design of record, builds cite it, and HANDOVER §11 puts design fidelity first.
+directory is the design of record, builds cite it, and CLAUDE.md §3 puts design fidelity first.
 
 ---
 
@@ -137,7 +137,7 @@ directory is the design of record, builds cite it, and HANDOVER §11 puts design
 
 ## Fetching from the Claude Design MCP
 Project `4931d7e6-358d-4ef9-a066-9a422439ee44` — **29 files** (`list_files`, depth -1, verified 2026-07-17;
-28 excluding `.thumbnail`). **HANDOVER and the standing brief both say 26 — they are wrong; 29 is the measured
+28 excluding `.thumbnail`). **CLAUDE.md and the standing brief both say 26 — they are wrong; 29 is the measured
 count.** The "26" predates three deliveries.
 
 - **Flat sources live in `screens/` and at the project root. Never fetch the `(standalone)` bundles** — 0.8–1.2 MB with embedded woff2 font blobs.
