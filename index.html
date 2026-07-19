@@ -7,7 +7,7 @@
 <title>The Living Forest — the Living Globe</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300&family=Hanken+Grotesk:wght@400;500;600&family=Azeret+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <script src="https://unpkg.com/three@0.149.0/build/three.min.js"></script>
 <script src="https://unpkg.com/topojson-client@3/dist/topojson-client.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -70,19 +70,148 @@
   #card .grid .val{font-size:12.5px;color:#e6eefb;margin-top:3px;}
   #card .grid .val.mono{font-family:'Azeret Mono',monospace;font-size:11.5px;}
 
-  /* status / sign-in overlay */
-  #gate{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(4,7,14,.72);backdrop-filter:blur(6px);padding:24px;}
-  #gate .box{width:min(380px,92vw);background:rgba(10,18,34,.9);border:1px solid rgba(180,205,235,.16);border-radius:20px;padding:26px 26px 24px;text-align:center;}
-  #gate h2{font-family:'Newsreader',serif;font-weight:300;font-size:24px;margin:6px 0 6px;color:#f4ecdb;}
-  #gate p{font-size:13px;color:rgba(206,221,240,.65);line-height:1.5;margin:0 0 16px;}
-  #gate input{width:100%;background:#0a1220;border:1px solid rgba(180,205,235,.2);border-radius:12px;color:#eef2fb;padding:12px 13px;font-size:15px;font-family:inherit;margin-top:8px;outline:none;}
-  #gate input:focus{border-color:#f3cd84;}
-  #gate button{width:100%;margin-top:14px;background:linear-gradient(180deg,#ffe6ad,#f3cd84);color:#3a2a05;font-weight:700;font-family:inherit;font-size:15px;padding:13px;border:none;border-radius:13px;cursor:pointer;}
-  #gate .msg{margin-top:12px;font-size:12.5px;color:#ff9a8f;min-height:16px;}
-  #gate .spin{display:inline-block;width:34px;height:34px;border:3px solid rgba(243,205,132,.25);border-top-color:#f3cd84;border-radius:50%;animation:sp 1s linear infinite;}
-  #gate .alt{margin-top:15px;font-size:12.5px;color:rgba(206,221,240,.6);}
-  #gate .alt a{color:#f3cd84;cursor:pointer;text-decoration:underline;text-underline-offset:2px;}
-  @keyframes sp{to{transform:rotate(360deg)}}
+  /* ===== sign-in gate — designed "alive" port (screens/Login - alive.html) ===== */
+  #gate{ position:absolute; inset:0; z-index:20; overflow:hidden;
+    --cream:#f4ecdb; --muted:#9db0cc; --dim:#6f83a3; --hair:#ffffff18; --panel:#ffffff0b;
+    --gold:#f3cd84; --gold-hi:#ffe6ad; --cool:#7fb4d8; --cool-hi:#a9d2ee;
+    --edit:#c9a2ff; --edit-hi:#ddc6ff; --leaf:#8fd6a0; --coral:#ff9d8f;
+    background:radial-gradient(150% 100% at 50% -6%, #12233c 0%, #0a1526 44%, #04070e 100%);
+    color:var(--cream); }
+  #gate .screen[dir="rtl"] .serif,
+  #gate .screen[dir="rtl"] .head,
+  #gate .screen[dir="rtl"] .fin input{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
+  #gate .stars{ position:absolute; inset:0; z-index:0; opacity:.5; animation:starbreathe 6.8s ease-in-out infinite;
+    background-image:radial-gradient(1px 1px at 20% 14%, #cfe0ff88, transparent), radial-gradient(1px 1px at 68% 8%, #cfe0ff66, transparent),
+      radial-gradient(1px 1px at 82% 30%, #ffe6ad55, transparent), radial-gradient(1px 1px at 34% 22%, #cfe0ff55, transparent),
+      radial-gradient(1px 1px at 12% 40%, #cfe0ff44, transparent), radial-gradient(1px 1px at 90% 20%, #cfe0ff44, transparent); }
+  @keyframes starbreathe{ 0%,100%{ opacity:.32; } 50%{ opacity:.68; } }
+  #gate .atmo-veil{ position:absolute; inset:0; z-index:3; pointer-events:none;
+    background:radial-gradient(120% 60% at 50% 4%, rgba(143,214,160,.05), transparent 40%),
+      radial-gradient(130% 80% at 50% 108%, rgba(4,7,14,.2), rgba(4,7,14,.66) 100%); }
+  #gate .globe{ position:absolute; z-index:1; left:50%; bottom:-46%; width:150%; aspect-ratio:1; transform:translateX(-50%);
+    border-radius:50%; pointer-events:none;
+    background:radial-gradient(circle at 40% 30%, rgba(201,224,246,.6), rgba(127,180,216,.34) 26%, rgba(46,96,150,.4) 48%, rgba(18,52,92,.55) 64%, rgba(6,20,40,.7) 74%, transparent 76%);
+    box-shadow:0 0 130px 8px rgba(127,180,216,.28), inset 22px 30px 90px rgba(143,214,160,.14), inset -30px -20px 90px rgba(4,10,26,.6);
+    animation:globebreathe 9s ease-in-out infinite; }
+  #gate .globe::before{ content:""; position:absolute; inset:0; border-radius:50%; mix-blend-mode:screen;
+    background:conic-gradient(from 0deg, transparent, rgba(255,230,173,.10) 18%, transparent 38%, rgba(143,214,160,.12) 62%, transparent 82%, rgba(127,180,216,.10) 96%, transparent);
+    animation:globespin 44s linear infinite; }
+  #gate .globe::after{ content:""; position:absolute; inset:0; border-radius:50%; opacity:.5; mix-blend-mode:screen;
+    background:repeating-radial-gradient(circle at 50% 50%, transparent 0 26px, rgba(169,210,238,.07) 26px 27px),
+      linear-gradient(90deg, transparent 49.6%, rgba(169,210,238,.09) 50%, transparent 50.4%); }
+  @keyframes globebreathe{ 0%,100%{ transform:translateX(-50%) scale(1); filter:brightness(1); } 50%{ transform:translateX(-50%) scale(1.03); filter:brightness(1.12); } }
+  @keyframes globespin{ to{ transform:rotate(360deg); } }
+  #gate.loading .globe{ animation:globepulse 2.6s ease-in-out infinite; }
+  @keyframes globepulse{ 0%,100%{ transform:translateX(-50%) scale(1.01); filter:brightness(1.05); } 50%{ transform:translateX(-50%) scale(1.06); filter:brightness(1.4); } }
+  #gate .sky{ position:absolute; inset:0; z-index:2; overflow:hidden; pointer-events:none; }
+  #gate .aurora{ position:absolute; border-radius:50%; filter:blur(54px); mix-blend-mode:screen; will-change:transform; }
+  #gate .a1{ width:280px; height:280px; left:-80px; top:-40px; background:radial-gradient(circle,#8fd6a0,transparent 68%); opacity:.4; animation:drift1 26s ease-in-out infinite; }
+  #gate .a2{ width:340px; height:340px; right:-110px; top:-30px; background:radial-gradient(circle,#7fb4d8,transparent 68%); opacity:.4; animation:drift2 31s ease-in-out infinite; }
+  #gate .a3{ width:320px; height:320px; left:-30px; top:120px; background:radial-gradient(circle,#a98bff,transparent 66%); opacity:.34; animation:drift3 29s ease-in-out infinite; }
+  #gate .a4{ width:220px; height:220px; right:-30px; top:60px; background:radial-gradient(circle,#f3cd84,transparent 62%); opacity:.4; animation:drift2 22s ease-in-out infinite reverse; }
+  @keyframes drift1{ 0%,100%{ transform:translate(-6%,-4%) scale(1); } 50%{ transform:translate(9%,7%) scale(1.2); } }
+  @keyframes drift2{ 0%,100%{ transform:translate(5%,6%) scale(1.1); } 50%{ transform:translate(-9%,-4%) scale(.92); } }
+  @keyframes drift3{ 0%,100%{ transform:translate(0,5%) scale(1); } 50%{ transform:translate(7%,-6%) scale(1.16); } }
+  #gate .motes{ position:absolute; inset:0; }
+  #gate .mote{ position:absolute; opacity:0; animation:sow var(--d,13s) linear infinite; }
+  #gate .mote b{ display:block; width:var(--s,3px); height:var(--s,3px); border-radius:50%;
+    background:radial-gradient(circle,#fff 12%,var(--c,#ffe6ad) 55%,transparent 74%);
+    box-shadow:0 0 8px 1px var(--c,#ffe6ad); animation:tw var(--tw,3s) ease-in-out infinite; }
+  @keyframes sow{ 0%{ transform:translate(0,-46px) scale(.55); opacity:0; } 12%{ opacity:.95; } 86%{ opacity:.85; } 100%{ transform:translate(var(--dx,0),780px) scale(.9); opacity:0; } }
+  @keyframes tw{ 0%,100%{ opacity:.35; transform:scale(.82); } 50%{ opacity:1; transform:scale(1.18); } }
+  #gate.loading .mote{ animation-duration:calc(var(--d,13s) * .6); }
+  #gate .screen{ position:absolute; inset:0; z-index:4; overflow:hidden; }
+  #gate .gate{ position:relative; z-index:5; height:100%; max-width:440px; margin:0 auto; display:flex; flex-direction:column; padding:0 24px calc(22px + env(safe-area-inset-bottom)); overflow-y:auto; }
+  #gate .gtop{ display:flex; align-items:center; justify-content:flex-end; padding:16px 0 0; min-height:52px; }
+  #gate .langpill{ display:inline-flex; align-items:center; gap:6px; font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+    padding:8px 11px; border-radius:99px; cursor:pointer; border:1px solid var(--hair); background:rgba(10,20,34,.55); color:var(--muted); }
+  #gate .langpill:hover{ border-color:rgba(255,255,255,.3); color:var(--cream); }
+  #gate .langpill svg{ width:12px; height:12px; }
+  #gate .gmid{ flex:1; display:flex; flex-direction:column; justify-content:center; gap:18px; padding:8px 0; }
+  #gate .brand{ display:flex; flex-direction:column; align-items:center; gap:11px; text-align:center; }
+  #gate .mk{ width:46px; height:46px; filter:drop-shadow(0 0 14px rgba(143,214,160,.5)); }
+  #gate .brand .eyebrow{ font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.34em; text-transform:uppercase; color:var(--muted); }
+  #gate .brand .head{ font-family:'Newsreader',serif; font-weight:300; font-size:29px; line-height:1.06; color:#f7f0e2; }
+  #gate .brand .sub{ font-size:13.5px; color:var(--muted); line-height:1.5; max-width:300px; }
+  #gate .card{ background:rgba(9,16,29,.62); backdrop-filter:blur(13px); border:1px solid var(--hair); border-radius:22px;
+    padding:18px 18px 20px; box-shadow:0 30px 80px -46px #000; }
+  #gate .seg{ display:flex; gap:4px; padding:4px; border-radius:14px; background:rgba(4,9,18,.6); border:1px solid var(--hair); margin-bottom:16px; }
+  #gate .segb{ flex:1; padding:10px 8px; border-radius:10px; border:none; cursor:pointer; background:transparent; color:var(--muted);
+    font-family:'Hanken Grotesk',sans-serif; font-size:13px; font-weight:600; letter-spacing:.01em; transition:color .2s,background .2s; }
+  #gate .segb:hover{ color:var(--cream); }
+  #gate .segb.on{ color:#1a1206; background:linear-gradient(180deg,var(--gold-hi),var(--gold)); box-shadow:0 6px 18px -8px rgba(243,205,132,.7); }
+  #gate .fields{ display:flex; flex-direction:column; gap:12px; }
+  #gate .field{ display:block; }
+  #gate .fl{ display:flex; align-items:center; gap:8px; font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--dim); margin:0 2px 7px; }
+  #gate .fin{ display:flex; align-items:center; gap:11px; padding:13px 14px; border-radius:14px;
+    background:rgba(6,13,24,.72); border:1px solid var(--hair); transition:border-color .2s, box-shadow .2s; }
+  #gate .fin:focus-within{ border-color:rgba(243,205,132,.5); box-shadow:0 0 22px -10px rgba(243,205,132,.6); }
+  #gate .fin .ic{ width:18px; height:18px; color:var(--dim); flex:0 0 auto; }
+  #gate .fin input{ flex:1; min-width:0; background:none; border:none; outline:none; color:var(--cream);
+    font-family:'Newsreader',serif; font-size:17px; }
+  #gate .fin input::placeholder{ color:#5f7089; }
+  #gate .screen[dir="rtl"] .fin input{ text-align:right; }
+  #gate .eye{ width:22px; height:22px; display:grid; place-items:center; cursor:pointer; color:var(--dim); background:none; border:none; flex:0 0 auto; }
+  #gate .eye:hover{ color:var(--muted); } #gate .eye svg{ width:17px; height:17px; }
+  #gate .prov{ display:inline-flex; align-items:center; gap:6px; font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.06em; }
+  #gate .prov .d{ width:6px; height:6px; border-radius:50%; flex:0 0 auto; }
+  #gate .prov.gold{ color:var(--gold); } #gate .prov.gold .d{ background:var(--gold); box-shadow:0 0 7px 1px var(--gold); }
+  #gate .prov.cool{ color:var(--cool); } #gate .prov.cool .d{ background:var(--cool); box-shadow:0 0 7px 1px rgba(127,180,216,.7); }
+  #gate .fl .prov{ margin-inline-start:auto; }
+  #gate .fin.wrong{ border-color:rgba(255,157,143,.6); box-shadow:0 0 22px -10px rgba(255,157,143,.6); }
+  #gate .errline{ display:flex; align-items:flex-start; gap:8px; margin:10px 2px 0; font-size:12.5px; line-height:1.45; color:var(--coral);
+    font-family:'Newsreader',serif; font-style:italic; }
+  #gate .errline svg{ width:15px; height:15px; flex:0 0 auto; margin-top:1px; }
+  #gate .infoline{ margin:10px 2px 0; font-size:12.5px; line-height:1.5; color:var(--muted); font-family:'Newsreader',serif; font-style:italic; }
+  #gate .opennote{ display:flex; align-items:center; gap:9px; margin:14px 2px 2px; font-size:12px; line-height:1.45; color:var(--leaf); }
+  #gate .opennote svg{ width:14px; height:14px; flex:0 0 auto; }
+  #gate .enter{ width:100%; margin-top:16px; display:inline-flex; align-items:center; justify-content:center; gap:9px; padding:15px;
+    border:none; border-radius:15px; cursor:pointer; font-family:'Hanken Grotesk',sans-serif; font-size:15px; font-weight:700; color:#1a1206;
+    background:linear-gradient(180deg,var(--gold-hi),var(--gold)); box-shadow:0 16px 34px -16px rgba(243,205,132,.8); transition:transform .15s; }
+  #gate .enter:hover{ transform:translateY(-1px); } #gate .enter svg{ width:17px; height:17px; }
+  #gate .altrow{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:15px; }
+  #gate .altrow.single{ justify-content:center; }
+  #gate .link{ background:none; border:none; cursor:pointer; font-family:'Hanken Grotesk',sans-serif; font-size:12.5px; color:var(--muted); }
+  #gate .link b{ color:var(--cool-hi); font-weight:600; }
+  #gate .link:hover b{ color:#cfe6f7; }
+  #gate .link.ghost{ color:var(--dim); }
+  #gate .foot{ text-align:center; padding-top:16px; }
+  #gate .foot .l{ font-family:'Newsreader',serif; font-style:italic; font-size:12.5px; color:rgba(143,214,160,.6); }
+  #gate .planting{ display:flex; flex-direction:column; align-items:center; gap:18px; text-align:center; padding:14px 6px 4px; }
+  #gate .sproutwrap{ width:96px; height:96px; position:relative; display:grid; place-items:end center;
+    filter:drop-shadow(0 0 22px rgba(143,214,160,.55)); }
+  #gate .stem{ width:3px; height:0; background:linear-gradient(180deg,var(--leaf),#5fae74); border-radius:3px; animation:grow 2.6s ease-in-out infinite; transform-origin:bottom; }
+  #gate .leaf{ position:absolute; width:26px; height:16px; background:radial-gradient(circle at 30% 40%, var(--leaf), #4f9d68); opacity:0; }
+  #gate .leaf.l{ left:18px; bottom:44px; border-radius:0 80% 0 80%; transform:rotate(30deg) scale(0); transform-origin:right bottom; animation:unfurlL 2.6s ease-in-out infinite; }
+  #gate .leaf.r{ right:18px; bottom:56px; border-radius:80% 0 80% 0; transform:rotate(-30deg) scale(0); transform-origin:left bottom; animation:unfurlR 2.6s ease-in-out infinite; }
+  @keyframes grow{ 0%{ height:0; } 45%,100%{ height:58px; } }
+  @keyframes unfurlL{ 0%,30%{ transform:rotate(30deg) scale(0); opacity:0; } 60%,100%{ transform:rotate(18deg) scale(1); opacity:1; } }
+  @keyframes unfurlR{ 0%,42%{ transform:rotate(-30deg) scale(0); opacity:0; } 72%,100%{ transform:rotate(-18deg) scale(1); opacity:1; } }
+  #gate .planting .pt{ font-family:'Newsreader',serif; font-weight:300; font-size:23px; line-height:1.2; color:#f4ead4; }
+  #gate .planting .pt em{ font-style:italic; color:var(--leaf); }
+  #gate .planting .ps{ font-size:13px; color:var(--muted); line-height:1.55; max-width:250px; }
+  #gate .prog{ width:180px; height:3px; border-radius:99px; overflow:hidden; background:rgba(255,255,255,.08); margin-top:2px; }
+  #gate .prog b{ display:block; height:100%; width:40%; border-radius:99px; background:linear-gradient(90deg,transparent,var(--leaf),var(--cool-hi)); animation:sweep 1.7s ease-in-out infinite; }
+  @keyframes sweep{ 0%{ transform:translateX(-120%); } 100%{ transform:translateX(320%); } }
+  #gate .scrim{ position:absolute; inset:0; z-index:30; background:rgba(4,7,14,.66); backdrop-filter:blur(3px); opacity:0; pointer-events:none; transition:opacity .28s ease; }
+  #gate .scrim.show{ opacity:1; pointer-events:auto; }
+  #gate .sheet{ position:absolute; z-index:31; inset-inline:0; bottom:0; background:linear-gradient(180deg,#0f1e33,#081120);
+    border:1px solid var(--hair); border-bottom:none; border-radius:22px 22px 0 0; padding:10px 20px calc(22px + env(safe-area-inset-bottom));
+    transform:translateY(103%); transition:transform .34s cubic-bezier(.16,.8,.28,1); box-shadow:0 -24px 70px -30px #000; max-width:440px; margin:0 auto; }
+  #gate .sheet.show{ transform:translateY(0); }
+  #gate .grip{ width:40px; height:4px; border-radius:99px; background:rgba(255,255,255,.2); margin:6px auto 15px; }
+  #gate .sheet h3{ font-family:'Newsreader',serif; font-weight:400; font-size:21px; color:#fbf5e8; margin-bottom:4px; }
+  #gate .sheet .ssub{ font-size:12.5px; color:var(--muted); margin-bottom:16px; }
+  #gate .lang-opt{ display:flex; align-items:center; gap:14px; width:100%; padding:14px 15px; border-radius:14px;
+    background:var(--panel); border:1px solid var(--hair); color:var(--cream); cursor:pointer; margin-bottom:9px; text-align:start; }
+  #gate .lang-opt.on{ border-color:rgba(243,205,132,.55); background:rgba(243,205,132,.08); }
+  #gate .lang-opt .native{ font-family:'Newsreader',serif; font-size:18px; } #gate .lang-opt .en{ font-size:11.5px; color:var(--muted); margin-top:1px; }
+  #gate .lang-opt .tick{ margin-inline-start:auto; color:var(--gold); opacity:0; } #gate .lang-opt.on .tick{ opacity:1; } #gate .lang-opt .tick svg{ width:18px; height:18px; }
+  @media (prefers-reduced-motion:reduce){
+    #gate .aurora,#gate .mote,#gate .mote b,#gate .stars,#gate .globe,#gate .globe::before,#gate .stem,#gate .leaf,#gate .prog b{ animation:none!important; }
+    #gate .stem{ height:58px; } #gate .leaf{ opacity:1; }
+    #gate .leaf.l{ transform:rotate(18deg) scale(1); } #gate .leaf.r{ transform:rotate(-18deg) scale(1); }
+  }
 
   @media (max-width:560px){ #tl p{display:none;} #br{display:none;} }
 </style>
@@ -161,7 +290,15 @@
     </div>
   </div></div>
 
-  <div id="gate"><div class="box" id="gateBox"><div class="spin"></div><p style="margin-top:16px">Reading your forest…</p></div></div>
+  <div id="gate">
+    <div class="stars"></div>
+    <div class="globe"></div>
+    <div class="atmo-veil"></div>
+    <div class="sky" id="gateSky"></div>
+    <div class="screen" id="gateScreen" dir="ltr" data-lang="en"></div>
+    <div class="scrim" id="gateScrim"></div>
+    <section class="sheet" id="gateSheet"></section>
+  </div>
 </div>
 
 <script>
@@ -484,60 +621,229 @@ function tick(){ requestAnimationFrame(tick);
 function zoomF(){ return camera.position.z/320; }
 tick();
 
-/* ---- sign-in gate (shares the app's session; same origin) ---- */
-function showSignIn(){
-  const box=$('#gateBox');
-  let mode='in';                                // 'in' = sign in · 'up' = create account
-  function loading(t){ box.innerHTML='<div class="spin"></div><p style="margin-top:16px">'+t+'</p>'; }
-  function render(){
-    if(mode==='in'){
-      box.innerHTML='<h2 class="serif">Your forest</h2>'+
-        '<p>Sign in to see your family on the globe — or create an account, everyone is welcome.</p>'+
-        '<input id="gEmail" type="email" placeholder="you@example.com" autocomplete="email"/>'+
-        '<input id="gPw" type="password" placeholder="password" autocomplete="current-password"/>'+
-        '<button id="gGo">Sign in</button>'+
-        '<div class="msg" id="gMsg"></div>'+
-        '<div class="alt">New here? <a id="gToUp">Create an account</a></div>';
-      $('#gGo').onclick=doSignIn;
-      $('#gToUp').onclick=()=>{ mode='up'; render(); };
-    } else {
-      box.innerHTML='<h2 class="serif">Join the forest</h2>'+
-        '<p>Create an account and land straight on the globe.</p>'+
-        '<input id="gName" type="text" placeholder="Your name" autocomplete="name"/>'+
-        '<input id="gEmail" type="email" placeholder="you@example.com" autocomplete="email"/>'+
-        '<input id="gPw" type="password" placeholder="choose a password" autocomplete="new-password"/>'+
-        '<button id="gGo">Create account</button>'+
-        '<div class="msg" id="gMsg"></div>'+
-        '<div class="alt">Already have an account? <a id="gToIn">Sign in</a></div>';
-      $('#gGo').onclick=doRegister;
-      $('#gToIn').onclick=()=>{ mode='in'; render(); };
-    }
-  }
-  async function doSignIn(){
-    const email=$('#gEmail').value.trim(), password=$('#gPw').value, m=$('#gMsg');
-    if(!email||!password){ m.style.color='#ff9a8f'; m.textContent='Enter your email and password.'; return; }
-    m.style.color='rgba(206,221,240,.65)'; m.textContent='Signing in…';
-    const { error }=await sb.auth.signInWithPassword({email,password});
-    if(error){ m.style.color='#ff9a8f'; m.textContent=error.message; return; }
-    loading('Reading your forest…'); load();
-  }
-  async function doRegister(){
-    const name=$('#gName').value.trim(), email=$('#gEmail').value.trim(), password=$('#gPw').value, m=$('#gMsg');
-    if(!name||!email||!password){ m.style.color='#ff9a8f'; m.textContent='Enter your name, email and a password.'; return; }
-    if(password.length<6){ m.style.color='#ff9a8f'; m.textContent='Use at least 6 characters for your password.'; return; }
-    m.style.color='rgba(206,221,240,.65)'; m.textContent='Creating your account…';
-    const { data, error }=await sb.auth.signUp({ email, password, options:{ data:{ display_name:name } } });
-    if(error){ m.style.color='#ff9a8f'; m.textContent=error.message; return; }
-    if(data && data.session){ loading('Planting you in the forest…'); load(); return; }
-    // Open registration: no approval gate. If no session came back the project may want
-    // email confirmation — try an immediate sign-in in case it isn't actually enforced.
-    const { data:si }=await sb.auth.signInWithPassword({ email, password });
-    if(si && si.session){ loading('Planting you in the forest…'); load(); return; }
-    // Confirmation genuinely required — still open, just point the way (no keeper step).
-    m.style.color='rgba(206,221,240,.8)';
-    m.textContent='Account created. Please confirm via the email we sent, then sign in.';
-  }
-  render();
+/* =========================================================================
+   SIGN-IN GATE — designed "alive" port of screens/Login - alive.html.
+   Two modes (sign in · open registration), a living globe breathing behind,
+   seeds drifting down, a "planting you in the forest…" moment, gentle errors.
+   The working auth logic (signInWithPassword / signUp → immediate session →
+   load() → globe; ensureProfile) is preserved from the hand-coded gate.
+   ========================================================================= */
+const GATE_LANGS=['en','ru','he'];
+let GLANG=(localStorage.getItem('lf_lang')||(navigator.language||'en').slice(0,2).toLowerCase());
+if(GATE_LANGS.indexOf(GLANG)<0) GLANG='en';
+let gateView='reading', curMode='in', atmoBuilt=false;
+
+const IC_MARK='<svg class="mk" viewBox="0 0 48 48" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M24 45V21" stroke="#8fd6a0" stroke-width="2.4"/><path d="M24 27C24 27 17 26 14 20C20 19 24 24 24 24" fill="#8fd6a0" opacity=".9"/><path d="M24 23C24 23 31 21 34 15C28 14 24 20 24 20" fill="#f3cd84" opacity=".9"/><path d="M24 33C24 33 18 33 15 28C21 27 24 31 24 31" fill="#7fb4d8" opacity=".85"/><circle cx="24" cy="12" r="3" fill="#ffe6ad"/></svg>';
+const IC_MAIL='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>';
+const IC_LOCK='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+const IC_USER='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 21c0-4 3.5-6 7-6s7 2 7 6"/></svg>';
+const IC_EYE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+const IC_ARROW='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+const IC_ARROW_RTL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform:scaleX(-1)"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+const IC_LEAF='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v6M12 21c-4-3-7-6-7-10a7 7 0 0 1 14 0c0 4-3 7-7 10z"/></svg>';
+const IC_ALERT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>';
+const IC_CHEV='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+const TICK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+
+const T={
+ en:{ dir:'ltr', eyebrow:'The Living Forest',
+   signHead:'Welcome back.', signSub:'Sign in and the globe turns to find you.',
+   regHead:'Plant yourself here.', regSub:'Make an account and take your place among your people.',
+   segIn:'Sign in', segUp:'Create account',
+   name:'Your name', toldByYou:'told by you', namePh:'How your family knows you',
+   email:'Email', emailPh:'you@family.email',
+   pw:'Password', pwPhIn:'Your password', pwPhUp:'Choose a password',
+   enterIn:'Enter the forest', enterUp:'Plant me in the forest',
+   newHere:'New here?', createAcc:'Create an account', forgot:'Forgot password?',
+   haveAcc:'Already have an account?', signin:'Sign in',
+   open:'Registration is open — anyone in the family may join.',
+   footIn:'Family only — the forest keeps your people close.',
+   footUp:'Your name is yours to tell — gold, always.',
+   footPlant:'A moment — roots take a breath to hold.',
+   plantT:'Planting you in the ', plantEm:'forest',
+   plantS:'Finding your place among your people and turning the globe to meet you.',
+   reading:'Reading your forest…', showPw:'Show password',
+   badPw:"That password doesn't match this email. Try again, or reset it below.",
+   needBoth:'Enter your email and password.', needAll:'Enter your name, email and a password.',
+   needEmail:'Enter your email.', shortPw:'Use at least 6 characters for your password.',
+   madeConfirm:'Account created. Please confirm via the email we sent, then sign in.',
+   resetSent:'If that email exists, we have sent a reset link.',
+   langTitle:'Language', langSub:'The forest greets you in the language you choose.',
+   langEn:'English', langRu:'Russian', langHe:'Hebrew', hmm:'Hmm', tryAgain:'Try again' },
+ ru:{ dir:'ltr', eyebrow:'Живой лес',
+   signHead:'С возвращением.', signSub:'Войдите — и глобус повернётся к вам.',
+   regHead:'Пустите здесь корни.', regSub:'Создайте аккаунт и займите своё место среди близких.',
+   segIn:'Вход', segUp:'Создать аккаунт',
+   name:'Ваше имя', toldByYou:'с ваших слов', namePh:'Как вас знает семья',
+   email:'Почта', emailPh:'you@family.email',
+   pw:'Пароль', pwPhIn:'Ваш пароль', pwPhUp:'Придумайте пароль',
+   enterIn:'Войти в лес', enterUp:'Посадить меня в лес',
+   newHere:'Впервые здесь?', createAcc:'Создать аккаунт', forgot:'Забыли пароль?',
+   haveAcc:'Уже есть аккаунт?', signin:'Войти',
+   open:'Регистрация открыта — присоединиться может любой член семьи.',
+   footIn:'Только для семьи — лес хранит близких рядом.',
+   footUp:'Ваше имя — вам его рассказывать, всегда золотом.',
+   footPlant:'Минутку — корням нужно вдохнуть, чтобы прижиться.',
+   plantT:'Сажаем вас в ', plantEm:'лес',
+   plantS:'Находим ваше место среди близких и поворачиваем глобус к вам.',
+   reading:'Читаем ваш лес…', showPw:'Показать пароль',
+   badPw:'Пароль не подходит к этой почте. Попробуйте снова или сбросьте его ниже.',
+   needBoth:'Введите почту и пароль.', needAll:'Введите имя, почту и пароль.',
+   needEmail:'Введите вашу почту.', shortPw:'Используйте не менее 6 символов в пароле.',
+   madeConfirm:'Аккаунт создан. Подтвердите его по письму, которое мы отправили, затем войдите.',
+   resetSent:'Если такая почта есть, мы отправили ссылку для сброса пароля.',
+   langTitle:'Язык', langSub:'Лес встретит вас на выбранном языке.',
+   langEn:'Английский', langRu:'Русский', langHe:'Иврит', hmm:'Хм', tryAgain:'Попробовать снова' },
+ he:{ dir:'rtl', eyebrow:'היער החי',
+   signHead:'ברוכים השבים.', signSub:'היכנסו והגלובוס יסתובב למצוא אתכם.',
+   regHead:'שתלו את עצמכם כאן.', regSub:'פתחו חשבון ותפסו את מקומכם בין בני משפחתכם.',
+   segIn:'כניסה', segUp:'יצירת חשבון',
+   name:'השם שלכם', toldByYou:'סופר על ידיכם', namePh:'איך המשפחה מכירה אתכם',
+   email:'אימייל', emailPh:'you@family.email',
+   pw:'סיסמה', pwPhIn:'הסיסמה שלכם', pwPhUp:'בחרו סיסמה',
+   enterIn:'היכנסו ליער', enterUp:'שתלו אותי ביער',
+   newHere:'חדשים כאן?', createAcc:'צרו חשבון', forgot:'שכחתם סיסמה?',
+   haveAcc:'כבר יש לכם חשבון?', signin:'כניסה',
+   open:'ההרשמה פתוחה — כל בני המשפחה מוזמנים.',
+   footIn:'רק למשפחה — היער שומר את יקיריכם קרוב.',
+   footUp:'השם שלכם הוא שלכם לספר — תמיד בזהב.',
+   footPlant:'רגע — לשורשים דרוש רגע להיאחז.',
+   plantT:'שותלים אתכם ב', plantEm:'יער',
+   plantS:'מוצאים את מקומכם בין בני משפחתכם ומסובבים את הגלובוס לפגוש אתכם.',
+   reading:'קוראים את היער שלכם…', showPw:'הצג סיסמה',
+   badPw:'הסיסמה אינה תואמת לאימייל הזה. נסו שוב, או אפסו אותה למטה.',
+   needBoth:'הזינו אימייל וסיסמה.', needAll:'הזינו שם, אימייל וסיסמה.',
+   needEmail:'הזינו את האימייל שלכם.', shortPw:'השתמשו בלפחות 6 תווים בסיסמה.',
+   madeConfirm:'החשבון נוצר. אשרו אותו במייל ששלחנו, ואז היכנסו.',
+   resetSent:'אם האימייל קיים, שלחנו קישור לאיפוס הסיסמה.',
+   langTitle:'שפה', langSub:'היער מקבל אתכם בשפה שתבחרו.',
+   langEn:'אנגלית', langRu:'רוסית', langHe:'עברית', hmm:'הממ', tryAgain:'נסו שוב' }
+};
+
+function gscreen(){ return document.getElementById('gateScreen'); }
+function pill(){ return GLANG==='he'?'עב':GLANG.toUpperCase(); }
+function applyDir(){ const s=gscreen(); if(!s) return; s.setAttribute('dir',T[GLANG].dir); s.setAttribute('data-lang',GLANG); }
+
+function modeHTML(mode){
+ const t=T[GLANG];
+ const nameField = mode==='up'
+   ? '<label class="field"><span class="fl">'+t.name+' <span class="prov gold"><span class="d"></span>'+t.toldByYou+'</span></span><div class="fin">'+IC_USER+'<input id="gName" type="text" placeholder="'+t.namePh+'" autocomplete="name"></div></label>'
+   : '';
+ const pwPh = mode==='up'?t.pwPhUp:t.pwPhIn;
+ const opennote = mode==='up' ? '<div class="opennote">'+IC_LEAF+t.open+'</div>' : '';
+ const enter = mode==='up'?t.enterUp:t.enterIn;
+ const arrow = t.dir==='rtl'?IC_ARROW_RTL:IC_ARROW;
+ const alt = mode==='up'
+   ? '<div class="altrow single"><button class="link" data-gosign>'+t.haveAcc+' <b>'+t.signin+'</b></button></div>'
+   : '<div class="altrow"><button class="link" data-goreg>'+t.newHere+' <b>'+t.createAcc+'</b></button><button class="link ghost" data-forgot>'+t.forgot+'</button></div>';
+ const foot = mode==='up'?t.footUp:t.footIn;
+ return '<div class="gate">'
+  +'<div class="gtop"><button class="langpill" data-langbtn>'+pill()+' '+IC_CHEV+'</button></div>'
+  +'<div class="gmid">'
+   +'<div class="brand">'+IC_MARK+'<div class="eyebrow">'+t.eyebrow+'</div><div class="head">'+(mode==='up'?t.regHead:t.signHead)+'</div><div class="sub">'+(mode==='up'?t.regSub:t.signSub)+'</div></div>'
+   +'<div class="card">'
+     +'<div class="seg"><button class="segb '+(mode==='in'?'on':'')+'" data-gosign>'+t.segIn+'</button><button class="segb '+(mode==='up'?'on':'')+'" data-goreg>'+t.segUp+'</button></div>'
+     +'<div class="fields">'+nameField
+       +'<label class="field"><span class="fl">'+t.email+'</span><div class="fin">'+IC_MAIL+'<input id="gEmail" type="email" placeholder="'+t.emailPh+'" autocomplete="email"></div></label>'
+       +'<label class="field"><span class="fl">'+t.pw+'</span><div class="fin" id="gPwFin">'+IC_LOCK+'<input id="gPw" type="password" placeholder="'+pwPh+'" autocomplete="'+(mode==='up'?'new-password':'current-password')+'"><button class="eye" data-eye aria-label="'+t.showPw+'">'+IC_EYE+'</button></div></label>'
+     +'</div>'
+     +opennote
+     +'<div class="errslot" id="gErr"></div>'
+     +'<button class="enter" id="gGo">'+enter+' '+arrow+'</button>'
+     +alt
+   +'</div>'
+  +'</div>'
+  +'<div class="foot"><div class="l">'+foot+'</div></div>'
+ +'</div>';
+}
+
+function renderGate(mode){ gateView='form'; curMode=mode; $('#gate').classList.remove('loading'); $('#gate').style.display=''; ensureAtmosphere(); gscreen().innerHTML=modeHTML(mode); applyDir(); wireMode(mode); }
+function showSignIn(){ renderGate('in'); }
+
+function wireMode(mode){ const s=gscreen();
+ s.querySelectorAll('[data-gosign]').forEach(b=>b.onclick=()=>renderGate('in'));
+ s.querySelectorAll('[data-goreg]').forEach(b=>b.onclick=()=>renderGate('up'));
+ s.querySelectorAll('[data-eye]').forEach(b=>b.onclick=()=>{ const i=b.parentNode.querySelector('input'); i.type=i.type==='password'?'text':'password'; });
+ s.querySelectorAll('[data-langbtn]').forEach(b=>b.onclick=openLangSheet);
+ s.querySelectorAll('[data-forgot]').forEach(b=>b.onclick=doForgot);
+ const go=s.querySelector('#gGo'); if(go) go.onclick=(mode==='up'?doRegister:doSignIn);
+ s.querySelectorAll('input').forEach(inp=>inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); go&&go.click(); } }));
+}
+
+function fieldError(text){ const box=document.getElementById('gErr'); if(box) box.innerHTML='<div class="errline">'+IC_ALERT+text+'</div>'; const fin=document.getElementById('gPwFin'); if(fin) fin.classList.add('wrong'); }
+function infoMsg(text){ const box=document.getElementById('gErr'); if(box) box.innerHTML='<div class="infoline">'+text+'</div>'; const fin=document.getElementById('gPwFin'); if(fin) fin.classList.remove('wrong'); }
+function clearErr(){ const box=document.getElementById('gErr'); if(box) box.innerHTML=''; const fin=document.getElementById('gPwFin'); if(fin) fin.classList.remove('wrong'); }
+
+async function doSignIn(){ clearErr(); const t=T[GLANG];
+ const email=(gscreen().querySelector('#gEmail').value||'').trim(), password=gscreen().querySelector('#gPw').value;
+ if(!email||!password){ fieldError(t.needBoth); return; }
+ const { error }=await sb.auth.signInWithPassword({ email, password });
+ if(error){ fieldError(/invalid|credential|password|not found/i.test(error.message||'')?t.badPw:error.message); return; }
+ showPlanting('plant'); load();
+}
+async function doRegister(){ clearErr(); const t=T[GLANG];
+ const name=(gscreen().querySelector('#gName').value||'').trim(), email=(gscreen().querySelector('#gEmail').value||'').trim(), password=gscreen().querySelector('#gPw').value;
+ if(!name||!email||!password){ fieldError(t.needAll); return; }
+ if(password.length<6){ fieldError(t.shortPw); return; }
+ const { data, error }=await sb.auth.signUp({ email, password, options:{ data:{ display_name:name } } });
+ if(error){ fieldError(error.message); return; }
+ if(data && data.session){ showPlanting('plant'); load(); return; }
+ // Open registration: no approval gate. If no session came back the project may want
+ // email confirmation — try an immediate sign-in in case it isn't actually enforced.
+ const { data:si }=await sb.auth.signInWithPassword({ email, password });
+ if(si && si.session){ showPlanting('plant'); load(); return; }
+ // Confirmation genuinely required — still open, just point the way (no keeper step).
+ infoMsg(t.madeConfirm);
+}
+async function doForgot(){ const t=T[GLANG]; const el=gscreen().querySelector('#gEmail'); const email=el&&(el.value||'').trim();
+ if(!email){ fieldError(t.needEmail); return; }
+ try{ await sb.auth.resetPasswordForEmail(email); }catch(e){}
+ infoMsg(t.resetSent);
+}
+
+function plantingHTML(kind){ const t=T[GLANG];
+ const title = kind==='reading' ? t.reading : (t.plantT+'<em>'+t.plantEm+'</em>…');
+ const sub = kind==='reading' ? '' : t.plantS;
+ return '<div class="gate"><div class="gtop"></div><div class="gmid">'
+   +'<div class="brand">'+IC_MARK+'<div class="eyebrow">'+t.eyebrow+'</div></div>'
+   +'<div class="card"><div class="planting">'
+     +'<div class="sproutwrap"><span class="leaf l"></span><span class="leaf r"></span><span class="stem"></span></div>'
+     +'<div class="pt">'+title+'</div>'
+     +(sub?'<div class="ps">'+sub+'</div>':'')
+     +'<div class="prog"><b></b></div>'
+   +'</div></div></div>'
+   +'<div class="foot"><div class="l">'+t.footPlant+'</div></div></div>';
+}
+function showPlanting(kind){ gateView=kind==='reading'?'reading':'plant'; ensureAtmosphere(); $('#gate').style.display=''; $('#gate').classList.add('loading'); gscreen().innerHTML=plantingHTML(kind); applyDir(); }
+
+/* language bottom sheet (EN/RU/HE; choice persists to localStorage + profiles) */
+function buildSheet(){ const t=T[GLANG]; const sheet=document.getElementById('gateSheet'); if(!sheet) return;
+ sheet.setAttribute('dir',t.dir);
+ function opt(code,native,ff){ const label=code==='en'?t.langEn:code==='ru'?t.langRu:t.langHe;
+   return '<button class="lang-opt '+(GLANG===code?'on':'')+'" data-pick="'+code+'"><div><div class="native"'+(ff?' style="font-family:\'Frank Ruhl Libre\',serif"':'')+'>'+native+'</div><div class="en">'+label+'</div></div><span class="tick">'+TICK+'</span></button>'; }
+ sheet.innerHTML='<div class="grip"></div><h3>'+t.langTitle+'</h3><div class="ssub">'+t.langSub+'</div>'+opt('en','English',false)+opt('ru','Русский',false)+opt('he','עברית',true);
+ sheet.querySelectorAll('[data-pick]').forEach(o=>o.onclick=()=>chooseLang(o.getAttribute('data-pick')));
+}
+function openLangSheet(){ document.getElementById('gateScrim').classList.add('show'); document.getElementById('gateSheet').classList.add('show'); }
+function closeLangSheet(){ document.getElementById('gateScrim').classList.remove('show'); document.getElementById('gateSheet').classList.remove('show'); }
+function chooseLang(code){ if(GATE_LANGS.indexOf(code)<0) return; GLANG=code; try{ localStorage.setItem('lf_lang',code); }catch(e){}
+ closeLangSheet(); buildSheet();
+ sb.auth.getSession().then(({data})=>{ const u=data&&data.session&&data.session.user; if(u) sb.from('profiles').update({ preferred_lang:code }).eq('id',u.id).then(()=>{},()=>{}); }).catch(()=>{});
+ if(gateView==='form') renderGate(curMode);
+ else if(gateView==='reading'||gateView==='plant'){ gscreen().innerHTML=plantingHTML(gateView); applyDir(); }
+}
+
+let __atmoDone=false;
+function ensureAtmosphere(){ if(__atmoDone) return; __atmoDone=true; buildMotes(); buildSheet();
+ const scrim=document.getElementById('gateScrim'); if(scrim) scrim.onclick=closeLangSheet; }
+function buildMotes(){ const sky=document.getElementById('gateSky'); if(!sky) return;
+ const PAL=['#ffe6ad','#f3cd84','#8fd6a0','#a98bff','#7fd0e6'];
+ let h='<span class="aurora a1"></span><span class="aurora a2"></span><span class="aurora a3"></span><span class="aurora a4"></span><div class="motes">';
+ for(let i=0;i<18;i++){ const c=PAL[Math.floor(Math.random()*PAL.length)];
+   const left=(4+Math.random()*92).toFixed(1), top=(-6+Math.random()*30).toFixed(1), s=(2+Math.random()*3).toFixed(1),
+     dx=(-20+Math.random()*40).toFixed(0), d=(9+Math.random()*8).toFixed(1), tw=(2.2+Math.random()*2).toFixed(1), dl=(-(Math.random()*16)).toFixed(1);
+   h+='<span class="mote" style="left:'+left+'%;top:'+top+'%;--s:'+s+'px;--c:'+c+';--dx:'+dx+'px;--d:'+d+'s;--tw:'+tw+'s;animation-delay:'+dl+'s"><b></b></span>'; }
+ h+='</div>'; sky.innerHTML=h;
 }
 
 /* ---- ensure a profiles row exists for this account (open registration; never overwrite) ---- */
@@ -547,7 +853,7 @@ async function ensureProfile(user){
     const { data:existing }=await sb.from('profiles').select('id').eq('id',user.id).maybeSingle();
     if(existing) return;                        // never overwrite an existing profile
     const displayName=(user.user_metadata&&user.user_metadata.display_name)||(user.email||'').split('@')[0]||'Someone';
-    const lang=(navigator.language||'en').slice(0,2).toLowerCase();
+    const lang=GLANG;   // the language chosen at the gate (persisted to localStorage)
     let row={ id:user.id, display_name:displayName, preferred_lang:lang };
     // Optimistic insert; the live schema decides which columns hold. Drop any column
     // PostgREST doesn't recognise and retry, so we never assume column names.
@@ -560,8 +866,13 @@ async function ensureProfile(user){
     }
   }catch(e){ /* profile is best-effort; never block entry to the globe */ }
 }
-function gateError(msg){ $('#gate').style.display='flex'; $('#gateBox').innerHTML='<h2 class="serif">Hmm</h2><p>'+msg+'</p><button onclick="location.reload()">Try again</button>'; }
+function gateError(msg){ gateView='error'; $('#gate').classList.remove('loading'); $('#gate').style.display=''; ensureAtmosphere(); const t=T[GLANG];
+ gscreen().innerHTML='<div class="gate"><div class="gtop"><button class="langpill" data-langbtn>'+pill()+' '+IC_CHEV+'</button></div><div class="gmid"><div class="brand">'+IC_MARK+'<div class="eyebrow">'+t.eyebrow+'</div><div class="head">'+t.hmm+'</div><div class="sub">'+(msg||'')+'</div></div><div class="card"><button class="enter" onclick="location.reload()">'+t.tryAgain+'</button></div></div><div class="foot"><div class="l">'+t.footIn+'</div></div></div>';
+ applyDir(); gscreen().querySelectorAll('[data-langbtn]').forEach(b=>b.onclick=openLangSheet);
+}
 
+/* first paint: living atmosphere + a "reading your forest" moment, then load */
+ensureAtmosphere(); showPlanting('reading');
 load();
 </script>
   <script src="lf-nav.js" data-here="map"></script>
