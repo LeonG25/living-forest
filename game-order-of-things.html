@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>The Order of Things · The Living Forest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="lf-games.js"></script>
+<style>
+  /* ============================================================
+     Foreground reproduced verbatim from the delivered design:
+     screens/Game - The Order of Things (play).html   (Rule 1 fidelity)
+     ============================================================ */
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body{ background:#04070e; }
+  :root{
+    --cream:#f4ecdb; --muted:#9db0cc; --dim:#6f83a3; --hair:#ffffff18; --panel:#ffffff0b;
+    --gold:#f3cd84; --gold-hi:#ffe6ad; --cool:#7fb4d8; --cool-hi:#a9d2ee;
+    --edit:#c9a2ff; --edit-hi:#ddc6ff; --leaf:#8fd6a0; --xtl:#9a8bbd; --warm:#e7a35a;
+  }
+  body{ font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--cream); min-height:100dvh;
+    display:flex; align-items:flex-start; justify-content:center; gap:40px; padding:34px 20px 90px;
+    background:radial-gradient(150% 100% at 50% -6%, #12233c 0%, #0a1526 44%, #04070e 100%);
+    -webkit-user-select:none; user-select:none; flex-wrap:wrap; }
+  .serif{ font-family:'Newsreader',Georgia,serif; }
+  .mono{ font-family:'Azeret Mono',monospace; }
+  .screen[dir="rtl"] .serif{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
+
+  .stagewrap{ display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .caption{ font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--dim); }
+  .device{ position:relative; width:390px; height:820px; border-radius:42px; overflow:hidden; flex:0 0 auto;
+    background:#04070e; box-shadow:0 40px 120px -50px #000, 0 0 0 9px #14141b, 0 0 0 10px #2b2b34; }
+  .veil{ position:absolute; inset:0; z-index:3; pointer-events:none;
+    background:radial-gradient(120% 70% at 50% 4%, rgba(243,205,132,.08), transparent 46%),
+      radial-gradient(120% 92% at 50% 46%, transparent 30%, rgba(4,7,14,.62) 100%); }
+  .screen{ position:absolute; inset:0; z-index:2; overflow-y:auto; scrollbar-width:none; }
+  .screen::-webkit-scrollbar{ display:none; }
+  .pad{ padding:0 20px calc(30px + env(safe-area-inset-bottom)); }
+
+  /* ============ SIGNATURE MOTION · "the drift of years" ============
+     Horizontal strata of light slide past at four different speeds — time as a
+     current running sideways under the cards — while faint mono year-numerals
+     rise slowly through them. Nothing else in the app moves sideways. */
+  .drift{ position:absolute; inset:0; z-index:1; overflow:hidden; pointer-events:none; }
+  .strat{ position:absolute; left:-60%; width:220%; height:150px; border-radius:50%; filter:blur(34px); opacity:.5; }
+  .s1{ top:6%;  background:linear-gradient(90deg,transparent,rgba(243,205,132,.30),transparent); animation:slide 34s linear infinite alternate; }
+  .s2{ top:27%; background:linear-gradient(90deg,transparent,rgba(127,180,216,.32),transparent); animation:slideb 46s linear infinite alternate; }
+  .s3{ top:53%; background:linear-gradient(90deg,transparent,rgba(201,162,255,.24),transparent); animation:slide 60s linear infinite alternate; }
+  .s4{ top:76%; background:linear-gradient(90deg,transparent,rgba(143,214,160,.22),transparent); animation:slideb 40s linear infinite alternate; }
+  @keyframes slide{  from{ transform:translateX(-24%);} to{ transform:translateX(24%);} }
+  @keyframes slideb{ from{ transform:translateX(22%);} to{ transform:translateX(-22%);} }
+  .yr-rain{ position:absolute; inset:0; }
+  .yr-rain span{ position:absolute; font-family:'Azeret Mono',monospace; font-size:11px; letter-spacing:.1em;
+    color:rgba(243,205,132,.16); animation-name:rise-yr; animation-timing-function:linear; animation-iteration-count:infinite; }
+  @keyframes rise-yr{ 0%{ transform:translateY(0); opacity:0; } 12%{ opacity:1; } 88%{ opacity:1; } 100%{ transform:translateY(-560px); opacity:0; } }
+  @media (prefers-reduced-motion: reduce){
+    .strat, .yr-rain span{ animation:none; }
+    .yr-rain span{ opacity:.5; }
+  }
+
+  .topbar{ position:sticky; top:0; z-index:14; display:flex; align-items:center; gap:10px;
+    padding:15px 18px 11px; background:linear-gradient(to bottom, rgba(5,9,17,.92), rgba(5,9,17,.4) 68%, transparent);
+    backdrop-filter:blur(7px); }
+  .ibtn{ width:40px; height:40px; border-radius:12px; flex:0 0 auto; display:grid; place-items:center; cursor:pointer;
+    border:1px solid var(--hair); background:rgba(10,20,34,.55); color:var(--cream); }
+  .ibtn:hover{ border-color:rgba(255,255,255,.34); }
+  .ibtn svg{ width:18px; height:18px; }
+  .ttl{ flex:1; min-width:0; text-align:center; }
+  .ttl .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.24em; text-transform:uppercase; color:var(--muted); }
+  .ttl .n{ font-family:'Newsreader',serif; font-size:18px; color:#fbf5e8; margin-top:1px; }
+  .streak{ flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:8px 11px; border-radius:99px;
+    background:rgba(243,205,132,.1); border:1px solid rgba(243,205,132,.3); }
+  .streak .fl{ width:7px; height:7px; border-radius:50%; background:var(--gold); box-shadow:0 0 9px 1px var(--gold); }
+  .streak b{ font-family:'Azeret Mono',monospace; font-size:11px; color:var(--gold-hi); font-weight:500; }
+
+  .kindle{ margin:2px 4px 0; }
+  .kindle .lab{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; }
+  .kindle .lab .l{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+  .kindle .lab .r{ font-family:'Newsreader',serif; font-style:italic; font-size:12px; color:rgba(143,214,160,.72); }
+  .kindle .bar{ height:5px; border-radius:99px; background:rgba(255,255,255,.09); overflow:hidden; }
+  .kindle .bar i{ display:block; height:100%; border-radius:99px; background:linear-gradient(90deg,var(--gold),var(--cool)); transition:width .8s cubic-bezier(.16,.8,.28,1); }
+
+  .ask{ margin-top:18px; padding:16px 16px 15px; border-radius:16px;
+    background:rgba(243,205,132,.06); border:1px solid rgba(243,205,132,.24); }
+  .ask .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--gold);
+    display:flex; align-items:center; gap:7px; margin-bottom:8px; }
+  .ask .k .pl{ display:inline-grid; place-items:center; width:16px; height:16px; border-radius:5px; background:rgba(243,205,132,.16); color:var(--gold-hi); }
+  .ask .k .pl svg{ width:11px; height:11px; }
+  .ask .q{ font-family:'Newsreader',serif; font-size:19px; line-height:1.4; color:#f6ecd7; }
+  .ask .q em{ font-style:italic; color:var(--gold-hi); }
+
+  /* ---- the strand the moments hang on ---- */
+  .strand{ position:relative; margin-top:16px; padding-inline-start:26px; }
+  .strand::before{ content:""; position:absolute; inset-inline-start:9px; top:14px; bottom:14px; width:2px; border-radius:2px;
+    background:linear-gradient(180deg, rgba(243,205,132,.55), rgba(127,180,216,.5)); }
+  .list{ display:flex; flex-direction:column; gap:9px; }
+
+  .mo{ position:relative; display:flex; align-items:flex-start; gap:11px; padding:12px; border-radius:15px;
+    background:rgba(9,17,29,.78); border:1px solid var(--hair); cursor:grab; touch-action:none;
+    transition:border-color .2s, background .25s, box-shadow .25s; }
+  .mo:hover{ border-color:rgba(255,255,255,.3); }
+  .mo::before{ content:""; position:absolute; inset-inline-start:-21px; top:22px; width:9px; height:9px; border-radius:50%;
+    background:var(--gold); box-shadow:0 0 10px 1px rgba(243,205,132,.7); }
+  .mo.cool::before{ background:var(--cool); box-shadow:0 0 10px 1px rgba(127,180,216,.7); }
+  .mo.wait::before{ background:var(--edit); box-shadow:0 0 10px 1px rgba(201,162,255,.7); }
+  .mo.lift{ cursor:grabbing; z-index:8; border-color:rgba(255,255,255,.45);
+    box-shadow:0 18px 40px -14px #000, 0 0 26px -6px rgba(243,205,132,.4); }
+  .mo .grip{ flex:0 0 auto; width:20px; display:grid; place-items:center; padding-top:4px; color:var(--dim); }
+  .mo .grip svg{ width:15px; height:15px; }
+  .mo .bd{ flex:1; min-width:0; }
+  .mo .src{ display:flex; align-items:center; gap:7px; font-family:'Azeret Mono',monospace; font-size:8.5px;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--gold); margin-bottom:4px; }
+  .mo.cool .src{ color:var(--cool); } .mo.wait .src{ color:var(--edit); }
+  .mo .src .sd{ width:6px; height:6px; border-radius:50%; background:var(--gold); flex:0 0 auto; }
+  .mo.cool .src .sd{ background:var(--cool); } .mo.wait .src .sd{ background:var(--edit); }
+  .mo .tx{ font-family:'Newsreader',serif; font-size:16px; line-height:1.34; color:#f6ecd7; }
+  .mo .tx em{ font-style:italic; color:var(--gold-hi); }
+  .mo.cool .tx{ color:#dcebf7; } .mo.cool .tx em{ color:var(--cool-hi); }
+  .mo .when{ font-family:'Azeret Mono',monospace; font-size:11px; margin-top:6px; color:var(--gold-hi);
+    opacity:0; max-height:0; overflow:hidden; transition:opacity .45s ease, max-height .45s ease; }
+  .mo.cool .when{ color:var(--cool-hi); }
+  .mo.shown .when{ opacity:1; max-height:24px; }
+  .mo .nudge{ flex:0 0 auto; display:flex; flex-direction:column; gap:4px; }
+  .mo .nudge button{ width:30px; height:30px; border-radius:9px; display:grid; place-items:center; cursor:pointer;
+    border:1px solid var(--hair); background:rgba(255,255,255,.04); color:var(--muted); }
+  .mo .nudge button:hover{ color:var(--cream); border-color:rgba(255,255,255,.34); }
+  .mo .nudge svg{ width:13px; height:13px; }
+
+  .mo.settled{ animation:settle .55s cubic-bezier(.2,.9,.3,1); }
+  @keyframes settle{ 0%{ box-shadow:0 0 0 0 rgba(243,205,132,.45);} 100%{ box-shadow:0 0 0 15px rgba(243,205,132,0);} }
+  .mo.ok{ border-color:rgba(243,205,132,.6); background:rgba(243,205,132,.1); }
+  .mo.moved{ border-color:rgba(127,180,216,.5); background:rgba(127,180,216,.08); }
+  @media (prefers-reduced-motion: reduce){ .mo, .mo.settled{ transition:none; animation:none; } }
+
+  .cta{ margin-top:18px; width:100%; padding:15px; border-radius:15px; cursor:pointer; border:1px solid transparent;
+    font-family:'Hanken Grotesk',sans-serif; font-size:14.5px; font-weight:600;
+    background:linear-gradient(180deg,var(--gold-hi),var(--gold)); color:#1a1206; }
+  .hintbar{ margin-top:13px; text-align:center; font-size:11.5px; color:var(--dim); font-style:italic;
+    font-family:'Newsreader',serif; line-height:1.5; }
+
+  /* ---- gentle reveal ---- */
+  .reveal{ display:none; }
+  .reveal.show{ display:block; animation:rise .55s cubic-bezier(.16,.8,.28,1) both; }
+  @keyframes rise{ from{ transform:translateY(8px); opacity:0; } to{ transform:translateY(0); opacity:1; } }
+  .revcard{ margin-top:18px; padding:16px; border-radius:16px;
+    background:linear-gradient(120deg, rgba(243,205,132,.1), rgba(127,180,216,.06)); border:1px solid rgba(243,205,132,.3); }
+  .revcard .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--leaf); text-align:center; }
+  .revcard .h{ font-family:'Newsreader',serif; font-size:21px; line-height:1.35; color:#fbf5e8; text-align:center; margin-top:8px; }
+  .revcard .h em{ font-style:italic; color:var(--gold-hi); }
+  .revcard .s{ font-family:'Newsreader',serif; font-size:14px; line-height:1.55; color:var(--muted); text-align:center; margin-top:9px; }
+  .legend{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:14px; }
+  .lchip{ display:inline-flex; align-items:center; gap:7px; padding:6px 11px; border-radius:99px; font-size:11.5px;
+    font-family:'Newsreader',serif; background:rgba(243,205,132,.1); border:1px solid rgba(243,205,132,.3); color:#f2e6cd; }
+  .lchip .d{ width:6px; height:6px; border-radius:50%; background:var(--gold); }
+  .lchip.cool{ background:rgba(127,180,216,.1); border-color:rgba(127,180,216,.3); color:#d7e7f4; }
+  .lchip.cool .d{ background:var(--cool); }
+  .btnrow{ display:flex; gap:10px; margin-top:18px; }
+  .btn{ flex:1; padding:14px; border-radius:14px; font-family:'Hanken Grotesk',sans-serif; font-size:14px; font-weight:600;
+    cursor:pointer; border:1px solid transparent; text-align:center; }
+  .btn.ghost{ background:transparent; border-color:var(--hair); color:var(--cream); }
+  .btn.primary{ background:linear-gradient(180deg,var(--gold-hi),var(--gold)); color:#1a1206; }
+  .reelnote{ margin-top:12px; display:flex; align-items:center; gap:9px; justify-content:center;
+    font-size:11.5px; color:rgba(127,180,216,.8); font-family:'Azeret Mono',monospace; letter-spacing:.04em; }
+  .reelnote svg{ width:13px; height:13px; }
+
+  /* ---- not_enough_data ---- */
+  .bare{ margin-top:30px; height:196px; border-radius:20px; position:relative; overflow:hidden;
+    border:1px solid var(--hair); background:linear-gradient(150deg,#0c1a2c,#0a1626); }
+  .bare .tone{ position:absolute; inset:0; background:radial-gradient(70% 70% at 50% 42%, rgba(243,205,132,.1), transparent 70%); }
+  .bare .spine{ position:absolute; left:64px; top:22px; bottom:22px; width:2px;
+    background:linear-gradient(180deg, transparent, rgba(243,205,132,.4), rgba(127,180,216,.3), transparent); }
+  .bare .bead{ position:absolute; left:60px; width:11px; height:11px; border-radius:50%; }
+  .bare .bead.on{ background:var(--gold); box-shadow:0 0 12px 2px rgba(243,205,132,.6); }
+  .bare .bead.off{ border:1.5px dashed rgba(255,255,255,.22); }
+  .bare .card{ position:absolute; left:92px; width:150px; height:28px; border-radius:9px; border:1px dashed rgba(255,255,255,.16); }
+  .bare .card.lit{ border:1px solid rgba(243,205,132,.4); background:rgba(243,205,132,.08); }
+  .locked-title{ text-align:center; margin-top:22px; }
+  .locked-title .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--gold); }
+  .locked-title .h{ font-family:'Newsreader',serif; font-size:25px; color:#fbf5e8; margin-top:7px; }
+  .locked-body{ font-family:'Newsreader',serif; font-size:15.5px; line-height:1.6; color:#e7dcc6; text-align:center;
+    margin:14px auto 0; max-width:306px; }
+  .locked-body em{ font-style:italic; color:var(--gold-hi); }
+  .have{ margin-top:18px; padding:13px 14px; border-radius:14px; background:rgba(127,180,216,.06); border:1px solid rgba(127,180,216,.24); }
+  .have .hh{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--cool); margin-bottom:9px; }
+  .have ul{ list-style:none; display:flex; flex-direction:column; gap:8px; }
+  .have li{ display:flex; align-items:center; gap:9px; font-family:'Newsreader',serif; font-size:14.5px; color:#f2e6cd; }
+  .have li .d{ width:7px; height:7px; border-radius:50%; flex:0 0 auto; background:var(--cool); }
+  .have li.none{ color:var(--edit-hi); } .have li.none .d{ background:var(--edit); }
+  .keeper-cta{ margin-top:18px; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; padding:15px;
+    border-radius:15px; background:rgba(201,162,255,.08); border:1px dashed rgba(201,162,255,.42); color:var(--edit-hi);
+    font-family:'Newsreader',serif; font-size:16px; cursor:pointer; text-decoration:none; }
+  .keeper-cta svg{ width:19px; height:19px; }
+  .keeper-only{ margin-top:11px; display:flex; align-items:center; gap:8px; justify-content:center;
+    font-family:'Azeret Mono',monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--edit); }
+  .keeper-only svg{ width:13px; height:13px; }
+  .locked-foot{ margin-top:18px; text-align:center; font-family:'Newsreader',serif; font-style:italic; font-size:13px;
+    color:rgba(143,214,160,.6); line-height:1.5; }
+
+  /* ---- gentle failure (same hand as the locked state) ---- */
+  .fail{ margin-top:46px; text-align:center; }
+  .fail .glyph{ width:56px; height:56px; margin:0 auto; border-radius:18px; display:grid; place-items:center;
+    color:var(--warm); border:1px solid rgba(231,163,90,.3); background:rgba(231,163,90,.07); }
+  .fail .glyph svg{ width:24px; height:24px; }
+  .fail .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--warm); margin-top:16px; }
+  .fail .h{ font-family:'Newsreader',serif; font-size:24px; color:#fbf5e8; margin-top:7px; }
+  .fail .b{ font-family:'Newsreader',serif; font-size:15px; line-height:1.6; color:var(--muted);
+    margin:12px auto 20px; max-width:290px; }
+  .fail .btn{ max-width:200px; margin:0 auto; }
+
+  /* ---- language sheet ---- */
+  .scrim{ position:absolute; inset:0; z-index:30; background:rgba(3,6,12,.62); backdrop-filter:blur(3px);
+    opacity:0; pointer-events:none; transition:opacity .28s ease; }
+  .scrim.show{ opacity:1; pointer-events:auto; }
+  .sheet{ position:absolute; z-index:31; inset-inline:0; bottom:0; background:linear-gradient(180deg,#0f1e33,#081120);
+    border:1px solid var(--hair); border-bottom:none; border-radius:22px 22px 0 0; padding:10px 20px calc(22px + env(safe-area-inset-bottom));
+    transform:translateY(103%); transition:transform .34s cubic-bezier(.16,.8,.28,1); box-shadow:0 -24px 70px -30px #000; max-height:90%; overflow-y:auto; scrollbar-width:none; }
+  .sheet::-webkit-scrollbar{ display:none; }
+  .sheet.show{ transform:translateY(0); }
+  .grip-h{ width:40px; height:4px; border-radius:99px; background:rgba(255,255,255,.2); margin:6px auto 15px; }
+  .sheet h3{ font-family:'Newsreader',serif; font-weight:400; font-size:21px; color:#fbf5e8; margin-bottom:4px; }
+  .sheet .sub{ font-size:12.5px; color:var(--muted); margin-bottom:16px; line-height:1.45; }
+  .lang-opt{ display:flex; align-items:center; gap:14px; width:100%; padding:14px 15px; border-radius:14px;
+    background:var(--panel); border:1px solid var(--hair); color:var(--cream); cursor:pointer; margin-bottom:9px; text-align:start; }
+  .lang-opt.on{ border-color:rgba(243,205,132,.55); background:rgba(243,205,132,.08); }
+  .lang-opt .native{ font-family:'Newsreader',serif; font-size:18px; } .lang-opt .en{ font-size:11.5px; color:var(--muted); margin-top:1px; }
+  .lang-opt .tick{ margin-inline-start:auto; color:var(--gold); opacity:0; } .lang-opt.on .tick{ opacity:1; } .lang-opt .tick svg{ width:18px; height:18px; }
+
+  /* full-viewport page (drop the mock device frame) */
+  html,body{ background:#04070e; margin:0; }
+  body{ gap:0; padding:0; }
+  .stagewrap{ gap:0; width:100%; }
+  .device{ width:100vw!important; height:100dvh!important; max-width:none!important; border-radius:0!important; border:none!important; box-shadow:none!important; }
+</style>
+</head>
+<body>
+  <div class="stagewrap">
+    <div class="device" id="dev">
+      <div class="drift" aria-hidden="true">
+        <div class="strat s1"></div><div class="strat s2"></div><div class="strat s3"></div><div class="strat s4"></div>
+        <div class="yr-rain" id="yrRain"></div>
+      </div>
+      <div class="veil"></div>
+      <div class="screen" id="screen">
+        <div class="topbar">
+          <button class="ibtn" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path class="backarrow" d="M15 18l-6-6 6-6"/></svg></button>
+          <div class="ttl"><div class="k mono" data-t="tk"></div><div class="n serif" data-t="tn"></div></div>
+          <button class="ibtn" data-act="lang" aria-label="Language"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></button>
+          <div class="streak" id="streak" hidden><span class="fl"></span><b id="streakN">×1</b></div>
+        </div>
+        <div class="pad">
+          <div id="play" style="display:none"></div>
+          <div id="locked" style="display:none"></div>
+          <div id="error" style="display:none"></div>
+        </div>
+      </div>
+      <div class="scrim"></div>
+      <section class="sheet" data-sheet="lang" role="dialog" aria-modal="true" aria-label="Language"></section>
+    </div>
+  </div>
+
+<script>
+(function(){
+  'use strict';
+  const SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
+  const sb=window.supabase.createClient(SB_URL,SB_KEY);
+  const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+  const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+  const qs=new URLSearchParams(location.search);
+  const PERSON_ID=qs.get('id')||qs.get('person')||null;
+  const START_SEED=qs.get('seed')||null;
+  const LANGS=['en','ru','he'];
+
+  /* ---------- i18n (EN / RU / HE) — content shown once, in the chosen language ---------- */
+  const T={
+    en:{ dir:'ltr', native:'English', label:'English',
+      tk:'Life · a game', tn:'The Order of Things',
+      askK:n=>`${wordNum(n,'en')} moments, out of order`,
+      askQ:name=>`These all happened to <em>${esc(name)}</em>. Put them back the way they lived them &mdash; earliest at the top.`,
+      told:'A person told us', worked:'The app worked it out',
+      earlier:'Move earlier', later:'Move later',
+      cta:'Set them in order',
+      hint:'Drag a moment, or nudge it with the arrows.<br>The years stay hidden until you’re ready.',
+      hintAfter:'The years were there all along — you simply had not been shown them.',
+      kindleL:'How lit up are they', kindleR:n=>`${wordNum(n,'en')} of eight kindled`,
+      revK:'You kindled their Life',
+      revH:span=>span>0
+        ? `${wordNum(span,'en')} years, back in <em>the order they lived them</em>.`
+        : `Back in <em>the order they lived them</em>.`,
+      revAll:'Every one where it belonged. The years were there all along — you simply had not been shown them.',
+      revSome:(r,t)=>`${r} of ${t} were already in place. The rest moved gently into theirs — nothing is lost by getting it wrong first.`,
+      legGold:'Gold years: a person told us', legCool:'Blue: the app worked it out',
+      another:'Another life', toReel:'Add to their Reel', reelnote:'Saved to your Journal',
+      born:'Born', died:'Died', amemory:'A memory',
+      lockK:'Not enough years yet', lockH:'Not enough dated moments yet',
+      lockBody:'There is no order to find until at least <em>three of their moments carry a year</em>. Add a few dates and this comes alive.',
+      needL:'It’s waiting for', haveH:'What the app can see so far',
+      hDated:n=>`${n} dated ${n===1?'moment':'moments'} it could place in time`,
+      hPeople:n=>`${n} ${n===1?'person has':'people have'} at least one dated moment`,
+      hPlayable:n=>`${n} ${n===1?'person is':'people are'} ready to play`,
+      hNone:'Waiting for a year on the rest',
+      invite:'Put a year to a moment', keeperOnly:'Waiting for the keeper',
+      lockFoot:'The third year you add is the one<br>that turns this into a game.',
+      errK:'Something’s tangled', errH:'The years are out of reach',
+      errB:'The game couldn’t gather the moments just now. Give it another moment.', retry:'Try again',
+      langtitle:'Language', langsub:'Titles, prompts and the whole game follow the language you choose.' },
+    ru:{ dir:'ltr', native:'Русский', label:'Russian',
+      tk:'Жизнь · игра', tn:'Порядок вещей',
+      askK:n=>`${wordNum(n,'ru')} моментов, вразнобой`,
+      askQ:name=>`Всё это случилось с <em>${esc(name)}</em>. Расставьте так, как это было прожито &mdash; раннее наверху.`,
+      told:'Рассказал человек', worked:'Приложение вычислило',
+      earlier:'Раньше', later:'Позже',
+      cta:'Расставить по порядку',
+      hint:'Перетащите момент или подвиньте стрелками.<br>Годы скрыты, пока вы не будете готовы.',
+      hintAfter:'Годы были здесь всё это время — их вам просто не показывали.',
+      kindleL:'Насколько он озарён', kindleR:n=>`${wordNum(n,'ru')} из восьми зажжено`,
+      revK:'Вы зажгли его Жизнь',
+      revH:span=>span>0
+        ? `${wordNum(span,'ru')} лет — снова в <em>том порядке, в каком прожиты</em>.`
+        : `Снова в <em>том порядке, в каком прожито</em>.`,
+      revAll:'Каждый на своём месте. Годы были здесь всё это время — их вам просто не показывали.',
+      revSome:(r,t)=>`${r} из ${t} уже стояли верно. Остальные мягко встали на свои места — ошибиться сначала ничего не стоит.`,
+      legGold:'Золотые годы: рассказал человек', legCool:'Синее: приложение вычислило',
+      another:'Ещё одна жизнь', toReel:'В его Плёнку', reelnote:'Сохранено в ваш Журнал',
+      born:'Родился', died:'Умер', amemory:'Воспоминание',
+      lockK:'Пока не хватает годов', lockH:'Пока мало моментов с датами',
+      lockBody:'Порядок нельзя найти, пока хотя бы <em>у трёх моментов не будет года</em>. Добавьте несколько дат — и игра оживёт.',
+      needL:'Ждёт', haveH:'Что приложение видит сейчас',
+      hDated:n=>`${n} моментов с датой, которые можно поставить во времени`,
+      hPeople:n=>`У ${n} человек есть хотя бы один момент с датой`,
+      hPlayable:n=>`${n} человек готовы к игре`,
+      hNone:'У остальных год ещё ждёт',
+      invite:'Поставить год моменту', keeperOnly:'Ждёт хранителя',
+      lockFoot:'Третий добавленный год — тот самый,<br>что превращает это в игру.',
+      errK:'Что-то запуталось', errH:'Годы недоступны',
+      errB:'Игра не смогла собрать моменты сейчас. Попробуйте ещё раз через мгновение.', retry:'Ещё раз',
+      langtitle:'Язык', langsub:'Заголовки, вопросы и вся игра — на выбранном языке.' },
+    he:{ dir:'rtl', native:'עברית', label:'Hebrew',
+      tk:'חיים · משחק', tn:'סדר הדברים',
+      askK:n=>`${wordNum(n,'he')} רגעים, ללא סדר`,
+      askQ:name=>`כל אלה קרו ל<em>${esc(name)}</em>. סדרו אותם כפי שנחיו &mdash; המוקדם למעלה.`,
+      told:'מישהו סיפר לנו', worked:'האפליקציה חישבה',
+      earlier:'מוקדם יותר', later:'מאוחר יותר',
+      cta:'סדרו אותם',
+      hint:'גררו רגע, או הזיזו אותו בחיצים.<br>השנים מוסתרות עד שתסיימו.',
+      hintAfter:'השנים היו כאן כל הזמן — פשוט לא הראו לכם אותן.',
+      kindleL:'כמה הם מוארים', kindleR:n=>`${wordNum(n,'he')} מתוך שמונה`,
+      revK:'הארתם את החיים שלהם',
+      revH:span=>span>0
+        ? `${wordNum(span,'he')} שנים, שוב <em>בסדר שבו נחיו</em>.`
+        : `שוב <em>בסדר שבו נחיו</em>.`,
+      revAll:'כל אחד במקומו. השנים היו כאן כל הזמן — פשוט לא הראו לכם אותן.',
+      revSome:(r,t)=>`${r} מתוך ${t} כבר היו במקום. השאר עברו בעדינות למקומם — אין הפסד בטעות ראשונה.`,
+      legGold:'שנים בזהב: מישהו סיפר לנו', legCool:'בכחול: האפליקציה חישבה',
+      another:'חיים נוספים', toReel:'אל הסרט שלהם', reelnote:'נשמר ביומן שלכם',
+      born:'נולד', died:'נפטר', amemory:'זיכרון',
+      lockK:'עדיין חסרות שנים', lockH:'עדיין אין מספיק רגעים מתוארכים',
+      lockBody:'אין סדר למצוא עד ש<em>לשלושה רגעים לפחות תהיה שנה</em>. הוסיפו כמה תאריכים והמשחק יתעורר.',
+      needL:'ממתין ל', haveH:'מה האפליקציה רואה עד כה',
+      hDated:n=>`${n} רגעים מתוארכים שניתן למקם בזמן`,
+      hPeople:n=>`ל-${n} אנשים יש לפחות רגע מתוארך אחד`,
+      hPlayable:n=>`${n} אנשים מוכנים למשחק`,
+      hNone:'לשאר עוד ממתינה שנה',
+      invite:'הוסיפו שנה לרגע', keeperOnly:'ממתין למנהל הזיכרון',
+      lockFoot:'השנה השלישית שתוסיפו היא זו<br>שהופכת את זה למשחק.',
+      errK:'משהו הסתבך', errH:'השנים מחוץ להישג',
+      errB:'המשחק לא הצליח לאסוף את הרגעים כרגע. נסו שוב בעוד רגע.', retry:'נסו שוב',
+      langtitle:'שפה', langsub:'הכותרות, השאלות וכל המשחק — לפי השפה שתבחרו.' }
+  };
+  const NUMW={
+    en:['zero','one','two','three','four','five','six','seven','eight','nine','ten'],
+    ru:['ноль','один','два','три','четыре','пять','шесть','семь','восемь','девять','десять'],
+    he:['אפס','אחד','שניים','שלושה','ארבעה','חמישה','שישה','שבעה','שמונה','תשעה','עשרה']
+  };
+  function wordNum(n,lang){ const a=NUMW[lang]||NUMW.en; return (n>=0&&n<a.length)?a[n]:String(n); }
+  const d=()=>T[state.lang];
+
+  const I={
+    back:'M15 18l-6-6 6-6', backR:'M9 18l6-6-6-6',
+    clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    grip:'<path d="M8 8h.01M8 12h.01M8 16h.01M16 8h.01M16 12h.01M16 16h.01"/>',
+    up:'<path d="M18 15l-6-6-6 6"/>', down:'<path d="M6 9l6 6 6-6"/>',
+    check:'<path d="M20 6L9 17l-5-5"/>',
+    reel:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/>',
+    cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4M12 13v4M10 15h4"/>',
+    shield:'<path d="M12 3l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V6z"/><path d="M9 12l2 2 4-4"/>',
+    warn:'<path d="M12 9v4M12 17h.01"/><path d="M10.3 4.3 2.5 18a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 4.3a2 2 0 0 0-3.4 0z"/>'
+  };
+  const sv=(p,w)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w||1.6}" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+
+  /* ---------- state ---------- */
+  const state={ lang:'en', seed:null, round:null, streak:0, streakShown:false, solved:false };
+
+  /* ---------- the drift of years: numerals taken from the LIVE round ---------- */
+  function paintRain(years){
+    const box=$('#yrRain'); if(!box) return;
+    const list=(years&&years.length?years:['19??','19??','19??']).slice(0,5);
+    box.innerHTML=list.map((y,i)=>{
+      const left=[11,74,38,88,56][i%5], top=[78,88,95,70,84][i%5];
+      const dur=[26,34,30,38,32][i%5], del=[3,11,19,7,24][i%5];
+      return `<span style="left:${left}%; top:${top}%; animation-duration:${dur}s; animation-delay:-${del}s">${esc(y)}</span>`;
+    }).join('');
+  }
+
+  /* ---------- real "how lit up are they" (person-axis) ---------- */
+  async function kindleOf(pid){
+    if(!pid) return null;
+    try{
+      const {data:pf}=await sb.from('person_facts').select('field').eq('person_id',pid);
+      const fields=new Set((pf||[]).map(r=>r.field));
+      const has=arr=>arr.some(f=>fields.has(f));
+      let rels=0, subs=0;
+      try{ const r=await sb.from('relationships').select('id',{count:'exact',head:true}).or('from_person.eq.'+pid+',to_person.eq.'+pid); rels=r.count||0; }catch(e){}
+      try{ const r=await sb.from('artefact_subjects').select('artefact_id',{count:'exact',head:true}).eq('person_id',pid); subs=r.count||0; }catch(e){}
+      const facets=[
+        has(['given','family','called','patronymic','maiden','honorific','nickname']),
+        subs>0,
+        has(['birth','birth_prec','death','living','gender','occupation','about','langspoken']),
+        fields.has('lived'),
+        subs>0,
+        rels>0,
+        subs>0,
+        has(['custom_label','custom_value','source'])
+      ];
+      return { n:facets.filter(Boolean).length, total:8 };
+    }catch(e){ return null; }
+  }
+
+  /* ---------- seed ---------- */
+  function freshSeed(){ try{ if(window.crypto&&crypto.getRandomValues){ const a=new Uint32Array(1); crypto.getRandomValues(a); return a[0]>>>0; } }catch(e){} return (Math.floor(Math.random()*0x7fffffff))>>>0; }
+
+  function show(which){ ['play','locked','error'].forEach(s=>{ $('#'+s).style.display = s===which?'block':'none'; }); }
+
+  /* ---------- chrome ---------- */
+  function paintChrome(){ const L=d();
+    document.documentElement.lang=state.lang; document.documentElement.dir=L.dir;
+    $('#screen').setAttribute('dir',L.dir); $('#screen').setAttribute('lang',state.lang);
+    $$('[data-t]').forEach(el=>{ el.textContent=L[el.getAttribute('data-t')]; });
+    $('.backarrow').setAttribute('d', L.dir==='rtl'?I.backR:I.back);
+    const st=$('#streak'); st.hidden=!state.streakShown; $('#streakN').textContent='×'+Math.max(1,state.streak);
+  }
+
+  /* ---------- provenance (Rule 2 — never blended, never asserted falsely) ----------
+     Gold = a person told us: a life fact a family member entered, or a memory in
+     someone's own words. Cool = the app worked it out: a moment the engine had to
+     label itself, having no human telling for it. */
+  function isCool(o){
+    const label=String(o.label==null?'':o.label).trim();
+    return o.kind==='memory' && (label==='' || label==='A memory');
+  }
+  function cardText(o){
+    const L=d();
+    if(o.kind==='birth') return L.born;
+    if(o.kind==='death') return L.died;
+    const label=String(o.label==null?'':o.label).trim();
+    return (label && label!=='A memory') ? label : L.amemory;
+  }
+
+  /* ---------- PLAY ---------- */
+  function renderPlay(round){
+    const L=d();
+    const name=(round.prompt&&round.prompt.person_name)||(round.person&&round.person.label)||'';
+    const cards=round.options.map(o=>{
+      const cool=isCool(o);
+      return `
+      <div class="mo${cool?' cool':''}" data-id="${esc(o.id)}">
+        <div class="grip">${sv(I.grip,1.7)}</div>
+        <div class="bd">
+          <div class="src serif"><span class="sd"></span>${esc(cool?L.worked:L.told)}</div>
+          <div class="tx serif">${esc(cardText(o))}</div>
+          <div class="when">${esc(o.when||o.year||'')}</div>
+        </div>
+        <div class="nudge">
+          <button type="button" data-dir="-1" aria-label="${esc(L.earlier)}">${sv(I.up,2)}</button>
+          <button type="button" data-dir="1" aria-label="${esc(L.later)}">${sv(I.down,2)}</button>
+        </div>
+      </div>`;
+    }).join('');
+    $('#play').innerHTML=`
+      <div class="kindle" id="kindle" style="display:none">
+        <div class="lab"><span class="l">${esc(L.kindleL)}</span><span class="r" id="kindleR"></span></div>
+        <div class="bar"><i id="kindleBar" style="width:0%"></i></div>
+      </div>
+      <div class="ask">
+        <div class="k"><span class="pl">${sv(I.clock,1.8)}</span>${esc(L.askK(round.options.length))}</div>
+        <div class="q serif">${L.askQ(name)}</div>
+      </div>
+      <div class="strand"><div class="list" id="list">${cards}</div></div>
+      <button class="cta" type="button" id="cta">${esc(L.cta)}</button>
+      <div class="hintbar serif" id="hint">${L.hint}</div>
+      <div class="reveal" id="reveal"></div>`;
+    wireList();
+    paintKindle(round.person&&round.person.id);
+  }
+
+  async function paintKindle(pid){
+    const k=await kindleOf(pid); if(!k) return;
+    const box=$('#kindle'); if(!box) return;
+    box.style.display='block';
+    $('#kindleR').textContent=d().kindleR(k.n);
+    requestAnimationFrame(()=>{ const b=$('#kindleBar'); if(b) b.style.width=Math.round(k.n/k.total*100)+'%'; });
+  }
+
+  function settle(card){ card.classList.remove('settled'); void card.offsetWidth; card.classList.add('settled'); }
+
+  /* nudge arrows + pointer drag — both finger paths the design draws */
+  function wireList(){
+    const list=$('#list'); if(!list) return;
+
+    list.addEventListener('click', e=>{
+      const b=e.target.closest('.nudge button'); if(!b||state.solved) return;
+      const card=b.closest('.mo');
+      const dir=parseInt(b.getAttribute('data-dir'),10);
+      if(dir<0){ const prev=card.previousElementSibling; if(prev) list.insertBefore(card,prev); }
+      else { const next=card.nextElementSibling; if(next) list.insertBefore(next,card); }
+      settle(card);
+    });
+
+    let drag=null;
+    list.addEventListener('pointerdown', e=>{
+      if(state.solved) return;
+      if(e.target.closest('.nudge button')) return;
+      const card=e.target.closest('.mo'); if(!card) return;
+      drag={ card:card, startY:e.clientY };
+      card.setPointerCapture(e.pointerId);
+      card.classList.add('lift');
+    });
+    list.addEventListener('pointermove', e=>{
+      if(!drag) return;
+      drag.card.style.transform='translateY('+(e.clientY-drag.startY)+'px)';
+      const box=drag.card.getBoundingClientRect(), mid=box.top+box.height/2;
+      const prev=drag.card.previousElementSibling, next=drag.card.nextElementSibling;
+      if(prev){ const pb=prev.getBoundingClientRect();
+        if(mid<pb.top+pb.height/2){ list.insertBefore(drag.card,prev); drag.startY=e.clientY; drag.card.style.transform=''; return; } }
+      if(next){ const nb=next.getBoundingClientRect();
+        if(mid>nb.top+nb.height/2){ list.insertBefore(next,drag.card); drag.startY=e.clientY; drag.card.style.transform=''; } }
+    });
+    const endDrag=()=>{ if(!drag) return; drag.card.style.transform=''; drag.card.classList.remove('lift'); settle(drag.card); drag=null; };
+    list.addEventListener('pointerup', endDrag);
+    list.addEventListener('pointercancel', endDrag);
+  }
+
+  /* ---------- the gentle reveal — checked against answer_order ---------- */
+  function onSolve(){
+    if(state.solved) return; const round=state.round; if(!round) return;
+    state.solved=true;
+    const L=d(), list=$('#list');
+    const truth=round.answer_order.slice();
+    const placedCards=[...list.children];
+    const placed=placedCards.map(c=>c.getAttribute('data-id'));
+    let right=0; for(let i=0;i<placed.length;i++){ if(placed[i]===truth[i]) right++; }
+    const total=placed.length;
+
+    if(right===total){ state.streak++; } else { state.streak=0; }
+    state.streakShown=true; paintChrome();
+
+    const byId={}; placedCards.forEach(c=>{ byId[c.getAttribute('data-id')]=c; });
+    const inTruthOrder=truth.map(id=>byId[id]).filter(Boolean);
+    const step=reduceMotion?0:200;
+
+    inTruthOrder.forEach((card,i)=>{
+      const wasAlreadyRight = placedCards.indexOf(card)===i;
+      setTimeout(()=>{
+        list.appendChild(card);
+        card.classList.add('shown');
+        card.classList.add(wasAlreadyRight?'ok':'moved');
+        settle(card);
+      }, step*i);
+    });
+
+    setTimeout(()=>renderReveal(round,right,total), step*total+300);
+  }
+
+  function renderReveal(round,right,total){
+    const L=d();
+    const years=round.options.map(o=>o.year).filter(y=>typeof y==='number');
+    const span=years.length?Math.max(...years)-Math.min(...years):0;
+    const anyCool=round.options.some(isCool);
+    const legend=[`<span class="lchip"><span class="d"></span>${esc(L.legGold)}</span>`];
+    if(anyCool) legend.push(`<span class="lchip cool"><span class="d"></span>${esc(L.legCool)}</span>`);
+    const rev=$('#reveal');
+    rev.innerHTML=`
+      <div class="revcard">
+        <div class="k">${esc(L.revK)}</div>
+        <div class="h serif">${L.revH(span)}</div>
+        <div class="s serif">${esc(right===total?L.revAll:L.revSome(right,total))}</div>
+        <div class="legend">${legend.join('')}</div>
+        <div class="btnrow">
+          <button class="btn ghost" type="button" data-act="next">${esc(L.another)}</button>
+          <button class="btn primary" type="button" data-act="reel">${esc(L.toReel)}</button>
+        </div>
+        <div class="reelnote">${sv(I.reel,1.7)}${esc(L.reelnote)}</div>
+      </div>`;
+    rev.classList.add('show');
+    const hint=$('#hint'); if(hint) hint.textContent=L.hintAfter;
+    const cta=$('#cta'); if(cta) cta.style.display='none';
+    rev.scrollIntoView({behavior:reduceMotion?'auto':'smooth', block:'nearest'});
+  }
+
+  /* ---------- LOCKED (not_enough_data) ---------- */
+  function renderLocked(res){
+    const L=d();
+    const det=(res&&res.detail)||{};
+    const rows=[];
+    if(typeof det.dated_events==='number') rows.push([det.dated_events>0, L.hDated(det.dated_events)]);
+    if(typeof det.dated_facts==='number') rows.push([det.dated_facts>0, L.hDated(det.dated_facts)]);
+    if(typeof det.people_with_events==='number') rows.push([det.people_with_events>0, L.hPeople(det.people_with_events)]);
+    if(typeof det.people_playable==='number') rows.push([det.people_playable>0, L.hPlayable(det.people_playable)]);
+    rows.push([false, L.hNone]);
+    const have=`
+      <div class="have">
+        <div class="hh">${esc(L.haveH)}</div>
+        <ul>${rows.map(r=>`<li class="${r[0]?'':'none'}"><span class="d"></span>${esc(r[1])}</li>`).join('')}</ul>
+      </div>`;
+    const need=(res&&res.need)?`<div class="locked-body serif" style="margin-top:12px"><em>${esc(L.needL)}: ${esc(res.need)}</em></div>`:'';
+    $('#locked').innerHTML=`
+      <div class="bare">
+        <div class="tone"></div><div class="spine"></div>
+        <div class="bead on"  style="top:38px"></div>
+        <div class="bead off" style="top:86px"></div>
+        <div class="bead off" style="top:134px"></div>
+        <div class="card lit" style="top:30px"></div>
+        <div class="card"     style="top:78px"></div>
+        <div class="card"     style="top:126px"></div>
+      </div>
+      <div class="locked-title"><div class="k">${esc(L.lockK)}</div><div class="h serif">${esc(L.lockH)}</div></div>
+      <div class="locked-body serif">${L.lockBody}</div>
+      ${need}
+      ${have}
+      <a class="keeper-cta serif" href="contribute-real.html">${sv(I.cal,1.6)}${esc(L.invite)}</a>
+      <div class="keeper-only">${sv(I.shield,1.7)}${esc(L.keeperOnly)}</div>
+      <div class="locked-foot serif">${L.lockFoot}</div>`;
+  }
+
+  /* ---------- ERROR ---------- */
+  function renderError(){
+    const L=d();
+    $('#error').innerHTML=`
+      <div class="fail">
+        <div class="glyph">${sv(I.warn,1.6)}</div>
+        <div class="k">${esc(L.errK)}</div>
+        <div class="h serif">${esc(L.errH)}</div>
+        <div class="b serif">${esc(L.errB)}</div>
+        <button class="btn ghost" type="button" data-act="retry">${esc(L.retry)}</button>
+      </div>`;
+  }
+
+  /* ---------- load a round (ENGINE — Rule 8: nothing here is hard-coded) ---------- */
+  async function loadRound(seed){
+    state.seed=seed; state.solved=false; state.round=null;
+    let res;
+    try{ res=await window.LFGames.orderOfThings(sb,{ id:PERSON_ID, personId:PERSON_ID, seed:seed }); }
+    catch(e){ res={status:'error', message:(e&&e.message)||String(e)}; }
+    if(res && res.status==='ok'){
+      state.round=res;
+      paintRain(res.options.map(o=>o.year).filter(Boolean).map(String));
+      renderPlay(res); show('play');
+    } else if(res && res.status==='not_enough_data'){
+      paintRain(null); renderLocked(res); show('locked');
+    } else {
+      paintRain(null); renderError(); show('error');
+    }
+    paintChrome();
+  }
+
+  /* ---------- language sheet ---------- */
+  const showSheet=()=>{ $('.scrim').classList.add('show'); $('.sheet[data-sheet="lang"]').classList.add('show'); };
+  const hideSheets=()=>{ $('.scrim').classList.remove('show'); $$('.sheet').forEach(s=>s.classList.remove('show')); };
+  window.__lfClose=()=>{ if($('.sheet.show')){ hideSheets(); return true; } return false; };
+  function openLang(){ const L=d(); const sh=$('.sheet[data-sheet="lang"]');
+    sh.innerHTML=`<div class="grip-h"></div><h3>${esc(L.langtitle)}</h3><div class="sub">${esc(L.langsub)}</div>
+      ${LANGS.map(k=>`<button class="lang-opt ${k===state.lang?'on':''}" type="button" data-lang="${k}"><span><span class="native">${esc(T[k].native)}</span><span class="en" style="display:block">${esc(T[k].label)}</span></span><span class="tick">${sv(I.check,2)}</span></button>`).join('')}`;
+    sh.querySelectorAll('[data-lang]').forEach(b=>b.onclick=async()=>{ await setLang(b.dataset.lang); hideSheets(); });
+    showSheet(); }
+  async function setLang(lang){ if(!T[lang]||lang===state.lang) return; state.lang=lang;
+    try{ localStorage.setItem('lf_lang',lang); }catch(e){}
+    try{ const {data:{session}}=await sb.auth.getSession(); if(session&&session.user){ await sb.from('profiles').update({preferred_lang:lang}).eq('id',session.user.id); } }catch(e){}
+    paintChrome();
+    // same seed reproduces the same round in the new language (deterministic engine)
+    await loadRound(state.seed!=null?state.seed:freshSeed());
+  }
+
+  /* ---------- click wiring ---------- */
+  function wire(){
+    $('#dev').addEventListener('click', e=>{
+      if(e.target.closest('#cta')){ onSolve(); return; }
+      const a=e.target.closest('[data-act]'); if(!a) return;
+      const act=a.dataset.act;
+      if(act==='back'){ if(history.length>1) history.back(); else location.href='person-real.html'; return; }
+      if(act==='lang'){ openLang(); return; }
+      if(act==='next'){ loadRound(freshSeed()); return; }
+      if(act==='reel'){ const id=state.round&&state.round.person&&state.round.person.id;
+        location.href = id?('reel-real.html?id='+encodeURIComponent(id)):'reel-real.html'; return; }
+      if(act==='retry'){ loadRound(state.seed!=null?state.seed:freshSeed()); return; }
+    });
+    $('.scrim').addEventListener('click', hideSheets);
+  }
+
+  /* ---------- boot: session gate → load round ---------- */
+  async function boot(){
+    const stored=(function(){ try{ return localStorage.getItem('lf_lang'); }catch(e){ return null; } })();
+    if(stored&&T[stored]) state.lang=stored; else { const dl=(navigator.language||'en').slice(0,2); if(T[dl]) state.lang=dl; }
+    paintChrome(); paintRain(null);
+    let session=null;
+    try{ const r=await sb.auth.getSession(); session=r.data&&r.data.session; }catch(e){ session=null; }
+    if(!session){ location.replace('index.html'); return; }
+    try{ const {data:pr}=await sb.from('profiles').select('preferred_lang').eq('id',session.user.id).maybeSingle(); if(pr&&pr.preferred_lang&&!stored&&T[pr.preferred_lang]) state.lang=pr.preferred_lang; }catch(e){}
+    paintChrome();
+    await loadRound(START_SEED!=null?START_SEED:freshSeed());
+  }
+
+  wire(); boot();
+})();
+</script>
+<script src="lf-nav.js" data-here="" data-parent="person-real.html"></script>
+</body></html>
