@@ -11,7 +11,7 @@
   function inAppRef(){
     try{ if(!document.referrer) return false;
       var u=new URL(document.referrer);
-      return u.origin===location.origin && /((home-real|person-real|place-real|moment-real|crowd-real|timeline-real|search-real|tree-real|contribute-real|curators-real|index|preview|preview-globe|prototype)\.html?|\/)$/.test(u.pathname);
+      return u.origin===location.origin && /((home-real|person-real|place-real|moment-real|crowd-real|timeline-real|search-real|tree-real|contribute-real|curators-real|game-missing-voice|game-tangled-thread|game-who-is-who|index|preview|preview-globe|prototype)\.html?|\/)$/.test(u.pathname);
     }catch(e){ return false; }
   }
   function goBack(){

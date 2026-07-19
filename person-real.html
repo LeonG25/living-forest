@@ -823,7 +823,11 @@
       <div class="btnrow"><button class="btn ghost" data-act="close">${L.cancel}</button><button class="btn violet" data-act="addsend">${L.send}</button></div>`;
     showSheet('add'); }
 
+  // gids that have a real, built, engine-wired play page (scoped by ?id=)
+  const GAME_PAGES={ whoiswho:'game-who-is-who.html', whosememory:'game-who-is-who.html', voice:'game-missing-voice.html', thread:'game-tangled-thread.html', crowd:'crowd-real.html' };
   function openGame(gid){ const L=d(); const g=GAMES[gid], sh=$('.sheet[data-sheet="game"]');
+    const page=GAME_PAGES[gid];
+    if(page){ const q=(person&&person.id)?('?id='+encodeURIComponent(person.id)):''; location.href=page+q; return; }
     sh.innerHTML=`<div class="grip"></div><div class="gamehero"><div class="tone"></div>${sv(I[g.icon],1.4)}</div>
       <h3>${L.gameNames[gid]}</h3><div class="sub">${L.gameSubs[gid]}</div>
       <div class="pending" style="margin-top:0;margin-bottom:14px;background:rgba(243,205,132,.08);border-color:rgba(243,205,132,.3);color:var(--gold-hi)">${sv(I.play,0)} ${L.gameScoped}</div>
