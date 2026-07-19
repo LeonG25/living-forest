@@ -11,7 +11,7 @@
   function inAppRef(){
     try{ if(!document.referrer) return false;
       var u=new URL(document.referrer);
-      return u.origin===location.origin && /((home-real|person-real|place-real|moment-real|crowd-real|timeline-real|search-real|tree-real|contribute-real|contribute-add-real|curators-real|game-missing-voice|game-tangled-thread|game-who-is-who|index|preview|preview-globe|prototype)\.html?|\/)$/.test(u.pathname);
+      return u.origin===location.origin && /((home-real|person-real|place-real|moment-real|crowd-real|timeline-real|search-real|tree-real|contribute-real|contribute-add-real|curators-real|review-real|game-missing-voice|game-tangled-thread|game-who-is-who|index|preview|preview-globe|prototype)\.html?|\/)$/.test(u.pathname);
     }catch(e){ return false; }
   }
   function goBack(){
@@ -54,6 +54,10 @@
   function addKeeperItem(){
     if(!window.__lfKeeper) return;
     if(panel.querySelector('a[data-lf="curators"]')) return; // once
+    var rv=document.createElement('a'); rv.href='review-real.html'; rv.setAttribute('data-lf','review');
+    rv.innerHTML='<span class="ic">\u2713</span><span>'+(window.__lfReviewLabel||'Review')+'</span>';
+    if(HERE==='review') rv.className='cur';
+    panel.appendChild(rv);
     var a=document.createElement('a'); a.href='curators-real.html'; a.setAttribute('data-lf','curators');
     a.innerHTML='<span class="ic">\u2609</span><span>'+(window.__lfKeeperLabel||'Curators')+'</span>';
     if(HERE==='curators') a.className='cur';
