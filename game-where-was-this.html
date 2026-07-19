@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Where Was This? · The Living Forest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  /* ===== Design: "Game - Where Was This (play)" — reproduced verbatim ===== */
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body{ background:#04070e; }
+  :root{
+    --cream:#f4ecdb; --muted:#9db0cc; --dim:#6f83a3; --hair:#ffffff18; --panel:#ffffff0b;
+    --gold:#f3cd84; --gold-hi:#ffe6ad; --cool:#7fb4d8; --cool-hi:#a9d2ee;
+    --edit:#c9a2ff; --edit-hi:#ddc6ff; --leaf:#8fd6a0; --xtl:#9a8bbd; --warm:#e7a35a;
+  }
+  body{ font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--cream); min-height:100dvh;
+    display:flex; align-items:flex-start; justify-content:center; gap:40px; padding:34px 20px 90px;
+    background:radial-gradient(150% 100% at 50% -6%, #12233c 0%, #0a1526 44%, #04070e 100%);
+    -webkit-user-select:none; user-select:none; flex-wrap:wrap; }
+  .serif{ font-family:'Newsreader',Georgia,serif; }
+  .mono{ font-family:'Azeret Mono',monospace; }
+  .screen[dir="rtl"] .serif{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
+
+  .stagewrap{ display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .caption{ font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--dim); }
+  .device{ position:relative; width:390px; height:820px; border-radius:42px; overflow:hidden; flex:0 0 auto;
+    background:#04070e; box-shadow:0 40px 120px -50px #000, 0 0 0 9px #14141b, 0 0 0 10px #2b2b34; }
+  .veil{ position:absolute; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(120% 70% at 50% 4%, rgba(243,205,132,.08), transparent 46%),
+      radial-gradient(120% 92% at 50% 46%, transparent 30%, rgba(4,7,14,.62) 100%); }
+  .screen{ position:absolute; inset:0; z-index:2; overflow-y:auto; scrollbar-width:none; }
+  .screen::-webkit-scrollbar{ display:none; }
+  .pad{ padding:0 20px calc(30px + env(safe-area-inset-bottom)); }
+
+  /* ── SIGNATURE MOTION · the compass sweep ─────────────────────────
+     A bearing line turns slowly over the globe, the way a compass
+     searches; the meridians drift east behind it. Aurora blooms sit
+     under the whole screen. Nothing else moves — the sweep is the
+     page's pulse, and it is this page's alone. */
+  .aurora{ position:absolute; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+  .aurora b{ position:absolute; display:block; border-radius:50%; filter:blur(46px); opacity:.5; }
+  .aurora .a1{ width:260px; height:260px; left:-70px; top:60px; background:rgba(127,180,216,.34); animation:drift1 21s ease-in-out infinite; }
+  .aurora .a2{ width:230px; height:230px; right:-80px; top:290px; background:rgba(243,205,132,.2); animation:drift2 27s ease-in-out infinite; }
+  .aurora .a3{ width:280px; height:280px; left:30px; bottom:-90px; background:rgba(143,214,160,.16); animation:drift1 33s ease-in-out infinite reverse; }
+  @keyframes drift1{ 0%,100%{ transform:translate(0,0); } 50%{ transform:translate(38px,-30px); } }
+  @keyframes drift2{ 0%,100%{ transform:translate(0,0); } 50%{ transform:translate(-34px,26px); } }
+
+  .topbar{ position:sticky; top:0; z-index:14; display:flex; align-items:center; gap:10px;
+    padding:15px 18px 11px; background:linear-gradient(to bottom, rgba(5,9,17,.92), rgba(5,9,17,.4) 68%, transparent);
+    backdrop-filter:blur(7px); }
+  .ibtn{ width:44px; height:44px; border-radius:12px; flex:0 0 auto; display:grid; place-items:center; cursor:pointer;
+    border:1px solid var(--hair); background:rgba(10,20,34,.55); color:var(--cream); }
+  .ibtn svg{ width:18px; height:18px; }
+  .ttl{ flex:1; min-width:0; text-align:center; }
+  .ttl .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.24em; text-transform:uppercase; color:var(--muted); }
+  .ttl .n{ font-family:'Newsreader',serif; font-size:18px; color:#fbf5e8; margin-top:1px; }
+  .cool-pill{ flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:8px 11px; border-radius:99px;
+    background:rgba(127,180,216,.1); border:1px solid rgba(127,180,216,.3); }
+  .cool-pill .fl{ width:7px; height:7px; border-radius:50%; background:var(--cool); box-shadow:0 0 9px 1px var(--cool); }
+  .cool-pill b{ font-family:'Azeret Mono',monospace; font-size:10px; color:var(--cool-hi); font-weight:500; letter-spacing:.06em; }
+
+  .kindle{ margin-top:16px; }
+  .kindle .lab{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:7px; }
+  .kindle .l{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); }
+  .kindle .r{ font-family:'Newsreader',serif; font-size:12.5px; color:var(--gold); font-style:italic; }
+  .kindle .bar{ height:4px; border-radius:99px; background:rgba(255,255,255,.07); overflow:hidden; }
+  .kindle .bar i{ display:block; height:100%; border-radius:99px; background:linear-gradient(90deg,var(--gold),var(--gold-hi)); }
+
+  /* the photograph */
+  .photo{ margin-top:16px; border-radius:18px; overflow:hidden; border:1px solid var(--hair); position:relative; }
+  .photo .img{ height:214px; position:relative;
+    background:linear-gradient(178deg,#c8b394 0%,#a58f74 34%,#6f6350 62%,#463f36 100%); }
+  .photo .img .sun{ position:absolute; left:24%; top:16%; width:78px; height:78px; border-radius:50%;
+    background:radial-gradient(circle,#f6e2b8,rgba(246,226,184,0) 68%); }
+  .photo .img .horizon{ position:absolute; left:0; right:0; top:52%; height:1px; background:rgba(255,255,255,.22); }
+  .photo .img .b1,.photo .img .b2,.photo .img .b3{ position:absolute; bottom:0; background:rgba(38,33,28,.72); }
+  .photo .img .b1{ left:8%; width:22%; height:34%; }
+  .photo .img .b2{ left:34%; width:30%; height:47%; }
+  .photo .img .b3{ left:68%; width:24%; height:28%; }
+  .photo .img .fig{ position:absolute; left:50%; bottom:12%; transform:translateX(-50%); width:34px; height:60px;
+    background:linear-gradient(180deg,#2c2620,#1c1815); border-radius:16px 16px 6px 6px; }
+  .photo .img .grain{ position:absolute; inset:0; opacity:.16;
+    background-image:radial-gradient(rgba(255,255,255,.5) .6px,transparent .6px); background-size:3px 3px; }
+  .photo .cap{ display:flex; align-items:flex-start; gap:9px; padding:12px 13px; background:rgba(9,17,29,.72); }
+  .photo .cap .d{ width:7px; height:7px; border-radius:50%; background:var(--gold); flex:0 0 auto; margin-top:6px;
+    box-shadow:0 0 8px 1px rgba(243,205,132,.6); }
+  .photo .cap .t{ min-width:0; }
+  .photo .cap .ck{ font-family:'Azeret Mono',monospace; font-size:8.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); }
+  .photo .cap .cv{ font-family:'Newsreader',serif; font-size:14.5px; line-height:1.45; color:#f2e6cd; margin-top:3px; }
+  .photo .cap .cv em{ font-style:italic; color:var(--gold-hi); }
+
+  /* the ask */
+  .ask{ margin-top:14px; padding:14px 15px; border-radius:16px;
+    background:rgba(127,180,216,.06); border:1px solid rgba(127,180,216,.24); }
+  .ask .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--cool);
+    display:flex; align-items:center; gap:7px; margin-bottom:7px; }
+  .ask .k .pl{ display:inline-grid; place-items:center; width:16px; height:16px; border-radius:5px; background:rgba(127,180,216,.16); color:var(--cool-hi); }
+  .ask .k .pl svg{ width:11px; height:11px; }
+  .ask .q{ font-family:'Newsreader',serif; font-size:19px; line-height:1.4; color:#eef4fa; }
+  .ask .q em{ font-style:italic; color:var(--cool-hi); }
+
+  /* the globe */
+  .globe{ position:relative; height:268px; border-radius:18px; overflow:hidden; margin-top:14px;
+    border:1px solid var(--hair);
+    background:radial-gradient(120% 100% at 50% 8%, #10203a 0%, #0a1626 54%, #070f1c 100%); }
+  .globe .stars{ position:absolute; inset:0; opacity:.5;
+    background-image:radial-gradient(rgba(255,255,255,.7) .7px,transparent .7px); background-size:34px 34px; }
+  .globe .badge{ position:absolute; top:11px; inset-inline-start:12px; z-index:6; font-family:'Azeret Mono',monospace; font-size:9px;
+    letter-spacing:.14em; text-transform:uppercase; color:rgba(127,180,216,.8); display:flex; align-items:center; gap:6px; }
+  .globe .badge svg{ width:12px; height:12px; }
+  .orb{ position:absolute; left:50%; top:52%; transform:translate(-50%,-50%); width:214px; height:214px; border-radius:50%;
+    background:radial-gradient(64% 58% at 36% 28%, rgba(127,180,216,.3), rgba(18,40,66,.86) 62%, rgba(6,14,26,.96));
+    box-shadow:inset 0 0 44px -8px rgba(127,180,216,.4), 0 0 60px -18px rgba(127,180,216,.5); }
+  .orb .mer{ position:absolute; inset:0; border-radius:50%; overflow:hidden; }
+  .orb .mer svg{ position:absolute; inset:0; width:100%; height:100%; }
+  .orb .mer .lines{ stroke:rgba(127,180,216,.34); fill:none; stroke-width:1; }
+  .orb .mer .spin{ transform-origin:107px 107px; animation:spinmer 44s linear infinite; }
+  @keyframes spinmer{ to{ transform:rotate(360deg); } }
+  .orb .land{ position:absolute; inset:0; border-radius:50%; opacity:.5;
+    background:radial-gradient(34% 26% at 38% 36%, rgba(143,214,160,.42), transparent 66%),
+      radial-gradient(28% 22% at 66% 62%, rgba(143,214,160,.32), transparent 66%),
+      radial-gradient(22% 18% at 58% 24%, rgba(143,214,160,.26), transparent 68%); }
+  .orb .sweep{ position:absolute; inset:0; border-radius:50%; overflow:hidden; }
+  .orb .sweep i{ position:absolute; left:50%; top:50%; width:50%; height:50%; transform-origin:0 0;
+    background:conic-gradient(from 0deg, rgba(127,180,216,.34), rgba(127,180,216,.06) 22%, transparent 42%);
+    animation:sweep 9s linear infinite; }
+  @keyframes sweep{ to{ transform:rotate(360deg); } }
+  .orb .rim{ position:absolute; inset:-5px; border-radius:50%; border:1px solid rgba(127,180,216,.24); }
+
+  .gpin{ position:absolute; z-index:5; transform:translate(-50%,-50%); cursor:pointer; width:48px; height:48px;
+    display:grid; place-items:center; background:none; border:0; padding:0; }
+  .gpin .dot{ width:15px; height:15px; border-radius:50%; position:relative;
+    background:rgba(127,180,216,.24); border:1.5px solid var(--cool); transition:transform .18s, background .2s, border-color .2s, box-shadow .2s; }
+  .gpin .dot::after{ content:""; position:absolute; inset:-7px; border-radius:50%; border:1px solid rgba(127,180,216,.3);
+    animation:ping 2.8s ease-out infinite; }
+  @keyframes ping{ 0%{ transform:scale(.7); opacity:.75; } 100%{ transform:scale(1.9); opacity:0; } }
+  .gpin:hover .dot{ transform:scale(1.18); }
+  .gpin.miss .dot{ background:rgba(127,180,216,.06); border-color:rgba(127,180,216,.3); opacity:.4; }
+  .gpin.miss .dot::after{ animation:none; opacity:0; }
+  .gpin.hit .dot{ background:rgba(243,205,132,.4); border-color:var(--gold-hi); transform:scale(1.3);
+    box-shadow:0 0 0 5px rgba(243,205,132,.18), 0 0 26px 4px rgba(243,205,132,.7); }
+  .gpin.hit .dot::after{ border-color:rgba(243,205,132,.5); }
+  .gpin .lb{ position:absolute; top:34px; left:50%; transform:translateX(-50%); white-space:nowrap;
+    font-family:'Newsreader',serif; font-size:11.5px; color:#cfe0ef; text-shadow:0 1px 5px #000; }
+  .gpin.hit .lb{ color:var(--gold-hi); }
+
+  /* the options — the same answer, finger-sized */
+  .opts{ display:flex; flex-wrap:wrap; gap:9px; margin-top:14px; }
+  .opt{ flex:1 1 46%; min-height:52px; display:flex; align-items:center; gap:9px; padding:11px 12px; border-radius:14px;
+    cursor:pointer; background:rgba(9,17,29,.5); border:1px solid var(--hair); transition:border-color .2s, background .2s, opacity .2s; }
+  .opt .pin{ width:26px; height:26px; border-radius:9px; flex:0 0 auto; display:grid; place-items:center;
+    background:rgba(127,180,216,.12); color:var(--cool); }
+  .opt .pin svg{ width:14px; height:14px; }
+  .opt .nm{ font-family:'Newsreader',serif; font-size:15px; color:#f0e7d6; line-height:1.2; min-width:0; }
+  .opt .nm small{ display:block; font-family:'Hanken Grotesk',sans-serif; font-size:10.5px; color:var(--dim); margin-top:2px; }
+  .opt:hover{ border-color:rgba(255,255,255,.3); }
+  .opt.right{ border-color:rgba(243,205,132,.6); background:rgba(243,205,132,.1); }
+  .opt.right .pin{ background:rgba(243,205,132,.18); color:var(--gold-hi); }
+  .opt.wrong{ border-color:rgba(127,180,216,.5); background:rgba(127,180,216,.08); animation:nudge .34s; }
+  .opt.dim{ opacity:.34; }
+  @keyframes nudge{ 0%,100%{ transform:translateX(0);} 25%{ transform:translateX(-5px);} 75%{ transform:translateX(5px);} }
+
+  /* colder / warmer read-out */
+  .warmth{ display:none; margin-top:14px; padding:13px 15px; border-radius:14px; align-items:flex-start; gap:11px; border:1px solid; }
+  .warmth.show{ display:flex; }
+  .warmth.cold{ background:rgba(127,180,216,.08); border-color:rgba(127,180,216,.32); }
+  .warmth.warm{ background:rgba(231,163,90,.09); border-color:rgba(231,163,90,.36); }
+  .warmth .ic{ width:34px; height:34px; border-radius:10px; flex:0 0 auto; display:grid; place-items:center; }
+  .warmth.cold .ic{ background:rgba(127,180,216,.14); color:var(--cool-hi); }
+  .warmth.warm .ic{ background:rgba(231,163,90,.16); color:#f2c088; }
+  .warmth .ic svg{ width:17px; height:17px; }
+  .warmth .wt .h{ font-family:'Newsreader',serif; font-size:16px; color:#f3ecdd; }
+  .warmth.cold .wt .h{ color:#dcebf7; }
+  .warmth .wt .s{ font-size:12px; line-height:1.45; color:var(--muted); margin-top:3px; }
+
+  .hintbar{ margin-top:14px; text-align:center; font-size:11.5px; color:var(--dim); font-style:italic; font-family:'Newsreader',serif; }
+
+  /* the reveal */
+  .reveal{ display:none; }
+  .reveal.show{ display:block; animation:rise .5s cubic-bezier(.16,.8,.28,1) both; }
+  @keyframes rise{ from{ opacity:0; transform:translateY(16px); } to{ opacity:1; transform:none; } }
+  .revk{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.22em; text-transform:uppercase; color:var(--leaf);
+    text-align:center; margin-top:22px; }
+  .revname{ font-family:'Newsreader',serif; font-size:30px; color:#fbf5e8; text-align:center; margin-top:6px; }
+  .revname em{ font-style:italic; color:var(--gold-hi); }
+  .revsub{ font-family:'Newsreader',serif; font-size:14.5px; line-height:1.55; color:#e7dcc6; text-align:center;
+    margin:10px auto 0; max-width:300px; }
+  .revwhy{ margin-top:18px; padding:14px; border-radius:15px; background:rgba(9,17,29,.5); border:1px solid var(--hair); }
+  .revwhy .h{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
+  .prov{ display:flex; flex-wrap:wrap; gap:8px; }
+  .pchip{ display:inline-flex; align-items:center; gap:7px; padding:7px 11px; border-radius:99px; font-size:12px;
+    font-family:'Newsreader',serif; background:rgba(243,205,132,.1); border:1px solid rgba(243,205,132,.3); color:#f2e6cd; }
+  .pchip .d{ width:6px; height:6px; border-radius:50%; background:var(--gold); }
+  .pchip.cool{ background:rgba(127,180,216,.1); border-color:rgba(127,180,216,.3); color:#d7e7f4; }
+  .pchip.cool .d{ background:var(--cool); }
+  .btnrow{ display:flex; gap:10px; margin-top:18px; }
+  .btn{ flex:1; padding:14px; border-radius:14px; font-family:'Hanken Grotesk',sans-serif; font-size:14px; font-weight:600;
+    cursor:pointer; border:1px solid transparent; text-align:center; }
+  .btn.ghost{ background:transparent; border-color:var(--hair); color:var(--cream); }
+  .btn.primary{ background:linear-gradient(180deg,var(--gold-hi),var(--gold)); color:#1a1206; }
+  .reelnote{ margin-top:13px; display:flex; align-items:center; gap:9px; justify-content:center;
+    font-size:11.5px; color:rgba(127,180,216,.8); font-family:'Azeret Mono',monospace; letter-spacing:.04em; }
+  .reelnote svg{ width:13px; height:13px; }
+
+  /* NOT ENOUGH DATA — the memory does not say where */
+  .empty-hero{ margin-top:26px; height:236px; border-radius:20px; position:relative; overflow:hidden;
+    border:1px solid var(--hair); background:radial-gradient(120% 100% at 50% 10%, #10203a 0%, #0a1626 56%, #070f1c 100%); }
+  .empty-hero .stars{ position:absolute; inset:0; opacity:.34;
+    background-image:radial-gradient(rgba(255,255,255,.7) .7px,transparent .7px); background-size:34px 34px; }
+  .empty-orb{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:176px; height:176px; border-radius:50%;
+    border:1.5px dashed rgba(127,180,216,.34); display:grid; place-items:center; }
+  .empty-orb .qm{ font-family:'Newsreader',serif; font-size:52px; color:rgba(127,180,216,.4); }
+  .empty-hero .ghost-pin{ position:absolute; width:15px; height:15px; border-radius:50%; border:1.5px dashed rgba(255,255,255,.18); }
+  .empty-title{ text-align:center; margin-top:22px; }
+  .empty-title .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--cool); }
+  .empty-title .h{ font-family:'Newsreader',serif; font-size:25px; color:#fbf5e8; margin-top:7px; }
+  .empty-body{ font-family:'Newsreader',serif; font-size:15.5px; line-height:1.6; color:#e7dcc6; text-align:center;
+    margin:14px auto 0; max-width:306px; }
+  .empty-body em{ font-style:italic; color:var(--cool-hi); }
+  .waiting-row{ margin-top:18px; display:flex; align-items:center; gap:9px; justify-content:center; padding:11px 13px;
+    border-radius:13px; background:rgba(201,162,255,.07); border:1px solid rgba(201,162,255,.3); }
+  .waiting-row .d{ width:7px; height:7px; border-radius:50%; background:var(--edit); flex:0 0 auto; }
+  .waiting-row span{ font-family:'Newsreader',serif; font-size:13.5px; color:var(--edit-hi); }
+  .keeper-cta{ margin-top:14px; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; padding:15px;
+    border-radius:15px; background:rgba(201,162,255,.08); border:1px dashed rgba(201,162,255,.42); color:var(--edit-hi);
+    font-family:'Newsreader',serif; font-size:16px; cursor:pointer; }
+  .keeper-cta svg{ width:19px; height:19px; }
+  .alt-cta{ margin-top:10px; width:100%; display:flex; align-items:center; justify-content:center; gap:9px; padding:14px;
+    border-radius:15px; background:transparent; border:1px solid var(--hair); color:var(--cream);
+    font-family:'Hanken Grotesk',sans-serif; font-size:14px; font-weight:600; cursor:pointer; }
+  .empty-foot{ margin-top:18px; text-align:center; font-family:'Newsreader',serif; font-style:italic; font-size:13px;
+    color:rgba(143,214,160,.6); line-height:1.5; }
+
+  @media (prefers-reduced-motion: reduce){
+    .aurora b, .orb .sweep i, .orb .mer .spin, .gpin .dot::after{ animation:none !important; }
+    .reveal.show{ animation:none; }
+    .opt.wrong{ animation:none; }
+  }
+
+  /* ===== additions for the live page ===== */
+  /* full-viewport page (drop the mock device frame) */
+  html,body{ margin:0; }
+  body{ gap:0; padding:0; }
+  .stagewrap{ gap:0; width:100%; }
+  .device{ width:100vw!important; height:100dvh!important; max-width:none!important; border-radius:0!important; border:none!important; box-shadow:none!important; }
+
+  /* compact language switch (topbar) */
+  .langsw{ flex:0 0 auto; display:flex; align-items:center; gap:2px; padding:3px; border-radius:99px;
+    background:rgba(10,20,34,.55); border:1px solid var(--hair); }
+  .langsw button{ font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.04em; color:var(--muted);
+    background:transparent; border:none; cursor:pointer; padding:4px 7px; border-radius:99px; }
+  .langsw button.on{ color:#1a1206; background:linear-gradient(180deg,var(--cool-hi),var(--cool)); }
+
+  .state[hidden]{ display:none; }
+  [hidden]{ display:none!important; }
+  .loading{ margin-top:60px; text-align:center; color:var(--dim); font-family:'Newsreader',serif; font-style:italic; font-size:15px; }
+
+  /* the real photograph, when the memory carries one */
+  .photo .img.real{ background:#0a1220; }
+  .photo .img img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+
+  /* the engine's own words about what it still needs */
+  .needline{ margin-top:12px; text-align:center; font-family:'Azeret Mono',monospace; font-size:9.5px;
+    letter-spacing:.1em; color:rgba(127,180,216,.72); line-height:1.6; }
+
+  /* gentle error (reuses the empty-state language) */
+  .err-body{ font-family:'Newsreader',serif; font-size:15.5px; line-height:1.6; color:#e7dcc6; text-align:center; margin:14px auto 0; max-width:306px; }
+  .err-body em{ color:var(--cool-hi); font-style:italic; }
+
+  /* Hebrew/RTL: give every Newsreader text block the Hebrew serif (matches the design's .serif rule) */
+  .screen[dir="rtl"] .ask .q,
+  .screen[dir="rtl"] .photo .cap .cv,
+  .screen[dir="rtl"] .opt .nm,
+  .screen[dir="rtl"] .gpin .lb,
+  .screen[dir="rtl"] .warmth .wt .h,
+  .screen[dir="rtl"] .revname,
+  .screen[dir="rtl"] .revsub,
+  .screen[dir="rtl"] .pchip,
+  .screen[dir="rtl"] .empty-title .h,
+  .screen[dir="rtl"] .empty-body,
+  .screen[dir="rtl"] .empty-foot,
+  .screen[dir="rtl"] .waiting-row span,
+  .screen[dir="rtl"] .keeper-cta,
+  .screen[dir="rtl"] .err-body,
+  .screen[dir="rtl"] .kindle .r,
+  .screen[dir="rtl"] .hintbar{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
+</style>
+</head>
+<body>
+  <div class="stagewrap">
+    <div class="device" id="dev">
+      <div class="aurora"><b class="a1"></b><b class="a2"></b><b class="a3"></b></div>
+      <div class="veil"></div>
+      <div class="screen" id="screen">
+        <div class="topbar">
+          <div class="ibtn" id="backBtn" role="button" tabindex="0" aria-label="Back">
+            <svg id="backIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </div>
+          <div class="ttl"><div class="k" id="ttlK">Places · a game</div><div class="n serif" id="ttlN">Where Was This?</div></div>
+          <div class="langsw" id="langsw">
+            <button data-lang="en">EN</button><button data-lang="ru">RU</button><button data-lang="he">עב</button>
+          </div>
+          <div class="cool-pill" id="triesPill" hidden><span class="fl"></span><b id="triesB">3</b></div>
+        </div>
+        <div class="pad">
+
+          <!-- LOADING -->
+          <div class="state" id="stateLoad"><div class="loading serif" id="loadTxt">Turning the globe…</div></div>
+
+          <!-- PLAY -->
+          <div class="state" id="statePlay" hidden>
+
+            <div class="kindle" id="kindle" hidden>
+              <div class="lab"><span class="l" id="kindleL">How lit up they are</span><span class="r serif" id="kindleR"></span></div>
+              <div class="bar"><i id="kindleBar" style="width:0%"></i></div>
+            </div>
+
+            <div class="photo" id="photo">
+              <div class="img" id="photoImg">
+                <div class="sun"></div><div class="horizon"></div>
+                <div class="b1"></div><div class="b2"></div><div class="b3"></div>
+                <div class="fig"></div><div class="grain"></div>
+              </div>
+              <div class="cap" id="photoCap" hidden>
+                <span class="d"></span>
+                <div class="t">
+                  <div class="ck" id="capK">A person told us</div>
+                  <div class="cv serif" id="capV"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="ask">
+              <div class="k"><span class="pl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.7-6-10a6 6 0 1112 0c0 4.3-6 10-6 10z"/></svg></span><span id="askK">The app is asking</span></div>
+              <div class="q serif" id="askQ"></div>
+            </div>
+
+            <div class="globe" id="globe">
+              <div class="stars"></div>
+              <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg><span id="badgeTxt">Places this family knows</span></div>
+              <div class="orb">
+                <div class="land"></div>
+                <div class="mer">
+                  <svg viewBox="0 0 214 214">
+                    <g class="lines spin">
+                      <ellipse cx="107" cy="107" rx="34" ry="106"></ellipse>
+                      <ellipse cx="107" cy="107" rx="72" ry="106"></ellipse>
+                      <ellipse cx="107" cy="107" rx="100" ry="106"></ellipse>
+                    </g>
+                    <g class="lines">
+                      <ellipse cx="107" cy="107" rx="106" ry="34"></ellipse>
+                      <ellipse cx="107" cy="107" rx="106" ry="72"></ellipse>
+                      <circle cx="107" cy="107" r="106"></circle>
+                    </g>
+                  </svg>
+                </div>
+                <div class="sweep"><i></i></div>
+                <div class="rim"></div>
+              </div>
+              <!-- pins injected by JS -->
+            </div>
+
+            <div class="opts" id="opts"></div>
+
+            <div class="warmth" id="warmth"><div class="ic" id="warmIc"></div><div class="wt"><div class="h serif" id="warmH"></div><div class="s" id="warmS"></div></div></div>
+            <div class="hintbar serif" id="hint">Tap a light on the globe, or a name beneath it.</div>
+
+            <div class="reveal" id="rev">
+              <div class="revk mono" id="revK">You kindled their Places</div>
+              <div class="revname serif" id="revName"></div>
+              <div class="revsub serif" id="revSub"></div>
+              <div class="revwhy">
+                <div class="h" id="revWhyH">How we know</div>
+                <div class="prov" id="prov"></div>
+              </div>
+              <div class="btnrow">
+                <button class="btn ghost" id="btnAnother">Another photograph</button>
+                <button class="btn primary" id="btnSee">See the place</button>
+              </div>
+              <div class="reelnote mono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7h6M9 11h6M9 15h4"/><rect x="5" y="3" width="14" height="18" rx="2"/></svg><span id="reelTxt">Saved to your Journal</span></div>
+            </div>
+          </div>
+
+          <!-- NOT ENOUGH DATA -->
+          <div class="state" id="stateLocked" hidden>
+            <div class="empty-hero">
+              <div class="stars"></div>
+              <div class="ghost-pin" style="left:22%; top:26%"></div>
+              <div class="ghost-pin" style="left:76%; top:34%"></div>
+              <div class="ghost-pin" style="left:68%; top:74%"></div>
+              <div class="ghost-pin" style="left:26%; top:70%"></div>
+              <div class="empty-orb"><span class="qm serif">?</span></div>
+            </div>
+            <div class="empty-title"><div class="k" id="emptyK">Nowhere to point yet</div><div class="h serif" id="emptyH">No memory says where</div></div>
+            <div class="empty-body serif" id="emptyBody"></div>
+            <div class="needline mono" id="needLine" hidden></div>
+
+            <div class="waiting-row" id="waitingRow" hidden><span class="d"></span><span class="serif" id="waitingTxt"></span></div>
+
+            <div class="keeper-cta" id="keeperCta" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.7-6-10a6 6 0 1112 0c0 4.3-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg><span id="keeperCtaTxt">Tell us where one was taken</span></div>
+            <button class="alt-cta" id="altCta">Play a different game</button>
+
+            <div class="empty-foot serif" id="emptyFoot"></div>
+          </div>
+
+          <!-- ERROR -->
+          <div class="state" id="stateError" hidden>
+            <div class="empty-hero">
+              <div class="stars"></div>
+              <div class="empty-orb"><span class="qm serif">!</span></div>
+            </div>
+            <div class="empty-title"><div class="k" id="errK">The globe would not turn</div><div class="h serif" id="errH">Something slipped</div></div>
+            <div class="err-body" id="errBody"></div>
+            <div class="keeper-cta" id="btnRetry" style="border-style:solid;border-color:rgba(127,180,216,.42);background:rgba(127,180,216,.08);color:var(--cool-hi)"><span id="retryTxt">Try again</span></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script src="lf-games.js"></script>
+<script>
+'use strict';
+(function(){
+  var SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
+  var sb=window.supabase.createClient(SB_URL,SB_KEY);
+
+  // ---- i18n -------------------------------------------------------------
+  var T={
+    en:{
+      dir:'ltr', back:'M15 18l-6-6 6-6',
+      ttlK:'Places · a game', ttlN:'Where Was This?',
+      loadTxt:'Turning the globe…',
+      askK:'The app is asking', askQ:'The telling never said where. <em>Where was this taken?</em>',
+      badge:'Places this family knows',
+      capK:'A person told us',
+      toldBy:function(n){ return ' — told by <em>'+n+'</em>'; },
+      toldByAlone:function(n){ return 'Told by <em>'+n+'</em>'; },
+      hint:'Tap a light on the globe, or a name beneath it.',
+      tries:function(n){ return n+' left'; },
+      kindleL:'How lit up they are',
+      kindleR:function(n){ return n+' of eight kindled'; },
+      warmH:'Warm — you are close',
+      warmS:function(d,dir){ return 'About '+d+' km off, to the '+dir+'. The right city is nearer than you think.'; },
+      coldH:'Cold — a long way off',
+      coldS:function(d,dir){ return 'Some '+d+' km away, to the '+dir+'. Look further afield.'; },
+      coldPlainH:'Not this one',
+      coldPlainS:'The globe does not hold coordinates for these two yet, so it cannot say how far — but this is not the place.',
+      revK:'You kindled their Places',
+      revKLost:'The place was',
+      revName:function(p,y){ return y ? p+', <em>'+y+'</em>' : p; },
+      revOnly:'The only memory the family keeps from here.',
+      revMore:function(n){ return 'The family keeps '+n+' other memories from here.'; },
+      revWhyH:'How we know',
+      chipTold:function(n){ return n+' told us the where'; },
+      chipWhere:'A person told us the place',
+      chipYear:function(y){ return 'Taken in '+y; },
+      chipOthers:function(n){ return n+' other memories here'; },
+      chipOnly:'The only memory from here',
+      another:'Another photograph', see:'See the place', reel:'Saved to your Journal',
+      emptyK:'Nowhere to point yet', emptyH:'No memory says where',
+      emptyBody:'This game needs one photograph whose <em>place is known</em>, and two or three others to choose between. Not enough of the memories carry a place yet — so there is nothing to find on the globe.',
+      waiting:function(n){ return n===1 ? 'one photograph waiting for a place' : n+' photographs waiting for a place'; },
+      keeperCta:'Tell us where one was taken', altCta:'Play a different game',
+      emptyFoot:'The moment one photograph knows its place,<br>the globe has somewhere to send you.',
+      errK:'The globe would not turn', errH:'Something slipped',
+      errBody:'We could not reach the memories just now. <em>Try again</em> in a moment.', retry:'Try again',
+      dirs:['north','north-east','east','south-east','south','south-west','west','north-west']
+    },
+    ru:{
+      dir:'ltr', back:'M15 18l-6-6 6-6',
+      ttlK:'Места · игра', ttlN:'Где это было?',
+      loadTxt:'Поворачиваем глобус…',
+      askK:'Приложение спрашивает', askQ:'Рассказ не назвал места. <em>Где это было снято?</em>',
+      badge:'Места, знакомые семье',
+      capK:'Нам рассказал человек',
+      toldBy:function(n){ return ' — рассказал(а) <em>'+n+'</em>'; },
+      toldByAlone:function(n){ return 'Рассказал(а) <em>'+n+'</em>'; },
+      hint:'Коснитесь огонька на глобусе или названия под ним.',
+      tries:function(n){ return 'осталось '+n; },
+      kindleL:'Насколько человек зажжён',
+      kindleR:function(n){ return n+' из восьми зажжено'; },
+      warmH:'Тепло — вы рядом',
+      warmS:function(d,dir){ return 'Примерно '+d+' км в сторону: '+dir+'. Нужный город ближе, чем кажется.'; },
+      coldH:'Холодно — далеко',
+      coldS:function(d,dir){ return 'Около '+d+' км, в сторону: '+dir+'. Ищите дальше.'; },
+      coldPlainH:'Не здесь',
+      coldPlainS:'Для этих двух мест координат пока нет, поэтому расстояние не назвать — но это не то место.',
+      revK:'Вы зажгли их «Места»',
+      revKLost:'Это было здесь',
+      revName:function(p,y){ return y ? p+', <em>'+y+'</em>' : p; },
+      revOnly:'Единственное воспоминание семьи отсюда.',
+      revMore:function(n){ return 'У семьи есть ещё '+n+' воспоминаний отсюда.'; },
+      revWhyH:'Откуда мы знаем',
+      chipTold:function(n){ return n+' рассказал(а), где это'; },
+      chipWhere:'Место назвал человек',
+      chipYear:function(y){ return 'Снято в '+y; },
+      chipOthers:function(n){ return 'ещё '+n+' воспоминаний отсюда'; },
+      chipOnly:'Единственное воспоминание отсюда',
+      another:'Другой снимок', see:'Показать место', reel:'Сохранено в вашем дневнике',
+      emptyK:'Пока некуда указать', emptyH:'Ни одно воспоминание не называет места',
+      emptyBody:'Игре нужен снимок, у которого <em>известно место</em>, и ещё два-три на выбор. Пока у слишком немногих воспоминаний есть место — на глобусе нечего искать.',
+      waiting:function(n){ return n===1 ? 'один снимок ждёт своего места' : n+' снимков ждут своего места'; },
+      keeperCta:'Расскажите, где это снято', altCta:'Сыграть в другую игру',
+      emptyFoot:'Как только у одного снимка появится место,<br>глобусу будет куда вас отправить.',
+      errK:'Глобус не повернулся', errH:'Что-то соскользнуло',
+      errBody:'Не удалось добраться до воспоминаний. <em>Попробуйте снова</em> через мгновение.', retry:'Попробовать снова',
+      dirs:['на север','на северо-восток','на восток','на юго-восток','на юг','на юго-запад','на запад','на северо-запад']
+    },
+    he:{
+      dir:'rtl', back:'M9 18l6-6-6-6',
+      ttlK:'מקומות · משחק', ttlN:'איפה זה היה?',
+      loadTxt:'מסובבים את הגלובוס…',
+      askK:'האפליקציה שואלת', askQ:'הסיפור מעולם לא אמר איפה. <em>איפה זה צולם?</em>',
+      badge:'מקומות שהמשפחה מכירה',
+      capK:'אדם סיפר לנו',
+      toldBy:function(n){ return ' — סיפר/ה <em>'+n+'</em>'; },
+      toldByAlone:function(n){ return 'סיפר/ה <em>'+n+'</em>'; },
+      hint:'הקישו על אור בגלובוס, או על שם מתחתיו.',
+      tries:function(n){ return 'נותרו '+n; },
+      kindleL:'כמה הם מוארים',
+      kindleR:function(n){ return n+' מתוך שמונה נדלקו'; },
+      warmH:'חם — אתם קרובים',
+      warmS:function(d,dir){ return 'בערך '+d+' ק״מ משם, '+dir+'. העיר הנכונה קרובה משנדמה.'; },
+      coldH:'קר — רחוק מאוד',
+      coldS:function(d,dir){ return 'כ־'+d+' ק״מ משם, '+dir+'. חפשו רחוק יותר.'; },
+      coldPlainH:'לא זה',
+      coldPlainS:'לגלובוס אין עדיין נקודות ציון לשני המקומות האלה, ולכן אי אפשר לומר כמה רחוק — אבל זה לא המקום.',
+      revK:'הדלקתם את המקומות שלהם',
+      revKLost:'המקום היה',
+      revName:function(p,y){ return y ? p+', <em>'+y+'</em>' : p; },
+      revOnly:'הזיכרון היחיד שהמשפחה שומרת מכאן.',
+      revMore:function(n){ return 'למשפחה יש עוד '+n+' זיכרונות מכאן.'; },
+      revWhyH:'איך אנחנו יודעים',
+      chipTold:function(n){ return n+' סיפר/ה לנו איפה'; },
+      chipWhere:'אדם אמר לנו את המקום',
+      chipYear:function(y){ return 'צולם ב־'+y; },
+      chipOthers:function(n){ return 'עוד '+n+' זיכרונות מכאן'; },
+      chipOnly:'הזיכרון היחיד מכאן',
+      another:'תצלום אחר', see:'הציגו את המקום', reel:'נשמר ביומן שלך',
+      emptyK:'אין עדיין לאן להצביע', emptyH:'אף זיכרון לא אומר איפה',
+      emptyBody:'המשחק הזה צריך תצלום אחד ש<em>המקום שלו ידוע</em>, ועוד שניים־שלושה לבחור ביניהם. לא מספיק זיכרונות נושאים מקום — אז אין מה למצוא על הגלובוס.',
+      waiting:function(n){ return n===1 ? 'תצלום אחד מחכה למקום' : n+' תצלומים מחכים למקום'; },
+      keeperCta:'ספרו לנו איפה אחד מהם צולם', altCta:'שחקו במשחק אחר',
+      emptyFoot:'ברגע שתצלום אחד יידע את מקומו,<br>לגלובוס יהיה לאן לשלוח אתכם.',
+      errK:'הגלובוס לא הסתובב', errH:'משהו חמק',
+      errBody:'לא הצלחנו להגיע לזיכרונות כרגע. <em>נסו שוב</em> בעוד רגע.', retry:'נסו שוב',
+      dirs:['צפונה','צפון-מזרחה','מזרחה','דרום-מזרחה','דרומה','דרום-מערבה','מערבה','צפון-מערבה']
+    }
+  };
+
+  var FLAME='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c2 3 5 5 5 9a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 3 3-1-3 0-5 0-8z"/></svg>';
+  var SNOW='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 8l14 8M19 8L5 16M8 4l4 3 4-3M8 20l4-3 4 3"/></svg>';
+  var PINSVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.7-6-10a6 6 0 1112 0c0 4.3-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>';
+
+  // ---- state ------------------------------------------------------------
+  var state={ lang:'en', keeper:false, user:null };
+  var round=null;           // the raw engine result
+  var extra=null;           // enrichment fetched for the round (never invented)
+  var tries=3, done=false, guessed={};
+  var geoCache=null;
+  var $=function(id){ return document.getElementById(id); };
+  var params=new URLSearchParams(location.search);
+  var scopeId=params.get('id')||null;
+  var urlSeed=params.get('seed');
+
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function norm(s){ return String(s||'').trim().toLowerCase(); }
+
+  function showState(name){
+    ['stateLoad','statePlay','stateLocked','stateError'].forEach(function(id){ $(id).hidden=true; });
+    $({ load:'stateLoad', play:'statePlay', locked:'stateLocked', error:'stateError' }[name]).hidden=false;
+    $('triesPill').hidden = (name!=='play' || done);
+  }
+
+  // ---- language ---------------------------------------------------------
+  function applyStatic(){
+    var L=T[state.lang], sc=$('screen');
+    sc.setAttribute('dir', L.dir); sc.setAttribute('lang', state.lang);
+    document.documentElement.setAttribute('lang', state.lang);
+    document.documentElement.setAttribute('dir', L.dir);
+    $('backIcon').innerHTML='<path d="'+L.back+'"/>';
+    $('ttlK').textContent=L.ttlK; $('ttlN').textContent=L.ttlN;
+    $('loadTxt').textContent=L.loadTxt;
+    $('askK').textContent=L.askK; $('askQ').innerHTML=L.askQ;
+    $('badgeTxt').textContent=L.badge;
+    $('capK').textContent=L.capK;
+    $('hint').textContent=L.hint;
+    $('kindleL').textContent=L.kindleL;
+    $('revWhyH').textContent=L.revWhyH;
+    $('btnAnother').textContent=L.another; $('btnSee').textContent=L.see;
+    $('reelTxt').textContent=L.reel;
+    $('emptyK').textContent=L.emptyK; $('emptyH').textContent=L.emptyH;
+    $('emptyBody').innerHTML=L.emptyBody; $('emptyFoot').innerHTML=L.emptyFoot;
+    $('keeperCtaTxt').textContent=L.keeperCta; $('altCta').textContent=L.altCta;
+    $('errK').textContent=L.errK; $('errH').textContent=L.errH;
+    $('errBody').innerHTML=L.errBody; $('retryTxt').textContent=L.retry;
+    Array.prototype.forEach.call($('langsw').children, function(b){ b.classList.toggle('on', b.dataset.lang===state.lang); });
+  }
+  function setLang(l){
+    if(!T[l]) return;
+    state.lang=l;
+    try{ localStorage.setItem('lf_lang', l); }catch(e){}
+    if(state.user){ sb.from('profiles').update({preferred_lang:l}).eq('id',state.user.id).then(function(){},function(){}); }
+    applyStatic();
+    if(round && round.status==='ok') renderPlay();
+    else if(round && round.status==='not_enough_data') renderLocked();
+  }
+
+  // ---- geography (real rows only; never invented) ------------------------
+  function loadGeo(){
+    if(geoCache) return Promise.resolve(geoCache);
+    return sb.from('place_geo').select('name,lat,lng,label').then(function(r){
+      geoCache={};
+      (r&&r.data||[]).forEach(function(g){
+        if(g && g.lat!=null && g.lng!=null) geoCache[norm(g.name)]={ lat:+g.lat, lng:+g.lng, label:g.label||'' };
+      });
+      return geoCache;
+    }, function(){ geoCache={}; return geoCache; });
+  }
+  function haversine(a,b){
+    var R=6371, r=Math.PI/180;
+    var dLat=(b.lat-a.lat)*r, dLon=(b.lng-a.lng)*r;
+    var s=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLon/2)*Math.sin(dLon/2);
+    return 2*R*Math.asin(Math.min(1,Math.sqrt(s)));
+  }
+  function bearingIdx(from,to){
+    var r=Math.PI/180;
+    var y=Math.sin((to.lng-from.lng)*r)*Math.cos(to.lat*r);
+    var x=Math.cos(from.lat*r)*Math.sin(to.lat*r)-Math.sin(from.lat*r)*Math.cos(to.lat*r)*Math.cos((to.lng-from.lng)*r);
+    var deg=(Math.atan2(y,x)/r+360)%360;
+    return Math.round(deg/45)%8;
+  }
+
+  // ---- the per-person kindle axis (only when scoped to a person) ---------
+  function loadKindle(pid){
+    return Promise.all([
+      sb.from('person_facts').select('field').eq('person_id',pid).eq('status','published'),
+      sb.from('artefact_subjects').select('artefact_id').eq('person_id',pid),
+      sb.from('relationships').select('id').or('from_person.eq.'+pid+',to_person.eq.'+pid)
+    ]).then(function(rs){
+      var fields={}; (rs[0]&&rs[0].data||[]).forEach(function(f){ fields[f.field]=true; });
+      var nSubj=(rs[1]&&rs[1].data||[]).length, nKin=(rs[2]&&rs[2].data||[]).length;
+      var any=function(list){ return list.some(function(f){ return fields[f]; }); };
+      var lit={
+        name:any(['given','family','called','patronymic','maiden','honorific','nickname']),
+        face:fields.face||nSubj>0,
+        life:any(['birth','death','living','gender','langspoken']),
+        places:!!fields.lived,
+        story:nSubj>0,
+        kin:nKin>0,
+        more:any(['custom_label','source'])
+      };
+      var n=0; Object.keys(lit).forEach(function(k){ if(lit[k]) n++; });
+      lit.reel = n>=5;               // the reel lights when the rest of the person does
+      return lit.reel ? n+1 : n;
+    }, function(){ return null; });
+  }
+
+  // ---- enrichment for one round (all from real rows) ---------------------
+  function enrich(res){
+    var answer=res.answer_label||'';
+    var artId=(res.used_rows&&res.used_rows.artefacts&&res.used_rows.artefacts[0])||null;
+    var jobs=[
+      loadGeo(),
+      artId ? sb.from('artefacts').select('contributor_id').eq('id',artId).maybeSingle() : Promise.resolve(null),
+      answer ? sb.from('artefacts').select('id',{count:'exact',head:true}).eq('status','published').ilike('metadata->>where', answer) : Promise.resolve(null),
+      scopeId ? loadKindle(scopeId) : Promise.resolve(null),
+      res.prompt&&res.prompt.storage_path ? sb.storage.from('family').createSignedUrl(res.prompt.storage_path,3600) : Promise.resolve(null)
+    ];
+    return Promise.all(jobs.map(function(p){ return Promise.resolve(p).catch(function(){ return null; }); })).then(function(r){
+      var out={ geo:r[0]||{}, teller:null, sameHere:(r[2]&&typeof r[2].count==='number')?r[2].count:null,
+                kindled:r[3], photoUrl:(r[4]&&r[4].data&&r[4].data.signedUrl)||'' };
+      var cid=r[1]&&r[1].data&&r[1].data.contributor_id;   // who TOLD it (a person), never the uploader
+      if(!cid) return out;
+      return sb.from('people').select('display_name,called_name').eq('id',cid).maybeSingle().then(function(pr){
+        var p=pr&&pr.data; if(p) out.teller=p.called_name||p.display_name||null;
+        return out;
+      }, function(){ return out; });
+    });
+  }
+
+  function countPlaceless(){
+    return sb.from('artefacts').select('id,metadata').eq('status','published').then(function(r){
+      return (r&&r.data||[]).filter(function(a){
+        return !(a.metadata && a.metadata.where!=null && String(a.metadata.where).trim());
+      }).length;
+    }, function(){ return null; });
+  }
+
+  // ---- rounds -----------------------------------------------------------
+  function newRound(seed){
+    done=false; tries=3; guessed={}; extra=null;
+    showState('load');
+    var o={ id:scopeId };
+    if(seed!=null) o.seed=seed;
+    else if(urlSeed!=null){ o.seed=urlSeed; urlSeed=null; }
+    window.LFGames.whereWasThis(sb, o).then(function(res){
+      round=res;
+      if(!res || res.status==='error') return renderError();
+      if(res.status==='not_enough_data'){
+        return countPlaceless().then(function(n){ extra={ placeless:n }; renderLocked(); }, function(){ extra={placeless:null}; renderLocked(); });
+      }
+      if(res.status==='ok'){
+        return enrich(res).then(function(x){ extra=x; renderPlay(); }, function(){ extra={geo:{}}; renderPlay(); });
+      }
+      renderError();
+    }, function(){ renderError(); });
+  }
+
+  function renderError(){ showState('error'); }
+
+  function renderLocked(){
+    var L=T[state.lang];
+    // the engine's own words about what it still needs — shown, not hidden behind prose
+    var need=round&&round.need ? String(round.need) : '';
+    $('needLine').hidden=!need;
+    if(need) $('needLine').textContent=need;
+    var n=extra&&typeof extra.placeless==='number'?extra.placeless:null;
+    $('waitingRow').hidden = !(n>0);
+    if(n>0) $('waitingTxt').textContent=L.waiting(n);
+    $('keeperCta').hidden = !state.keeper;
+    showState('locked');
+  }
+
+  // pin geometry: the orb is 214px, centred at (50%, 52%) of the globe box
+  var ORB_R=107, PIN_R=80;
+  function layout(opts){
+    var geo=(extra&&extra.geo)||{};
+    var pts=opts.map(function(o){ return geo[norm(o.label)]||null; });
+    var known=pts.filter(Boolean);
+    if(known.length>=2){
+      var lat0=known.reduce(function(s,p){ return s+p.lat; },0)/known.length*Math.PI/180;
+      var lon0=known.reduce(function(s,p){ return s+p.lng; },0)/known.length*Math.PI/180;
+      var raw=pts.map(function(p){
+        if(!p) return null;
+        var la=p.lat*Math.PI/180, lo=p.lng*Math.PI/180, dl=lo-lon0;
+        var k=Math.sin(lat0)*Math.sin(la)+Math.cos(lat0)*Math.cos(la)*Math.cos(dl);
+        if(k<0) return null;                                  // on the far side — fall back
+        return { x:Math.cos(la)*Math.sin(dl), y:-(Math.cos(lat0)*Math.sin(la)-Math.sin(lat0)*Math.cos(la)*Math.cos(dl)) };
+      });
+      var max=0; raw.forEach(function(p){ if(p) max=Math.max(max, Math.sqrt(p.x*p.x+p.y*p.y)); });
+      if(max>0 && raw.filter(Boolean).length>=2){
+        var k2=PIN_R/max;
+        return raw.map(function(p,i){ return p ? { x:p.x*k2, y:p.y*k2 } : scatter(i, opts.length); });
+      }
+    }
+    return opts.map(function(_,i){ return scatter(i, opts.length); });
+  }
+  function scatter(i,n){
+    // deterministic ring placement, seeded by the round — no coordinates claimed
+    var rng=window.LFGames._util.makeRng(window.LFGames._util.resolveSeed((round&&round.seed)+'-'+i));
+    var ang=(i/Math.max(1,n))*Math.PI*2 + rng()*0.5 + 0.4;
+    var rr=PIN_R*(0.6+rng()*0.34);
+    return { x:Math.cos(ang)*rr, y:Math.sin(ang)*rr*0.9 };
+  }
+
+  function renderPlay(){
+    var L=T[state.lang], res=round, p=res.prompt||{}, opts=res.options||[];
+    var geo=(extra&&extra.geo)||{};
+
+    // kindle spine — only when the game is scoped to a person and we could count
+    var kn=extra&&extra.kindled;
+    $('kindle').hidden = !(typeof kn==='number');
+    if(typeof kn==='number'){ $('kindleR').textContent=L.kindleR(kn); $('kindleBar').style.width=Math.round(kn/8*100)+'%'; }
+
+    // the photograph (real image when the memory holds one; no invented scene otherwise)
+    var img=$('photoImg');
+    if(extra&&extra.photoUrl){
+      img.className='img real';
+      img.innerHTML='<img alt="" src="'+esc(extra.photoUrl)+'"><div class="grain"></div>';
+      $('photo').hidden=false;
+    } else if(p.has_photo){
+      img.className='img'; img.innerHTML='<div class="sun"></div><div class="horizon"></div><div class="b1"></div><div class="b2"></div><div class="b3"></div><div class="fig"></div><div class="grain"></div>';
+      $('photo').hidden=false;
+    } else {
+      img.className='img'; img.innerHTML=''; img.style.display='none';
+      $('photo').hidden = !(p.caption || (extra&&extra.teller));
+    }
+    if(extra&&extra.photoUrl || p.has_photo) img.style.display='';
+
+    // the telling — gold, because a person said it
+    var cap=p.caption ? '&ldquo;'+esc(p.caption)+'&rdquo;' : '';
+    if(cap && extra&&extra.teller) cap+=L.toldBy(esc(extra.teller));
+    else if(!cap && extra&&extra.teller) cap=L.toldByAlone(esc(extra.teller));
+    $('photoCap').hidden=!cap;
+    if(cap) $('capV').innerHTML=cap;
+
+    // pins on the globe
+    var globe=$('globe');
+    Array.prototype.slice.call(globe.querySelectorAll('.gpin')).forEach(function(n){ n.remove(); });
+    var pos=layout(opts);
+    opts.forEach(function(o,i){
+      var b=document.createElement('button');
+      b.className='gpin'; b.dataset.i=String(i);
+      b.setAttribute('aria-label', o.label);
+      b.style.left='calc(50% + '+Math.round(pos[i].x)+'px)';
+      b.style.top='calc(52% + '+Math.round(pos[i].y)+'px)';
+      b.innerHTML='<span class="dot"></span><span class="lb serif">'+esc(o.label)+'</span>';
+      b.addEventListener('click', function(){ choose(i); });
+      globe.appendChild(b);
+    });
+
+    // the same answer, finger-sized
+    var box=$('opts'); box.innerHTML='';
+    opts.forEach(function(o,i){
+      var g=geo[norm(o.label)];
+      var sub=(g && g.label && norm(g.label)!==norm(o.label)) ? '<small>'+esc(g.label)+'</small>' : '';
+      var d=document.createElement('div');
+      d.className='opt'; d.dataset.i=String(i);
+      d.setAttribute('role','button'); d.setAttribute('tabindex','0');
+      d.innerHTML='<span class="pin">'+PINSVG+'</span><span class="nm serif">'+esc(o.label)+sub+'</span>';
+      d.addEventListener('click', function(){ choose(i); });
+      d.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); choose(i); } });
+      box.appendChild(d);
+    });
+
+    // restore any guesses already made this round (language switch mid-play)
+    $('warmth').className='warmth';
+    $('rev').className='reveal';
+    $('hint').style.display=''; $('hint').textContent=L.hint;
+    Object.keys(guessed).forEach(function(i){ markMiss(+i); });
+    $('triesB').textContent=L.tries(tries);
+    showState('play');
+    if(done) reveal(true);
+  }
+
+  function byI(sel,i){ return document.querySelector(sel+'[data-i="'+i+'"]'); }
+  function markMiss(i){
+    var o=byI('#opts .opt',i), pn=byI('#globe .gpin',i);
+    if(o) o.classList.add('dim');
+    if(pn) pn.classList.add('miss');
+  }
+
+  function choose(i){
+    if(done || !round || round.status!=='ok') return;
+    if(guessed[i]) return;
+    var L=T[state.lang], opts=round.options||[];
+    var o=byI('#opts .opt',i), pn=byI('#globe .gpin',i);
+    if(i===round.answer_index){
+      done=true;
+      $('warmth').classList.remove('show');
+      $('hint').style.display='none';
+      $('triesPill').hidden=true;
+      if(o) o.classList.add('right');
+      if(pn) pn.classList.add('hit');
+      Array.prototype.forEach.call(document.querySelectorAll('#opts .opt'), function(el){ if(el!==o) el.classList.add('dim'); });
+      Array.prototype.forEach.call(document.querySelectorAll('#globe .gpin'), function(el){ if(el!==pn) el.classList.add('miss'); });
+      reveal(false);
+      return;
+    }
+    guessed[i]=true;
+    tries=Math.max(0, tries-1);
+    $('triesB').textContent=L.tries(tries);
+
+    // warmth is measured, never guessed: only when both places carry real coordinates
+    var geo=(extra&&extra.geo)||{};
+    var a=geo[norm((opts[i]||{}).label)], b=geo[norm(round.answer_label)];
+    var w=$('warmth');
+    if(a&&b){
+      var km=Math.round(haversine(a,b));
+      var dir=L.dirs[bearingIdx(a,b)];
+      var warm=km<500;
+      w.className='warmth show '+(warm?'warm':'cold');
+      $('warmIc').innerHTML=warm?FLAME:SNOW;
+      $('warmH').textContent=warm?L.warmH:L.coldH;
+      $('warmS').textContent=(warm?L.warmS:L.coldS)(km.toLocaleString(state.lang==='he'?'he':state.lang), dir);
+    } else {
+      w.className='warmth show cold';
+      $('warmIc').innerHTML=SNOW;
+      $('warmH').textContent=L.coldPlainH;
+      $('warmS').textContent=L.coldPlainS;
+    }
+    if(o){ o.classList.add('wrong'); setTimeout(function(){ o.classList.remove('wrong'); o.classList.add('dim'); }, 420); }
+    if(pn) pn.classList.add('miss');
+
+    if(tries===0){
+      done=true;
+      $('triesPill').hidden=true;
+      var right=byI('#opts .opt',round.answer_index), rpin=byI('#globe .gpin',round.answer_index);
+      if(right){ right.classList.remove('dim'); right.classList.add('right'); }
+      if(rpin){ rpin.classList.remove('miss'); rpin.classList.add('hit'); }
+      $('hint').style.display='none';
+      reveal(false, true);
+    }
+  }
+
+  function reveal(instant, lost){
+    var L=T[state.lang], res=round, p=res.prompt||{};
+    $('revK').textContent = lost ? L.revKLost : L.revK;
+    $('revName').innerHTML = L.revName(esc(res.answer_label||''), p.year?esc(String(p.year)):'');
+    var n=extra&&typeof extra.sameHere==='number' ? extra.sameHere : null;
+    if(n===null){ $('revSub').textContent=''; $('revSub').hidden=true; }
+    else { $('revSub').hidden=false; $('revSub').textContent = n>1 ? L.revMore(n-1) : L.revOnly; }
+
+    // provenance: gold = a person told us · cool = the app worked it out
+    var chips=[];
+    if(extra&&extra.teller) chips.push('<span class="pchip serif"><span class="d"></span>'+esc(L.chipTold(extra.teller))+'</span>');
+    else chips.push('<span class="pchip serif"><span class="d"></span>'+esc(L.chipWhere)+'</span>');
+    if(p.year) chips.push('<span class="pchip serif"><span class="d"></span>'+esc(L.chipYear(p.year))+'</span>');
+    if(n!==null) chips.push('<span class="pchip cool serif"><span class="d"></span>'+esc(n>1?L.chipOthers(n-1):L.chipOnly)+'</span>');
+    $('prov').innerHTML=chips.join('');
+
+    if(instant) $('rev').classList.add('show');
+    else setTimeout(function(){ $('rev').classList.add('show'); }, 420);
+  }
+
+  // ---- wiring -----------------------------------------------------------
+  function goBack(){ if(window.__lfClose){ window.__lfClose(); } else { try{ history.back(); }catch(e){ location.href='person-real.html'; } } }
+  $('backBtn').addEventListener('click', goBack);
+  $('backBtn').addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); goBack(); } });
+  $('btnAnother').addEventListener('click', function(){ newRound(); });
+  $('btnSee').addEventListener('click', function(){
+    var label=round&&round.answer_label;
+    if(label) location.href='place-real.html?place='+encodeURIComponent(label);
+    else goBack();
+  });
+  $('btnRetry').addEventListener('click', function(){ newRound(); });
+  $('keeperCta').addEventListener('click', function(){ if(state.keeper) location.href='contribute-real.html'; });
+  $('altCta').addEventListener('click', function(){ location.href = scopeId ? 'person-real.html?id='+encodeURIComponent(scopeId) : 'crowd-real.html'; });
+  Array.prototype.forEach.call($('langsw').children, function(b){ b.addEventListener('click', function(){ setLang(b.dataset.lang); }); });
+
+  // ---- boot -------------------------------------------------------------
+  function boot(){
+    var stored=null; try{ stored=localStorage.getItem('lf_lang'); }catch(e){}
+    if(stored && T[stored]) state.lang=stored;
+    else { var dl=(navigator.language||'en').slice(0,2); if(T[dl]) state.lang=dl; }
+    applyStatic();
+    sb.auth.getSession().then(function(r){
+      var session=r&&r.data&&r.data.session;
+      if(!session){ location.replace('index.html'); return; }
+      state.user=session.user;
+      sb.from('profiles').select('is_keeper,preferred_lang').eq('id',state.user.id).maybeSingle().then(function(pr){
+        var p=pr&&pr.data;
+        if(p){ state.keeper=!!p.is_keeper; if(p.preferred_lang && !stored && T[p.preferred_lang]){ state.lang=p.preferred_lang; applyStatic(); } }
+        newRound();
+      }, function(){ newRound(); });
+    }, function(){ renderError(); });
+  }
+  boot();
+})();
+</script>
+<script src="lf-nav.js" data-here="" data-parent="person-real.html"></script>
+</body>
+</html>
