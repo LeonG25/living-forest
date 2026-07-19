@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>The Living Forest — contribute</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body{ background:#04070e; }
+  :root{
+    --cream:#f4ecdb; --muted:#9db0cc; --dim:#6f83a3; --hair:#ffffff18; --panel:#ffffff0b;
+    --gold:#f3cd84; --gold-hi:#ffe6ad; --cool:#7fb4d8; --cool-hi:#a9d2ee;
+    --edit:#c9a2ff; --edit-hi:#ddc6ff; --edit-soft:#efe6ff; --leaf:#8fd6a0; --autotr:#9a8bbd; --coral:#ff8a80;
+  }
+  body{ font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--cream); min-height:100dvh;
+    display:flex; align-items:flex-start; justify-content:center; gap:40px; padding:34px 20px 90px;
+    background:radial-gradient(150% 100% at 50% -6%, #1a1330 0%, #0c0e22 44%, #04070e 100%);
+    -webkit-user-select:none; user-select:none; flex-wrap:wrap; position:relative; overflow-x:hidden; }
+  .serif{ font-family:'Newsreader',Georgia,serif; }
+  .screen[dir="rtl"]{ direction:rtl; }
+  .screen[dir="rtl"] .serif,.screen[dir="rtl"] .big,.screen[dir="rtl"] .bigfield input,.screen[dir="rtl"] .gh2{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
+
+  /* ===== ALIVE : page-wide drifting colour behind the device ===== */
+  .pageatmo{ position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+  .pageatmo span{ position:absolute; border-radius:50%; filter:blur(80px); opacity:.5; mix-blend-mode:screen; }
+  .pageatmo .p1{ width:46vw; height:46vw; left:-8vw; top:-10vh; background:radial-gradient(circle, rgba(243,205,132,.55), transparent 66%); animation:auraDrift 40s ease-in-out infinite; }
+  .pageatmo .p2{ width:44vw; height:44vw; right:-10vw; top:8vh; background:radial-gradient(circle, rgba(201,162,255,.6), transparent 66%); animation:auraDrift2 48s ease-in-out infinite; }
+  .pageatmo .p3{ width:52vw; height:52vw; left:24vw; bottom:-24vh; background:radial-gradient(circle, rgba(255,138,128,.42), transparent 66%); animation:auraDrift 56s ease-in-out infinite reverse; }
+  .stagewrap{ position:relative; z-index:2; }
+
+  .stagewrap{ display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .device{ position:relative; width:390px; height:820px; max-height:calc(100dvh - 40px); border-radius:42px; overflow:hidden; flex:0 0 auto;
+    background:#04070e; box-shadow:0 40px 120px -50px #000, 0 0 0 9px #14141b, 0 0 0 10px #2b2b34; }
+
+  /* ===== ALIVE : in-device atmosphere — rising candle-glow embers + warm aurora ===== */
+  .atmo{ position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+  .aur{ position:absolute; border-radius:50%; filter:blur(46px); opacity:.6; mix-blend-mode:screen; }
+  .aur.a1{ width:300px; height:300px; left:-70px; top:-46px; background:radial-gradient(circle, rgba(243,205,132,.92), transparent 68%); animation:auraDrift 22s ease-in-out infinite; }
+  .aur.a2{ width:340px; height:340px; right:-96px; top:150px; background:radial-gradient(circle, rgba(201,162,255,.9), transparent 66%); animation:auraDrift2 27s ease-in-out infinite; }
+  .aur.a3{ width:290px; height:290px; left:-44px; bottom:-56px; background:radial-gradient(circle, rgba(255,138,128,.78), transparent 66%); animation:auraDrift 31s ease-in-out infinite reverse; }
+  .embers{ position:absolute; inset:0; z-index:1; pointer-events:none; opacity:.9;
+    background:
+      radial-gradient(1.6px 1.6px at 18% 20%, #ffe6adcc, transparent 60%),
+      radial-gradient(2px 2px at 72% 42%, #ffd0a0bb, transparent 60%),
+      radial-gradient(1.5px 1.5px at 40% 68%, #ddc6ffcc, transparent 60%),
+      radial-gradient(2px 2px at 86% 82%, #ff8a80aa, transparent 60%),
+      radial-gradient(1.5px 1.5px at 30% 92%, #ffe6adaa, transparent 60%),
+      radial-gradient(1.5px 1.5px at 58% 12%, #cfe0ffaa, transparent 60%),
+      radial-gradient(1.4px 1.4px at 8% 54%, #ffe6ad99, transparent 60%);
+    background-size:100% 380px; background-repeat:repeat;
+    -webkit-mask:linear-gradient(to top, transparent, #000 16%, #000 74%, transparent);
+            mask:linear-gradient(to top, transparent, #000 16%, #000 74%, transparent);
+    animation:emberScroll 15s linear infinite; }
+  .stars{ position:absolute; inset:0; z-index:0; opacity:.55; animation:twinkle 7s ease-in-out infinite;
+    background-image:radial-gradient(1px 1px at 18% 12%, #cfe0ff88, transparent), radial-gradient(1px 1px at 66% 7%, #cfe0ff66, transparent),
+      radial-gradient(1px 1px at 84% 26%, #ffe6ad55, transparent), radial-gradient(1px 1px at 30% 40%, #cfe0ff44, transparent),
+      radial-gradient(1px 1px at 10% 58%, #cfe0ff44, transparent), radial-gradient(1px 1px at 88% 62%, #cfe0ff44, transparent); }
+  .atmo-veil{ position:absolute; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(120% 70% at 50% 6%, rgba(143,214,160,.05), transparent 42%), radial-gradient(120% 92% at 50% 42%, transparent 26%, rgba(4,7,14,.62) 100%); }
+  @keyframes auraDrift{ 0%{transform:translate(0,0) scale(1);} 50%{transform:translate(6%,-4%) scale(1.16);} 100%{transform:translate(0,0) scale(1);} }
+  @keyframes auraDrift2{ 0%{transform:translate(0,0) scale(1.05);} 50%{transform:translate(-7%,5%) scale(1.24);} 100%{transform:translate(0,0) scale(1.05);} }
+  @keyframes emberScroll{ from{ background-position:0 0; } to{ background-position:0 -380px; } }
+  @keyframes twinkle{ 0%,100%{opacity:.4;} 50%{opacity:.72;} }
+
+  .screen{ position:absolute; inset:0; z-index:2; overflow-y:auto; scrollbar-width:none; }
+  .screen::-webkit-scrollbar{ display:none; }
+  .pad{ padding:0 18px calc(40px + env(safe-area-inset-bottom)); }
+
+  .topbar{ position:sticky; top:0; z-index:14; display:flex; align-items:center; gap:10px;
+    padding:15px 16px 11px; background:linear-gradient(to bottom, rgba(7,9,22,.92), rgba(7,9,22,.5) 68%, transparent); backdrop-filter:blur(9px); }
+  .ibtn{ width:40px; height:40px; border-radius:12px; flex:0 0 auto; display:grid; place-items:center; cursor:pointer; border:1px solid var(--hair); background:rgba(12,16,34,.55); color:var(--cream); transition:border-color .2s; }
+  .ibtn:hover{ border-color:rgba(255,255,255,.34); } .ibtn svg{ width:18px; height:18px; }
+  .ibtn:focus-visible{ outline:2px solid var(--cool-hi); outline-offset:2px; }
+  .screen[dir="rtl"] .ibtn svg{ transform:scaleX(-1); }
+  .ttl{ flex:1; min-width:0; }
+  .ttl .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.24em; text-transform:uppercase; color:var(--muted); }
+  .ttl .n{ font-family:'Newsreader',serif; font-size:17px; color:#fbf5e8; margin-top:1px; }
+  .langpill{ display:inline-flex; align-items:center; gap:6px; font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; padding:8px 11px; border-radius:99px; cursor:pointer; border:1px solid var(--hair); background:rgba(12,16,34,.55); color:var(--muted); flex:0 0 auto; }
+
+  .keeper-note{ display:flex; align-items:center; gap:9px; margin:2px 0 4px; padding:10px 13px; border-radius:12px; background:rgba(201,162,255,.1); border:1px solid rgba(201,162,255,.3); backdrop-filter:blur(4px); }
+  .keeper-note svg{ width:16px; height:16px; color:var(--edit); flex:0 0 auto; }
+  .keeper-note span{ font-size:11.5px; color:#cbbce6; line-height:1.35; }
+
+  .warm{ font-family:'Newsreader',serif; font-size:22px; line-height:1.3; color:#f6efe0; margin:12px 2px 4px; }
+  .warm em{ font-style:italic; color:var(--gold-hi); }
+  .warmsub{ font-size:13px; color:var(--muted); line-height:1.5; margin:0 2px 16px; }
+
+  .ways{ display:flex; flex-direction:column; gap:12px; }
+  .way{ display:flex; align-items:center; gap:14px; padding:16px; border-radius:18px; cursor:pointer; width:100%; text-align:start;
+    background:rgba(11,15,32,.62); border:1px solid var(--hair); backdrop-filter:blur(6px); transition:border-color .2s, transform .2s; color:inherit; }
+  .way:hover{ border-color:rgba(243,205,132,.42); transform:translateY(-1px); }
+  .way:focus-visible{ outline:2px solid var(--gold-hi); outline-offset:2px; }
+  .way .wi{ width:50px; height:50px; border-radius:14px; flex:0 0 auto; display:grid; place-items:center;
+    background:rgba(243,205,132,.12); border:1px solid rgba(243,205,132,.3); color:var(--gold-hi); }
+  .way .wi svg{ width:24px; height:24px; }
+  .way .wt{ flex:1; min-width:0; }
+  .way .wt .wn{ font-family:'Newsreader',serif; font-size:19px; color:#fbf5e8; line-height:1.1; }
+  .way .wt .ws{ font-size:12.5px; color:var(--muted); margin-top:3px; line-height:1.4; }
+  .way .arw{ color:var(--dim); flex:0 0 auto; } .way .arw svg{ width:18px; height:18px; }
+  .screen[dir="rtl"] .way .arw{ transform:scaleX(-1); }
+  .way .done{ font-family:'Azeret Mono',monospace; font-size:8px; letter-spacing:.14em; text-transform:uppercase; color:var(--leaf); padding:3px 8px; border-radius:99px; border:1px solid rgba(143,214,160,.4); background:rgba(143,214,160,.1); }
+  .way.voice{ background:linear-gradient(120deg, rgba(201,162,255,.16), rgba(127,180,216,.06)); border-color:rgba(201,162,255,.36); box-shadow:0 0 30px -12px rgba(201,162,255,.6); animation:voiceGlow 4.5s ease-in-out infinite; }
+  .way.voice .wi{ background:rgba(201,162,255,.16); border-color:rgba(201,162,255,.4); color:var(--edit-hi); }
+  @keyframes voiceGlow{ 0%,100%{ box-shadow:0 0 26px -14px rgba(201,162,255,.5);} 50%{ box-shadow:0 0 42px -6px rgba(201,162,255,.8);} }
+  .way .cnt{ font-family:'Azeret Mono',monospace; font-size:8.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--gold); padding:3px 8px; border-radius:99px; border:1px solid rgba(243,205,132,.36); background:rgba(243,205,132,.09); }
+
+  .fieldlab{ display:block; font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin:18px 2px 8px; }
+  .bigfield{ display:flex; align-items:center; gap:10px; padding:16px; border-radius:16px; background:rgba(10,12,28,.74); border:1px solid rgba(243,205,132,.5); box-shadow:0 0 26px -14px rgba(243,205,132,.6); }
+  .bigfield input{ flex:1; min-width:0; background:none; border:none; outline:none; color:var(--cream); font-family:'Newsreader',serif; font-size:22px; }
+  .bigfield input::placeholder{ color:#5f7089; }
+  .enough{ display:flex; align-items:flex-start; gap:9px; margin:12px 2px 0; }
+  .enough svg{ width:16px; height:16px; color:var(--leaf); flex:0 0 auto; margin-top:1px; }
+  .enough p{ font-size:12.5px; color:#bfe0c8; line-height:1.5; } .enough p b{ color:var(--leaf); font-weight:600; }
+
+  .gifts{ margin-top:18px; }
+  .gifts .gt{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--dim); margin:0 2px 10px; }
+  .gift{ display:flex; align-items:center; gap:12px; width:100%; padding:13px 14px; border-radius:13px; cursor:pointer;
+    background:transparent; border:1px dashed var(--hair); color:var(--muted); margin-bottom:9px; text-align:start; }
+  .gift:hover{ border-color:rgba(243,205,132,.4); color:var(--cream); }
+  .gift.open{ border-style:solid; border-color:rgba(201,162,255,.4); background:rgba(201,162,255,.06); color:var(--cream); }
+  .gift .gi{ width:30px; height:30px; border-radius:9px; display:grid; place-items:center; flex:0 0 auto; background:rgba(255,255,255,.04); color:var(--dim); }
+  .gift .gi svg{ width:16px; height:16px; }
+  .gift .gn{ flex:1; font-family:'Newsreader',serif; font-size:15px; color:var(--cream); }
+  .gift .plus{ color:var(--dim); } .gift .plus svg{ width:16px; height:16px; }
+  .screen[dir="rtl"] .gift.open .plus{ transform:rotate(45deg); }
+  .giftin{ margin:-4px 2px 12px; }
+  .giftin input{ width:100%; background:rgba(10,12,28,.7); border:1px solid rgba(201,162,255,.34); border-radius:11px; padding:12px 13px;
+    color:var(--cream); font-family:'Newsreader',serif; font-size:16px; outline:none; }
+  .giftin input::placeholder{ color:#5f7089; }
+
+  .primary{ display:flex; align-items:center; justify-content:center; gap:9px; width:100%; margin-top:20px; padding:15px; border-radius:14px; cursor:pointer;
+    background:linear-gradient(180deg,var(--gold-hi),var(--gold)); color:#1a1206; font-weight:600; font-size:15px; border:none; box-shadow:0 10px 34px -14px rgba(243,205,132,.8); }
+  .primary:disabled{ opacity:.55; cursor:default; }
+  .primary svg{ width:17px; height:17px; }
+  .violetbtn{ background:linear-gradient(180deg,var(--edit-hi),var(--edit)); color:#1a0f2e; box-shadow:0 10px 34px -14px rgba(201,162,255,.8); }
+  .spin{ width:15px; height:15px; border-radius:50%; border:2px solid rgba(26,18,6,.35); border-top-color:#1a1206; animation:spin 1s linear infinite; }
+
+  .aboutchip{ display:inline-flex; align-items:center; gap:8px; margin:6px 2px 0; padding:8px 13px; border-radius:99px; background:rgba(243,205,132,.09); border:1px solid rgba(243,205,132,.3); }
+  .aboutchip .av{ width:24px; height:24px; border-radius:50%; overflow:hidden; flex:0 0 auto; } .aboutchip .av svg{ width:100%; height:100%; }
+  .aboutchip .txt{ font-size:12px; color:var(--cream); } .aboutchip .txt b{ font-family:'Newsreader',serif; }
+  .prompt{ margin-top:16px; padding:20px; border-radius:18px; background:linear-gradient(160deg, rgba(201,162,255,.16), rgba(11,15,32,.6)); border:1px solid rgba(201,162,255,.3); text-align:center; backdrop-filter:blur(6px); }
+  .prompt .pk{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--edit-hi); }
+  .prompt .pq{ font-family:'Newsreader',serif; font-style:italic; font-weight:300; font-size:22px; line-height:1.35; color:#f4ead4; margin-top:12px; }
+  .prompt .pn{ font-size:12px; color:var(--muted); margin-top:14px; }
+  .prompt .pn b{ color:var(--edit-hi); cursor:pointer; font-weight:600; }
+  .recwrap{ margin-top:26px; display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .recbtn{ position:relative; width:96px; height:96px; border-radius:50%; display:grid; place-items:center; cursor:pointer; border:1.5px solid rgba(201,162,255,.55);
+    background:radial-gradient(circle at 42% 34%, rgba(201,162,255,.32), rgba(201,162,255,.1));
+    animation:recGlow 3.4s ease-in-out infinite; }
+  .recbtn::before{ content:""; position:absolute; inset:-16px; border-radius:50%; border:1px solid rgba(201,162,255,.4); animation:recRing 3.4s ease-out infinite; }
+  .recbtn .core{ width:34px; height:34px; border-radius:50%; background:linear-gradient(180deg,var(--edit-hi),var(--edit)); box-shadow:0 0 16px rgba(201,162,255,.7); animation:corePulse 3.4s ease-in-out infinite; }
+  .recbtn.live{ border-color:rgba(255,138,128,.8); }
+  .recbtn.live .core{ width:30px; height:30px; border-radius:7px; background:linear-gradient(180deg,#ffb3ac,var(--coral)); box-shadow:0 0 20px rgba(255,138,128,.8); }
+  @keyframes recGlow{ 0%,100%{ box-shadow:0 0 40px -8px rgba(201,162,255,.6);} 50%{ box-shadow:0 0 68px 2px rgba(201,162,255,.9);} }
+  @keyframes recRing{ 0%{ transform:scale(.86); opacity:.85;} 100%{ transform:scale(1.35); opacity:0;} }
+  @keyframes corePulse{ 0%,100%{ transform:scale(1);} 50%{ transform:scale(1.12);} }
+  .recwrap .rl{ font-size:13px; color:var(--muted); text-align:center; line-height:1.5; }
+  .recwrap .rl b{ color:var(--cream); }
+  .recwrap audio{ width:100%; margin-top:4px; }
+  .recact{ display:flex; gap:10px; width:100%; }
+  .recact button{ flex:1; padding:12px; border-radius:12px; cursor:pointer; font-size:13px; font-weight:600; font-family:inherit;
+    background:rgba(12,16,34,.6); border:1px solid var(--hair); color:var(--cream); }
+  .recact button.discard{ color:#ff9a8a; border-color:rgba(255,138,128,.3); }
+  .reassure{ display:flex; align-items:center; gap:9px; margin-top:8px; padding:11px 14px; border-radius:12px; background:rgba(143,214,160,.07); border:1px solid rgba(143,214,160,.24); }
+  .reassure svg{ width:15px; height:15px; color:var(--leaf); flex:0 0 auto; }
+  .reassure span{ font-size:11.5px; color:#bfe0c8; line-height:1.4; }
+
+  .gapshead{ font-family:'Newsreader',serif; font-size:19px; line-height:1.35; color:#f4ead4; margin:12px 2px 4px; }
+  .gapshead em{ font-style:italic; color:var(--gold-hi); }
+  .gapscount{ font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin:0 2px 16px; display:inline-flex; align-items:center; gap:8px; }
+  .gap{ display:flex; align-items:flex-start; gap:13px; padding:14px; border-radius:16px; cursor:pointer; margin-bottom:11px; width:100%; text-align:start; color:inherit;
+    background:rgba(243,205,132,.05); border:1px dashed rgba(243,205,132,.3); backdrop-filter:blur(4px); transition:border-color .2s, transform .2s; }
+  .gap:hover{ border-color:rgba(243,205,132,.55); transform:translateY(-1px); }
+  .gap:focus-visible{ outline:2px solid var(--gold-hi); outline-offset:2px; }
+  .gap .gt{ width:44px; height:44px; border-radius:12px; flex:0 0 auto; display:grid; place-items:center; overflow:hidden; background:rgba(14,18,38,.72); border:1px solid var(--hair); color:var(--gold-hi); }
+  .gap .gt svg{ width:20px; height:20px; } .gap .gt .im{ width:100%; height:100%; } .gap .gt .im svg{ width:100%; height:100%; } .gap .gt img{ width:100%; height:100%; object-fit:cover; }
+  .gap .gb{ flex:1; min-width:0; }
+  .gap .gq{ font-family:'Newsreader',serif; font-size:16px; color:#f3e7cd; line-height:1.32; }
+  .gap .gwho{ font-size:11.5px; color:var(--muted); margin-top:5px; line-height:1.4; }
+  .gap .gwho b{ color:var(--gold); }
+  .gap .gact{ display:inline-flex; align-items:center; gap:6px; margin-top:9px; font-size:12px; font-weight:600; color:var(--gold-hi); }
+  .gap .gact svg{ width:14px; height:14px; }
+  .screen[dir="rtl"] .gap .gact svg{ transform:scaleX(-1); }
+
+  .almost{ margin-top:8px; padding:20px 16px; border-radius:18px; text-align:center; background:linear-gradient(160deg, rgba(143,214,160,.14), rgba(11,15,32,.5)); border:1px solid rgba(143,214,160,.3); }
+  .almost .ac{ width:64px; height:64px; margin:0 auto 14px; border-radius:50%; display:grid; place-items:center; background:radial-gradient(circle at 42% 34%, rgba(143,214,160,.24), transparent 68%); border:1px solid rgba(143,214,160,.42); color:var(--leaf); animation:recGlow 5s ease-in-out infinite; }
+  .almost .ac svg{ width:28px; height:28px; }
+  .almost .at{ font-family:'Newsreader',serif; font-size:19px; line-height:1.35; color:#eaf6ec; }
+  .almost .asub{ font-size:12.5px; color:var(--muted); margin-top:8px; line-height:1.5; }
+
+  .receipt{ margin-top:20px; padding:22px 18px; border-radius:20px; text-align:center; background:linear-gradient(160deg, rgba(201,162,255,.18), rgba(11,15,32,.55)); border:1px solid rgba(201,162,255,.38); backdrop-filter:blur(6px); }
+  .receipt .rc{ width:72px; height:72px; margin:0 auto 16px; border-radius:50%; display:grid; place-items:center; background:radial-gradient(circle at 42% 34%, rgba(201,162,255,.32), transparent 68%); border:1px solid rgba(201,162,255,.55); color:var(--edit-hi); animation:recGlow 4s ease-in-out infinite; }
+  .receipt .rc svg{ width:32px; height:32px; }
+  .receipt .rt{ font-family:'Newsreader',serif; font-size:23px; line-height:1.25; color:#f4ead4; }
+  .receipt .rt em{ font-style:italic; color:var(--edit-hi); }
+  .receipt .rsub{ font-size:13px; color:var(--muted); margin-top:10px; line-height:1.55; }
+  .waitrow{ display:inline-flex; align-items:center; gap:9px; margin-top:16px; padding:9px 14px; border-radius:99px; background:rgba(201,162,255,.12); border:1px solid rgba(201,162,255,.42); }
+  .waitrow .sp{ width:11px; height:11px; border-radius:50%; border:2px solid rgba(201,162,255,.35); border-top-color:var(--edit); animation:spin 1s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .waitrow span{ font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--edit-hi); }
+  .whatgave{ margin-top:18px; padding:13px 15px; border-radius:14px; background:rgba(11,15,32,.55); border:1px solid var(--hair); text-align:start; }
+  .whatgave .wl{ font-family:'Azeret Mono',monospace; font-size:8.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--dim); }
+  .whatgave .wv{ font-family:'Newsreader',serif; font-size:19px; color:#fbf5e8; margin-top:4px; }
+
+  .foot{ margin-top:24px; text-align:center; }
+  .foot .l{ font-family:'Newsreader',serif; font-style:italic; font-size:13px; color:rgba(143,214,160,.6); }
+  .msg{ font-size:12.5px; margin-top:12px; text-align:center; min-height:16px; }
+  .msg.err{ color:#ff9a8a; } .msg.ok{ color:var(--leaf); }
+  .loadwrap{ display:grid; place-items:center; height:100%; }
+  .loadwrap .l{ font-family:'Newsreader',serif; font-style:italic; color:var(--muted); }
+
+  @media (prefers-reduced-motion: reduce){
+    .aur,.embers,.stars,.way.voice,.recbtn,.recbtn::before,.recbtn .core,.almost .ac,.receipt .rc,.pageatmo span{ animation:none !important; }
+    .waitrow .sp,.spin{ animation:none; }
+  }
+</style>
+</head>
+<body>
+  <div class="pageatmo"><span class="p1"></span><span class="p2"></span><span class="p3"></span></div>
+
+  <div class="stagewrap">
+    <div class="device">
+      <div class="atmo"><span class="aur a1"></span><span class="aur a2"></span><span class="aur a3"></span></div>
+      <div class="stars"></div><div class="embers"></div><div class="atmo-veil"></div>
+      <div class="screen" id="screen" dir="ltr">
+        <div class="loadwrap"><div class="l">Opening the forest…</div></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+'use strict';
+(function(){
+  const SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
+  const sb=window.supabase.createClient(SB_URL,SB_KEY);
+  const $=s=>document.querySelector(s);
+  const uuid=()=>(crypto&&crypto.randomUUID)?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==='x'?r:(r&0x3|0x8)).toString(16);});
+  const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  let user=null;
+  const state={ lang:'en', screen:'hub', people:[], rels:[], arts:[], gaps:[], pairs:[], pairIdx:0,
+    propose:{ name:'', open:{}, gifts:{} }, rec:{ status:'idle', blob:null, url:'', rec:null, chunks:[] }, receipt:null, msg:'' };
+
+  /* ---------- SVG glyphs ---------- */
+  const IC={
+    back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
+    chev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px"><path d="M6 9l6 6 6-6"/></svg>',
+    arrw:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>',
+    memory:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v12H8l-4 4z"/><path d="M8 10h8M8 13h5"/></svg>',
+    person:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/><path d="M19 4v4M17 6h4"/></svg>',
+    mic:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3 3 0 003-3V7a3 3 0 00-6 0v5a3 3 0 003 3z"/><path d="M6 11a6 6 0 0012 0M12 18v3"/></svg>',
+    pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 016 6c0 4-6 12-6 12S6 13 6 9a6 6 0 016-6z"/><path d="M9.5 9h5M12 6.5v5"/></svg>',
+    pindot:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 016 6c0 4-6 12-6 12S6 13 6 9a6 6 0 016-6z"/><circle cx="12" cy="9" r="1.6"/></svg>',
+    shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V6z"/><path d="M9 12l2 2 4-4"/></svg>',
+    shieldp:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V6z"/></svg>',
+    check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>',
+    lang2:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5h9M8 3v2M6 5c0 5-2 8-4 9"/><path d="M13 19l4-9 4 9M14.5 15h5"/></svg>',
+    home2:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8h10M7 12h6"/><path d="M4 4h16v12H8l-4 4z"/></svg>',
+    clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>',
+    kin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="8" r="2.4"/><circle cx="17" cy="8" r="2.4"/><path d="M7 10v4M17 10v4M7 14h10"/></svg>',
+    plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+    send:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-7-7 16-2-7z"/></svg>',
+    facemiss:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="4"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>',
+    story:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4z"/></svg>',
+    arro:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+    leaf:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-7M12 14L7 9M12 11l5-4M9 5a2.5 2.5 0 105 0 2.5 2.5 0 10-5 0"/></svg>'
+  };
+  function photoSVG(){ return '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><rect width="100" height="100" fill="#8a92b0"/><rect x="10" y="56" width="80" height="34" rx="3" fill="rgba(0,0,0,.2)"/><circle cx="36" cy="40" r="11" fill="#e6c49b"/><circle cx="64" cy="44" r="13" fill="#d8b58a"/></svg>'; }
+
+  /* ---------- i18n ---------- */
+  const T={
+    en:{ dir:'ltr', code:'EN',
+      kick:'Add to the forest', contribute:'Contribute',
+      warm:'You have something to give. <em>Anything</em> keeps a light on.',
+      warmsub:"A name, a face, a story, a voice — you don't need all of it. Start with whatever you have.",
+      wMemN:'Add a memory', wMemS:'A photograph, a moment, something that happened', ready:'Ready',
+      wPerN:'Propose a person', wPerS:"Someone the forest doesn't have yet — even just a name",
+      wVoiN:'Record a voice', wVoiS:'The one thing that outlives everything else here',
+      wGapN:'Fill a gap', wGapS:'Answer something only you might know',
+      waiting:n=>n+' waiting',
+      hubFoot:'The forest stays dark until someone bothers to tell it.',
+      proTitle:'Propose a person',
+      keeperNote:'They go to the keeper first. Nobody appears in the forest until approved.',
+      nameLab:'Their name — in any language you have it', namePh:'A name is enough…',
+      enough:"<b>That's enough.</b> You can send them now. Everything below is a gift, never required — add only what you happen to know.",
+      giftsT:'If you’d like to add more',
+      gAlt:'Their name in another language', gAltPh:'e.g. in Russian or Hebrew',
+      gCalled:'What they were called at home', gCalledPh:'the everyday name',
+      gWhen:'Roughly when they lived', gWhenPh:'e.g. 1920s, or born ~1935',
+      gKin:'How they’re related to someone here', gKinPh:'e.g. Rita’s aunt',
+      sendPerson:n=>'Send '+(n||'them')+' to the keeper', proFoot:'A form with fourteen fields turns a memory into homework.',
+      voiTitle:'Record a voice',
+      aboutChip:(a,b)=>'This is <b>'+a+'’s</b> voice, telling about <b>'+b+'</b>',
+      promptK:"You don't have to perform", promptPn:'Not the right question? <b id="another">Ask me another →</b>',
+      recIdle:'<b>Just talk to me.</b><br>Tap when you’re ready — there’s no clock.',
+      recLive:'<b>Listening.</b><br>Tap again when you’re done.', recPerm:'Allow the microphone to begin — nothing is kept until you send it.',
+      recDone:'<b>That’s it.</b><br>Listen back, send it, or throw it away.',
+      recSending:'Sending your voice to the keeper…',
+      discard:'Throw away', reRecord:'Record again', sendVoice:'Send to the keeper',
+      reassure:'Nothing is shared until you choose. You can stop, listen back, or throw it away — any time.',
+      voiFoot:'A voice outlives everything else in this forest.',
+      voiThinN:'The forest needs a few more people first.', voiThinS:'Once two family members are in the forest, we can ask one to tell about the other. Propose someone to begin.',
+      gapTitle:'Where the forest needs you',
+      gapHead:'There are things only <em>you</em> might still know.',
+      gapCount:n=>n+(n===1?' place the family hasn’t reached':' places the family hasn’t reached'),
+      gapFace:n=>n+' has no face.', gapFaceW:'A photo would let the family recognise them everywhere. <b>You may be the only one who has one.</b>', gapFaceA:'Add a photograph',
+      gapWhereQ:'Nobody has told us where this was taken.', gapWhereW:(w)=>'A photograph'+(w?' from about '+w:'')+' · <b>where was it?</b>', gapWhereA:'Place it on the map',
+      gapTellQ:'Nobody knows who told this story.', gapTellW:'A memory with no teller. <b>Whose memory is it?</b>', gapTellA:'Say who told it',
+      gapBornQ:n=>'When was '+n+' born?', gapBornW:'Their years are still empty. <b>Roughly when did their life begin?</b>', gapBornA:'Tell us when',
+      almostT:'The family has told almost everything.', almostS:'Every gap that fills lights something more in the forest. Thank you for coming this far.',
+      gapFoot:'A gap is not a failure — it is a place the family can still reach.',
+      recvTitle:'Sent to the keeper',
+      recvPerson:n=>'Received. <em>'+n+'</em> is with the keeper now.',
+      recvVoice:'Received. <em>Your voice</em> is with the keeper now.',
+      recvSub:'You’ll see it take its place in the forest once Leon approves it. Nothing was lost — it is safely held.',
+      waitKeeper:'Waiting for the keeper', whatGave:'What you gave',
+      again:'Contribute something else', recvFoot:'Received, not swallowed — you’ll see it when it blooms.',
+      errSend:'Something went wrong sending it. Nothing was lost — please try again.',
+      relative:'a relative', unnamed:'Someone', backHub:'Back' },
+    ru:{ dir:'ltr', code:'RU',
+      kick:'Пополнить лес', contribute:'Вклад',
+      warm:'Вам есть чем поделиться. <em>Что угодно</em> зажигает огонёк.',
+      warmsub:'Имя, лицо, история, голос — не обязательно всё сразу. Начните с того, что есть.',
+      wMemN:'Добавить воспоминание', wMemS:'Фотография, момент, что-то, что случилось', ready:'Готово',
+      wPerN:'Предложить человека', wPerS:'Того, кого в лесу ещё нет — хотя бы имя',
+      wVoiN:'Записать голос', wVoiS:'То единственное, что переживёт здесь всё остальное',
+      wGapN:'Заполнить пробел', wGapS:'Ответить на то, что знаете, возможно, только вы',
+      waiting:n=>n+' ждут',
+      hubFoot:'Лес остаётся тёмным, пока кто-то не расскажет о нём.',
+      proTitle:'Предложить человека',
+      keeperNote:'Сначала — к хранителю. Никто не появляется в лесу до одобрения.',
+      nameLab:'Их имя — на любом языке, какой знаете', namePh:'Имени достаточно…',
+      enough:'<b>Этого достаточно.</b> Уже можно отправлять. Всё, что ниже — дар, не обязательство: добавляйте лишь то, что знаете.',
+      giftsT:'Если хотите добавить больше',
+      gAlt:'Их имя на другом языке', gAltPh:'напр. по-русски или на иврите',
+      gCalled:'Как их звали дома', gCalledPh:'повседневное имя',
+      gWhen:'Примерно когда они жили', gWhenPh:'напр. 1920-е, или род. ~1935',
+      gKin:'Кем они приходятся кому-то здесь', gKinPh:'напр. тётя Риты',
+      sendPerson:n=>'Отправить '+(n||'их')+' хранителю', proFoot:'Форма из четырнадцати полей превращает память в домашнее задание.',
+      voiTitle:'Записать голос',
+      aboutChip:(a,b)=>'Это голос <b>'+a+'</b>, рассказ о <b>'+b+'</b>',
+      promptK:'Не нужно ничего исполнять', promptPn:'Не тот вопрос? <b id="another">Спросите другой →</b>',
+      recIdle:'<b>Просто говорите со мной.</b><br>Нажмите, когда будете готовы — часов нет.',
+      recLive:'<b>Слушаю.</b><br>Нажмите снова, когда закончите.', recPerm:'Разрешите микрофон, чтобы начать — ничего не сохранится, пока вы не отправите.',
+      recDone:'<b>Вот и всё.</b><br>Прослушайте, отправьте или сотрите.',
+      recSending:'Отправляем ваш голос хранителю…',
+      discard:'Стереть', reRecord:'Записать заново', sendVoice:'Отправить хранителю',
+      reassure:'Ничего не публикуется, пока вы не решите. Можно остановить, прослушать или стереть — в любой момент.',
+      voiFoot:'Голос переживает в этом лесу всё остальное.',
+      voiThinN:'Сначала лесу нужно ещё немного людей.', voiThinS:'Когда в лесу будут двое родных, мы попросим одного рассказать о другом. Предложите кого-нибудь, чтобы начать.',
+      gapTitle:'Где лесу нужны вы',
+      gapHead:'Есть то, что, возможно, знаете только <em>вы</em>.',
+      gapCount:n=>n+(n===1?' место, куда семья ещё не дошла':' мест, куда семья ещё не дошла'),
+      gapFace:n=>'У '+n+' нет лица.', gapFaceW:'Фото помогло бы семье узнавать их повсюду. <b>Возможно, оно есть только у вас.</b>', gapFaceA:'Добавить фотографию',
+      gapWhereQ:'Никто не сказал, где это снято.', gapWhereW:(w)=>'Фотография'+(w?' примерно '+w:'')+' · <b>где это было?</b>', gapWhereA:'Отметить на карте',
+      gapTellQ:'Никто не знает, кто рассказал эту историю.', gapTellW:'Воспоминание без рассказчика. <b>Чья это память?</b>', gapTellA:'Указать рассказчика',
+      gapBornQ:n=>'Когда родился(-ась) '+n+'?', gapBornW:'Их годы всё ещё пусты. <b>Примерно когда началась их жизнь?</b>', gapBornA:'Скажите когда',
+      almostT:'Семья рассказала почти всё.', almostS:'Каждый заполненный пробел зажигает в лесу что-то ещё. Спасибо, что дошли до сюда.',
+      gapFoot:'Пробел — не провал, а место, куда семья ещё может дойти.',
+      recvTitle:'Отправлено хранителю',
+      recvPerson:n=>'Получено. <em>'+n+'</em> теперь у хранителя.',
+      recvVoice:'Получено. <em>Ваш голос</em> теперь у хранителя.',
+      recvSub:'Вы увидите, как это займёт место в лесу, когда Леон одобрит. Ничего не потеряно — всё бережно хранится.',
+      waitKeeper:'Ожидает хранителя', whatGave:'Что вы дали',
+      again:'Добавить что-то ещё', recvFoot:'Получено, а не проглочено — вы увидите это, когда оно расцветёт.',
+      errSend:'Что-то пошло не так при отправке. Ничего не потеряно — попробуйте ещё раз.',
+      relative:'родственник', unnamed:'Кто-то', backHub:'Назад' },
+    he:{ dir:'rtl', code:'HE',
+      kick:'להוסיף ליער', contribute:'תרומה',
+      warm:'יש לך משהו לתת. <em>כל דבר</em> מדליק אור.',
+      warmsub:'שם, פנים, סיפור, קול — לא צריך את הכול. התחילו במה שיש.',
+      wMemN:'להוסיף זיכרון', wMemS:'תצלום, רגע, משהו שקרה', ready:'מוכן',
+      wPerN:'להציע אדם', wPerS:'מישהו שעדיין אין ביער — ולו רק שם',
+      wVoiN:'להקליט קול', wVoiS:'הדבר האחד ששורד כאן יותר מכל דבר אחר',
+      wGapN:'למלא פער', wGapS:'לענות על משהו שאולי רק אתם יודעים',
+      waiting:n=>n+' ממתינים',
+      hubFoot:'היער נשאר חשוך עד שמישהו טורח לספר עליו.',
+      proTitle:'להציע אדם',
+      keeperNote:'הם עוברים קודם לשומר. איש אינו מופיע ביער עד לאישור.',
+      nameLab:'שמם — בכל שפה שיש לכם', namePh:'שם מספיק…',
+      enough:'<b>זה מספיק.</b> אפשר לשלוח כבר עכשיו. כל מה שלמטה הוא מתנה, לא חובה — הוסיפו רק את מה שבמקרה ידוע לכם.',
+      giftsT:'אם תרצו להוסיף עוד',
+      gAlt:'שמם בשפה אחרת', gAltPh:'למשל ברוסית או בעברית',
+      gCalled:'איך קראו להם בבית', gCalledPh:'השם היומיומי',
+      gWhen:'בערך מתי הם חיו', gWhenPh:'למשל שנות ה־20, או נולד ~1935',
+      gKin:'מה הקשר שלהם למישהו כאן', gKinPh:'למשל דודה של ריטה',
+      sendPerson:n=>'לשלוח את '+(n||'')+' לשומר', proFoot:'טופס עם ארבעה־עשר שדות הופך זיכרון לשיעורי בית.',
+      voiTitle:'להקליט קול',
+      aboutChip:(a,b)=>'זהו קולה של <b>'+a+'</b>, מספר על <b>'+b+'</b>',
+      promptK:'אין צורך להופיע', promptPn:'לא השאלה הנכונה? <b id="another">בקשו אחרת →</b>',
+      recIdle:'<b>פשוט דברו אליי.</b><br>הקישו כשאתם מוכנים — אין שעון.',
+      recLive:'<b>מקשיב.</b><br>הקישו שוב כשסיימתם.', recPerm:'אשרו את המיקרופון כדי להתחיל — דבר אינו נשמר עד שתשלחו.',
+      recDone:'<b>זהו.</b><br>הקשיבו, שלחו, או השליכו.',
+      recSending:'שולח את הקול שלכם לשומר…',
+      discard:'להשליך', reRecord:'להקליט שוב', sendVoice:'לשלוח לשומר',
+      reassure:'שום דבר אינו משותף עד שתבחרו. אפשר לעצור, להאזין, או להשליך — בכל רגע.',
+      voiFoot:'קול שורד ביער הזה יותר מכל דבר אחר.',
+      voiThinN:'קודם היער צריך עוד כמה אנשים.', voiThinS:'כששני בני משפחה יהיו ביער, נוכל לבקש מאחד לספר על השני. הציעו מישהו כדי להתחיל.',
+      gapTitle:'איפה היער צריך אותך',
+      gapHead:'יש דברים שאולי רק <em>אתם</em> עדיין יודעים.',
+      gapCount:n=>n+(n===1?' פער שהמשפחה עוד לא הגיעה אליו':' פערים שהמשפחה עוד לא הגיעה אליהם'),
+      gapFace:n=>'ל'+n+' אין פנים.', gapFaceW:'תמונה תאפשר למשפחה לזהות אותם בכל מקום. <b>ייתכן שרק לכם יש אחת.</b>', gapFaceA:'להוסיף תצלום',
+      gapWhereQ:'אף אחד לא סיפר לנו איפה זה צולם.', gapWhereW:(w)=>'תצלום'+(w?' משנת '+w+' לערך':'')+' · <b>איפה זה היה?</b>', gapWhereA:'למקם על המפה',
+      gapTellQ:'אף אחד לא יודע מי סיפר את הסיפור הזה.', gapTellW:'זיכרון בלי מספר. <b>של מי הזיכרון?</b>', gapTellA:'לומר מי סיפר',
+      gapBornQ:n=>'מתי נולד/ה '+n+'?', gapBornW:'השנים שלהם עדיין ריקות. <b>בערך מתי התחילו חייהם?</b>', gapBornA:'ספרו לנו מתי',
+      almostT:'המשפחה סיפרה כמעט הכול.', almostS:'כל פער שמתמלא מדליק עוד משהו ביער. תודה שהגעתם עד כאן.',
+      gapFoot:'פער אינו כישלון — הוא מקום שהמשפחה עוד תגיע אליו.',
+      recvTitle:'נשלח לשומר',
+      recvPerson:n=>'התקבל. <em>'+n+'</em> אצל השומר עכשיו.',
+      recvVoice:'התקבל. <em>הקול שלכם</em> אצל השומר עכשיו.',
+      recvSub:'תראו אותו תופס את מקומו ביער ברגע שליאון יאשר. שום דבר לא אבד — הוא נשמר בבטחה.',
+      waitKeeper:'ממתין לשומר', whatGave:'מה נתתם',
+      again:'לתרום עוד משהו', recvFoot:'התקבל, לא נבלע — תראו אותו כשיפרח.',
+      errSend:'משהו השתבש בשליחה. שום דבר לא אבד — נסו שוב בבקשה.',
+      relative:'קרוב משפחה', unnamed:'מישהו', backHub:'חזרה' }
+  };
+  const t=k=>{ const o=T[state.lang]||T.en; return (o[k]!==undefined?o[k]:T.en[k]); };
+
+  /* ---------- name-language detection ---------- */
+  function detectLang(s){ if(/[֐-׿]/.test(s)) return 'he'; if(/[Ѐ-ӿ]/.test(s)) return 'ru'; return 'en'; }
+
+  /* ---------- data ---------- */
+  async function loadData(){
+    try{ const {data}=await sb.from('people').select('id,display_name,called_name,sex,primary_asset,birth_date,is_living'); state.people=(data||[]).filter(p=>p.display_name); }catch(e){ state.people=[]; }
+    try{ const {data}=await sb.from('relationships').select('id,from_person,to_person,kind'); state.rels=data||[]; }catch(e){ state.rels=[]; }
+    try{ const {data}=await sb.from('artefacts').select('id,kind,storage_path,metadata,contributor_id,status').eq('status','published'); state.arts=data||[]; }catch(e){ state.arts=[]; }
+    buildGaps(); buildPairs();
+  }
+  const nameOf=id=>{ const p=state.people.find(x=>x.id===id); return p?(p.display_name||t('unnamed')):t('unnamed'); };
+
+  /* ---------- gaps engine (computed from live data — never hard-coded) ---------- */
+  function buildGaps(){
+    const g=[];
+    // 1. people with no portrait
+    state.people.filter(p=>!p.primary_asset).slice(0,6).forEach(p=>{
+      g.push({ type:'face', pid:p.id, name:p.display_name });
+    });
+    // 2. published photos with no place recorded
+    state.arts.filter(a=>a.kind==='photo'&&a.storage_path&&!(a.metadata&&a.metadata.where)).slice(0,4).forEach(a=>{
+      g.push({ type:'where', aid:a.id, when:(a.metadata&&a.metadata.when)||'', path:a.storage_path });
+    });
+    // 3. artefacts with no teller (contributor_id)
+    state.arts.filter(a=>a.storage_path&&!a.contributor_id).slice(0,4).forEach(a=>{
+      g.push({ type:'tell', aid:a.id });
+    });
+    // 4. people with no birth date
+    state.people.filter(p=>!p.birth_date).slice(0,4).forEach(p=>{
+      g.push({ type:'born', pid:p.id, name:p.display_name });
+    });
+    state.gaps=g;
+  }
+
+  /* ---------- voice-prompt engine (built from real relationships/people) ---------- */
+  const Q=[ (a,b)=>a+' — tell me about the first time you met '+b+'.',
+            (a,b)=>a+', what do you remember most about '+b+'?',
+            (a,b)=>a+' — tell me about '+b+' when they were young.',
+            (a,b)=>a+', what would '+b+' always say?',
+            (a,b)=>a+' — where were you and '+b+' happiest together?' ];
+  const Qru=[ (a,b)=>a+' — расскажите о первой встрече с '+b+'.',
+              (a,b)=>a+', что вы помните о '+b+' ярче всего?',
+              (a,b)=>a+' — расскажите о '+b+' в молодости.',
+              (a,b)=>a+', что всегда говорил(а) '+b+'?',
+              (a,b)=>a+' — где вам с '+b+' было счастливее всего?' ];
+  const Qhe=[ (a,b)=>a+' — ספרו לי על הפעם הראשונה שפגשתם את '+b+'.',
+              (a,b)=>a+', מה אתם זוכרים יותר מכול על '+b+'?',
+              (a,b)=>a+' — ספרו על '+b+' כשהיו צעירים.',
+              (a,b)=>a+', מה '+b+' תמיד היו אומרים?',
+              (a,b)=>a+' — איפה הייתם ו'+b+' המאושרים ביותר יחד?' ];
+  function buildPairs(){
+    const pairs=[]; const seen=new Set();
+    state.rels.forEach(r=>{ const a=state.people.find(x=>x.id===r.from_person), b=state.people.find(x=>x.id===r.to_person);
+      if(a&&b){ const k=a.id+'>'+b.id; if(!seen.has(k)){ seen.add(k); pairs.push({teller:a,subject:b}); } } });
+    // fallback: any two distinct people so the engine still yields prompts as data grows
+    if(pairs.length<3){ const P=state.people.slice(0,8);
+      for(let i=0;i<P.length&&pairs.length<8;i++){ for(let j=0;j<P.length&&pairs.length<8;j++){ if(i!==j){ const k=P[i].id+'>'+P[j].id; if(!seen.has(k)){ seen.add(k); pairs.push({teller:P[i],subject:P[j]}); } } } } }
+    // shuffle by index rotation (no Math.random needed for correctness)
+    state.pairs=pairs; state.pairIdx=0;
+  }
+  function currentPrompt(){
+    if(!state.pairs.length) return null;
+    const p=state.pairs[state.pairIdx%state.pairs.length];
+    const bank=state.lang==='ru'?Qru:state.lang==='he'?Qhe:Q;
+    const q=bank[state.pairIdx%bank.length](p.teller.display_name,p.subject.display_name);
+    return { teller:p.teller, subject:p.subject, q };
+  }
+
+  /* ================= RENDER ================= */
+  function topbar(title){
+    return '<div class="topbar">'
+      +'<button class="ibtn" id="back" aria-label="'+esc(t('backHub'))+'">'+IC.back+'</button>'
+      +'<div class="ttl"><div class="k">'+esc(t('contribute'))+'</div><div class="n serif">'+esc(title)+'</div></div>'
+      +'<button class="langpill" id="lang">'+esc((T[state.lang]||T.en).code)+' '+IC.chev+'</button>'
+      +'</div>';
+  }
+  function foot(txt){ return '<div class="foot"><div class="l serif">'+esc(txt)+'</div></div>'; }
+
+  function screenHub(){
+    const n=state.gaps.length;
+    return topbar(t('contribute'))+'<div class="pad">'
+      +'<div class="warm serif">'+t('warm')+'</div>'
+      +'<div class="warmsub">'+esc(t('warmsub'))+'</div>'
+      +'<div class="ways">'
+      +'<button class="way" data-href="prototype.html"><span class="wi">'+IC.memory+'</span><span class="wt"><span class="wn serif">'+esc(t('wMemN'))+'</span><span class="ws">'+esc(t('wMemS'))+'</span></span><span class="done">'+esc(t('ready'))+'</span></button>'
+      +'<button class="way" data-go="propose"><span class="wi">'+IC.person+'</span><span class="wt"><span class="wn serif">'+esc(t('wPerN'))+'</span><span class="ws">'+esc(t('wPerS'))+'</span></span><span class="arw">'+IC.arrw+'</span></button>'
+      +'<button class="way voice" data-go="voice"><span class="wi">'+IC.mic+'</span><span class="wt"><span class="wn serif">'+esc(t('wVoiN'))+'</span><span class="ws">'+esc(t('wVoiS'))+'</span></span><span class="arw">'+IC.arrw+'</span></button>'
+      +'<button class="way" data-go="gaps"><span class="wi">'+IC.pin+'</span><span class="wt"><span class="wn serif">'+esc(t('wGapN'))+'</span><span class="ws">'+esc(t('wGapS'))+'</span></span>'+(n?'<span class="cnt">'+esc(t('waiting')(n))+'</span>':'<span class="arw">'+IC.arrw+'</span>')+'</button>'
+      +'</div>'+foot(t('hubFoot'))+'</div>';
+  }
+
+  function screenPropose(){
+    const p=state.propose; const nm=p.name.trim();
+    const gift=(key,icon,ph)=>{
+      const open=!!p.open[key];
+      return '<button class="gift'+(open?' open':'')+'" data-gift="'+key+'"><span class="gi">'+icon+'</span><span class="gn serif">'+esc(t(key==='alt'?'gAlt':key==='called'?'gCalled':key==='when'?'gWhen':'gKin'))+'</span><span class="plus">'+IC.plus+'</span></button>'
+        +(open?'<div class="giftin"><input data-giftin="'+key+'" value="'+esc(p.gifts[key]||'')+'" placeholder="'+esc(ph)+'"></div>':'');
+    };
+    return topbar(t('proTitle'))+'<div class="pad">'
+      +'<div class="keeper-note">'+IC.shield+'<span>'+esc(t('keeperNote'))+'</span></div>'
+      +'<label class="fieldlab">'+esc(t('nameLab'))+'</label>'
+      +'<div class="bigfield"><input id="pname" value="'+esc(p.name)+'" placeholder="'+esc(t('namePh'))+'" autocomplete="off"></div>'
+      +(nm?'<div class="enough">'+IC.check+'<p>'+t('enough')+'</p></div>':'')
+      +'<div class="gifts"><div class="gt">'+esc(t('giftsT'))+'</div>'
+      +gift('alt',IC.lang2,t('gAltPh'))
+      +gift('called',IC.home2,t('gCalledPh'))
+      +gift('when',IC.clock,t('gWhenPh'))
+      +gift('kin',IC.kin,t('gKinPh'))
+      +'</div>'
+      +'<button class="primary" id="sendPerson"'+(nm?'':' disabled')+'>'+IC.send+' '+esc(t('sendPerson')(nm))+'</button>'
+      +'<div class="msg'+(state.msg?' err':'')+'" id="msg">'+esc(state.msg)+'</div>'
+      +foot(t('proFoot'))+'</div>';
+  }
+
+  function screenVoice(){
+    const pr=currentPrompt();
+    if(!pr){
+      return topbar(t('voiTitle'))+'<div class="pad">'
+        +'<div class="almost" style="background:linear-gradient(160deg, rgba(201,162,255,.14), rgba(11,15,32,.5));border-color:rgba(201,162,255,.3)">'
+        +'<div class="ac" style="color:var(--edit-hi);border-color:rgba(201,162,255,.42);background:radial-gradient(circle at 42% 34%, rgba(201,162,255,.24), transparent 68%)">'+IC.mic+'</div>'
+        +'<div class="at serif">'+esc(t('voiThinN'))+'</div><div class="asub">'+esc(t('voiThinS'))+'</div></div>'
+        +'<button class="primary violetbtn" data-go="propose" style="margin-top:18px">'+IC.plus+' '+esc(t('wPerN'))+'</button>'
+        +foot(t('voiFoot'))+'</div>';
+    }
+    const r=state.rec; let recUI='';
+    if(r.status==='recorded'){
+      recUI='<div class="recbtn"><div class="core"></div></div>'
+        +'<audio controls src="'+esc(r.url)+'"></audio>'
+        +'<div class="rl">'+t('recDone')+'</div>'
+        +'<div class="recact"><button class="discard" id="discard">'+esc(t('discard'))+'</button><button id="rerecord">'+esc(t('reRecord'))+'</button></div>'
+        +'<button class="primary violetbtn" id="sendVoice" style="margin-top:2px">'+IC.send+' '+esc(t('sendVoice'))+'</button>';
+    } else if(r.status==='sending'){
+      recUI='<div class="recbtn"><div class="core"></div></div><div class="rl">'+esc(t('recSending'))+'</div>';
+    } else {
+      const live=r.status==='recording';
+      recUI='<div class="recbtn'+(live?' live':'')+'" id="recbtn" role="button" aria-label="'+esc(t('wVoiN'))+'"><div class="core"></div></div>'
+        +'<div class="rl">'+(live?t('recLive'):t('recIdle'))+'</div>';
+    }
+    return topbar(t('voiTitle'))+'<div class="pad">'
+      +'<div class="aboutchip"><span class="txt">'+t('aboutChip')(esc(pr.teller.display_name),esc(pr.subject.display_name))+'</span></div>'
+      +'<div class="prompt"><div class="pk">'+esc(t('promptK'))+'</div><div class="pq serif">“'+esc(pr.q)+'”</div><div class="pn">'+t('promptPn')+'</div></div>'
+      +'<div class="recwrap">'+recUI+'</div>'
+      +'<div class="msg'+(state.msg?' err':'')+'" id="msg">'+esc(state.msg)+'</div>'
+      +'<div class="reassure">'+IC.shieldp+'<span>'+esc(t('reassure'))+'</span></div>'
+      +foot(t('voiFoot'))+'</div>';
+  }
+
+  function gapCard(g){
+    let icon,thumb,q,who,act,go;
+    if(g.type==='face'){ icon=IC.facemiss; q=t('gapFace')(g.name); who=t('gapFaceW'); act=t('gapFaceA'); go='person-real.html?id='+g.pid; }
+    else if(g.type==='where'){ icon=IC.pin; q=t('gapWhereQ'); who=t('gapWhereW')(esc(g.when)); act=t('gapWhereA'); go='moment-real.html?id='+g.aid; thumb='<span class="im">'+photoSVG()+'</span>'; }
+    else if(g.type==='tell'){ icon=IC.story; q=t('gapTellQ'); who=t('gapTellW'); act=t('gapTellA'); go='moment-real.html?id='+g.aid; }
+    else { icon=IC.pindot; q=t('gapBornQ')(g.name); who=t('gapBornW'); act=t('gapBornA'); go='person-real.html?id='+g.pid; }
+    return '<button class="gap" data-href="'+esc(go)+'"><span class="gt">'+(thumb||icon)+'</span><span class="gb">'
+      +'<span class="gq serif" style="display:block">'+esc(q)+'</span>'
+      +'<span class="gwho" style="display:block">'+who+'</span>'
+      +'<span class="gact">'+esc(act)+' '+IC.arro+'</span></span></button>';
+  }
+  function screenGaps(){
+    const n=state.gaps.length;
+    let body;
+    if(!n){
+      body='<div class="almost"><div class="ac">'+IC.leaf+'</div><div class="at serif">'+esc(t('almostT'))+'</div><div class="asub">'+esc(t('almostS'))+'</div></div>';
+    } else {
+      body='<div class="gapshead serif">'+t('gapHead')+'</div>'
+        +'<div class="gapscount"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px"><path d="M12 3a6 6 0 016 6c0 4-6 12-6 12S6 13 6 9a6 6 0 016-6z"/></svg> '+esc(t('gapCount')(n))+'</div>'
+        +state.gaps.map(gapCard).join('');
+    }
+    return topbar(t('gapTitle'))+'<div class="pad">'+body+foot(t('gapFoot'))+'</div>';
+  }
+
+  function screenReceipt(){
+    const r=state.receipt;
+    const title=r.kind==='voice'?t('recvVoice'):t('recvPerson')(esc(r.name||''));
+    return topbar(t('recvTitle'))+'<div class="pad">'
+      +'<div class="receipt"><div class="rc">'+IC.send+'</div>'
+      +'<div class="rt serif">'+title+'</div>'
+      +'<div class="rsub">'+esc(t('recvSub'))+'</div>'
+      +'<div class="waitrow"><span class="sp"></span><span>'+esc(t('waitKeeper'))+'</span></div>'
+      +'<div class="whatgave"><div class="wl">'+esc(t('whatGave'))+'</div><div class="wv serif">'+esc(r.gave||'')+'</div></div>'
+      +'</div>'
+      +'<button class="primary violetbtn" id="again" style="margin-top:22px">'+IC.plus+' '+esc(t('again'))+'</button>'
+      +foot(t('recvFoot'))+'</div>';
+  }
+
+  function render(){
+    const sc=$('#screen'); const o=T[state.lang]||T.en;
+    sc.setAttribute('dir',o.dir); document.documentElement.setAttribute('dir',o.dir); document.documentElement.setAttribute('lang',state.lang);
+    let html;
+    if(state.screen==='receipt') html=screenReceipt();
+    else if(state.screen==='propose') html=screenPropose();
+    else if(state.screen==='voice') html=screenVoice();
+    else if(state.screen==='gaps') html=screenGaps();
+    else html=screenHub();
+    sc.innerHTML=html; sc.scrollTop=0; wire();
+  }
+
+  /* ================= WIRE ================= */
+  function go(scr){ state.msg=''; state.screen=scr; if(scr!=='receipt') state.receipt=null; render(); }
+  function cycleLang(){ const order=['en','ru','he']; state.lang=order[(order.indexOf(state.lang)+1)%3];
+    try{ localStorage.setItem('lf_lang',state.lang); }catch(e){}
+    if(user){ sb.from('profiles').update({preferred_lang:state.lang}).eq('id',user.id).then(()=>{},()=>{}); }
+    render(); }
+
+  function wire(){
+    const back=$('#back'); if(back) back.onclick=()=>{ if(state.screen==='hub'){ if(history.length>1) history.back(); else location.href='index.html'; } else go('hub'); };
+    const lang=$('#lang'); if(lang) lang.onclick=cycleLang;
+    document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.getAttribute('data-go')));
+    document.querySelectorAll('[data-href]').forEach(b=>b.onclick=()=>{ location.href=b.getAttribute('data-href'); });
+
+    if(state.screen==='propose') wirePropose();
+    if(state.screen==='voice') wireVoice();
+    if(state.screen==='receipt'){ const a=$('#again'); if(a) a.onclick=()=>{ state.propose={name:'',open:{},gifts:{}}; go('hub'); }; }
+  }
+
+  function wirePropose(){
+    const nameIn=$('#pname');
+    if(nameIn){ nameIn.oninput=()=>{ const was=!!state.propose.name.trim(), now=!!nameIn.value.trim();
+        state.propose.name=nameIn.value;
+        const btn=$('#sendPerson'); if(btn){ btn.disabled=!now; btn.lastChild.textContent=' '+t('sendPerson')(nameIn.value.trim()); }
+        if(was!==now){ const pos=nameIn.selectionStart; render(); const ni=$('#pname'); if(ni){ ni.focus(); try{ ni.setSelectionRange(pos,pos); }catch(e){} } }
+      };
+    }
+    document.querySelectorAll('[data-gift]').forEach(b=>b.onclick=()=>{ const k=b.getAttribute('data-gift'); state.propose.open[k]=!state.propose.open[k]; if(state.propose.name.trim()) state.propose.name=$('#pname')?$('#pname').value:state.propose.name; render(); const gi=document.querySelector('[data-giftin="'+k+'"]'); if(gi) gi.focus(); });
+    document.querySelectorAll('[data-giftin]').forEach(inp=>inp.oninput=()=>{ state.propose.gifts[inp.getAttribute('data-giftin')]=inp.value; });
+    const send=$('#sendPerson'); if(send) send.onclick=submitPerson;
+  }
+
+  async function submitPerson(){
+    const nm=state.propose.name.trim(); if(!nm||!user) return;
+    const btn=$('#sendPerson'); btn.disabled=true; const label=btn.lastChild; const prev=label?label.textContent:'';
+    if(label) label.textContent=''; btn.insertBefore(mkSpin(),btn.firstChild);
+    state.msg='';
+    try{
+      const pid=uuid(); const lang=detectLang(nm);
+      // gated container: a proposed person waits for the keeper (status in_review)
+      const {error:pe}=await sb.from('people').insert({ id:pid, display_name:nm, created_by:user.id, status:'in_review' });
+      if(pe) throw pe;
+      // per-field suggestions — each its own row, each independently approvable (Rule 3)
+      const rows=[{ field:'given', lang, value:nm }];
+      const g=state.propose.gifts;
+      if(g.alt&&g.alt.trim()) rows.push({ field:'given', lang:detectLang(g.alt.trim()), value:g.alt.trim() });
+      if(g.called&&g.called.trim()) rows.push({ field:'called', lang, value:g.called.trim() });
+      if(g.when&&g.when.trim()) rows.push({ field:'birth', lang:'und', value:g.when.trim() });
+      if(g.kin&&g.kin.trim()) rows.push({ field:'kin', lang:'und', value:g.kin.trim() });
+      const facts=rows.map((r,i)=>({ person_id:pid, group_id:uuid(), field:r.field, lang:r.lang, value:r.value, ord:i, status:'in_review', created_by:user.id }));
+      const {error:fe}=await sb.from('person_facts').insert(facts);
+      if(fe) throw fe;
+      const extras=[]; if(g.called&&g.called.trim()) extras.push(g.called.trim()); if(g.kin&&g.kin.trim()) extras.push(g.kin.trim());
+      state.receipt={ kind:'person', name:nm, gave:nm+(extras.length?' · '+extras.join(' · '):'') };
+      state.propose={ name:'', open:{}, gifts:{} };
+      go('receipt');
+    }catch(err){ state.msg=t('errSend'); render(); }
+  }
+  function mkSpin(){ const s=document.createElement('span'); s.className='spin'; return s; }
+
+  /* ---------- voice ---------- */
+  function wireVoice(){
+    const another=$('#another'); if(another) another.onclick=()=>{ state.pairIdx++; render(); };
+    const recbtn=$('#recbtn'); if(recbtn) recbtn.onclick=toggleRec;
+    const dis=$('#discard'); if(dis) dis.onclick=resetRec;
+    const rr=$('#rerecord'); if(rr) rr.onclick=()=>{ resetRec(); setTimeout(toggleRec,60); };
+    const sv=$('#sendVoice'); if(sv) sv.onclick=submitVoice;
+  }
+  function resetRec(){ const r=state.rec; if(r.url){ try{ URL.revokeObjectURL(r.url); }catch(e){} } state.rec={ status:'idle', blob:null, url:'', rec:null, chunks:[] }; state.msg=''; render(); }
+  async function toggleRec(){
+    const r=state.rec;
+    if(r.status==='recording'){ try{ r.rec.stop(); }catch(e){} return; }
+    if(!navigator.mediaDevices||!window.MediaRecorder){ state.msg=t('recPerm'); render(); return; }
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      const mr=new MediaRecorder(stream); state.rec.rec=mr; state.rec.chunks=[];
+      mr.ondataavailable=e=>{ if(e.data&&e.data.size) state.rec.chunks.push(e.data); };
+      mr.onstop=()=>{ stream.getTracks().forEach(tk=>tk.stop());
+        const blob=new Blob(state.rec.chunks,{type:mr.mimeType||'audio/webm'});
+        state.rec.blob=blob; state.rec.url=URL.createObjectURL(blob); state.rec.status='recorded'; render(); };
+      mr.start(); state.rec.status='recording'; state.msg=''; render();
+    }catch(e){ state.msg=t('recPerm'); render(); }
+  }
+  async function submitVoice(){
+    const r=state.rec; const pr=currentPrompt(); if(!r.blob||!pr||!user) return;
+    state.rec.status='sending'; state.msg=''; render();
+    try{
+      const ext=(r.blob.type&&r.blob.type.indexOf('ogg')>-1)?'ogg':'webm';
+      const path=user.id+'/'+uuid()+'.'+ext;
+      const up=await sb.storage.from('family').upload(path,r.blob,{contentType:r.blob.type||'audio/webm'});
+      if(up.error) throw up.error;
+      const {data:art,error:ae}=await sb.from('artefacts').insert({
+        kind:'voice', storage_path:path, body:null,
+        contributor_user:user.id,          // who uploaded (account)
+        contributor_id:pr.teller.id,        // who told it (person) — Rule 6
+        status:'in_review',
+        metadata:{ about:pr.subject.display_name, prompt:pr.q }
+      }).select('id').single();
+      if(ae) throw ae;
+      try{ await sb.from('artefact_subjects').insert({ artefact_id:art.id, person_id:pr.subject.id, detail:null }); }catch(e){}
+      state.receipt={ kind:'voice', gave:pr.teller.display_name+' → '+pr.subject.display_name };
+      resetRecSilent();
+      go('receipt');
+    }catch(err){ state.rec.status='recorded'; state.msg=t('errSend'); render(); }
+  }
+  function resetRecSilent(){ const r=state.rec; if(r.url){ try{ URL.revokeObjectURL(r.url); }catch(e){} } state.rec={ status:'idle', blob:null, url:'', rec:null, chunks:[] }; }
+
+  /* ---------- overlay close hook for lf-nav ---------- */
+  window.__lfClose=()=>{ if(state.screen!=='hub'){ go('hub'); return true; } return false; };
+
+  /* ================= BOOT ================= */
+  async function boot(){
+    const stored=(function(){ try{ return localStorage.getItem('lf_lang'); }catch(e){ return null; } })();
+    if(stored&&T[stored]) state.lang=stored; else { const dl=(navigator.language||'en').slice(0,2); if(T[dl]) state.lang=dl; }
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session){ location.replace('index.html'); return; }
+    user=session.user;
+    try{ const {data:pr}=await sb.from('profiles').select('preferred_lang').eq('id',user.id).maybeSingle(); if(pr&&pr.preferred_lang&&!stored&&T[pr.preferred_lang]) state.lang=pr.preferred_lang; }catch(e){}
+    await loadData();
+    render();
+  }
+  boot();
+})();
+</script>
+<script src="lf-nav.js" data-here="add" data-parent="index.html"></script>
+</body></html>
