@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>The Living Forest — Story Reel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body{ background:#04070e; }
+  :root{
+    --cream:#f4ecdb; --muted:#9db0cc; --dim:#6f83a3; --hair:#ffffff18; --panel:#ffffff0b;
+    --gold:#f3cd84; --gold-hi:#ffe6ad; --cool:#7fb4d8; --cool-hi:#a9d2ee;
+    --edit:#c9a2ff; --edit-hi:#ddc6ff; --edit-soft:#efe6ff; --leaf:#8fd6a0; --autotr:#9a8bbd; --coral:#ff8a80;
+  }
+  body{ font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--cream); min-height:100dvh;
+    background:radial-gradient(150% 100% at 50% -6%, #191233 0%, #0b0e22 44%, #04070e 100%);
+    -webkit-user-select:none; user-select:none; }
+  .serif{ font-family:'Newsreader',Georgia,serif; }
+  .screen[dir="rtl"]{ direction:rtl; }
+  .screen[dir="rtl"] .serif,.screen[dir="rtl"] .warm,.screen[dir="rtl"] .telling p,.screen[dir="rtl"] .rname,.screen[dir="rtl"] .endt,.screen[dir="rtl"] .gt2{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
+
+  /* full-viewport single device */
+  .device{ position:relative; width:100vw; height:100dvh; overflow:hidden; background:#04070e; }
+
+  /* ===== in-device ambient aurora (signature: drifting colour) ===== */
+  .atmo{ position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+  .aur{ position:absolute; border-radius:50%; filter:blur(46px); opacity:.5; mix-blend-mode:screen; }
+  .aur.a1{ width:300px; height:300px; left:-70px; top:-46px; background:radial-gradient(circle, rgba(201,162,255,.8), transparent 68%); animation:auraDrift 24s ease-in-out infinite; }
+  .aur.a2{ width:340px; height:340px; right:-96px; top:150px; background:radial-gradient(circle, rgba(127,180,216,.78), transparent 66%); animation:auraDrift2 29s ease-in-out infinite; }
+  .aur.a3{ width:290px; height:290px; left:-44px; bottom:-56px; background:radial-gradient(circle, rgba(243,205,132,.72), transparent 66%); animation:auraDrift 33s ease-in-out infinite reverse; }
+  .stars{ position:absolute; inset:0; z-index:0; opacity:.5; animation:twinkle 7s ease-in-out infinite;
+    background-image:radial-gradient(1px 1px at 18% 12%, #cfe0ff88, transparent), radial-gradient(1px 1px at 66% 7%, #cfe0ff66, transparent),
+      radial-gradient(1px 1px at 84% 26%, #ddc6ff55, transparent), radial-gradient(1px 1px at 30% 40%, #cfe0ff44, transparent),
+      radial-gradient(1px 1px at 10% 58%, #cfe0ff44, transparent), radial-gradient(1px 1px at 88% 62%, #cfe0ff44, transparent); }
+  .atmo-veil{ position:absolute; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(120% 70% at 50% 6%, rgba(201,162,255,.05), transparent 42%), radial-gradient(120% 92% at 50% 42%, transparent 26%, rgba(4,7,14,.55) 100%); }
+  @keyframes auraDrift{ 0%{transform:translate(0,0) scale(1);} 50%{transform:translate(6%,-4%) scale(1.16);} 100%{transform:translate(0,0) scale(1);} }
+  @keyframes auraDrift2{ 0%{transform:translate(0,0) scale(1.05);} 50%{transform:translate(-7%,5%) scale(1.24);} 100%{transform:translate(0,0) scale(1.05);} }
+  @keyframes twinkle{ 0%,100%{opacity:.36;} 50%{opacity:.64;} }
+
+  .screen{ position:absolute; inset:0; z-index:2; overflow-y:auto; scrollbar-width:none; }
+  .screen::-webkit-scrollbar{ display:none; }
+  .pad{ max-width:440px; margin:0 auto; padding:0 18px calc(30px + env(safe-area-inset-bottom)); }
+
+  .topbar{ position:sticky; top:0; z-index:14; display:flex; align-items:center; gap:10px; max-width:440px; margin:0 auto;
+    padding:15px 16px 11px; background:linear-gradient(to bottom, rgba(7,9,22,.92), rgba(7,9,22,.5) 68%, transparent); backdrop-filter:blur(9px); }
+  .ibtn{ width:40px; height:40px; border-radius:12px; flex:0 0 auto; display:grid; place-items:center; cursor:pointer; border:1px solid var(--hair); background:rgba(12,16,34,.55); color:var(--cream); transition:border-color .2s; }
+  .ibtn:hover{ border-color:rgba(255,255,255,.34); } .ibtn:focus-visible{ outline:2px solid var(--cool-hi); outline-offset:2px; } .ibtn svg{ width:18px; height:18px; }
+  .ttl{ flex:1; min-width:0; display:flex; align-items:center; gap:9px; }
+  .ttl .tx{ min-width:0; }
+  .ttl .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.24em; text-transform:uppercase; color:var(--muted); }
+  .ttl .n{ font-family:'Newsreader',serif; font-size:17px; color:#fbf5e8; margin-top:1px; }
+  /* SIGNATURE : the reel spool, slowly turning in the title */
+  .spool{ position:relative; width:26px; height:26px; border-radius:50%; flex:0 0 auto;
+    border:2px solid rgba(243,205,132,.55); background:radial-gradient(circle, rgba(243,205,132,.14), transparent 70%); animation:spin 9s linear infinite; }
+  .spool::before{ content:""; position:absolute; inset:8px; border-radius:50%; background:rgba(243,205,132,.4); }
+  .spool i{ position:absolute; width:3.5px; height:3.5px; border-radius:50%; background:rgba(255,230,173,.85); top:2.5px; left:50%; margin-left:-1.75px; box-shadow:0 19px 0 rgba(255,230,173,.85); }
+  .spool i.b{ transform:rotate(90deg); transform-origin:1.75px 11px; }
+  .langpill{ display:inline-flex; align-items:center; gap:6px; font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; padding:8px 11px; border-radius:99px; cursor:pointer; border:1px solid var(--hair); background:rgba(12,16,34,.55); color:var(--muted); flex:0 0 auto; }
+  .langpill svg{ width:12px; height:12px; }
+  /* language popover */
+  .langmenu{ position:absolute; top:56px; inset-inline-end:16px; z-index:40; min-width:150px; padding:6px; border-radius:14px;
+    background:linear-gradient(180deg,#101d33,#0a1220); border:1px solid var(--hair); box-shadow:0 24px 60px -30px #000; }
+  .langmenu[hidden]{ display:none; }
+  .langmenu button{ display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; padding:11px 12px; border:none; cursor:pointer;
+    background:transparent; color:var(--cream); border-radius:10px; font-family:inherit; font-size:14px; text-align:start; }
+  .langmenu button:hover{ background:rgba(255,255,255,.06); }
+  .langmenu button .en{ display:block; font-size:11px; color:var(--muted); }
+  .langmenu button .tick{ color:var(--gold-hi); opacity:0; } .langmenu button.on .tick{ opacity:1; } .langmenu button .tick svg{ width:16px; height:16px; }
+
+  /* the person being played back */
+  .who{ display:flex; align-items:center; gap:12px; margin:6px 2px 4px; }
+  .who .av{ width:52px; height:52px; border-radius:50%; overflow:hidden; flex:0 0 auto; border:1.5px solid rgba(243,205,132,.6); box-shadow:0 0 16px -3px rgba(243,205,132,.6); }
+  .who .av svg,.who .av img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .who .wn{ flex:1; min-width:0; }
+  .who .wn .rname{ font-family:'Newsreader',serif; font-size:22px; line-height:1.12; color:#fbf5e8; }
+  .who .wn .rname .maiden{ font-size:12px; color:var(--gold); font-style:italic; margin-inline-start:6px; }
+  .who .wn .rsub{ font-family:'Azeret Mono',monospace; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-top:5px; }
+
+  /* ===== THE REEL HERO — the SIGNATURE cinematic frame ===== */
+  .reelhero{ position:relative; border-radius:18px; overflow:hidden; margin:12px 0 2px; height:300px;
+    border:1px solid rgba(255,244,214,.7); box-shadow:0 0 26px -8px rgba(255,232,180,.55), 0 26px 70px -44px #000; }
+  .scene{ position:absolute; inset:0; z-index:0; }
+  .scene .im{ position:absolute; inset:0; }
+  .scene .im svg,.scene .im img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .scene.on .im{ animation:kenBurns 22s ease-in-out infinite alternate; will-change:transform; }
+  @keyframes kenBurns{ 0%{ transform:scale(1.08) translate(-2%,-1.5%);} 100%{ transform:scale(1.2) translate(3%,2%);} }
+  .scene .tint{ position:absolute; inset:0; background:linear-gradient(180deg, rgba(10,7,26,.15) 0%, transparent 30%, rgba(6,8,20,.5) 78%, rgba(4,7,14,.86) 100%); }
+  .leak{ position:absolute; inset:-20% -10%; z-index:1; pointer-events:none; mix-blend-mode:screen;
+    background:linear-gradient(100deg, transparent 34%, rgba(255,214,150,.42) 48%, rgba(255,138,128,.18) 54%, transparent 64%);
+    transform:translateX(-130%); animation:leak 12s ease-in-out infinite; }
+  @keyframes leak{ 0%,70%{ transform:translateX(-130%) skewX(-10deg); opacity:0; } 78%{ opacity:.85; } 92%{ opacity:.7; } 100%{ transform:translateX(150%) skewX(-10deg); opacity:0; } }
+  .grain{ position:absolute; inset:0; z-index:2; pointer-events:none; opacity:.09; mix-blend-mode:overlay;
+    background-image:radial-gradient(1px 1px at 12% 24%,#fff,transparent),radial-gradient(1px 1px at 47% 62%,#fff,transparent),radial-gradient(1px 1px at 78% 33%,#fff,transparent),radial-gradient(1px 1px at 63% 88%,#fff,transparent),radial-gradient(1px 1px at 28% 71%,#fff,transparent),radial-gradient(1px 1px at 88% 12%,#fff,transparent);
+    animation:grainShift .6s steps(2) infinite; }
+  @keyframes grainShift{ 0%{transform:translate(0,0);} 50%{transform:translate(-1.5px,1px);} 100%{transform:translate(1px,-1px);} }
+  .vig{ position:absolute; inset:0; z-index:2; pointer-events:none; background:radial-gradient(120% 96% at 50% 42%, transparent 44%, rgba(4,7,14,.66) 100%); }
+  .gate{ position:absolute; left:-24px; right:-24px; height:15px; z-index:3; display:flex; align-items:center; gap:10px; padding:0 8px; overflow:hidden; }
+  .gate.top{ top:0; background:linear-gradient(to bottom, rgba(4,6,16,.82), transparent); }
+  .gate.bot{ bottom:0; background:linear-gradient(to top, rgba(4,6,16,.82), transparent); }
+  .gate i{ width:13px; height:8px; border-radius:2px; flex:0 0 auto; background:rgba(6,10,22,.7); border:1px solid rgba(255,255,255,.16); box-shadow:inset 0 0 4px rgba(0,0,0,.6); }
+  .gate.top{ animation:advance 2.6s linear infinite; } .gate.bot{ animation:advance 2.6s linear infinite reverse; }
+  @keyframes advance{ from{ transform:translateX(0);} to{ transform:translateX(-23px);} }
+  .sceneno{ position:absolute; top:20px; inset-inline-start:16px; z-index:4; display:inline-flex; align-items:center; gap:8px;
+    font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:#e9dcc0;
+    padding:6px 11px; border-radius:99px; background:rgba(6,10,22,.55); backdrop-filter:blur(8px); border:1px solid rgba(243,205,132,.34); }
+  .sceneno .dot{ width:6px; height:6px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px 1px var(--gold); animation:flick 3.4s ease-in-out infinite; }
+  .sceneno.cool{ border-color:rgba(127,180,216,.34); } .sceneno.cool .dot{ background:var(--cool); box-shadow:0 0 8px 1px var(--cool); }
+  @keyframes flick{ 0%,100%{opacity:.7; transform:scale(.9);} 45%{opacity:1; transform:scale(1.14);} }
+  .rcap{ position:absolute; inset-inline:14px; bottom:14px; z-index:4; }
+  .rcap .telling p{ font-family:'Newsreader',serif; font-size:19px; line-height:1.34; color:#f8efdb; text-shadow:0 2px 18px rgba(0,0,0,.7); }
+  .rcap .telling p em{ color:var(--gold-hi); font-style:italic; }
+  .toldby{ display:inline-flex; align-items:center; gap:8px; margin-top:11px; padding:6px 12px 6px 12px; border-radius:99px; background:rgba(6,10,22,.6); backdrop-filter:blur(8px); border:1px solid rgba(243,205,132,.4); }
+  .toldby .flame{ width:7px; height:7px; border-radius:50%; background:var(--gold); box-shadow:0 0 9px 2px rgba(243,205,132,.8); animation:flick 3.4s ease-in-out infinite; }
+  .toldby span{ font-size:11.5px; color:var(--gold-hi); } .toldby span b{ font-family:'Newsreader',serif; font-weight:400; color:#fbf5e8; }
+
+  /* provenance mono line under the frame */
+  .provline{ display:flex; align-items:center; gap:7px; margin:11px 2px 2px; font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); }
+  .provline .lp{ width:6px; height:6px; border-radius:2px; transform:rotate(45deg); flex:0 0 auto; }
+  .provline .lp.g{ background:var(--gold); box-shadow:0 0 7px 1px var(--gold); }
+  .provline .lp.c{ background:var(--cool); box-shadow:0 0 7px 1px var(--cool); }
+  .provline .lp.v{ background:var(--edit); box-shadow:0 0 7px 1px var(--edit); }
+
+  /* ===== the kindle spine — how lit-up this person is ===== */
+  .kindle{ margin:16px 0 4px; padding:15px 15px 16px; border-radius:16px; background:rgba(10,12,28,.5); border:1px solid var(--hair); }
+  .kindle .kh{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:13px; }
+  .kindle .kh .kt{ font-family:'Newsreader',serif; font-size:16px; color:#f6efe0; } .kindle .kh .kt b{ color:var(--gold-hi); font-style:italic; font-weight:400; }
+  .kindle .kh .kn{ font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.1em; color:var(--muted); }
+  .beads{ display:flex; gap:7px; }
+  .bead{ position:relative; flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; }
+  .bead .b{ width:100%; height:5px; border-radius:99px; background:rgba(255,255,255,.08); overflow:hidden; }
+  .bead.lit .b{ background:linear-gradient(90deg,var(--gold),var(--gold-hi)); box-shadow:0 0 12px -2px rgba(243,205,132,.75); }
+  .bead.lit.cool .b{ background:linear-gradient(90deg,var(--cool),var(--cool-hi)); box-shadow:0 0 12px -2px rgba(127,180,216,.7); }
+  .bead.wait .b{ background:repeating-linear-gradient(90deg, rgba(201,162,255,.5) 0 5px, transparent 5px 10px); }
+  .bead .bl{ font-family:'Azeret Mono',monospace; font-size:7.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--dim); }
+  .bead.lit .bl{ color:#d9c9a2; } .bead.wait .bl{ color:var(--edit); }
+
+  /* ===== the scrubber — a filmstrip of scenes ===== */
+  .scrub{ display:flex; gap:8px; margin:14px 0 2px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; }
+  .scrub::-webkit-scrollbar{ display:none; }
+  .thumb{ position:relative; width:70px; height:52px; border-radius:9px; overflow:hidden; flex:0 0 auto; cursor:pointer; border:1px solid var(--hair); opacity:.5; transition:opacity .2s,border-color .2s; }
+  .thumb svg,.thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .thumb .tl{ position:absolute; left:0; right:0; bottom:0; font-family:'Azeret Mono',monospace; font-size:7px; letter-spacing:.08em; text-transform:uppercase; color:#f0e6cf; text-align:center; padding:2px 0 3px; background:linear-gradient(to top, rgba(4,7,14,.9), transparent); }
+  .thumb:hover{ opacity:.85; }
+  .thumb.now{ opacity:1; border-color:rgba(243,205,132,.85); box-shadow:0 0 0 1px rgba(243,205,132,.5), 0 0 16px -4px rgba(243,205,132,.8); }
+  .thumb.wait{ display:grid; place-items:center; background:rgba(201,162,255,.08); }
+  .thumb.wait .wi{ color:var(--edit); } .thumb.wait .wi svg{ width:20px; height:20px; }
+  .thumb.wait .tl{ color:var(--edit-hi); }
+
+  /* transport controls */
+  .transport{ display:flex; align-items:center; gap:12px; margin:14px 2px 2px; }
+  .tb{ width:42px; height:42px; border-radius:12px; display:grid; place-items:center; cursor:pointer; border:1px solid var(--hair); background:rgba(12,16,34,.55); color:var(--cream); }
+  .tb svg{ width:18px; height:18px; }
+  .tb.play{ width:56px; height:56px; border-radius:50%; background:linear-gradient(180deg,var(--gold-hi),var(--gold)); color:#1a1206; border:none; box-shadow:0 10px 30px -12px rgba(243,205,132,.85); }
+  .tb.play svg{ width:22px; height:22px; }
+  .tprog{ flex:1; min-width:0; }
+  .tprog .bar{ height:4px; border-radius:99px; background:rgba(255,255,255,.09); overflow:hidden; }
+  .tprog .bar i{ display:block; height:100%; border-radius:99px; background:linear-gradient(90deg,var(--gold),var(--gold-hi)); box-shadow:0 0 12px -2px rgba(243,205,132,.7); transition:width .3s; }
+  .tprog .tt{ display:flex; justify-content:space-between; margin-top:6px; font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.08em; color:var(--muted); }
+
+  .foot{ margin-top:22px; text-align:center; }
+  .foot .l{ font-family:'Newsreader',serif; font-style:italic; font-size:13px; color:rgba(143,214,160,.62); }
+
+  /* ===== the reel END — the payoff card ===== */
+  .endwrap{ text-align:center; padding:8px 0 0; }
+  .ring{ position:relative; width:150px; height:150px; margin:10px auto 6px; border-radius:50%;
+    box-shadow:0 0 44px -10px rgba(243,205,132,.6); animation:ringGlow 5s ease-in-out infinite; }
+  @keyframes ringGlow{ 0%,100%{ box-shadow:0 0 36px -14px rgba(243,205,132,.5);} 50%{ box-shadow:0 0 60px -6px rgba(243,205,132,.85);} }
+  .ring::before{ content:""; position:absolute; inset:11px; border-radius:50%; background:radial-gradient(circle at 50% 36%, #16112c, #0a0e1e 76%); }
+  .ring .rc{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .ring .rc .big{ font-family:'Newsreader',serif; font-size:34px; color:var(--gold-hi); line-height:1; }
+  .ring .rc .of{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin-top:4px; }
+  .ring .spark{ position:absolute; width:10px; height:10px; border-radius:50%; top:6px; left:50%; margin-left:-5px; background:var(--gold-hi); box-shadow:0 0 14px 3px rgba(255,230,173,.9); animation:spin 5s linear infinite; transform-origin:5px 69px; }
+  .endt{ font-family:'Newsreader',serif; font-size:25px; line-height:1.22; color:#f6efe0; margin:8px 8px 0; } .endt em{ font-style:italic; color:var(--gold-hi); }
+  .ends{ font-size:13px; color:var(--muted); line-height:1.55; margin:10px 12px 0; }
+  .facetlist{ margin:20px 0 4px; display:flex; flex-direction:column; gap:2px; border-radius:14px; overflow:hidden; border:1px solid var(--hair); text-align:start; }
+  .frow{ display:flex; align-items:center; gap:12px; padding:12px 14px; background:rgba(11,15,32,.5); }
+  .frow .fi{ width:32px; height:32px; border-radius:9px; flex:0 0 auto; display:grid; place-items:center; }
+  .frow .fi svg{ width:16px; height:16px; }
+  .frow.lit .fi{ background:rgba(243,205,132,.12); border:1px solid rgba(243,205,132,.34); color:var(--gold-hi); }
+  .frow.litc .fi{ background:rgba(127,180,216,.12); border:1px solid rgba(127,180,216,.32); color:var(--cool-hi); }
+  .frow.wait .fi{ background:rgba(201,162,255,.12); border:1px solid rgba(201,162,255,.34); color:var(--edit-hi); }
+  .frow .ft{ flex:1; min-width:0; }
+  .frow .ft .fl{ font-family:'Newsreader',serif; font-size:16px; color:#f3e7cd; }
+  .frow .ft .fs{ font-size:11px; color:var(--muted); margin-top:1px; }
+  .frow.wait .ft .fs{ color:var(--edit); }
+  .frow .fe{ flex:0 0 auto; } .frow .fe svg{ width:16px; height:16px; }
+  .frow.lit .fe,.frow.litc .fe{ color:var(--leaf); }
+  .frow.wait .fe{ color:var(--edit); }
+  .primary{ display:flex; align-items:center; justify-content:center; gap:9px; width:100%; margin-top:18px; padding:15px; border-radius:14px; cursor:pointer;
+    background:linear-gradient(180deg,var(--gold-hi),var(--gold)); color:#1a1206; font-weight:600; font-size:15px; border:none; box-shadow:0 10px 34px -14px rgba(243,205,132,.8); }
+  .primary svg{ width:17px; height:17px; }
+  .primary.violetbtn{ background:linear-gradient(180deg,var(--edit-hi),var(--edit)); color:#1a0f2e; box-shadow:0 10px 34px -14px rgba(201,162,255,.8); }
+  .ghostbtn{ display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin-top:11px; padding:13px; border-radius:13px; cursor:pointer;
+    background:transparent; border:1px solid var(--hair); color:var(--muted); font-weight:600; font-size:13.5px; }
+  .ghostbtn svg{ width:15px; height:15px; }
+
+  /* ===== still gathering (early / empty) ===== */
+  .reelhero.dim .scene .im{ filter:brightness(.5) saturate(.5) blur(1px); }
+  .reelhero.dim .tint{ background:linear-gradient(180deg, rgba(10,7,26,.5), rgba(4,7,14,.9)); }
+  .gathering{ position:absolute; inset:0; z-index:4; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px; }
+  .gathering .em{ position:relative; width:66px; height:66px; border-radius:50%; display:grid; place-items:center; margin-bottom:14px;
+    background:radial-gradient(circle at 42% 34%, rgba(201,162,255,.32), transparent 68%); border:1px solid rgba(201,162,255,.5); color:var(--edit-hi); animation:emGlow 4.4s ease-in-out infinite; }
+  .gathering .em svg{ width:30px; height:30px; }
+  .gathering .em::before{ content:""; position:absolute; inset:0; border-radius:50%; border:1px solid rgba(201,162,255,.4); animation:emRing 4.4s ease-out infinite; }
+  @keyframes emGlow{ 0%,100%{ box-shadow:0 0 34px -10px rgba(201,162,255,.55);} 50%{ box-shadow:0 0 56px -4px rgba(201,162,255,.9);} }
+  @keyframes emRing{ 0%{ transform:scale(.9); opacity:.7;} 100%{ transform:scale(1.6); opacity:0;} }
+  .gathering .gt2{ font-family:'Newsreader',serif; font-size:22px; line-height:1.3; color:#f4ead4; } .gathering .gt2 em{ font-style:italic; color:var(--edit-hi); }
+  .gathering .gs2{ font-size:12.5px; color:#c9bbe4; line-height:1.5; margin-top:10px; max-width:250px; }
+  .waitchip{ display:inline-flex; align-items:center; gap:8px; margin-top:16px; padding:8px 13px; border-radius:99px; background:rgba(201,162,255,.12); border:1px solid rgba(201,162,255,.42); }
+  .waitchip .sp{ width:11px; height:11px; border-radius:50%; border:2px solid rgba(201,162,255,.35); border-top-color:var(--edit); animation:spin 1s linear infinite; }
+  .waitchip span{ font-family:'Azeret Mono',monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--edit-hi); }
+
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  /* gate */
+  .gate-auth{ position:absolute; inset:0; z-index:60; display:flex; align-items:center; justify-content:center; padding:24px; background:rgba(4,7,14,.9); backdrop-filter:blur(6px); }
+  .gate-auth .box{ width:100%; max-width:320px; background:linear-gradient(180deg,#0e1c31,#081120); border:1px solid var(--hair); border-radius:20px; padding:24px; text-align:center; }
+  .gate-auth h3{ font-family:'Newsreader',serif; font-weight:400; font-size:22px; color:#fbf5e8; }
+  .gate-auth .sub{ font-size:12.5px; color:var(--muted); margin:6px 0 16px; }
+  .gate-auth input{ width:100%; margin-bottom:10px; background:rgba(6,14,26,.7); border:1px solid var(--hair); border-radius:12px; padding:12px; color:var(--cream); font-family:inherit; font-size:14px; }
+  .gate-auth .err{ color:#ff9a8a; font-size:12px; min-height:16px; margin-top:8px; }
+
+  @media (prefers-reduced-motion: reduce){
+    .aur,.stars,.scene.on .im,.leak,.grain,.gate,.spool,.sceneno .dot,.toldby .flame,.ring,.ring .spark,.gathering .em,.gathering .em::before,.waitchip .sp{ animation:none !important; }
+    .leak{ display:none; }
+  }
+</style>
+</head>
+<body>
+  <div class="device" id="dev">
+    <div class="atmo"><span class="aur a1"></span><span class="aur a2"></span><span class="aur a3"></span></div>
+    <div class="stars"></div>
+    <div class="atmo-veil"></div>
+    <div class="screen" dir="ltr">
+      <div class="topbar"></div>
+      <div class="langmenu" hidden></div>
+      <div class="pad"></div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  'use strict';
+  const SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
+  const sb=window.supabase.createClient(SB_URL,SB_KEY);
+  const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+  const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+  const qs=new URLSearchParams(location.search);
+  const PERSON_ID=qs.get('id')||qs.get('person')||'c9aa4593-7670-4305-bc81-28c2dbf189f3';
+  const LANGS=['en','ru','he'];
+
+  /* ---------- i18n ---------- */
+  const T={
+    en:{ dir:'ltr', native:'English', label:'English',
+      topK:'A life, assembled', topN:'Story Reel', eyebrow:'Story Reel',
+      keeper:'Nothing reaches the family until the keeper approves it.', signin:'Sign in',
+      facet:{ name:'Name', face:'Face', life:'Life', places:'Places', story:'Story', kin:'Kin', reel:'Reel', more:'More' },
+      playingBack:'Playing back', lightsOf:n=>`${n} lights of eight`,
+      sceneOf:(i,n)=>`Scene ${i} of ${n}`,
+      kindledA:'kindled', ofEight:'of eight facets kindled', ringOf:'of eight facets', nee:'was', stillDark:n=>n===1?'one still dark':`${n} still dark`, allLit:'all eight alight',
+      provGold:'Gold — a person told us this', provCool:'Cool — the app worked this out', provViolet:'Violet — still gathering, held for the keeper',
+      toldBy:'Told by',
+      capName:'Her name, as the family keeps it', capNameN:'Their name, as the family keeps it',
+      appearsIn:n=>n===1?'Appears in one photograph':`Appears in ${n} photographs`,
+      born:'Born', died:'Died', pbirth:'Born in', livedIn:'Lived in',
+      placesGathering:'Where they lived is still being gathered',
+      kinLine:n=>n===1?'One relative · the thread back to you':`${n} relatives · the thread back to you`,
+      untold:'Nothing added here yet',
+      endAssembled:'assembled', endTitle:name=>`${name}'s life — `, endSub:'Help the dark facets catch light — and the reel grows longer.', endSubFull:'Every facet is alight. Thank you for remembering them so fully.',
+      watchAgain:'Watch again', addToLight:f=>`Add to light ${f}`,
+      gatherTitle:name=>`${name}'s story is `, gatherStill:'still gathering', gatherSub:'A facet or two are already alight. Every memory you add spreads the light to another.',
+      waitKeeper:'Waiting for the keeper',
+      addMemory:name=>`Add a memory about ${name}`, tagPhoto:name=>`Tag ${name} in a photo`,
+      footPlay:'She grows brighter every time someone remembers her aloud.', footPlayN:'They grow brighter every time someone remembers them aloud.',
+      footEnd:'The reel never ends — it waits for the next to remember.', footGather:'The forest is dark until someone bothers to tell of her.', footGatherN:'The forest is dark until someone bothers to tell of them.',
+      aBack:'Back', aPrev:'Previous scene', aPlay:'Play', aPause:'Pause', aNext:'Next scene', aLang:'Language' },
+    ru:{ dir:'ltr', native:'Русский', label:'Russian',
+      topK:'Жизнь, собранная воедино', topN:'Лента жизни', eyebrow:'Лента жизни',
+      keeper:'Ничто не дойдёт до семьи, пока хранитель не одобрит.', signin:'Войти',
+      facet:{ name:'Имя', face:'Лицо', life:'Жизнь', places:'Места', story:'Рассказы', kin:'Родня', reel:'Лента', more:'Ещё' },
+      playingBack:'Проигрывается', lightsOf:n=>`${n} огней из восьми`,
+      sceneOf:(i,n)=>`Сцена ${i} из ${n}`,
+      kindledA:'зажжено', ofEight:'из восьми граней зажжены', ringOf:'из восьми граней', nee:'урожд.', stillDark:n=>n===1?'одна ещё тёмная':`ещё ${n} тёмных`, allLit:'все восемь горят',
+      provGold:'Золото — это рассказал человек', provCool:'Синее — приложение вычислило', provViolet:'Фиолетовое — ещё собирается, ждёт хранителя',
+      toldBy:'Рассказал(а)',
+      capName:'Её имя, как хранит семья', capNameN:'Их имя, как хранит семья',
+      appearsIn:n=>`На ${n} фотографиях`,
+      born:'Родилась', died:'Умерла', pbirth:'Место рождения', livedIn:'Жила в',
+      placesGathering:'Где жила — ещё собирается',
+      kinLine:n=>`${n} родственников · нить к вам`,
+      untold:'Пока ничего не добавлено',
+      endAssembled:'собрана', endTitle:name=>`Жизнь ${name} — `, endSub:'Помогите тёмным граням загореться — и лента станет длиннее.', endSubFull:'Все грани горят. Спасибо, что помните так полно.',
+      watchAgain:'Смотреть заново', addToLight:f=>`Добавить, чтобы зажечь «${f}»`,
+      gatherTitle:name=>`История ${name} `, gatherStill:'ещё собирается', gatherSub:'Одна-две грани уже горят. Каждое воспоминание переносит свет на следующую.',
+      waitKeeper:'Ожидает хранителя',
+      addMemory:name=>`Добавить воспоминание о ${name}`, tagPhoto:name=>`Отметить ${name} на фото`,
+      footPlay:'Она становится ярче каждый раз, когда её вспоминают вслух.', footPlayN:'Они становятся ярче каждый раз, когда их вспоминают вслух.',
+      footEnd:'Лента никогда не заканчивается — она ждёт следующего, кто вспомнит.', footGather:'Лес тёмен, пока кто-то не расскажет о ней.', footGatherN:'Лес тёмен, пока кто-то не расскажет о них.',
+      aBack:'Назад', aPrev:'Предыдущая сцена', aPlay:'Играть', aPause:'Пауза', aNext:'Следующая сцена', aLang:'Язык' },
+    he:{ dir:'rtl', native:'עברית', label:'Hebrew',
+      topK:'חיים שנאספים', topN:'סרט החיים', eyebrow:'סרט החיים',
+      keeper:'שום דבר לא יגיע למשפחה עד שהשומר יאשר.', signin:'כניסה',
+      facet:{ name:'שם', face:'פנים', life:'חיים', places:'מקומות', story:'סיפורים', kin:'משפחה', reel:'סרט', more:'עוד' },
+      playingBack:'מתנגן', lightsOf:n=>`${n} אורות מתוך שמונה`,
+      sceneOf:(i,n)=>`סצנה ${i} מתוך ${n}`,
+      kindledA:'נדלקו', ofEight:'מתוך שמונה גרנים נדלקו', ringOf:'מתוך שמונה', nee:'לבית', stillDark:n=>n===1?'אחת עדיין חשוכה':`${n} עדיין חשוכות`, allLit:'כל השמונה דולקות',
+      provGold:'זהב — אדם סיפר לנו את זה', provCool:'כחול — האפליקציה חישבה זאת', provViolet:'סגול — עדיין נאסף, שמור לשומר',
+      toldBy:'סיפר/ה',
+      capName:'שמה, כפי שהמשפחה שומרת', capNameN:'שמם, כפי שהמשפחה שומרת',
+      appearsIn:n=>`מופיעה ב-${n} תצלומים`,
+      born:'נולדה', died:'נפטרה', pbirth:'נולדה ב', livedIn:'גרה ב',
+      placesGathering:'היכן גרה — עדיין נאסף',
+      kinLine:n=>`${n} קרובי משפחה · החוט אליכם`,
+      untold:'עדיין לא נוסף כאן דבר',
+      endAssembled:'נאספו', endTitle:name=>`חייה של ${name} — `, endSub:'עזרו לגרנים החשוכות להידלק — והסרט יתארך.', endSubFull:'כל הגרנים דולקות. תודה שאתם זוכרים אותם כל כך במלואם.',
+      watchAgain:'לצפות שוב', addToLight:f=>`הוסיפו כדי להדליק «${f}»`,
+      gatherTitle:name=>`הסיפור של ${name} `, gatherStill:'עדיין נאסף', gatherSub:'גרן או שתיים כבר דולקות. כל זיכרון שתוסיפו מפיץ את האור לגרן נוספת.',
+      waitKeeper:'ממתין לשומר',
+      addMemory:name=>`הוסיפו זיכרון על ${name}`, tagPhoto:name=>`תייגו את ${name} בתצלום`,
+      footPlay:'היא מאירה יותר בכל פעם שמישהו נזכר בה בקול.', footPlayN:'הם מאירים יותר בכל פעם שמישהו נזכר בהם בקול.',
+      footEnd:'הסרט לעולם לא נגמר — הוא ממתין לבא שייזכר.', footGather:'היער חשוך עד שמישהו טורח לספר עליה.', footGatherN:'היער חשוך עד שמישהו טורח לספר עליהם.',
+      aBack:'חזרה', aPrev:'סצנה קודמת', aPlay:'נגן', aPause:'השהה', aNext:'סצנה הבאה', aLang:'שפה' }
+  };
+  const d=()=>T[state.lang];
+
+  /* ---------- icons ---------- */
+  const I={
+    back:'<path d="M15 18l-6-6 6-6"/>',
+    name:'<path d="M4 7V5h16v2M9 19h6M12 5v14"/>',
+    face:'<circle cx="12" cy="10" r="3.4"/><path d="M5 20c0-3.3 3-6 7-6s7 2.7 7 6"/>',
+    life:'<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',
+    places:'<path d="M12 21s-6-5.7-6-10a6 6 0 1112 0c0 4.3-6 10-6 10z"/><circle cx="12" cy="11" r="2"/>',
+    story:'<path d="M4 19V6l8-2 8 2v13M9 21v-6h6v6"/>',
+    kin:'<circle cx="9" cy="8" r="2.6"/><circle cx="17" cy="10" r="2.2"/><path d="M4 19c0-2.8 2.2-5 5-5s5 2.2 5 5M14 19c0-2 1-3.5 3-4"/>',
+    reel:'<circle cx="12" cy="12" r="9"/><path d="M10 8l6 4-6 4z"/>',
+    more:'<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/>',
+    check:'<path d="M20 6L9 17l-5-5"/>', plus:'<path d="M12 5v14M5 12h14"/>',
+    lang:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+    chev:'<path d="M6 9l6 6 6-6"/>',
+    prev:'<path d="M7 5h2v14H7zM20 5v14l-11-7z"/>', next:'<path d="M15 5h2v14h-2zM4 5l11 7-11 7z"/>',
+    play:'<path d="M8 5l12 7-12 7z"/>', pause:'<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>',
+    replay:'<path d="M4 12a8 8 0 108-8M4 12l3 3M4 12l3-3"/>',
+    upload:'<path d="M12 3v13M8 7l4-4 4 4M5 21h14"/>', camera:'<path d="M4 7h3l1.6-2.2h6.8L17 7h3a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V8a1 1 0 011-1z"/><circle cx="12" cy="13" r="3.4"/>',
+    spark:'<path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M18 6l-2 2M8 16l-2 2"/><circle cx="12" cy="12" r="3"/>'
+  };
+  const sv=(p,w)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w||1.7}" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+
+  /* ---------- scene tile SVGs (placeholders for facets with no photo) ---------- */
+  function nameSVG(ch){ ch=(ch||'•').toUpperCase();
+    return `<svg viewBox="0 0 100 66" preserveAspectRatio="xMidYMid slice"><rect width="100" height="66" fill="#241a3a"/><circle cx="50" cy="33" r="30" fill="none" stroke="#f3cd84" stroke-width="1" opacity=".5"/><text x="50" y="42" font-family="Georgia,serif" font-size="26" fill="#ffe6ad" text-anchor="middle">${esc(ch)}</text></svg>`; }
+  function lifeSVG(){ return `<svg viewBox="0 0 100 66" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="lf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#20304a"/><stop offset="1" stop-color="#132033"/></linearGradient></defs><rect width="100" height="66" fill="url(#lf)"/><circle cx="50" cy="33" r="17" fill="none" stroke="#7fb4d8" stroke-width="1.6" opacity=".7"/><path d="M50 22v11l7 5" fill="none" stroke="#a9d2ee" stroke-width="1.8" stroke-linecap="round"/></svg>`; }
+  function placeSVG(){ return `<svg viewBox="0 0 100 66" preserveAspectRatio="xMidYMid slice"><rect width="100" height="66" fill="#16283a"/><path d="M50 52s-11-10.3-11-18a11 11 0 1122 0c0 7.7-11 18-11 18z" fill="none" stroke="#7fb4d8" stroke-width="1.8"/><circle cx="50" cy="34" r="4" fill="#a9d2ee"/></svg>`; }
+  function kinSVG(){ return `<svg viewBox="0 0 100 66" preserveAspectRatio="xMidYMid slice"><rect width="100" height="66" fill="#16283a"/><path d="M14 33 H86" stroke="#7fb4d8" stroke-width="1.4" opacity=".6"/><circle cx="18" cy="33" r="6" fill="#a9d2ee"/><circle cx="50" cy="33" r="5" fill="#7fb4d8"/><circle cx="82" cy="33" r="7" fill="#f3cd84"/></svg>`; }
+  function galSVG(seed){ const s=['#c9a878','#8fa6b8','#b58a5c','#9fb0a0','#c08a70','#8a92b0','#a88f6e','#7f97ab'][(seed||0)%8];
+    return `<svg viewBox="0 0 100 66" preserveAspectRatio="xMidYMid slice"><rect width="100" height="66" fill="${s}"/><rect y="42" width="100" height="24" fill="rgba(0,0,0,.16)"/><circle cx="50" cy="30" r="12" fill="#e6c49b"/><path d="M50 64 Q50 46 34 44 Q37 36 50 36 Q63 36 66 44 Q50 46 50 64Z" fill="#5a4636"/></svg>`; }
+  function avSVG(){ return `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#2a3a52"/><circle cx="50" cy="42" r="18" fill="#e6c49b"/><path d="M50 96 Q50 68 28 64 Q32 48 50 48 Q68 48 72 64 Q50 68 50 96Z" fill="#c9c1b4"/></svg>`; }
+
+  /* ---------- state + data ---------- */
+  const state={ lang:'en', keeper:false, view:'play', idx:0, playing:!reduceMotion };
+  let user=null, person=null, facts=[], tagged=[], rels=[], memories=[], contribNames={};
+  let NAME={}, scenes=[], LIT={}, urlCache={};
+  let timer=null;
+
+  const FACET_ORDER=['name','face','life','places','story','kin','reel','more'];
+  const COOL=new Set(['life','places','kin','reel']);
+  const hasv=v=>v&&String(v).trim()!=='';
+  const isFem=()=>/^f/i.test(person&&person.sex||''); // explicit female → feminine voice; else neutral/plural (never misgender)
+
+  /* ---------- fact helpers ---------- */
+  const pubNewest=(field,lg)=>{ const rows=facts.filter(x=>x.field===field&&x.status==='published'&&(lg==null||x.lang===lg))
+      .sort((a,b)=>String(b.published_at||b.created_at||'').localeCompare(String(a.published_at||a.created_at||''))); return rows[0]?rows[0].value:''; };
+  const pubList=(field,lg)=>facts.filter(x=>x.field===field&&x.status==='published'&&(lg==null||x.lang===lg)).sort((a,b)=>(a.ord||0)-(b.ord||0));
+  const hasPending=fields=>facts.some(x=>fields.includes(x.field)&&x.status!=='published');
+
+  async function signedUrl(path){ if(!path) return ''; if(urlCache[path]!=null) return urlCache[path];
+    try{ const r=await sb.storage.from('family').createSignedUrl(path,3600); urlCache[path]=(r.data&&r.data.signedUrl)||''; }catch(e){ urlCache[path]=''; } return urlCache[path]; }
+
+  /* ---------- load ---------- */
+  async function loadData(){
+    try{ const {data:p}=await sb.from('people').select('id,display_name,called_name,sex,primary_asset,birth_date,death_date,is_living,metadata').eq('id',PERSON_ID).maybeSingle(); person=p||{id:PERSON_ID}; }catch(e){ person={id:PERSON_ID}; }
+    try{ const {data:fs}=await sb.from('person_facts').select('id,group_id,field,lang,value,ord,status,created_at,published_at').eq('person_id',PERSON_ID); facts=fs||[]; }catch(e){ facts=[]; }
+    tagged=[]; contribNames={};
+    try{ const {data:subs}=await sb.from('artefact_subjects').select('artefact_id,detail').eq('person_id',PERSON_ID); const ids=(subs||[]).map(s=>s.artefact_id);
+      if(ids.length){ let arts=[]; try{ const {data:a}=await sb.from('artefacts').select('id,storage_path,metadata,contributor_id,pub_status').in('id',ids); arts=a||[]; }
+        catch(e){ try{ const {data:a2}=await sb.from('artefacts').select('id,storage_path').in('id',ids); arts=a2||[]; }catch(e2){ arts=[]; } }
+        const byId={}; arts.forEach(a=>byId[a.id]=a);
+        tagged=(subs||[]).filter(s=>byId[s.artefact_id]&&byId[s.artefact_id].storage_path&&byId[s.artefact_id].pub_status!=='rejected')
+          .map(s=>({artefact_id:s.artefact_id,storage_path:byId[s.artefact_id].storage_path,meta:(byId[s.artefact_id]||{}).metadata||{},contributor_id:(byId[s.artefact_id]||{}).contributor_id||null}));
+        const cids=[...new Set(tagged.map(t=>t.contributor_id).filter(Boolean))];
+        if(cids.length){ try{ const {data:pp}=await sb.from('people').select('id,display_name').in('id',cids); (pp||[]).forEach(x=>contribNames[x.id]=x.display_name); }catch(e){} }
+      } }catch(e){}
+    rels=[];
+    try{ const {data:rp}=await sb.from('relationships').select('id,from_person,to_person').or('from_person.eq.'+PERSON_ID+',to_person.eq.'+PERSON_ID);
+      rels=(rp||[]).map(r=>({id:r.id})); }catch(e){ rels=[]; }
+    memories=tagged.map(t=>({ id:t.artefact_id, storage_path:t.storage_path, cap:[t.meta&&t.meta.when,t.meta&&t.meta.where].filter(Boolean).join(' · '), teller:t.contributor_id?(contribNames[t.contributor_id]||''):'' }));
+  }
+
+  /* ---------- name resolution (built from person_facts, newest-published wins) ---------- */
+  function buildNames(){ const NF=['display','given','called','family','maiden','patronymic','honorific'];
+    NAME={}; NF.forEach(f=>{ NAME[f]={}; LANGS.forEach(l=>{ NAME[f][l]=pubNewest(f,l); }); });
+    LANGS.forEach(l=>{ if(!NAME.display[l]){ const dn=[NAME.given[l],NAME.family[l]].filter(Boolean).join(' '); if(dn) NAME.display[l]=dn; } });
+    if(!NAME.display.en && person.display_name) NAME.display.en=person.display_name;
+    if(!NAME.called.en && person.called_name) NAME.called.en=person.called_name;
+  }
+  function nm(field){ const l=state.lang; const F=NAME[field]||{}; return F[l]||F.en||''; }
+  function fullName(){ const l=state.lang;
+    let disp=nm('display'); if(!disp){ const g=nm('given'), f=nm('family'); disp=[g,f].filter(Boolean).join(' '); }
+    if(!disp) disp=person.display_name||pubNewest('given',l)||pubNewest('given','en')||'';
+    return disp; }
+  function shortName(){ const g=nm('given'); if(g) return g; const disp=fullName(); return disp?disp.split(' ')[0]:''; }
+  function nameInitial(){ const s=shortName(); return s?s.slice(0,1):(fullName().slice(0,1)||'•'); }
+
+  /* ---------- what is lit (per-person kindle axis) ---------- */
+  function computeLit(){
+    const L={};
+    const lifeHas = hasv(person.birth_date)||hasv(person.death_date)||hasv(pubNewest('birth','und'))||hasv(pubNewest('death','und'))||hasv(pubNewest('occupation',state.lang))||hasv(pubNewest('occupation','en'))||hasv(person.sex);
+    const placesHas = pubList('lived','und').length>0 || hasv(pubNewest('pbirth','und')) || hasv(pubNewest('pbirth','en'));
+    const moreHas = facts.some(x=>(x.field==='custom_value'||x.field==='source')&&x.status==='published');
+    L.name = hasv(fullName());
+    L.face = tagged.length>0;
+    L.life = lifeHas;
+    L.places = placesHas;
+    L.story = memories.length>0;
+    L.kin = rels.length>0;
+    L.more = moreHas;
+    // Reel is lit once three or more content facets are alight — there is a real reel to play.
+    const contentLit=['name','face','life','places','story','kin','more'].filter(k=>L[k]).length;
+    L.reel = contentLit>=3;
+    // waiting (violet) — has pending suggestions but not yet published
+    L._wait = {
+      name: !L.name && hasPending(['given','family','display','called','maiden','patronymic','honorific']),
+      life: !L.life && hasPending(['birth','death','occupation','bio','gender','living']),
+      places: !L.places && hasPending(['lived','pbirth']),
+      story: !L.story && false,
+      kin: !L.kin && false,
+      more: !L.more && hasPending(['custom_label','custom_value','source'])
+    };
+    return L;
+  }
+  const litCount=()=>FACET_ORDER.filter(k=>LIT[k]).length;
+
+  /* ---------- assemble the reel from real data (engine-driven, Rule 8) ---------- */
+  function buildScenes(){
+    const L=d(); scenes=[]; const l=state.lang;
+    if(LIT.name){ scenes.push({facet:'name', prov:'gold', tile:()=>nameSVG(nameInitial()),
+      cap:isFem()?d().capName:d().capNameN }); }
+    if(LIT.face){ scenes.push({facet:'face', prov:'gold', photo:(person.primary_asset||(tagged[0]&&tagged[0].storage_path)||''), seed:0,
+      cap:d().appearsIn(tagged.length) }); }
+    if(LIT.life){
+      const parts=[]; const by=person.birth_date?String(person.birth_date).slice(0,4):(pubNewest('birth','und')?String(pubNewest('birth','und')).slice(0,4):'');
+      const dy=person.death_date?String(person.death_date).slice(0,4):(pubNewest('death','und')?String(pubNewest('death','und')).slice(0,4):'');
+      const occ=pubNewest('occupation',l)||pubNewest('occupation','en');
+      const pb=pubNewest('pbirth','und')||pubNewest('pbirth','en');
+      if(by) parts.push(d().born+' '+by+(pb?(' · '+pb):'')); if(dy) parts.push(d().died+' '+dy);
+      if(occ) parts.push(occ);
+      scenes.push({facet:'life', prov:'cool', tile:lifeSVG, cap:parts.join(' · ')||d().facet.life });
+    }
+    if(LIT.places){ const lived=pubList('lived','und').map(x=>x.value).filter(Boolean);
+      const pb=pubNewest('pbirth','und')||pubNewest('pbirth','en');
+      const line=(pb?d().pbirth+' '+pb:'')+((pb&&lived.length)?' · ':'')+(lived.length?d().livedIn+' '+lived.join(', '):'');
+      scenes.push({facet:'places', prov:'cool', tile:placeSVG, cap:line||d().facet.places }); }
+    memories.forEach((m,i)=>{ scenes.push({facet:'story', prov:'gold', photo:m.storage_path, seed:i+1,
+      cap:m.cap||'', teller:m.teller }); });
+    if(LIT.kin){ scenes.push({facet:'kin', prov:'cool', tile:kinSVG, cap:d().kinLine(rels.length) }); }
+    if(state.idx>=scenes.length) state.idx=Math.max(0,scenes.length-1);
+  }
+
+  /* ---------- render ---------- */
+  function render(){ const L=d();
+    document.documentElement.lang=state.lang; document.documentElement.dir=L.dir;
+    const scr=$('.screen'); if(scr) scr.setAttribute('dir',L.dir);
+    renderTop();
+    if(!scenes.length){ state.view='gather'; }
+    else if(state.view==='gather'){ state.view='play'; }
+    if(state.view==='gather') renderGather();
+    else if(state.view==='end') renderEnd();
+    else renderPlay();
+    fillMedia();
+    syncTimer();
+  }
+
+  function renderTop(){ const L=d();
+    $('.topbar').innerHTML=`
+      <button class="ibtn" data-act="back" aria-label="${esc(L.aBack)}">${sv(I.back, L.dir==='rtl'?1.7:1.7)}</button>
+      <div class="ttl"><span class="spool"><i></i><i class="b"></i></span><span class="tx"><span class="k">${esc(L.topK)}</span><span class="n serif">${esc(L.topN)}</span></span></div>
+      <button class="langpill" data-act="lang" aria-haspopup="true">${state.lang.toUpperCase()} ${sv(I.chev,1.7)}</button>`;
+    if(L.dir==='rtl'){ const b=$('.topbar .ibtn svg'); if(b) b.style.transform='scaleX(-1)'; }
+  }
+
+  function whoBlock(){ const L=d(); const maiden=nm('maiden');
+    const sub=state.view==='play'?`${d().playingBack} · ${d().lightsOf(litCount())}`:`${d().lightsOf(litCount())}`;
+    return `<div class="who"><span class="av" id="whoAv">${avSVG()}</span><span class="wn">
+      <span class="rname serif">${esc(fullName())}${maiden&&maiden!==nm('family')?`<span class="maiden">${esc(L.nee)} ${esc(maiden)}</span>`:''}</span>
+      <span class="rsub">${esc(sub)}</span></span></div>`; }
+
+  function kindleSpine(){ const L=d(); const n=litCount(); const dark=8-n;
+    const kt=n===8?`<b>${n}</b> — ${esc(L.allLit)}`:`<b>${n}</b> ${esc(L.ofEight)}`;
+    const kn=n===8?'':esc(L.stillDark(dark));
+    const beads=FACET_ORDER.map(k=>{ let cls='';
+      if(LIT[k]) cls='lit'+(COOL.has(k)?' cool':'');
+      else if(LIT._wait&&LIT._wait[k]) cls='wait';
+      return `<div class="bead ${cls}"><span class="b"></span><span class="bl">${esc(L.facet[k])}</span></div>`; }).join('');
+    return `<div class="kindle"><div class="kh"><div class="kt">${kt}</div><div class="kn">${kn}</div></div><div class="beads">${beads}</div></div>`; }
+
+  function gateHTML(top,bot){ return `<div class="gate ${top} ${bot}"></div>`; }
+  function gatesRow(){ let s=''; for(let i=0;i<18;i++) s+='<i></i>'; return s; }
+
+  function renderPlay(){ const L=d(); const s=scenes[state.idx]||scenes[0]; const cool=s.prov==='cool';
+    const provCls=s.prov==='gold'?'g':(s.prov==='cool'?'c':'v');
+    const provTxt=s.prov==='gold'?L.provGold:(s.prov==='cool'?L.provCool:L.provViolet);
+    const told=(s.facet==='story'&&s.teller)?`<span class="toldby"><span class="flame"></span><span>${esc(L.toldBy)} <b>${esc(s.teller)}</b></span></span>`:'';
+    const pct=Math.round(((state.idx+1)/scenes.length)*100);
+    // scrubber: one thumb per scene, plus violet wait thumbs for un-lit content facets
+    let thumbs=scenes.map((sc,i)=>`<div class="thumb ${i===state.idx?'now':''}" data-seek="${i}"><span class="thumbim" data-scene="${i}">${sc.photo?galSVG(sc.seed):sc.tile()}</span><span class="tl">${esc(L.facet[sc.facet])}</span></div>`).join('');
+    ['places','more'].forEach(f=>{ if(!LIT[f] && LIT._wait && LIT._wait[f]) thumbs+=`<div class="thumb wait"><span class="wi">${sv(I[f]||I.places,1.6)}</span><span class="tl">${esc(L.facet[f])}</span></div>`; });
+    const heroSVG=s.photo?galSVG(s.seed):s.tile();
+    const footL=isFem()?L.footPlay:L.footPlayN;
+    $('.pad').innerHTML=`
+      ${whoBlock()}
+      <div class="reelhero">
+        <div class="scene on"><div class="im" id="heroIm" data-hero="${state.idx}">${heroSVG}</div><div class="tint"></div></div>
+        <div class="leak"></div><div class="grain"></div><div class="vig"></div>
+        <div class="gate top">${gatesRow()}</div><div class="gate bot">${gatesRow()}</div>
+        <div class="sceneno ${cool?'cool':''}"><span class="dot"></span> ${esc(L.sceneOf(state.idx+1,scenes.length))} · ${esc(L.facet[s.facet])}</div>
+        <div class="rcap">
+          ${s.cap?`<div class="telling"><p>${esc(s.cap)}</p></div>`:''}
+          ${told}
+        </div>
+      </div>
+      <div class="provline"><span class="lp ${provCls}"></span> ${esc(provTxt)}</div>
+      ${kindleSpine()}
+      <div class="scrub">${thumbs}</div>
+      <div class="transport">
+        <button class="tb" data-act="prev" aria-label="${esc(L.aPrev)}"><svg viewBox="0 0 24 24" fill="currentColor">${I.prev}</svg></button>
+        <button class="tb play" data-act="playpause" aria-label="${esc(state.playing?L.aPause:L.aPlay)}"><svg viewBox="0 0 24 24" fill="currentColor">${state.playing?I.pause:I.play}</svg></button>
+        <button class="tb" data-act="next" aria-label="${esc(L.aNext)}"><svg viewBox="0 0 24 24" fill="currentColor">${I.next}</svg></button>
+        <span class="tprog"><span class="bar"><i style="width:${pct}%"></i></span><span class="tt"><span>${state.idx+1}</span><span>${scenes.length}</span></span></span>
+      </div>
+      <div class="foot"><div class="l">${esc(footL)}</div></div>`;
+  }
+
+  function facetSummary(f){ const L=d();
+    if(f==='name') return fullName();
+    if(f==='face') return LIT.face?d().appearsIn(tagged.length):d().untold;
+    if(f==='life'){ const by=person.birth_date?String(person.birth_date).slice(0,4):''; const dy=person.death_date?String(person.death_date).slice(0,4):''; const occ=pubNewest('occupation',state.lang)||pubNewest('occupation','en');
+      return [by?d().born+' '+by:'',dy?d().died+' '+dy:'',occ].filter(Boolean).join(' · ')||(LIT.life?d().facet.life:d().untold); }
+    if(f==='story') return LIT.story?(d().facet.story+' · '+memories.length):d().untold;
+    if(f==='kin') return LIT.kin?d().kinLine(rels.length):d().untold;
+    if(f==='places'){ if(LIT.places){ const lived=pubList('lived','und').map(x=>x.value); return lived.length?lived.join(', '):(pubNewest('pbirth','und')||pubNewest('pbirth','en')); } return d().placesGathering; }
+    if(f==='more') return LIT.more?d().facet.more:d().untold;
+    return '';
+  }
+  function renderEnd(){ const L=d(); const n=litCount(); const turn=(n/8).toFixed(3);
+    const rows=['name','face','life','story','kin','places','more'].map(f=>{
+      const lit=LIT[f]; const wait=!lit && LIT._wait && LIT._wait[f];
+      const cls=lit?(COOL.has(f)?'litc':'lit'):(wait?'wait':'wait');
+      const endIcon=lit?sv(I.check,2):sv(I.plus,1.8);
+      return `<div class="frow ${cls}"><span class="fi">${sv(I[f])}</span><span class="ft"><span class="fl">${esc(L.facet[f])}</span><span class="fs">${esc(facetSummary(f))}</span></span><span class="fe">${endIcon}</span></div>`; }).join('');
+    const firstDark=['places','more','life','kin','story','face'].find(f=>!LIT[f]);
+    const ghost=firstDark?`<button class="ghostbtn" data-act="go-add"><span>${sv(I.upload)}</span> ${esc(L.addToLight(L.facet[firstDark]))}</button>`:'';
+    const footL=L.footEnd;
+    const conic=`background:conic-gradient(from -90deg, var(--gold) 0turn ${turn}turn, rgba(255,255,255,.08) ${turn}turn 1turn)`;
+    $('.pad').innerHTML=`
+      ${whoBlock()}
+      <div class="endwrap">
+        <div class="ring" style="${conic}"><span class="spark"></span><div class="rc"><div class="big">${n}</div><div class="of">${esc(L.ringOf)}</div></div></div>
+        <div class="endt">${esc(L.endTitle(fullName()))}<em>${esc(L.endAssembled)}</em>.</div>
+        <div class="ends">${esc(n===8?L.endSubFull:L.endSub)}</div>
+      </div>
+      <div class="facetlist">${rows}</div>
+      <button class="primary" data-act="replay">${sv(I.replay,1.8)} ${esc(L.watchAgain)}</button>
+      ${ghost}
+      <div class="foot"><div class="l">${esc(footL)}</div></div>`;
+  }
+
+  function renderGather(){ const L=d(); const nm2=shortName()||fullName();
+    const footL=isFem()?L.footGather:L.footGatherN;
+    $('.pad').innerHTML=`
+      ${whoBlock()}
+      <div class="reelhero dim">
+        <div class="scene"><div class="im" id="heroIm">${tagged[0]?galSVG(0):nameSVG(nameInitial())}</div><div class="tint"></div></div>
+        <div class="grain"></div><div class="vig"></div>
+        <div class="gate top">${gatesRow()}</div><div class="gate bot">${gatesRow()}</div>
+        <div class="gathering">
+          <span class="em">${sv(I.spark,1.6)}</span>
+          <div class="gt2">${esc(L.gatherTitle(nm2))}<em>${esc(L.gatherStill)}</em>.</div>
+          <div class="gs2">${esc(L.gatherSub)}</div>
+          <span class="waitchip"><span class="sp"></span><span>${esc(L.waitKeeper)}</span></span>
+        </div>
+      </div>
+      ${kindleSpine()}
+      <button class="primary violetbtn" data-act="go-add">${sv(I.plus,1.8)} ${esc(L.addMemory(nm2))}</button>
+      <button class="ghostbtn" data-act="go-add">${sv(I.camera,1.8)} ${esc(L.tagPhoto(nm2))}</button>
+      <div class="foot"><div class="l">${esc(footL)}</div></div>`;
+    if(tagged[0]){ const im=$('#heroIm'); signedUrl(tagged[0].storage_path).then(u=>{ if(u&&im) im.innerHTML=`<img src="${u}" alt="">`; }); }
+  }
+
+  /* ---------- fill real photos after render ---------- */
+  async function fillMedia(){
+    // portrait avatar
+    const av=$('#whoAv'); if(av){ const p=person.primary_asset||(tagged[0]&&tagged[0].storage_path); if(p){ const u=await signedUrl(p); if(u&&$('#whoAv')) $('#whoAv').innerHTML=`<img src="${u}" alt="">`; } }
+    if(state.view!=='play') return;
+    const s=scenes[state.idx]; const im=$('#heroIm');
+    if(s&&s.photo&&im){ const u=await signedUrl(s.photo); if(u&&$('#heroIm')) $('#heroIm').innerHTML=`<img src="${u}" alt="">`; }
+    // scrubber thumbs
+    $$('.thumb .thumbim[data-scene]').forEach(async el=>{ const i=+el.getAttribute('data-scene'); const sc=scenes[i]; if(!sc||!sc.photo) return; const u=await signedUrl(sc.photo); if(u) el.innerHTML=`<img src="${u}" alt="">`; });
+  }
+
+  /* ---------- transport / autoplay ---------- */
+  function syncTimer(){ if(timer){ clearInterval(timer); timer=null; }
+    if(state.view==='play' && state.playing && !reduceMotion && scenes.length>1){
+      timer=setInterval(()=>{ advance(1,true); }, 5200);
+    } }
+  function advance(dir,auto){
+    const next=state.idx+dir;
+    if(next>=scenes.length){ if(auto||dir>0){ state.view='end'; state.playing=false; render(); return; } }
+    if(next<0) return;
+    if(next>=scenes.length) return;
+    state.idx=next; render();
+  }
+  function seek(i){ if(i<0||i>=scenes.length) return; state.idx=i; state.view='play'; render(); }
+
+  /* ---------- language ---------- */
+  function toggleLang(){ const m=$('.langmenu'); if(!m) return;
+    if(!m.hidden){ m.hidden=true; return; }
+    const L=d(); m.innerHTML=LANGS.map(k=>`<button data-lang="${k}" class="${k===state.lang?'on':''}"><span><span class="native">${esc(T[k].native)}</span><span class="en">${esc(T[k].label)}</span></span><span class="tick">${sv(I.check,2)}</span></button>`).join('');
+    m.hidden=false;
+    m.querySelectorAll('[data-lang]').forEach(b=>b.onclick=async()=>{ state.lang=b.dataset.lang; m.hidden=true;
+      try{localStorage.setItem('lf_lang',state.lang);}catch(e){}
+      if(user){ try{ await sb.from('profiles').update({preferred_lang:state.lang}).eq('id',user.id); }catch(e){} }
+      LIT=computeLit(); buildScenes(); render(); });
+  }
+  window.__lfClose=()=>{ const m=$('.langmenu'); if(m&&!m.hidden){ m.hidden=true; return true; } return false; };
+
+  /* ---------- wiring ---------- */
+  function wire(){ const root=$('#dev');
+    root.addEventListener('click', e=>{
+      const seekEl=e.target.closest('[data-seek]'); if(seekEl){ seek(+seekEl.getAttribute('data-seek')); return; }
+      const a=e.target.closest('[data-act]'); if(!a) return; const act=a.dataset.act;
+      const m=$('.langmenu'); if(m&&!m.hidden&&act!=='lang') m.hidden=true;
+      if(act==='back'){ if(history.length>1) history.back(); else location.href='person-real.html'+(person&&person.id?('?id='+encodeURIComponent(person.id)):''); return; }
+      if(act==='lang'){ toggleLang(); return; }
+      if(act==='prev'){ advance(-1,false); return; }
+      if(act==='next'){ advance(1,false); return; }
+      if(act==='playpause'){ state.playing=!state.playing; render(); return; }
+      if(act==='replay'){ state.view='play'; state.idx=0; state.playing=!reduceMotion; render(); return; }
+      if(act==='go-add'){ location.href='person-real.html'+(person&&person.id?('?id='+encodeURIComponent(person.id)):''); return; }
+    });
+    document.addEventListener('click', e=>{ const m=$('.langmenu'); if(m&&!m.hidden&&!e.target.closest('.langmenu')&&!e.target.closest('[data-act="lang"]')) m.hidden=true; });
+  }
+
+  /* ---------- gate + boot ---------- */
+  function showGate(){ const L=d(); let g=$('#gate'); if(!g){ g=document.createElement('div'); g.id='gate'; g.className='gate-auth'; $('#dev').appendChild(g); }
+    g.innerHTML=`<div class="box">
+      <h3>${esc(L.eyebrow)}</h3>
+      <div class="sub">${esc(L.keeper)}</div>
+      <input id="gEmail" type="email" placeholder="you@example.com" autocomplete="username">
+      <input id="gPass" type="password" placeholder="••••••••" autocomplete="current-password">
+      <button id="gBtn" class="primary" style="margin-top:2px">${esc(L.signin)}</button>
+      <div id="gErr" class="err"></div></div>`;
+    $('#gBtn').onclick=async()=>{ const {error}=await sb.auth.signInWithPassword({email:$('#gEmail').value.trim(),password:$('#gPass').value}); if(error){ $('#gErr').textContent=error.message; return; } g.remove(); boot(); };
+  }
+  async function boot(){ const {data:{session}}=await sb.auth.getSession();
+    const stored=localStorage.getItem('lf_lang'); if(stored&&T[stored]) state.lang=stored; else { const dl=(navigator.language||'en').slice(0,2); if(T[dl]) state.lang=dl; }
+    if(!session){ renderTop(); showGate(); return; }
+    user=session.user;
+    try{ const {data:pr}=await sb.from('profiles').select('is_keeper,preferred_lang').eq('id',user.id).maybeSingle();
+      if(pr){ state.keeper=!!pr.is_keeper; if(state.keeper){ window.__lfKeeper=true; try{document.dispatchEvent(new Event('lf-keeper-ready'));}catch(e){} }
+        if(pr.preferred_lang&&!stored&&T[pr.preferred_lang]) state.lang=pr.preferred_lang; } }catch(e){}
+    await loadData(); buildNames(); LIT=computeLit(); buildScenes(); render();
+  }
+  wire(); boot();
+})();
+</script>
+<script src="lf-nav.js" data-here="" data-parent="person-real.html"></script>
+</body></html>
