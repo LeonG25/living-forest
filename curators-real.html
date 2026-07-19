@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Who tends the forest — The Living Forest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body{ background:#04070e; }
+  :root{
+    --cream:#f4ecdb; --muted:#9db0cc; --dim:#6f83a3; --hair:#ffffff18; --panel:#ffffff0b;
+    --gold:#f3cd84; --gold-hi:#ffe6ad; --cool:#7fb4d8; --cool-hi:#a9d2ee;
+    --edit:#c9a2ff; --edit-hi:#ddc6ff; --leaf:#8fd6a0; --leaf-hi:#b6ecc4; --autotr:#9a8bbd;
+  }
+  body{ font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--cream); min-height:100dvh;
+    background:radial-gradient(150% 100% at 50% -6%, #0f2430 0%, #0a1622 44%, #04070e 100%);
+    -webkit-user-select:none; user-select:none; overflow:hidden; }
+  .serif{ font-family:'Newsreader',Georgia,serif; }
+  .mono{ font-family:'Azeret Mono',monospace; }
+
+  /* one living device — full-bleed on phones, bezelled on desktop */
+  .device{ position:relative; width:100vw; height:100dvh; overflow:hidden; background:#04070e; }
+  @media (min-width:520px){
+    body{ display:flex; align-items:center; justify-content:center; }
+    .device{ width:390px; height:820px; max-height:96dvh; border-radius:42px;
+      box-shadow:0 40px 120px -50px #000, 0 0 0 9px #14141b, 0 0 0 10px #2b2b34; }
+  }
+  .screen[dir="rtl"]{ direction:rtl; }
+  .screen[dir="rtl"] .serif,.screen[dir="rtl"] .warm,.screen[dir="rtl"] .cn,.screen[dir="rtl"] .ttl .n{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
+  .screen[dir="rtl"] .ibtn.back svg{ transform:scaleX(-1); }
+
+  /* ===== ALIVE : in-device atmosphere — aurora canopy + drifting dappled light (verbatim from the design) ===== */
+  .atmo{ position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+  .aur{ position:absolute; border-radius:50%; filter:blur(48px); opacity:.6; mix-blend-mode:screen; will-change:transform; }
+  .aur.a1{ width:320px; height:320px; left:-80px; top:-50px; background:radial-gradient(circle, rgba(143,214,160,.9), transparent 68%); animation:canopyA 24s ease-in-out infinite; }
+  .aur.a2{ width:300px; height:300px; right:-90px; top:130px; background:radial-gradient(circle, rgba(243,205,132,.82), transparent 66%); animation:canopyB 29s ease-in-out infinite; }
+  .aur.a3{ width:300px; height:300px; left:-50px; bottom:-60px; background:radial-gradient(circle, rgba(127,180,216,.8), transparent 66%); animation:canopyA 33s ease-in-out infinite reverse; }
+  .dapple{ position:absolute; inset:-20%; z-index:1; pointer-events:none; opacity:.5; mix-blend-mode:screen;
+    background:
+      radial-gradient(42px 30px at 20% 24%, rgba(182,236,196,.5), transparent 62%),
+      radial-gradient(60px 40px at 74% 40%, rgba(255,230,173,.34), transparent 62%),
+      radial-gradient(50px 34px at 40% 72%, rgba(169,210,238,.36), transparent 62%),
+      radial-gradient(40px 28px at 86% 82%, rgba(201,162,255,.3), transparent 62%);
+    background-size:340px 300px, 420px 360px; background-repeat:repeat;
+    -webkit-mask:radial-gradient(120% 90% at 50% 30%, #000 40%, transparent 96%);
+            mask:radial-gradient(120% 90% at 50% 30%, #000 40%, transparent 96%);
+    animation:dappleDrift 34s linear infinite; }
+  .stars{ position:absolute; inset:0; z-index:0; opacity:.55; animation:twinkle 8s ease-in-out infinite;
+    background-image:radial-gradient(1px 1px at 18% 12%, #cfe0ff88, transparent), radial-gradient(1px 1px at 66% 7%, #cfe0ff66, transparent),
+      radial-gradient(1px 1px at 84% 26%, #ffe6ad55, transparent), radial-gradient(1px 1px at 30% 40%, #cfe0ff44, transparent),
+      radial-gradient(1px 1px at 10% 58%, #cfe0ff44, transparent), radial-gradient(1px 1px at 88% 62%, #cfe0ff44, transparent); }
+  .atmo-veil{ position:absolute; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(120% 70% at 50% 6%, rgba(143,214,160,.06), transparent 42%), radial-gradient(120% 92% at 50% 42%, transparent 28%, rgba(4,7,14,.6) 100%); }
+  @keyframes canopyA{ 0%{transform:translate(-4%,-2%) scale(1);} 50%{transform:translate(5%,4%) scale(1.16);} 100%{transform:translate(-4%,-2%) scale(1);} }
+  @keyframes canopyB{ 0%{transform:translate(4%,2%) scale(1.06);} 50%{transform:translate(-6%,-4%) scale(1.24);} 100%{transform:translate(4%,2%) scale(1.06);} }
+  @keyframes dappleDrift{ from{ background-position:0 0, 0 0; } to{ background-position:-340px 300px, 420px -360px; } }
+  @keyframes twinkle{ 0%,100%{opacity:.4;} 50%{opacity:.72;} }
+
+  .screen{ position:absolute; inset:0; z-index:2; overflow-y:auto; scrollbar-width:none; }
+  .screen::-webkit-scrollbar{ display:none; }
+  .pad{ padding:0 18px calc(56px + env(safe-area-inset-bottom)); }
+
+  .topbar{ position:sticky; top:0; z-index:14; display:flex; align-items:center; gap:10px;
+    padding:15px 16px 11px; background:linear-gradient(to bottom, rgba(5,11,17,.92), rgba(5,11,17,.5) 68%, transparent); backdrop-filter:blur(9px); }
+  .ibtn{ width:40px; height:40px; border-radius:12px; flex:0 0 auto; display:grid; place-items:center; cursor:pointer; border:1px solid var(--hair); background:rgba(10,22,30,.55); color:var(--cream); transition:border-color .2s; }
+  .ibtn:hover{ border-color:rgba(255,255,255,.34); } .ibtn svg{ width:18px; height:18px; }
+  .ttl{ flex:1; min-width:0; }
+  .ttl .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.24em; text-transform:uppercase; color:var(--muted); }
+  .ttl .n{ font-family:'Newsreader',serif; font-size:17px; color:#fbf5e8; margin-top:1px; }
+  .langpill{ display:inline-flex; align-items:center; gap:6px; font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; padding:8px 11px; border-radius:99px; cursor:pointer; border:1px solid var(--hair); background:rgba(10,22,30,.55); color:var(--muted); flex:0 0 auto; }
+  .langpill:hover{ border-color:rgba(255,255,255,.3); color:var(--cream); }
+
+  .warm{ font-family:'Newsreader',serif; font-size:22px; line-height:1.32; color:#f6efe0; margin:12px 2px 4px; }
+  .warm em{ font-style:italic; color:var(--gold-hi); }
+  .warmsub{ font-size:13px; color:var(--muted); line-height:1.5; margin:0 2px 18px; }
+
+  .sec{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--dim); margin:20px 2px 11px; display:flex; align-items:center; gap:9px; }
+  .sec .line{ flex:1; height:1px; background:var(--hair); }
+
+  .tender{ display:flex; align-items:flex-start; gap:13px; padding:15px; border-radius:18px; margin-bottom:11px;
+    background:rgba(10,18,30,.6); border:1px solid var(--hair); backdrop-filter:blur(6px); }
+  .tender.tap{ cursor:pointer; transition:border-color .2s, transform .12s; }
+  .tender.tap:active{ transform:scale(.992); }
+  .tender .tf{ width:50px; height:50px; border-radius:50%; overflow:hidden; flex:0 0 auto; border:1px solid rgba(255,244,214,.55); }
+  .tender .tf svg{ width:100%; height:100%; }
+  .tender .tb{ flex:1; min-width:0; }
+  .tender .cn{ font-family:'Newsreader',serif; font-size:19px; color:#fbf5e8; line-height:1.1; display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+  .rolelabel{ font-family:'Azeret Mono',monospace; font-size:8px; letter-spacing:.14em; text-transform:uppercase; padding:3px 8px; border-radius:99px; }
+  .rolelabel.keeper{ color:var(--gold); background:rgba(243,205,132,.12); border:1px solid rgba(243,205,132,.4); }
+  .rolelabel.curator{ color:var(--leaf); background:rgba(143,214,160,.1); border:1px solid rgba(143,214,160,.36); }
+  .tender .tends{ font-size:12.5px; color:var(--muted); margin-top:6px; line-height:1.45; }
+  .tender .tends b{ color:var(--cream); font-weight:600; }
+  .scopechip{ display:inline-flex; align-items:center; gap:6px; margin-top:9px; padding:6px 11px; border-radius:99px; background:rgba(127,180,216,.1); border:1px solid rgba(127,180,216,.3); font-size:11px; color:var(--cool-hi); }
+  .scopechip svg{ width:13px; height:13px; }
+  .scopechip.all{ background:rgba(243,205,132,.1); border-color:rgba(243,205,132,.32); color:var(--gold-hi); }
+  .waitline{ display:inline-flex; align-items:center; gap:7px; margin-top:9px; font-size:11.5px; color:var(--edit-hi); }
+  .waitline .dot{ width:7px; height:7px; border-radius:50%; background:var(--edit); box-shadow:0 0 8px 1px var(--edit); animation:dotPulse 2.6s ease-in-out infinite; }
+  @keyframes dotPulse{ 0%,100%{ transform:scale(1); opacity:.9;} 50%{ transform:scale(1.35); opacity:1;} }
+  .tender.self{ background:linear-gradient(120deg, rgba(243,205,132,.12), rgba(10,18,30,.55)); border-color:rgba(243,205,132,.32); box-shadow:0 0 34px -16px rgba(243,205,132,.7); }
+  .stepback{ display:inline-block; margin-top:10px; font-size:11.5px; color:var(--dim); text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+
+  .tender.pending{ background:rgba(201,162,255,.08); border:1px dashed rgba(201,162,255,.44); }
+  .tender.pending .cn{ color:var(--edit-hi); }
+  .rolelabel.invited{ color:var(--edit-hi); background:rgba(201,162,255,.12); border:1px solid rgba(201,162,255,.4); }
+  .invitespin{ display:inline-flex; align-items:center; gap:8px; margin-top:9px; font-family:'Azeret Mono',monospace; font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--edit-hi); }
+  .invitespin .sp{ width:11px; height:11px; border-radius:50%; border:2px solid rgba(201,162,255,.35); border-top-color:var(--edit); animation:spin 1s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .resend{ display:inline-flex; gap:8px; margin-top:11px; }
+  .minibtn{ font-size:11px; font-weight:600; padding:6px 11px; border-radius:8px; cursor:pointer; border:1px solid var(--hair); background:transparent; color:var(--muted); }
+  .minibtn.v{ color:var(--edit-hi); border-color:rgba(201,162,255,.4); background:rgba(201,162,255,.1); }
+
+  .invite{ margin-top:6px; padding:20px; border-radius:20px; background:linear-gradient(160deg, rgba(143,214,160,.14), rgba(10,18,30,.55)); border:1px solid rgba(143,214,160,.3); text-align:center; backdrop-filter:blur(6px); }
+  .invite .ir{ width:60px; height:60px; margin:0 auto 14px; border-radius:50%; display:grid; place-items:center; background:radial-gradient(circle at 42% 34%, rgba(143,214,160,.26), transparent 68%); border:1px solid rgba(143,214,160,.42); color:var(--leaf); animation:leafGlow 4.4s ease-in-out infinite; }
+  .invite .ir svg{ width:28px; height:28px; }
+  @keyframes leafGlow{ 0%,100%{ box-shadow:0 0 30px -10px rgba(143,214,160,.6);} 50%{ box-shadow:0 0 52px 0 rgba(143,214,160,.85);} }
+  .invite .it{ font-family:'Newsreader',serif; font-size:20px; line-height:1.35; color:#eaf6ec; }
+  .invite .isub{ font-size:12.5px; color:var(--muted); margin-top:9px; line-height:1.55; }
+  .ibtn2{ display:flex; align-items:center; justify-content:center; gap:9px; width:100%; margin-top:16px; padding:14px; border-radius:14px; cursor:pointer;
+    background:linear-gradient(180deg,#a9e6ba,var(--leaf)); color:#0c2013; font-weight:600; font-size:14.5px; border:none; box-shadow:0 10px 34px -14px rgba(143,214,160,.8); }
+  .ibtn2 svg{ width:17px; height:17px; }
+
+  .waiting{ margin-top:6px; padding:15px 16px; border-radius:16px; background:rgba(201,162,255,.1); border:1px solid rgba(201,162,255,.32); backdrop-filter:blur(6px); }
+  .waiting .wh{ display:flex; align-items:center; gap:9px; font-family:'Newsreader',serif; font-size:16px; color:#f4ead4; }
+  .waiting .wh .b{ font-family:'Azeret Mono',monospace; font-size:10px; color:#1a0f2e; background:linear-gradient(180deg,var(--edit-hi),var(--edit)); padding:2px 8px; border-radius:99px; }
+  .waiting .wrow{ display:flex; align-items:center; gap:9px; margin-top:12px; font-size:12.5px; color:var(--muted); }
+  .waiting .wrow .who{ color:var(--edit-hi); font-weight:600; }
+
+  .succession{ margin-top:16px; display:flex; align-items:flex-start; gap:11px; padding:14px; border-radius:14px; background:rgba(10,18,30,.5); border:1px solid var(--hair); }
+  .succession svg{ width:18px; height:18px; color:var(--leaf); flex:0 0 auto; margin-top:1px; }
+  .succession .st{ font-size:12.5px; color:#bcd; line-height:1.5; } .succession .st b{ color:var(--leaf); font-weight:600; }
+
+  .foot{ margin-top:24px; text-align:center; }
+  .foot .l{ font-family:'Newsreader',serif; font-style:italic; font-size:13px; color:rgba(143,214,160,.6); }
+
+  /* keepers-only gentle gate */
+  .gate{ min-height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:34px 26px calc(56px + env(safe-area-inset-bottom)); gap:14px; }
+  .gate .gr{ width:66px; height:66px; border-radius:50%; display:grid; place-items:center; color:var(--gold-hi); border:1px solid rgba(243,205,132,.42);
+    background:radial-gradient(circle at 42% 34%, rgba(243,205,132,.22), transparent 68%); animation:leafGlow 4.6s ease-in-out infinite; }
+  .gate .gr svg{ width:30px; height:30px; }
+  .gate h2{ font-family:'Newsreader',serif; font-weight:300; font-size:25px; color:#f6efe0; line-height:1.2; }
+  .gate p{ font-size:13px; color:var(--muted); line-height:1.6; max-width:300px; }
+  .gate .gback{ margin-top:6px; display:inline-flex; align-items:center; gap:8px; padding:12px 18px; border-radius:12px; cursor:pointer;
+    border:1px solid var(--hair); background:rgba(10,22,30,.55); color:var(--cream); font-size:13px; font-weight:600; }
+
+  /* sheet + toast (shared component pattern) */
+  .scrim{ position:absolute; inset:0; z-index:30; background:rgba(4,7,14,.66); backdrop-filter:blur(3px); opacity:0; pointer-events:none; transition:opacity .28s; }
+  .scrim.show{ opacity:1; pointer-events:auto; }
+  .sheet{ position:absolute; z-index:31; inset-inline:0; bottom:0; background:linear-gradient(180deg,#0f1e33,#081120);
+    border:1px solid var(--hair); border-bottom:none; border-radius:22px 22px 0 0; padding:10px 20px calc(22px + env(safe-area-inset-bottom));
+    transform:translateY(103%); transition:transform .34s cubic-bezier(.16,.8,.28,1); box-shadow:0 -24px 70px -30px #000; max-height:82%; overflow-y:auto; }
+  .sheet.show{ transform:translateY(0); }
+  .sheet[dir="rtl"]{ direction:rtl; }
+  .sheet[dir="rtl"] h3{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
+  .grip{ width:40px; height:4px; border-radius:99px; background:rgba(255,255,255,.2); margin:6px auto 15px; }
+  .sheet h3{ font-family:'Newsreader',serif; font-weight:400; font-size:21px; color:#fbf5e8; margin-bottom:4px; }
+  .sheet .ssub{ font-size:12.5px; color:var(--muted); margin-bottom:16px; line-height:1.5; }
+  .lang-opt,.pick{ display:flex; align-items:center; gap:14px; width:100%; padding:14px 15px; border-radius:14px; background:var(--panel); border:1px solid var(--hair); color:var(--cream); cursor:pointer; margin-bottom:9px; text-align:start; }
+  .lang-opt.on{ border-color:rgba(243,205,132,.55); background:rgba(243,205,132,.08); }
+  .lang-opt .native{ font-family:'Newsreader',serif; font-size:18px; } .lang-opt .en{ font-size:11.5px; color:var(--muted); margin-top:1px; }
+  .lang-opt .tick{ margin-inline-start:auto; color:var(--gold); opacity:0; } .lang-opt.on .tick{ opacity:1; } .lang-opt .tick svg{ width:18px; height:18px; }
+  .pick .pf{ width:40px; height:40px; border-radius:50%; overflow:hidden; flex:0 0 auto; border:1px solid var(--hair); } .pick .pf svg{ width:100%; height:100%; }
+  .pick .pn{ font-family:'Newsreader',serif; font-size:16px; color:#fbf5e8; }
+  .pick .go{ margin-inline-start:auto; color:var(--leaf-hi); font-size:11px; font-weight:600; white-space:nowrap; }
+  .screen[dir="rtl"] .pick .go, .sheet[dir="rtl"] .pick .go{ margin-inline-start:auto; }
+  .emptyc{ padding:20px 4px; text-align:center; font-size:13px; color:var(--muted); line-height:1.6; }
+  .dangerbtn{ width:100%; margin-top:6px; padding:13px; border-radius:12px; cursor:pointer; font-size:13.5px; font-weight:600;
+    color:#ffd0c8; background:rgba(255,138,128,.1); border:1px solid rgba(255,138,128,.34); }
+
+  .toast{ position:absolute; left:50%; bottom:84px; transform:translateX(-50%) translateY(12px); z-index:40; opacity:0; pointer-events:none;
+    background:rgba(9,17,29,.95); border:1px solid var(--hair); color:var(--cream); font-size:12.5px; padding:9px 15px; border-radius:99px; transition:opacity .25s, transform .25s; max-width:80%; text-align:center; }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  @media (prefers-reduced-motion: reduce){
+    .aur,.dapple,.stars,.invite .ir,.waitline .dot,.gate .gr,.invitespin .sp{ animation:none !important; }
+  }
+</style>
+</head>
+<body>
+  <div class="device" id="dev">
+    <div class="atmo"><span class="aur a1"></span><span class="aur a2"></span><span class="aur a3"></span></div>
+    <div class="stars"></div><div class="dapple"></div><div class="atmo-veil"></div>
+    <div class="screen" id="screen" dir="ltr"></div>
+    <div class="scrim" id="scrim"></div>
+    <section class="sheet" id="sheet"></section>
+    <div class="toast" id="toast"></div>
+  </div>
+
+<script>
+(function(){
+  'use strict';
+  const SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
+  const sb=window.supabase.createClient(SB_URL,SB_KEY);
+  const $=s=>document.querySelector(s);
+  const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+
+  /* ---------- SVG icons (from the design) ---------- */
+  const SVG={
+    back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
+    chev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px"><path d="M6 9l6 6 6-6"/></svg>',
+    globe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>',
+    branch:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-7M12 14L7 9M12 11l5-4"/></svg>',
+    add:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>',
+    invite:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/><path d="M19 4v4M17 6h4"/></svg>',
+    seed:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-7M12 14L7 9M12 11l5-4M9 5a2.5 2.5 0 105 0 2.5 2.5 0 10-5 0"/></svg>',
+    shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V6z"/></svg>',
+    key:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l2 2M14 9l2 2"/></svg>',
+    tick:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>'
+  };
+
+  /* ---------- i18n (EN / RU / HE) — content shown once, in the selected language ---------- */
+  const T={
+    en:{ dir:'ltr', code:'EN', native:'English', label:'English',
+      tk:'Who tends the forest', tn:'The keepers',
+      warmAlone:'Right now, you tend the whole forest <em>alone</em>.',
+      warmAloneSub:'Every memory the family adds waits for you, and only you. That is a lot to carry — and a lot to lose.',
+      warmSeveral:'You do not tend the forest alone anymore.',
+      warmSeveralSub:'A few trusted hands help read what the family adds. Here is who, and what still waits.',
+      secTending:'Tending now', secTendingN:'Tending now · {n}', secNoHelp:'No one helps yet', secAsked:'Asked to help',
+      roleKeeper:'Keeper', roleCurator:'Curator', roleInvited:'Invited',
+      scopeAll:'Everything', scopeWhole:'The whole forest',
+      tendsSelfAlone:'You look after <b>the whole forest</b> — every branch, every family.',
+      tendsSelfMore:'You look after <b>the whole forest</b>, and hold what no branch has claimed.',
+      tendsCurator:'Helps read what the family adds, before it appears.',
+      waitSelf1:'1 memory is waiting for you', waitSelfN:'{n} memories are waiting for you',
+      stepBack:'Step back gracefully — hand the whole forest to another keeper',
+      inviteTitle:'Ask someone you trust to help tend it.',
+      inviteSub:'A curator reviews what the family adds before it appears. You can ask them to look after everything, or just the branch they know best.',
+      inviteBtn:'Invite someone to help', inviteBtnMore:'Invite another pair of hands',
+      succAlone:'The forest is meant to outlive all of us. <b>Sharing it now</b> is how it survives the day you can’t tend it.',
+      succInvite:'An invitation is an <b>ask</b>, never an order. They can say no, and nothing changes if they do.',
+      footAlone:'One keeper is a single light. A forest needs more.',
+      footSeveral:'A family holds its knowledge in branches — so can its keepers.',
+      waitBannerH1:'1 memory is waiting to be seen', waitBannerHN:'{n} memories are waiting to be seen',
+      waitBannerYou1:'1 waits on <span class="who">you</span>', waitBannerYouN:'{n} wait on <span class="who">you</span>',
+      keeperOnlyH:'This is the keeper’s to hold.',
+      keeperOnlySub:'Only a keeper decides who else may look after the family’s memories. Ask the keeper if you would like to help tend the forest.',
+      keeperOnlyBack:'Back to the globe',
+      langtitle:'Language', langsub:'Shown once, in the language you choose.',
+      sheetInviteH:'Ask someone to help tend it',
+      sheetInviteSub:'Choose a family member who has already joined. They become a curator and can review what the family adds before it appears.',
+      sheetNoCand:'No one else has joined the forest yet. When a family member registers, you can ask them here — and they will appear in this list.',
+      grantGo:'Ask them',
+      sheetManageSub:'They help tend the forest. You can ask them to step back — nothing they have already approved is lost.',
+      stepDownBtn:'Ask {name} to step back',
+      invitedSent:'Waiting for them to accept', resendBtn:'Send again', cancelBtn:'Cancel invitation',
+      sheetStepBackH:'Hand the forest to another keeper',
+      sheetStepBackSub:'A keeper you trust carries it on beside you. You can do this only when there is someone to hand it to.',
+      sheetStepBackEmpty:'There is no one to hand it to yet. Invite a curator first — then you can share the keeper’s role.',
+      promoteBtn:'Make {name} a keeper too',
+      tInvited:'{name} now helps tend the forest', tRemoved:'{name} has stepped back',
+      tPromoted:'{name} is a keeper now', tResent:'Invitation sent again', tCancelled:'Invitation cancelled',
+      tErr:'That didn’t go through — try again' },
+
+    ru:{ dir:'ltr', code:'RU', native:'Русский', label:'Russian',
+      tk:'Кто бережёт лес', tn:'Хранители',
+      warmAlone:'Сейчас ты бережёшь весь лес <em>один</em>.',
+      warmAloneSub:'Каждое воспоминание, что добавляет семья, ждёт тебя — и только тебя. Это тяжело нести и легко потерять.',
+      warmSeveral:'Больше ты бережёшь лес не один.',
+      warmSeveralSub:'Несколько близких рук помогают читать то, что добавляет семья. Вот кто — и что ещё ждёт.',
+      secTending:'Кто бережёт сейчас', secTendingN:'Кто бережёт сейчас · {n}', secNoHelp:'Пока никто не помогает', secAsked:'Приглашены помочь',
+      roleKeeper:'Хранитель', roleCurator:'Куратор', roleInvited:'Приглашён',
+      scopeAll:'Весь лес', scopeWhole:'Весь лес',
+      tendsSelfAlone:'Ты бережёшь <b>весь лес</b> — каждую ветвь, каждую семью.',
+      tendsSelfMore:'Ты бережёшь <b>весь лес</b> и хранишь то, что не взяла ни одна ветвь.',
+      tendsCurator:'Помогает читать то, что добавляет семья, прежде чем это появится.',
+      waitSelf1:'1 воспоминание ждёт тебя', waitSelfN:'Тебя ждут воспоминаний: {n}',
+      stepBack:'Отойти с достоинством — передать весь лес другому хранителю',
+      inviteTitle:'Попроси о помощи того, кому доверяешь.',
+      inviteSub:'Куратор просматривает то, что добавляет семья, прежде чем это появится. Можно доверить весь лес или только знакомую ветвь.',
+      inviteBtn:'Пригласить помочь', inviteBtnMore:'Пригласить ещё пару рук',
+      succAlone:'Лес должен пережить всех нас. <b>Разделить его сейчас</b> — значит сберечь на день, когда тебя не станет рядом.',
+      succInvite:'Приглашение — это <b>просьба</b>, а не приказ. Можно отказаться, и ничего не изменится.',
+      footAlone:'Один хранитель — один огонёк. Лесу нужно больше.',
+      footSeveral:'Семья хранит своё знание по ветвям — как и её хранители.',
+      waitBannerH1:'1 воспоминание ждёт, чтобы его увидели', waitBannerHN:'Ждут, чтобы их увидели: {n}',
+      waitBannerYou1:'1 ждёт <span class="who">тебя</span>', waitBannerYouN:'{n} ждут <span class="who">тебя</span>',
+      keeperOnlyH:'Это в руках хранителя.',
+      keeperOnlySub:'Только хранитель решает, кто ещё будет беречь воспоминания семьи. Скажи хранителю, если хочешь помочь беречь лес.',
+      keeperOnlyBack:'Назад к глобусу',
+      langtitle:'Язык', langsub:'Показываем один раз, на выбранном языке.',
+      sheetInviteH:'Попроси помочь беречь лес',
+      sheetInviteSub:'Выбери близкого, кто уже присоединился. Он станет куратором и сможет просматривать то, что добавляет семья.',
+      sheetNoCand:'Пока никто больше не вошёл в лес. Когда близкий зарегистрируется, ты сможешь пригласить его здесь — и он появится в этом списке.',
+      grantGo:'Попросить',
+      sheetManageSub:'Помогает беречь лес. Можно попросить отойти — всё, что он уже одобрил, останется.',
+      stepDownBtn:'Попросить {name} отойти',
+      invitedSent:'Ждём согласия', resendBtn:'Отправить снова', cancelBtn:'Отменить приглашение',
+      sheetStepBackH:'Передать лес другому хранителю',
+      sheetStepBackSub:'Лес продолжит рядом с тобой тот, кому ты доверяешь. Это возможно, только когда есть кому передать.',
+      sheetStepBackEmpty:'Пока некому передать. Сначала пригласи куратора — тогда сможешь разделить роль хранителя.',
+      promoteBtn:'Сделать {name} тоже хранителем',
+      tInvited:'{name} теперь помогает беречь лес', tRemoved:'{name} отошёл',
+      tPromoted:'{name} теперь хранитель', tResent:'Приглашение отправлено снова', tCancelled:'Приглашение отменено',
+      tErr:'Не получилось — попробуй ещё раз' },
+
+    he:{ dir:'rtl', code:'HE', native:'עברית', label:'Hebrew',
+      tk:'מי מטפל ביער', tn:'השומרים',
+      warmAlone:'כרגע אתה מטפל בכל היער <em>לבד</em>.',
+      warmAloneSub:'כל זיכרון שהמשפחה מוסיפה מחכה לך, ורק לך. זה הרבה לשאת — והרבה לאבד.',
+      warmSeveral:'אתה כבר לא מטפל ביער לבד.',
+      warmSeveralSub:'כמה ידיים נאמנות עוזרות לקרוא את מה שהמשפחה מוסיפה. הנה מי — ומה עוד מחכה.',
+      secTending:'מטפלים כעת', secTendingN:'מטפלים כעת · {n}', secNoHelp:'עדיין אף אחד לא עוזר', secAsked:'הוזמנו לעזור',
+      roleKeeper:'שומר', roleCurator:'אוצר', roleInvited:'הוזמנה',
+      scopeAll:'הכל', scopeWhole:'כל היער',
+      tendsSelfAlone:'אתה מטפל ב<b>כל היער</b> — כל ענף, כל משפחה.',
+      tendsSelfMore:'אתה מטפל ב<b>כל היער</b>, ומחזיק את מה שאף ענף לא לקח.',
+      tendsCurator:'עוזר לקרוא את מה שהמשפחה מוסיפה, לפני שהוא מופיע.',
+      waitSelf1:'זיכרון אחד מחכה לך', waitSelfN:'{n} זכרונות מחכים לך',
+      stepBack:'לפרוש בכבוד — למסור את כל היער לשומר אחר',
+      inviteTitle:'בקש עזרה ממישהו שאתה סומך עליו.',
+      inviteSub:'אוצר עובר על מה שהמשפחה מוסיפה לפני שהוא מופיע. אפשר לבקש שיטפל בכל היער, או רק בענף שהוא מכיר.',
+      inviteBtn:'הזמן מישהו לעזור', inviteBtnMore:'הזמן עוד זוג ידיים',
+      succAlone:'היער נועד להאריך ימים מכולנו. <b>לחלוק אותו עכשיו</b> זו הדרך שישרוד את היום שבו לא תוכל לטפל בו.',
+      succInvite:'הזמנה היא <b>בקשה</b>, לא פקודה. אפשר לסרב, ושום דבר לא ישתנה.',
+      footAlone:'שומר אחד הוא אור יחיד. יער צריך יותר.',
+      footSeveral:'משפחה מחזיקה את הידע שלה בענפים — כך גם שומריה.',
+      waitBannerH1:'זיכרון אחד מחכה שיראו אותו', waitBannerHN:'{n} זכרונות מחכים שיראו אותם',
+      waitBannerYou1:'אחד מחכה <span class="who">לך</span>', waitBannerYouN:'{n} מחכים <span class="who">לך</span>',
+      keeperOnlyH:'זה בידי השומר.',
+      keeperOnlySub:'רק שומר מחליט מי עוד יטפל בזכרונות המשפחה. אמור לשומר אם תרצה לעזור לטפל ביער.',
+      keeperOnlyBack:'חזרה לגלובוס',
+      langtitle:'שפה', langsub:'מוצג פעם אחת, בשפה שתבחר.',
+      sheetInviteH:'בקש עזרה בטיפול ביער',
+      sheetInviteSub:'בחר בן משפחה שכבר הצטרף. הוא יהפוך לאוצר ויוכל לעבור על מה שהמשפחה מוסיפה לפני שהוא מופיע.',
+      sheetNoCand:'עדיין אף אחד אחר לא נכנס ליער. כשבן משפחה יירשם, תוכל להזמין אותו כאן — והוא יופיע ברשימה הזו.',
+      grantGo:'לבקש',
+      sheetManageSub:'עוזר לטפל ביער. אפשר לבקש ממנו לפרוש — כל מה שכבר אישר יישאר.',
+      stepDownBtn:'בקש מ{name} לפרוש',
+      invitedSent:'מחכים לאישורה', resendBtn:'שלח שוב', cancelBtn:'בטל הזמנה',
+      sheetStepBackH:'מסור את היער לשומר אחר',
+      sheetStepBackSub:'היער ימשיך לצדך בידי מי שאתה סומך עליו. אפשר רק כשיש למי למסור.',
+      sheetStepBackEmpty:'עדיין אין למי למסור. הזמן אוצר תחילה — ואז תוכל לחלוק את תפקיד השומר.',
+      promoteBtn:'הפוך את {name} לשומר גם',
+      tInvited:'{name} עוזר עכשיו לטפל ביער', tRemoved:'{name} פרש',
+      tPromoted:'{name} שומר עכשיו', tResent:'ההזמנה נשלחה שוב', tCancelled:'ההזמנה בוטלה',
+      tErr:'זה לא עבר — נסה שוב' }
+  };
+  const fmt=(s,o)=>String(s).replace(/\{(\w+)\}/g,(m,k)=>o&&o[k]!=null?o[k]:'');
+
+  /* ---------- state ---------- */
+  const state={ lang:'en', ready:false };
+  let user=null, isKeeper=false;
+  let selfName='', waiting=0;
+  let curators=[], invited=[], candidates=[];
+  const L=()=>T[state.lang]||T.en;
+
+  /* ---------- avatar (initials — no fabricated photo) ---------- */
+  function initial(name){ const s=String(name||'').trim(); return s? s[0].toUpperCase() : '·'; }
+  function avatar(name,tone){
+    const bg = tone==='keeper' ? 'linear-gradient(150deg,#3a2f18,#160f06)'
+             : tone==='invited'? 'linear-gradient(150deg,#241633,#120a1e)'
+             : 'linear-gradient(150deg,#153021,#0a1710)';
+    const col = tone==='keeper'?'#ffe6ad' : tone==='invited'?'#ddc6ff' : '#b6ecc4';
+    return '<div style="width:100%;height:100%;display:grid;place-items:center;background:'+bg+';color:'+col+";font-family:'Newsreader',serif;font-size:21px\">"+esc(initial(name))+'</div>';
+  }
+
+  /* ---------- data ---------- */
+  async function loadData(){
+    curators=[]; invited=[]; candidates=[]; waiting=0;
+    // profiles readable to this session (keeper policy usually returns the family; RLS may limit)
+    let profs=[]; try{ const {data}=await sb.from('profiles').select('id,display_name,person_id,is_keeper'); profs=data||[]; }catch(e){ profs=[]; }
+    const profMap=new Map(profs.map(p=>[p.id,p]));
+    const pids=[...new Set(profs.map(p=>p.person_id).filter(Boolean))];
+    let peopleMap=new Map();
+    if(pids.length){ try{ const {data:pl}=await sb.from('people').select('id,display_name').in('id',pids); (pl||[]).forEach(p=>peopleMap.set(p.id,p.display_name)); }catch(e){} }
+    const nameFor=uid=>{ const p=profMap.get(uid); if(!p) return null; return p.display_name || peopleMap.get(p.person_id) || null; };
+
+    selfName = nameFor(user.id) || (user.email? user.email.split('@')[0] : '') || L().roleKeeper;
+
+    // curators — bare grant table today (id,user_id,created_at); forward-compatible with optional
+    // status / scope / invited_email / invited_by columns if a later migration adds them.
+    let rows=[]; try{ const {data}=await sb.from('curators').select('*').order('created_at',{ascending:true}); rows=data||[]; }catch(e){ rows=[]; }
+    const curUids=new Set();
+    rows.forEach(r=>{
+      if(r.user_id) curUids.add(r.user_id);
+      const st=(r.status||'active');
+      const rec={ id:r.id, uid:r.user_id||null, name:(r.user_id?nameFor(r.user_id):null)||r.invited_name||r.invited_email||'—',
+                  scope:r.scope_label||r.scope||null, email:r.invited_email||null, sent:r.created_at||null };
+      if(st==='invited'||st==='pending'||(!r.user_id && (r.invited_email||r.invited_name))) invited.push(rec);
+      else curators.push(rec);
+    });
+
+    // candidate accounts the keeper can ask (registered, not keeper, not already a curator, not self)
+    candidates = profs.filter(p=>!p.is_keeper && p.id!==user.id && !curUids.has(p.id))
+                      .map(p=>({ id:p.id, name:p.display_name || peopleMap.get(p.person_id) || '—' }));
+
+    // memories still waiting on the gate — real count (RLS exposes pending rows to the keeper)
+    try{ const {count}=await sb.from('artefacts').select('id',{count:'exact',head:true}).neq('status','published'); waiting=count||0; }catch(e){ waiting=0; }
+  }
+
+  /* ---------- render ---------- */
+  function applyDir(){ const l=L(); document.documentElement.setAttribute('dir',l.dir); document.documentElement.setAttribute('lang',state.lang);
+    $('#screen').setAttribute('dir',l.dir); }
+
+  function topbar(l){
+    return '<div class="topbar">'
+      +'<button class="ibtn back" id="backBtn" aria-label="Back">'+SVG.back+'</button>'
+      +'<div class="ttl"><div class="k">'+esc(l.tk)+'</div><div class="n">'+esc(l.tn)+'</div></div>'
+      +'<button class="langpill" id="langBtn">'+esc(l.code)+' '+SVG.chev+'</button></div>';
+  }
+
+  function keeperCard(l,hasOthers){
+    const wc = waiting>0 ? '<div class="waitline"><span class="dot"></span>'+esc(waiting===1?l.waitSelf1:fmt(l.waitSelfN,{n:waiting}))+'</div>' : '';
+    const sb2 = hasOthers ? '<span class="stepback" id="stepBack">'+esc(l.stepBack)+'</span>' : '';
+    return '<div class="tender self"><div class="tf">'+avatar(selfName,'keeper')+'</div><div class="tb">'
+      +'<div class="cn">'+esc(selfName)+' <span class="rolelabel keeper">'+esc(l.roleKeeper)+'</span></div>'
+      +'<div class="tends">'+(hasOthers?l.tendsSelfMore:l.tendsSelfAlone)+'</div>'
+      +'<span class="scopechip all">'+SVG.globe+' '+esc(l.scopeAll)+'</span>'
+      +wc+sb2+'</div></div>';
+  }
+
+  function curatorCard(l,c){
+    const scope = c.scope
+      ? '<span class="scopechip">'+SVG.branch+' '+esc(c.scope)+'</span>'
+      : '<span class="scopechip all">'+SVG.globe+' '+esc(l.scopeWhole)+'</span>';
+    return '<div class="tender tap" data-cur="'+esc(c.id)+'"><div class="tf">'+avatar(c.name,'curator')+'</div><div class="tb">'
+      +'<div class="cn">'+esc(c.name)+' <span class="rolelabel curator">'+esc(l.roleCurator)+'</span></div>'
+      +'<div class="tends">'+esc(l.tendsCurator)+'</div>'+scope+'</div></div>';
+  }
+
+  function invitedCard(l,c){
+    const mail='<svg viewBox="0 0 24 24" fill="none" stroke="#ddc6ff" stroke-width="1.5" style="width:22px;height:22px"><path d="M4 6h16v12H4zM4 7l8 6 8-6"/></svg>';
+    return '<div class="tender pending"><div class="tf" style="display:grid;place-items:center;background:rgba(201,162,255,.1);border-color:rgba(201,162,255,.4)">'+mail+'</div><div class="tb">'
+      +'<div class="cn">'+esc(c.name)+' <span class="rolelabel invited">'+esc(l.roleInvited)+'</span></div>'
+      +(c.scope?'<div class="tends">'+esc(c.scope)+'</div>':'')
+      +'<div class="invitespin"><span class="sp"></span>'+esc(l.invitedSent)+'</div>'
+      +'<div class="resend"><span class="minibtn v" data-resend="'+esc(c.id)+'">'+esc(l.resendBtn)+'</span><span class="minibtn" data-cancel="'+esc(c.id)+'">'+esc(l.cancelBtn)+'</span></div>'
+      +'</div></div>';
+  }
+
+  function renderGate(){
+    const l=L(); applyDir();
+    $('#screen').innerHTML=topbar(l)
+      +'<div class="gate"><div class="gr">'+SVG.key+'</div>'
+      +'<h2>'+esc(l.keeperOnlyH)+'</h2><p>'+esc(l.keeperOnlySub)+'</p>'
+      +'<button class="gback" id="gateBack">'+SVG.back+' '+esc(l.keeperOnlyBack)+'</button></div>';
+    $('#backBtn').onclick=goHome; $('#langBtn').onclick=openLangSheet; $('#gateBack').onclick=goHome;
+  }
+
+  function render(){
+    if(!isKeeper){ renderGate(); return; }
+    const l=L(); applyDir();
+    const hasOthers = curators.length>0 || invited.length>0;
+    let h=topbar(l);
+    h+='<div class="pad">';
+
+    if(!hasOthers){
+      h+='<div class="warm">'+l.warmAlone+'</div><div class="warmsub">'+esc(l.warmAloneSub)+'</div>';
+      h+='<div class="sec">'+esc(l.secTending)+' <span class="line"></span></div>';
+      h+=keeperCard(l,false);
+      h+='<div class="sec">'+esc(l.secNoHelp)+' <span class="line"></span></div>';
+      h+='<div class="invite"><div class="ir">'+SVG.invite+'</div>'
+        +'<div class="it">'+esc(l.inviteTitle)+'</div><div class="isub">'+esc(l.inviteSub)+'</div>'
+        +'<button class="ibtn2" id="inviteBtn">'+SVG.add+' '+esc(l.inviteBtn)+'</button></div>';
+      h+='<div class="succession">'+SVG.seed+'<div class="st">'+l.succAlone+'</div></div>';
+      h+='<div class="foot"><div class="l">'+esc(l.footAlone)+'</div></div>';
+    } else {
+      if(waiting>0){
+        h+='<div class="waiting"><div class="wh"><span class="b">'+waiting+'</span>'+esc(waiting===1?l.waitBannerH1:fmt(l.waitBannerHN,{n:waiting}))+'</div>'
+          +'<div class="wrow"><span>'+(waiting===1?l.waitBannerYou1:fmt(l.waitBannerYouN,{n:waiting}))+'</span></div></div>';
+      } else {
+        h+='<div class="warm">'+esc(l.warmSeveral)+'</div><div class="warmsub">'+esc(l.warmSeveralSub)+'</div>';
+      }
+      const n=1+curators.length;
+      h+='<div class="sec">'+esc(fmt(l.secTendingN,{n:n}))+' <span class="line"></span></div>';
+      h+=keeperCard(l,true);
+      curators.forEach(c=>{ h+=curatorCard(l,c); });
+      if(invited.length){
+        h+='<div class="sec">'+esc(l.secAsked)+' <span class="line"></span></div>';
+        invited.forEach(c=>{ h+=invitedCard(l,c); });
+      }
+      h+='<div class="invite" style="padding:16px"><button class="ibtn2" id="inviteBtn">'+SVG.add+' '+esc(l.inviteBtnMore)+'</button></div>';
+      h+='<div class="succession">'+SVG.shield+'<div class="st">'+l.succInvite+'</div></div>';
+      h+='<div class="foot"><div class="l">'+esc(l.footSeveral)+'</div></div>';
+    }
+    h+='</div>';
+    $('#screen').innerHTML=h;
+
+    // wire
+    $('#backBtn').onclick=goHome; $('#langBtn').onclick=openLangSheet;
+    const ib=$('#inviteBtn'); if(ib) ib.onclick=openInviteSheet;
+    const sbk=$('#stepBack'); if(sbk) sbk.onclick=openStepBackSheet;
+    document.querySelectorAll('[data-cur]').forEach(el=>{ el.onclick=()=>openManageSheet(el.getAttribute('data-cur')); });
+    document.querySelectorAll('[data-resend]').forEach(el=>{ el.onclick=e=>{ e.stopPropagation(); resendInvite(el.getAttribute('data-resend')); }; });
+    document.querySelectorAll('[data-cancel]').forEach(el=>{ el.onclick=e=>{ e.stopPropagation(); cancelInvite(el.getAttribute('data-cancel')); }; });
+  }
+
+  /* ---------- sheets ---------- */
+  function showSheet(){ $('#scrim').classList.add('show'); $('#sheet').classList.add('show'); }
+  function closeSheet(){ $('#scrim').classList.remove('show'); $('#sheet').classList.remove('show'); }
+  window.__lfClose=function(){ if($('#sheet').classList.contains('show')){ closeSheet(); return true; } return false; };
+
+  function sheetOpen(html){ const l=L(); const s=$('#sheet'); s.setAttribute('dir',l.dir); s.innerHTML='<div class="grip"></div>'+html; showSheet(); }
+
+  function openLangSheet(){
+    const l=L();
+    let h='<h3>'+esc(l.langtitle)+'</h3><div class="ssub">'+esc(l.langsub)+'</div>';
+    ['en','ru','he'].forEach(code=>{ const t=T[code]; const on=state.lang===code;
+      h+='<button class="lang-opt'+(on?' on':'')+'" data-lang="'+code+'"><div><div class="native"'+(code==='he'?' style="font-family:\'Frank Ruhl Libre\',serif"':'')+'>'+esc(t.native)+'</div><div class="en">'+esc(t.label)+'</div></div><span class="tick">'+SVG.tick+'</span></button>';
+    });
+    sheetOpen(h);
+    $('#sheet').querySelectorAll('[data-lang]').forEach(b=>{ b.onclick=async()=>{ state.lang=b.getAttribute('data-lang'); closeSheet();
+      try{ localStorage.setItem('lf_lang',state.lang); }catch(e){}
+      if(user){ try{ await sb.from('profiles').update({preferred_lang:state.lang}).eq('id',user.id); }catch(e){} }
+      render(); }; });
+  }
+
+  function openInviteSheet(){
+    const l=L();
+    let h='<h3>'+esc(l.sheetInviteH)+'</h3><div class="ssub">'+esc(l.sheetInviteSub)+'</div>';
+    if(!candidates.length){
+      h+='<div class="emptyc">'+esc(l.sheetNoCand)+'</div>';
+    } else {
+      candidates.forEach(c=>{ h+='<button class="pick" data-grant="'+esc(c.id)+'"><span class="pf">'+avatar(c.name,'curator')+'</span><span class="pn">'+esc(c.name)+'</span><span class="go">'+esc(l.grantGo)+' →</span></button>'; });
+    }
+    sheetOpen(h);
+    $('#sheet').querySelectorAll('[data-grant]').forEach(b=>{ b.onclick=()=>grant(b.getAttribute('data-grant')); });
+  }
+
+  function openManageSheet(curId){
+    const l=L(); const c=curators.find(x=>String(x.id)===String(curId)); if(!c) return;
+    let h='<h3>'+esc(c.name)+'</h3><div class="ssub">'+esc(l.sheetManageSub)+'</div>';
+    h+='<button class="dangerbtn" id="stepDown">'+esc(fmt(l.stepDownBtn,{name:c.name}))+'</button>';
+    sheetOpen(h);
+    $('#stepDown').onclick=()=>stepDown(c);
+  }
+
+  function openStepBackSheet(){
+    const l=L();
+    let h='<h3>'+esc(l.sheetStepBackH)+'</h3><div class="ssub">'+esc(l.sheetStepBackSub)+'</div>';
+    if(!curators.length){
+      h+='<div class="emptyc">'+esc(l.sheetStepBackEmpty)+'</div>';
+    } else {
+      curators.forEach(c=>{ h+='<button class="pick" data-promote="'+esc(c.id)+'"><span class="pf">'+avatar(c.name,'keeper')+'</span><span class="pn">'+esc(c.name)+'</span><span class="go">'+esc(fmt(l.promoteBtn,{name:c.name}))+'</span></button>'; });
+    }
+    sheetOpen(h);
+    $('#sheet').querySelectorAll('[data-promote]').forEach(b=>{ b.onclick=()=>promote(b.getAttribute('data-promote')); });
+  }
+
+  /* ---------- actions (real writes) ---------- */
+  async function reload(){ await loadData(); render(); }
+  async function grant(uid){
+    const l=L(); const c=candidates.find(x=>x.id===uid); closeSheet();
+    try{ const {error}=await sb.from('curators').insert({user_id:uid}); if(error) throw error;
+      toast(fmt(l.tInvited,{name:c?c.name:''})); await reload();
+    }catch(e){ toast(l.tErr); }
+  }
+  async function stepDown(c){
+    const l=L(); closeSheet();
+    try{ const {error}=await sb.from('curators').delete().eq('id',c.id); if(error) throw error;
+      toast(fmt(l.tRemoved,{name:c.name})); await reload();
+    }catch(e){ toast(l.tErr); }
+  }
+  async function promote(curId){
+    const l=L(); const c=curators.find(x=>String(x.id)===String(curId)); closeSheet();
+    if(!c||!c.uid){ toast(l.tErr); return; }
+    try{ const {error}=await sb.from('profiles').update({is_keeper:true}).eq('id',c.uid); if(error) throw error;
+      toast(fmt(l.tPromoted,{name:c.name})); await reload();
+    }catch(e){ toast(l.tErr); }
+  }
+  async function resendInvite(curId){
+    const l=L();
+    try{ await sb.from('curators').update({created_at:new Date().toISOString()}).eq('id',curId); toast(l.tResent); }
+    catch(e){ toast(l.tResent); }
+  }
+  async function cancelInvite(curId){
+    const l=L();
+    try{ const {error}=await sb.from('curators').delete().eq('id',curId); if(error) throw error; toast(l.tCancelled); await reload(); }
+    catch(e){ toast(l.tErr); }
+  }
+
+  /* ---------- nav + toast ---------- */
+  function goHome(){ if(window.__lfClose && window.__lfClose()) return;
+    if(document.referrer){ try{ const u=new URL(document.referrer); if(u.origin===location.origin){ history.back(); return; } }catch(e){} }
+    location.href='index.html'; }
+  let toastT=null; function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2600); }
+
+  /* ---------- boot ---------- */
+  async function boot(){
+    $('#scrim').onclick=closeSheet;
+    const stored=localStorage.getItem('lf_lang'); if(stored&&T[stored]) state.lang=stored;
+    else { const dl=(navigator.language||'en').slice(0,2); if(T[dl]) state.lang=dl; }
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session){ location.href='index.html'; return; }
+    user=session.user;
+    try{ const {data:pr}=await sb.from('profiles').select('is_keeper,preferred_lang').eq('id',user.id).maybeSingle();
+      if(pr){ isKeeper=!!pr.is_keeper; if(pr.preferred_lang&&!stored&&T[pr.preferred_lang]) state.lang=pr.preferred_lang; }
+    }catch(e){}
+    if(isKeeper){ try{ await loadData(); }catch(e){} }
+    render();
+  }
+  boot();
+})();
+</script>
+<script src="lf-nav.js" data-parent="index.html" data-here=""></script>
+</body>
+</html>
