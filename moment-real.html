@@ -615,7 +615,7 @@
     if(!session){ showGate(); return; }
     user=session.user;
     try{const {data:pr}=await sb.from('profiles').select('is_keeper,preferred_lang').eq('id',user.id).maybeSingle();
-      if(pr){ isKeeper=!!pr.is_keeper; if(pr.preferred_lang&&!stored&&UI[pr.preferred_lang]) lang=pr.preferred_lang; }}catch(e){}
+      if(pr){ isKeeper=!!pr.is_keeper; if(isKeeper){ window.__lfKeeper=true; try{document.dispatchEvent(new Event('lf-keeper-ready'));}catch(e){} } if(pr.preferred_lang&&!stored&&UI[pr.preferred_lang]) lang=pr.preferred_lang; }}catch(e){}
     await loadMoment();
   }
   async function loadMoment(){

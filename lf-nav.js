@@ -50,6 +50,18 @@
     if(it[0]===HERE) a.className='cur';
     panel.appendChild(a);
   });
+  // keeper-only entry: a page that knows keeper status sets window.__lfKeeper=true (and may set __lfKeeperLabel).
+  function addKeeperItem(){
+    if(!window.__lfKeeper) return;
+    if(panel.querySelector('a[data-lf="curators"]')) return; // once
+    var a=document.createElement('a'); a.href='curators-real.html'; a.setAttribute('data-lf','curators');
+    a.innerHTML='<span class="ic">\u2609</span><span>'+(window.__lfKeeperLabel||'Curators')+'</span>';
+    if(HERE==='curators') a.className='cur';
+    panel.appendChild(a);
+  }
+  addKeeperItem();
+  // in case the page sets the flag slightly after nav init:
+  document.addEventListener('lf-keeper-ready', addKeeperItem);
   var btn=document.createElement('button'); btn.id='lfnavBtn'; btn.type='button';
   btn.setAttribute('aria-label','Move between lenses'); btn.textContent='\u2295';
   wrap.appendChild(panel); wrap.appendChild(btn);

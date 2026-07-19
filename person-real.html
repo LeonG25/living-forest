@@ -952,7 +952,7 @@
     const stored=localStorage.getItem('lf_lang'); if(stored&&T[stored]) state.lang=stored; else { const dl=(navigator.language||'en').slice(0,2); if(T[dl]) state.lang=dl; }
     if(!session){ render(); showGate(); return; }
     user=session.user;
-    try{ const {data:pr}=await sb.from('profiles').select('is_keeper,preferred_lang').eq('id',user.id).maybeSingle(); if(pr){ state.keeper=!!pr.is_keeper; if(pr.preferred_lang&&!stored&&T[pr.preferred_lang]) state.lang=pr.preferred_lang; } }catch(e){}
+    try{ const {data:pr}=await sb.from('profiles').select('is_keeper,preferred_lang').eq('id',user.id).maybeSingle(); if(pr){ state.keeper=!!pr.is_keeper; if(state.keeper){ window.__lfKeeper=true; try{document.dispatchEvent(new Event('lf-keeper-ready'));}catch(e){} } if(pr.preferred_lang&&!stored&&T[pr.preferred_lang]) state.lang=pr.preferred_lang; } }catch(e){}
     await loadData(); seed(); render();
   }
   atmosphere($('#dev .atmo')); wireOnce(); boot();
