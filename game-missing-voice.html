@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>The Missing Voice · The Living Forest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="lf-games.js"></script>
+<style>
+  /* ============================================================
+     Foreground reproduced verbatim from the delivered design:
+     screens/Game - The Missing Voice (play).html  (Rule 1 fidelity)
+     ============================================================ */
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body{ background:#04070e; }
+  :root{
+    --cream:#f4ecdb; --muted:#9db0cc; --dim:#6f83a3; --hair:#ffffff18; --panel:#ffffff0b;
+    --gold:#f3cd84; --gold-hi:#ffe6ad; --cool:#7fb4d8; --cool-hi:#a9d2ee;
+    --edit:#c9a2ff; --edit-hi:#ddc6ff; --edit-soft:#efe6ff; --leaf:#8fd6a0; --xtl:#9a8bbd;
+  }
+  body{ font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--cream); min-height:100dvh;
+    display:flex; align-items:flex-start; justify-content:center; gap:40px; padding:34px 20px 90px;
+    background:radial-gradient(150% 100% at 50% -6%, #12233c 0%, #0a1526 44%, #04070e 100%);
+    -webkit-user-select:none; user-select:none; flex-wrap:wrap; }
+  .serif{ font-family:'Newsreader',Georgia,serif; }
+  .mono{ font-family:'Azeret Mono',monospace; }
+  .screen[dir="rtl"] .serif{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
+
+  .stagewrap{ display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .caption{ font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--dim); }
+  .device{ position:relative; width:390px; height:820px; border-radius:42px; overflow:hidden; flex:0 0 auto;
+    background:#04070e; box-shadow:0 40px 120px -50px #000, 0 0 0 9px #14141b, 0 0 0 10px #2b2b34; }
+  .veil{ position:absolute; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(120% 70% at 50% 4%, rgba(243,205,132,.08), transparent 46%),
+      radial-gradient(120% 92% at 50% 46%, transparent 30%, rgba(4,7,14,.62) 100%); }
+  .screen{ position:absolute; inset:0; z-index:2; overflow-y:auto; scrollbar-width:none; }
+  .screen::-webkit-scrollbar{ display:none; }
+  .pad{ padding:0 20px calc(30px + env(safe-area-inset-bottom)); }
+
+  .topbar{ position:sticky; top:0; z-index:14; display:flex; align-items:center; gap:10px;
+    padding:15px 18px 11px; background:linear-gradient(to bottom, rgba(5,9,17,.92), rgba(5,9,17,.4) 68%, transparent);
+    backdrop-filter:blur(7px); }
+  .ibtn{ width:40px; height:40px; border-radius:12px; flex:0 0 auto; display:grid; place-items:center; cursor:pointer;
+    border:1px solid var(--hair); background:rgba(10,20,34,.55); color:var(--cream); transition:border-color .2s,background .2s; }
+  .ibtn:hover{ border-color:rgba(255,255,255,.34); }
+  .ibtn:focus-visible{ outline:2px solid var(--cool-hi); outline-offset:2px; }
+  .ibtn svg{ width:18px; height:18px; }
+  .ttl{ flex:1; min-width:0; text-align:center; }
+  .ttl .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.24em; text-transform:uppercase; color:var(--muted); }
+  .ttl .n{ font-family:'Newsreader',serif; font-size:18px; color:#fbf5e8; margin-top:1px; }
+  .streak{ flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:8px 11px; border-radius:99px;
+    background:rgba(243,205,132,.1); border:1px solid rgba(243,205,132,.3); }
+  .streak .fl{ width:7px; height:7px; border-radius:50%; background:var(--gold); box-shadow:0 0 9px 1px var(--gold); }
+  .streak b{ font-family:'Azeret Mono',monospace; font-size:11px; color:var(--gold-hi); font-weight:500; }
+
+  .eye{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted);
+    display:flex; align-items:center; gap:8px; margin:22px 4px 12px; }
+  .eye::after{ content:""; flex:1; height:1px; background:var(--hair); }
+  .screen[dir="rtl"] .eye::after{ }
+
+  /* the memory being heard */
+  .memwrap{ margin-top:20px; position:relative; }
+  .quote{ position:absolute; top:-6px; inset-inline-start:-2px; font-family:'Newsreader',serif; font-size:64px; line-height:1;
+    color:rgba(243,205,132,.24); pointer-events:none; }
+  .memcard{ position:relative; padding:22px 20px 20px; border-radius:18px;
+    background:rgba(243,205,132,.05); border:1px solid rgba(243,205,132,.2); }
+  .memcard .words{ font-family:'Newsreader',serif; font-style:italic; font-weight:300; font-size:19px; line-height:1.55; color:#f6ecd7; }
+  .memcard .meta{ margin-top:15px; display:flex; flex-wrap:wrap; gap:7px; }
+  .mchip{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:99px; font-size:11px;
+    font-family:'Azeret Mono',monospace; letter-spacing:.04em; color:var(--muted); background:var(--panel); border:1px solid var(--hair); }
+  .mchip svg{ width:12px; height:12px; opacity:.8; }
+
+  /* the hidden teller */
+  .hidden-teller{ margin-top:18px; display:flex; align-items:center; gap:14px; padding:14px 16px; border-radius:16px;
+    background:linear-gradient(120deg, rgba(243,205,132,.08), rgba(243,205,132,.02)); border:1px dashed rgba(243,205,132,.4); }
+  .htface{ width:52px; height:52px; border-radius:50%; flex:0 0 auto; position:relative; display:grid; place-items:center;
+    background:rgba(8,16,28,.7); border:1px solid rgba(243,205,132,.4); overflow:hidden; }
+  .htface .fog{ position:absolute; inset:0; background:radial-gradient(60% 60% at 45% 35%, rgba(243,205,132,.22), rgba(8,16,28,.9) 75%); }
+  .htface .qm{ position:relative; font-family:'Newsreader',serif; font-size:26px; color:var(--gold-hi); }
+  .htt{ flex:1; min-width:0; }
+  .htt .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); display:flex; align-items:center; gap:7px; }
+  .htt .k .flame{ width:7px; height:7px; border-radius:50%; background:var(--gold); box-shadow:0 0 9px 1px var(--gold); }
+  .htt .n{ font-family:'Newsreader',serif; font-size:20px; color:#fbf5e8; margin-top:4px; }
+
+  .qhead{ text-align:center; margin:24px 0 14px; }
+  .qhead .q{ font-family:'Newsreader',serif; font-size:22px; color:#fbf5e8; }
+  .qhead .qs{ font-size:12px; color:var(--muted); margin-top:4px; }
+
+  /* teller options (rows) */
+  .tellers{ display:flex; flex-direction:column; gap:9px; }
+  .teller{ display:flex; align-items:center; gap:12px; padding:11px 13px; border-radius:14px; cursor:pointer;
+    background:rgba(9,17,29,.55); border:1px solid var(--hair); transition:border-color .2s, background .2s, transform .15s, opacity .3s; }
+  .teller:hover{ border-color:rgba(255,255,255,.3); transform:translateY(-1px); }
+  .teller:focus-visible{ outline:2px solid var(--gold-hi); outline-offset:2px; }
+  .teller .av{ width:42px; height:42px; border-radius:50%; flex:0 0 auto; position:relative; overflow:hidden; border:1px solid rgba(255,244,214,.5); }
+  .teller .av i{ position:absolute; inset:0; }
+  .teller .tn{ flex:1; min-width:0; }
+  .teller .tn .nm{ font-family:'Newsreader',serif; font-size:17px; color:var(--cream); line-height:1.15; }
+  .teller .tn .rel{ font-size:11px; color:var(--muted); margin-top:2px; }
+  .teller .mk{ width:22px; height:22px; border-radius:50%; display:grid; place-items:center; flex:0 0 auto; opacity:0; transition:opacity .2s; }
+  .teller.right{ border-color:rgba(243,205,132,.7); background:rgba(243,205,132,.14); box-shadow:0 0 24px -6px rgba(243,205,132,.5); }
+  .teller.right .mk{ opacity:1; background:linear-gradient(180deg,var(--gold-hi),var(--gold)); color:#1a1206; }
+  .teller.wrong{ border-color:rgba(127,180,216,.5); background:rgba(127,180,216,.08); animation:nudge .34s; }
+  .teller.wrong .mk{ opacity:1; color:var(--cool); }
+  .teller.dim{ opacity:.4; }
+  .teller .mk svg{ width:13px; height:13px; }
+  @keyframes nudge{ 0%,100%{ transform:translateX(0);} 25%{ transform:translateX(-5px);} 75%{ transform:translateX(5px);} }
+
+  .avA i{ background:radial-gradient(70% 60% at 40% 32%, #cfd8e6, #7d8ba0 70%, #4c586b); }
+  .avB i{ background:radial-gradient(70% 60% at 40% 32%, #f0d3ad, #b07d55 70%, #6f4c33); }
+  .avC i{ background:radial-gradient(70% 60% at 40% 32%, #f0dcc0, #c08a70 70%, #7a5040); }
+  .avD i{ background:radial-gradient(70% 60% at 40% 32%, #dfe6da, #9fb0a0 70%, #5f6f62); }
+  .avE i{ background:radial-gradient(70% 60% at 40% 32%, #e7d3b6, #a98a5f 70%, #6d5436); }
+
+  .hintbar{ margin-top:16px; text-align:center; font-size:11.5px; color:var(--dim); font-style:italic; font-family:'Newsreader',serif; }
+
+  /* reveal */
+  .reveal{ display:none; }
+  .reveal.show{ display:block; }
+  .revface{ width:120px; height:120px; margin:4px auto 0; border-radius:50%; position:relative; overflow:hidden;
+    border:1px solid rgba(255,244,214,.9);
+    box-shadow:0 0 28px -2px rgba(255,232,180,.6), 0 0 80px -14px rgba(243,205,132,.5), inset 0 0 0 4px rgba(4,7,14,.55); }
+  .revface i{ position:absolute; inset:0; background:radial-gradient(66% 56% at 42% 30%, #f0d3ad, #cf9b6f 62%, #7c563b); }
+  .revface i::after{ content:""; position:absolute; left:50%; bottom:-6%; width:56%; height:52%; transform:translateX(-50%);
+    background:#5a4636; border-radius:50% 50% 44% 44%; }
+  .revname{ text-align:center; margin-top:14px; }
+  .revname .rk{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--leaf); }
+  .revname .rn{ font-family:'Newsreader',serif; font-size:27px; color:#fbf5e8; margin-top:5px; }
+  .revname .rs{ font-size:12.5px; color:var(--muted); margin-top:7px; line-height:1.5; padding:0 18px; }
+  .revname .rs b{ color:var(--gold-hi); font-weight:500; }
+  .btnrow{ display:flex; gap:10px; margin-top:20px; }
+  .btn{ flex:1; padding:14px; border-radius:14px; font-family:'Hanken Grotesk',sans-serif; font-size:14px; font-weight:600;
+    cursor:pointer; border:1px solid transparent; text-align:center; }
+  .btn.ghost{ background:transparent; border-color:var(--hair); color:var(--cream); }
+  .btn.primary{ background:linear-gradient(180deg,var(--gold-hi),var(--gold)); color:#1a1206; }
+
+  /* NOT ENOUGH DATA */
+  .locked-hero{ margin-top:30px; height:168px; border-radius:20px; position:relative; overflow:hidden; display:grid; place-items:center;
+    background:linear-gradient(135deg,#12233c,#0a1626); border:1px solid var(--hair); }
+  .locked-hero .tone{ position:absolute; inset:0; background:radial-gradient(80% 80% at 50% 32%, rgba(243,205,132,.14), transparent 70%); }
+  .locked-hero .waves{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:5px; }
+  .locked-hero .waves span{ width:4px; border-radius:99px; background:linear-gradient(180deg,var(--gold-hi),rgba(243,205,132,.25)); opacity:.5;
+    transform-origin:center; animation:voicewave 2.6s ease-in-out infinite; }
+  .locked-hero .glyph{ position:relative; color:var(--gold-hi); opacity:.92; }
+  .locked-hero .glyph svg{ width:60px; height:60px; }
+  @keyframes voicewave{ 0%,100%{ transform:scaleY(.5); opacity:.35; } 50%{ transform:scaleY(1.15); opacity:.7; } }
+  .locked-title{ text-align:center; margin-top:22px; }
+  .locked-title .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--gold); }
+  .locked-title .h{ font-family:'Newsreader',serif; font-size:26px; color:#fbf5e8; margin-top:7px; }
+  .locked-body{ font-family:'Newsreader',serif; font-size:15.5px; line-height:1.6; color:#e7dcc6; text-align:center;
+    margin:14px auto 0; max-width:300px; }
+  .locked-body em{ font-style:italic; color:var(--gold-hi); }
+  .voice-count{ margin:22px 0 0; display:flex; align-items:center; gap:13px; padding:14px 16px; border-radius:15px;
+    background:rgba(243,205,132,.06); border:1px solid rgba(243,205,132,.22); }
+  .voice-count .av{ width:44px; height:44px; border-radius:50%; flex:0 0 auto; position:relative; overflow:hidden; border:1px solid rgba(255,244,214,.5); }
+  .voice-count .av i{ position:absolute; inset:0; }
+  .voice-count .vt{ flex:1; min-width:0; }
+  .voice-count .vt .n{ font-family:'Newsreader',serif; font-size:17px; color:var(--cream); }
+  .voice-count .vt .s{ display:flex; align-items:center; gap:7px; font-size:11px; color:var(--gold); margin-top:3px; font-family:'Azeret Mono',monospace; letter-spacing:.04em; }
+  .voice-count .vt .s .flame{ width:6px; height:6px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px 1px var(--gold); }
+  .voice-count .tag{ font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--gold-hi);
+    background:rgba(243,205,132,.12); border:1px solid rgba(243,205,132,.3); padding:6px 10px; border-radius:99px; flex:0 0 auto; }
+  .invite-cta{ margin-top:16px; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; padding:15px;
+    border-radius:15px; background:rgba(243,205,132,.09); border:1px dashed rgba(243,205,132,.42); color:var(--gold-hi);
+    font-family:'Newsreader',serif; font-size:16px; cursor:pointer; text-decoration:none; }
+  .invite-cta svg{ width:19px; height:19px; }
+  .locked-foot{ margin-top:18px; text-align:center; font-family:'Newsreader',serif; font-style:italic; font-size:13px; color:rgba(143,214,160,.6); line-height:1.5; }
+
+  /* gentle error state */
+  .fail{ margin-top:40px; text-align:center; }
+  .fail .glyph{ width:76px; height:76px; margin:0 auto 18px; border-radius:20px; display:grid; place-items:center;
+    background:linear-gradient(135deg,#12233c,#0a1626); border:1px solid var(--hair); color:var(--cool-hi); }
+  .fail .glyph svg{ width:38px; height:38px; }
+  .fail .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--cool); }
+  .fail .h{ font-family:'Newsreader',serif; font-size:24px; color:#fbf5e8; margin-top:8px; }
+  .fail .b{ font-size:13px; color:var(--muted); margin:12px auto 20px; max-width:280px; line-height:1.5; }
+  .fail .btn{ max-width:220px; margin:0 auto; }
+
+  /* ===== language sheet (from the live-page pattern) ===== */
+  .scrim{ position:absolute; inset:0; z-index:30; background:rgba(4,7,14,.66); backdrop-filter:blur(3px);
+    opacity:0; pointer-events:none; transition:opacity .28s ease; }
+  .scrim.show{ opacity:1; pointer-events:auto; }
+  .sheet{ position:absolute; z-index:31; inset-inline:0; bottom:0; background:linear-gradient(180deg,#0f1e33,#081120);
+    border:1px solid var(--hair); border-bottom:none; border-radius:22px 22px 0 0; padding:10px 20px calc(22px + env(safe-area-inset-bottom));
+    transform:translateY(103%); transition:transform .34s cubic-bezier(.16,.8,.28,1); box-shadow:0 -24px 70px -30px #000; max-height:90%; overflow-y:auto; scrollbar-width:none; }
+  .sheet::-webkit-scrollbar{ display:none; }
+  .sheet.show{ transform:translateY(0); }
+  .grip{ width:40px; height:4px; border-radius:99px; background:rgba(255,255,255,.2); margin:6px auto 15px; }
+  .sheet h3{ font-family:'Newsreader',serif; font-weight:400; font-size:21px; color:#fbf5e8; margin-bottom:4px; }
+  .sheet .sub{ font-size:12.5px; color:var(--muted); margin-bottom:16px; line-height:1.45; }
+  .lang-opt{ display:flex; align-items:center; gap:14px; width:100%; padding:14px 15px; border-radius:14px;
+    background:var(--panel); border:1px solid var(--hair); color:var(--cream); cursor:pointer; margin-bottom:9px; text-align:start; }
+  .lang-opt.on{ border-color:rgba(243,205,132,.55); background:rgba(243,205,132,.08); }
+  .lang-opt .native{ font-family:'Newsreader',serif; font-size:18px; } .lang-opt .en{ font-size:11.5px; color:var(--muted); margin-top:1px; }
+  .lang-opt .tick{ margin-inline-start:auto; color:var(--gold); opacity:0; } .lang-opt.on .tick{ opacity:1; } .lang-opt .tick svg{ width:18px; height:18px; }
+
+  @media (prefers-reduced-motion: reduce){ .locked-hero .waves span{ animation:none; } .teller.wrong{ animation:none; } }
+
+  /* ===== signature ambient motion — candle-glow voices (behind foreground) ===== */
+  .atmo{ position:absolute; inset:0; z-index:0; width:100%; height:100%; }
+
+  /* full-viewport page (drop the mock device frame) */
+  html,body{ background:#04070e; margin:0; }
+  body{ gap:0; padding:0; }
+  .stagewrap{ gap:0; width:100%; }
+  .device{ width:100vw!important; height:100dvh!important; max-width:none!important; border-radius:0!important; border:none!important; box-shadow:none!important; }
+</style>
+</head>
+<body>
+  <div class="stagewrap">
+    <div class="device" id="dev">
+      <canvas class="atmo" aria-hidden="true"></canvas>
+      <div class="veil"></div>
+      <div class="screen" id="screen">
+        <div class="topbar">
+          <button class="ibtn" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path class="backarrow" d="M15 18l-6-6 6-6"/></svg></button>
+          <div class="ttl"><div class="k mono" data-t="tk"></div><div class="n serif" data-t="tn"></div></div>
+          <button class="ibtn" data-act="lang" aria-label="Language"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></button>
+          <div class="streak" id="streak" hidden><span class="fl"></span><b id="streakN">×1</b></div>
+        </div>
+        <div class="pad">
+          <div id="play" style="display:none"></div>
+          <div id="locked" style="display:none"></div>
+          <div id="error" style="display:none"></div>
+        </div>
+      </div>
+      <div class="scrim"></div>
+      <section class="sheet" data-sheet="lang" role="dialog" aria-modal="true" aria-label="Language"></section>
+    </div>
+  </div>
+
+<script>
+(function(){
+  'use strict';
+  const SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
+  const sb=window.supabase.createClient(SB_URL,SB_KEY);
+  const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+  const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+  const qs=new URLSearchParams(location.search);
+  const PERSON_ID=qs.get('id')||qs.get('person')||null;
+  const START_SEED=qs.get('seed')||null;
+  const LANGS=['en','ru','he'];
+  const AV=['avA','avB','avC','avD','avE'];
+
+  /* ---------- i18n (EN / RU / HE) ---------- */
+  const T={
+    en:{ dir:'ltr', native:'English', label:'English',
+      tk:'Story · a game', tn:'The Missing Voice',
+      listen:'Listen',
+      htK:'A person told this', htN:'Whose voice is this?',
+      qQ:'Who is telling it?', qS:'Read the words — then choose the voice.',
+      hint:'There is no wrong way to remember — only a voice to find.',
+      revEye:'The voice was theirs', toldBy:'Told by',
+      revOne:name=>`One of the voices keeping this family’s memory.`,
+      revN:(name,n)=>`They have told <b>${n}</b> of the memories kept here.`,
+      next:'Next memory', whole:'Read the whole story',
+      lockK:'The game is sleeping', lockH:'Not enough voices — yet',
+      lockBody:'This game needs at least <em>two</em> people who have told a memory. Right now every memory here is carried by a single voice.',
+      told:n=>`${n} ${n===1?'memory':'memories'} told`, vtag:n=>`${n} ${n===1?'voice':'voices'}`,
+      record:'Record a memory in another voice',
+      lockFoot:'The moment a second relative tells one,<br>this game wakes on its own.',
+      errK:'Something’s tangled', errH:'The voices are out of reach', errB:'The game couldn’t gather the memories just now. Give it another moment.', retry:'Try again',
+      langtitle:'Language', langsub:'Titles, prompts and the whole game follow the language you choose.' },
+    ru:{ dir:'ltr', native:'Русский', label:'Russian',
+      tk:'История · игра', tn:'Пропавший голос',
+      listen:'Слушайте',
+      htK:'Это рассказал человек', htN:'Чей это голос?',
+      qQ:'Кто это рассказывает?', qS:'Прочтите слова — и выберите голос.',
+      hint:'Нет неправильного способа помнить — есть лишь голос, который нужно найти.',
+      revEye:'Это был его голос', toldBy:'Рассказал(а)',
+      revOne:name=>`Один из голосов, хранящих память этой семьи.`,
+      revN:(name,n)=>`Рассказал(а) <b>${n}</b> из хранящихся здесь воспоминаний.`,
+      next:'Следующее воспоминание', whole:'Прочитать всю историю',
+      lockK:'Игра спит', lockH:'Голосов пока мало',
+      lockBody:'Этой игре нужно хотя бы <em>двое</em> людей, рассказавших воспоминание. Сейчас каждое воспоминание здесь несёт один голос.',
+      told:n=>`${n} воспоминаний рассказано`, vtag:n=>`${n} голос`,
+      record:'Записать воспоминание другим голосом',
+      lockFoot:'Как только второй родственник расскажет своё,<br>игра проснётся сама.',
+      errK:'Что-то запуталось', errH:'Голоса недоступны', errB:'Игра не смогла собрать воспоминания сейчас. Попробуйте ещё раз.', retry:'Ещё раз',
+      langtitle:'Язык', langsub:'Заголовки, вопросы и вся игра — на выбранном языке.' },
+    he:{ dir:'rtl', native:'עברית', label:'Hebrew',
+      tk:'סיפור · משחק', tn:'הקול החסר',
+      listen:'הקשיבו',
+      htK:'אדם סיפר את זה', htN:'של מי הקול הזה?',
+      qQ:'מי מספר את זה?', qS:'קראו את המילים — ואז בחרו את הקול.',
+      hint:'אין דרך שגויה לזכור — יש רק קול שצריך למצוא.',
+      revEye:'הקול היה שלו', toldBy:'סופר על־ידי',
+      revOne:name=>`אחד הקולות ששומרים את זיכרון המשפחה הזו.`,
+      revN:(name,n)=>`סיפר/ה <b>${n}</b> מהזיכרונות השמורים כאן.`,
+      next:'הזיכרון הבא', whole:'קראו את כל הסיפור',
+      lockK:'המשחק ישן', lockH:'עדיין אין מספיק קולות',
+      lockBody:'המשחק הזה צריך לפחות <em>שני</em> אנשים שסיפרו זיכרון. כרגע כל זיכרון כאן נישא בקול אחד בלבד.',
+      told:n=>`${n} זיכרונות סופרו`, vtag:n=>`${n} קול`,
+      record:'הקליטו זיכרון בקול אחר',
+      lockFoot:'ברגע שקרוב שני יספר את שלו,<br>המשחק יתעורר מעצמו.',
+      errK:'משהו הסתבך', errH:'הקולות מחוץ להישג', errB:'המשחק לא הצליח לאסוף את הזיכרונות כרגע. נסו שוב בעוד רגע.', retry:'נסו שוב',
+      langtitle:'שפה', langsub:'הכותרות, השאלות וכל המשחק — לפי השפה שתבחרו.' }
+  };
+  const d=()=>T[state.lang];
+
+  const I={
+    back:'M15 18l-6-6 6-6', backR:'M9 18l6-6-6-6',
+    cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/>',
+    pin:'<path d="M12 21s-6-5.7-6-10a6 6 0 1112 0c0 4.3-6 10-6 10z"/><circle cx="12" cy="11" r="2"/>',
+    mic:'<path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6"/>',
+    check:'<path d="M20 6L9 17l-5-5"/>', x:'<path d="M6 6l12 12M18 6L6 18"/>',
+    warn:'<path d="M12 9v4M12 17h.01"/><path d="M10.3 4.3 2.5 18a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 4.3a2 2 0 0 0-3.4 0z"/>'
+  };
+  const sv=(p,w)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w||1.6}" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+
+  /* ---------- state ---------- */
+  const state={ lang:'en', seed:null, round:null, voices:[], streak:0, done:false, firstTry:true, streakShown:false };
+
+  /* ---------- data-driven voice census (for the locked state + reveal) ---------- */
+  async function loadVoices(){
+    try{
+      const {data:arts,error}=await sb.from('artefacts').select('id,body,contributor_id,status').eq('status','published');
+      if(error||!arts) return [];
+      const tally={};
+      arts.forEach(a=>{ const body=(a.body!=null?String(a.body).trim():''); if(a.contributor_id && body.length>0) tally[a.contributor_id]=(tally[a.contributor_id]||0)+1; });
+      const ids=Object.keys(tally); if(!ids.length) return [];
+      let names={};
+      try{ const {data:pp}=await sb.from('people').select('id,display_name,called_name').in('id',ids); (pp||[]).forEach(p=>{ names[p.id]=(p.display_name&&p.display_name.trim())||(p.called_name&&p.called_name.trim())||''; }); }catch(e){}
+      return ids.map(id=>({ id, name:names[id]||'', count:tally[id] })).sort((a,b)=>b.count-a.count);
+    }catch(e){ return []; }
+  }
+  function voiceCount(id){ const v=state.voices.find(x=>x.id===id); return v?v.count:0; }
+
+  /* ---------- fetch the shown memory's when/where for the meta chips (dynamic) ---------- */
+  async function memoryMeta(artefactId){
+    if(!artefactId) return {};
+    try{ const {data}=await sb.from('artefacts').select('metadata').eq('id',artefactId).maybeSingle();
+      const m=(data&&data.metadata)||{}; return { when:m.when!=null?String(m.when).trim():'', where:m.where!=null?String(m.where).trim():'' };
+    }catch(e){ return {}; }
+  }
+
+  /* ---------- seed ---------- */
+  function freshSeed(){ try{ if(window.crypto&&crypto.getRandomValues){ const a=new Uint32Array(1); crypto.getRandomValues(a); return a[0]>>>0; } }catch(e){} return (Math.floor(Math.random()*0x7fffffff))>>>0; }
+
+  /* ---------- state switching ---------- */
+  function show(which){ ['play','locked','error'].forEach(s=>{ $('#'+s).style.display = s===which?'block':'none'; }); }
+
+  /* ---------- chrome (topbar + dir) ---------- */
+  function paintChrome(){ const L=d();
+    document.documentElement.lang=state.lang; document.documentElement.dir=L.dir;
+    $('#screen').setAttribute('dir',L.dir); $('#screen').setAttribute('lang',state.lang);
+    $$('[data-t]').forEach(el=>{ el.textContent=L[el.getAttribute('data-t')]; });
+    $('.backarrow').setAttribute('d', L.dir==='rtl'?I.backR:I.back);
+    const st=$('#streak'); st.hidden=!state.streakShown; $('#streakN').textContent='×'+Math.max(1,state.streak);
+  }
+
+  /* ---------- PLAY ---------- */
+  function renderPlay(round, meta){
+    const L=d();
+    const chips=[];
+    if(meta&&meta.when) chips.push(`<span class="mchip">${sv(I.cal)}${esc(meta.when)}</span>`);
+    if(meta&&meta.where) chips.push(`<span class="mchip">${sv(I.pin)}${esc(meta.where)}</span>`);
+    const rows=round.options.map((o,i)=>`
+      <button class="teller" type="button" data-i="${i}" data-id="${esc(o.id)}">
+        <div class="av ${AV[i%AV.length]}"><i></i></div>
+        <div class="tn"><div class="nm serif">${esc(o.label||'—')}</div></div>
+        <div class="mk" data-right>${sv(I.check,2.4)}</div>
+        <div class="mk" data-wrong>${sv(I.x,2.2)}</div>
+      </button>`).join('');
+    $('#play').innerHTML=`
+      <div class="eye mono">${esc(L.listen)}</div>
+      <div class="memwrap">
+        <div class="quote">“</div>
+        <div class="memcard">
+          <div class="words">${esc(round.prompt&&round.prompt.memory_text||'')}</div>
+          ${chips.length?`<div class="meta">${chips.join('')}</div>`:''}
+        </div>
+      </div>
+      <div class="hidden-teller">
+        <div class="htface"><div class="fog"></div><div class="qm">?</div></div>
+        <div class="htt"><div class="k"><span class="flame"></span>${esc(L.htK)}</div><div class="n serif">${esc(L.htN)}</div></div>
+      </div>
+      <div class="qhead"><div class="q serif">${esc(L.qQ)}</div><div class="qs">${esc(L.qS)}</div></div>
+      <div class="tellers" id="tellers">${rows}</div>
+      <div class="hintbar">${esc(L.hint)}</div>
+      <div class="reveal" id="reveal"></div>`;
+    // each option shows only the correct/incorrect mark, never before a guess
+    $$('#tellers [data-wrong]').forEach(m=>m.style.display='none');
+    $$('#tellers [data-right]').forEach(m=>m.style.display='none');
+  }
+
+  function renderReveal(round){
+    const L=d();
+    const correct=round.options[round.answer_index]||{};
+    const n=voiceCount(round.answer_id);
+    const line = n>0 ? L.revN(correct.label, n) : L.revOne(correct.label);
+    const rev=$('#reveal');
+    rev.innerHTML=`
+      <div class="eye serif" style="margin-top:24px">${esc(L.revEye)}</div>
+      <div class="revface"><i></i></div>
+      <div class="revname">
+        <div class="rk">${esc(L.toldBy)}</div>
+        <div class="rn serif">${esc(correct.label||'—')}</div>
+        <div class="rs">${line}</div>
+      </div>
+      <div class="btnrow">
+        <button class="btn ghost" type="button" data-act="next">${esc(L.next)}</button>
+        <button class="btn primary" type="button" data-act="whole">${esc(L.whole)}</button>
+      </div>`;
+    rev.classList.add('show');
+    rev.scrollIntoView({behavior:reduceMotion?'auto':'smooth', block:'nearest'});
+  }
+
+  function onGuess(btn){
+    if(state.done) return; const round=state.round; if(!round) return;
+    const i=+btn.getAttribute('data-i');
+    if(i===round.answer_index){
+      state.done=true;
+      $$('#tellers .teller').forEach(el=>{ if(el!==btn) el.classList.add('dim'); });
+      btn.classList.remove('wrong'); btn.classList.add('right');
+      btn.querySelector('[data-right]').style.display='grid';
+      if(state.firstTry){ state.streak++; } state.streakShown=true; paintChrome();
+      setTimeout(()=>renderReveal(round), 480);
+    } else {
+      state.firstTry=false;
+      btn.classList.add('wrong');
+      const wm=btn.querySelector('[data-wrong]'); wm.style.display='grid';
+      setTimeout(()=>{ btn.classList.remove('wrong'); wm.style.display='none'; }, 900);
+    }
+  }
+
+  /* ---------- LOCKED (not_enough_data) ---------- */
+  function renderLocked(res){
+    const L=d();
+    const voiceRows=state.voices.map((v,i)=>`
+      <div class="voice-count">
+        <div class="av ${AV[i%AV.length]}"><i></i></div>
+        <div class="vt"><div class="n serif">${esc(v.name||'—')}</div><div class="s"><span class="flame"></span>${esc(L.told(v.count))}</div></div>
+        <div class="tag">${esc(L.vtag(1))}</div>
+      </div>`).join('');
+    $('#locked').innerHTML=`
+      <div class="locked-hero">
+        <div class="tone"></div>
+        <div class="waves">
+          ${[16,34,52,26,44,14,30].map((h,i)=>`<span style="height:${h}px;animation-delay:${(i*0.18).toFixed(2)}s"></span>`).join('')}
+        </div>
+        <div class="glyph">${sv(I.mic,1.4)}</div>
+      </div>
+      <div class="locked-title"><div class="k">${esc(L.lockK)}</div><div class="h serif">${esc(L.lockH)}</div></div>
+      <div class="locked-body serif">${L.lockBody}</div>
+      ${voiceRows}
+      <a class="invite-cta serif" href="contribute-real.html">${sv(I.mic,1.6)}${esc(L.record)}</a>
+      <div class="locked-foot serif">${L.lockFoot}</div>`;
+  }
+
+  /* ---------- ERROR ---------- */
+  function renderError(res){
+    const L=d();
+    $('#error').innerHTML=`
+      <div class="fail">
+        <div class="glyph">${sv(I.warn,1.6)}</div>
+        <div class="k">${esc(L.errK)}</div>
+        <div class="h serif">${esc(L.errH)}</div>
+        <div class="b">${esc(L.errB)}</div>
+        <button class="btn ghost" type="button" data-act="retry">${esc(L.retry)}</button>
+      </div>`;
+  }
+
+  /* ---------- load a round ---------- */
+  async function loadRound(seed){
+    state.seed = seed; state.done=false; state.firstTry=true; state.round=null;
+    let res;
+    try{ res=await window.LFGames.missingVoice(sb,{ id:PERSON_ID, seed:seed }); }
+    catch(e){ res={status:'error', message:(e&&e.message)||String(e)}; }
+    if(res && res.status==='ok'){
+      state.round=res;
+      const meta=await memoryMeta(res.used_rows && res.used_rows.artefacts && res.used_rows.artefacts[0]);
+      renderPlay(res, meta); show('play');
+    } else if(res && res.status==='not_enough_data'){
+      renderLocked(res); show('locked');
+    } else {
+      renderError(res||{}); show('error');
+    }
+    paintChrome();
+  }
+
+  /* ---------- language sheet ---------- */
+  const showSheet=()=>{ $('.scrim').classList.add('show'); $('.sheet[data-sheet="lang"]').classList.add('show'); };
+  const hideSheets=()=>{ $('.scrim').classList.remove('show'); $$('.sheet').forEach(s=>s.classList.remove('show')); };
+  window.__lfClose=()=>{ if($('.sheet.show')){ hideSheets(); return true; } return false; };
+  function openLang(){ const L=d(); const sh=$('.sheet[data-sheet="lang"]');
+    sh.innerHTML=`<div class="grip"></div><h3>${esc(L.langtitle)}</h3><div class="sub">${esc(L.langsub)}</div>
+      ${LANGS.map(k=>`<button class="lang-opt ${k===state.lang?'on':''}" data-lang="${k}"><span><span class="native">${esc(T[k].native)}</span><span class="en" style="display:block">${esc(T[k].label)}</span></span><span class="tick">${sv(I.check,2)}</span></button>`).join('')}`;
+    sh.querySelectorAll('[data-lang]').forEach(b=>b.onclick=async()=>{ await setLang(b.dataset.lang); hideSheets(); });
+    showSheet(); }
+  async function setLang(lang){ if(!T[lang]||lang===state.lang) return; state.lang=lang;
+    try{ localStorage.setItem('lf_lang',lang); }catch(e){}
+    try{ const {data:{session}}=await sb.auth.getSession(); if(session&&session.user){ await sb.from('profiles').update({preferred_lang:lang}).eq('id',session.user.id); } }catch(e){}
+    paintChrome();
+    // rebuild the live panel in the new language — same seed reproduces the same round (Rule 8, deterministic)
+    await loadRound(state.seed!=null?state.seed:freshSeed());
+  }
+
+  /* ---------- click wiring ---------- */
+  function wire(){
+    $('#dev').addEventListener('click', e=>{
+      const tl=e.target.closest('.teller'); if(tl){ onGuess(tl); return; }
+      const a=e.target.closest('[data-act]'); if(!a) return; const act=a.dataset.act;
+      if(act==='back'){ if(history.length>1) history.back(); else location.href='index.html'; return; }
+      if(act==='lang'){ openLang(); return; }
+      if(act==='next'){ loadRound(freshSeed()); return; }
+      if(act==='whole'){ const r=state.round; const mid=r&&r.used_rows&&r.used_rows.artefacts&&r.used_rows.artefacts[0]; location.href = mid?('moment-real.html?id='+encodeURIComponent(mid)):'index.html'; return; }
+      if(act==='retry'){ loadRound(state.seed||freshSeed()); return; }
+    });
+    $('.scrim').addEventListener('click', hideSheets);
+  }
+
+  /* ---------- signature ambient motion: candle-glow voices ---------- */
+  function atmosphere(canvas){ if(!canvas) return; const ctx=canvas.getContext('2d'); let W,H,DPR=Math.min(2,window.devicePixelRatio||1);
+    const COL=[[243,205,132],[127,180,216],[201,162,255],[143,214,160]]; let motes=[];
+    function build(){ motes=[]; const k=Math.max(10,Math.round(W/34));
+      for(let i=0;i<k;i++){ motes.push({ x:Math.random(), y:Math.random(), r:6+Math.random()*16, c:COL[Math.random()*COL.length|0],
+        rise:.008+Math.random()*.016, drift:(Math.random()-.5)*.5, tw:Math.random()*6.28, tsp:.6+Math.random()*1.1, a:.12+Math.random()*.2 }); } }
+    function resize(){ W=canvas.clientWidth; H=canvas.clientHeight; canvas.width=W*DPR; canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); build(); }
+    new ResizeObserver(resize).observe(canvas); resize();
+    function frame(now){ const t=(now||0)/1000; ctx.clearRect(0,0,W,H); ctx.globalCompositeOperation='lighter';
+      motes.forEach(m=>{ if(!reduceMotion){ m.y-=m.rise/60; m.x+=Math.sin(t*.25+m.tw)*.0006*m.drift*10; if(m.y< -0.06){ m.y=1.06; m.x=Math.random(); } }
+        const tw=reduceMotion?.7:.45+.55*(.5+.5*Math.sin(t*m.tsp+m.tw));
+        const px=m.x*W, py=m.y*H, R=m.r*(reduceMotion?1:(.85+.3*tw));
+        const gr=ctx.createRadialGradient(px,py,0,px,py,R); gr.addColorStop(0,`rgba(${m.c[0]},${m.c[1]},${m.c[2]},${m.a*tw})`); gr.addColorStop(1,`rgba(${m.c[0]},${m.c[1]},${m.c[2]},0)`);
+        ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(px,py,R,0,6.283); ctx.fill(); });
+      ctx.globalCompositeOperation='source-over'; if(!reduceMotion) requestAnimationFrame(frame); }
+    if(!reduceMotion) requestAnimationFrame(frame); else frame(0);
+  }
+
+  /* ---------- boot: session gate → load round ---------- */
+  async function boot(){
+    const stored=(function(){ try{ return localStorage.getItem('lf_lang'); }catch(e){ return null; } })();
+    if(stored&&T[stored]) state.lang=stored; else { const dl=(navigator.language||'en').slice(0,2); if(T[dl]) state.lang=dl; }
+    paintChrome();
+    let session=null;
+    try{ const r=await sb.auth.getSession(); session=r.data&&r.data.session; }catch(e){ session=null; }
+    if(!session){ location.replace('index.html'); return; }
+    try{ const {data:pr}=await sb.from('profiles').select('preferred_lang').eq('id',session.user.id).maybeSingle(); if(pr&&pr.preferred_lang&&!stored&&T[pr.preferred_lang]) state.lang=pr.preferred_lang; }catch(e){}
+    state.voices=await loadVoices();
+    paintChrome();
+    await loadRound(START_SEED!=null?START_SEED:freshSeed());
+  }
+
+  atmosphere($('#dev .atmo')); wire(); boot();
+})();
+</script>
+<script src="lf-nav.js" data-here="" data-parent="person-real.html"></script>
+</body></html>
