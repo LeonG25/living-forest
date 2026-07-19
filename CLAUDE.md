@@ -225,6 +225,23 @@ blessed had, in fact, never had a design pass.
 
 ## 7. Design
 
+### Design feeling — "alive" (Leon, firm, restated 2026-07-18)
+Future designs must be MORE ALIVE and colourful than the muted Search/Tree/Contribute/
+Curators set. Return to Leon's original Moment-page direction (his words, 2026-07-14):
+"Magical. Precious. Colourful. Alive." — "colourful lights drifting and moving in the
+background — think aurora, candle-glow, bokeh, a night sky with more colour than you first
+noticed." Motion is central; ambient colour that never sits still. Dark theme is fine as the
+BASE, but the background should be colourful, with motion, moving/3D objects, vivid colour.
+The Person page's moving light-ring and the Moment design (violet #1a0f2e, lavender #ddc6ff/
+#c9a2ff, coral #ff8a80; keyframes breathe/flick/spin, soft-blur glow) are the reference bar.
+**The reconciliation with the truth guardrail (Rule 2) is Leon's own:** "Colour freely in
+the sky; keep the two truths clear in the hand." The drifting background may be as colourful
+as it likes; the FOREGROUND content still obeys provenance — human voice gold #f3cd84, facts
+cool #7fb4d8, both perfectly legible over whatever moves behind. Each page keeps its OWN
+signature motion — do not clone one page's motion onto another.
+**Do NOT redesign anything already made.** This applies to NEW designs from here on.
+
+
 - Claude Design project **4931d7e6-358d-4ef9-a066-9a422439ee44**. `docs/designs/` holds
   9 of 9 delivered designs byte-exact (commit `e566a08`). Cite the exact design file
   (`docs/designs/INDEX.md`).
