@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>What Happened Next? · The Living Forest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="lf-games.js"></script>
+<style>
+  /* ============================================================
+     Foreground reproduced verbatim from the delivered design:
+     screens/Game - What Happened Next (play).html   (Rule 1 fidelity)
+     ============================================================ */
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body{ background:#04070e; }
+  :root{
+    --cream:#f4ecdb; --muted:#9db0cc; --dim:#6f83a3; --hair:#ffffff18; --panel:#ffffff0b;
+    --gold:#f3cd84; --gold-hi:#ffe6ad; --cool:#7fb4d8; --cool-hi:#a9d2ee;
+    --edit:#c9a2ff; --edit-hi:#ddc6ff; --leaf:#8fd6a0; --xtl:#9a8bbd;
+  }
+  body{ font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--cream); min-height:100dvh;
+    display:flex; align-items:flex-start; justify-content:center; gap:40px; padding:34px 20px 90px;
+    background:radial-gradient(150% 100% at 50% -6%, #12233c 0%, #0a1526 44%, #04070e 100%);
+    -webkit-user-select:none; user-select:none; flex-wrap:wrap; }
+  .serif{ font-family:'Newsreader',Georgia,serif; }
+  .mono{ font-family:'Azeret Mono',monospace; }
+  .screen[dir="rtl"] .serif{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
+
+  .stagewrap{ display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .device{ position:relative; width:390px; height:820px; border-radius:42px; overflow:hidden; flex:0 0 auto;
+    background:#04070e; box-shadow:0 40px 120px -50px #000, 0 0 0 9px #14141b, 0 0 0 10px #2b2b34; }
+
+  /* ===== SIGNATURE MOTION · THE CURRENT =====
+     Time as a river: three light-streams drift sideways at different
+     speeds and hues, slow motes travel with them. Sky, not hand. */
+  .current{ position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+  .stream{ position:absolute; left:-60%; width:220%; border-radius:50%; filter:blur(34px); opacity:.5; }
+  .s1{ top:8%;  height:230px; background:radial-gradient(closest-side, rgba(243,205,132,.34), transparent 72%); animation:flow 34s linear infinite; }
+  .s2{ top:36%; height:290px; background:radial-gradient(closest-side, rgba(127,180,216,.32), transparent 72%); animation:flow 52s linear infinite reverse; }
+  .s3{ top:63%; height:250px; background:radial-gradient(closest-side, rgba(201,162,255,.28), transparent 72%); animation:flow 44s linear infinite; }
+  @keyframes flow{ from{ transform:translateX(-18%) } to{ transform:translateX(18%) } }
+  .mote{ position:absolute; width:3px; height:3px; border-radius:50%; background:var(--gold-hi);
+    box-shadow:0 0 8px 1px rgba(255,230,173,.75); opacity:0; animation:drift linear infinite; }
+  @keyframes drift{
+    0%{ transform:translateX(-30px); opacity:0 }
+    12%{ opacity:.85 }
+    88%{ opacity:.7 }
+    100%{ transform:translateX(430px); opacity:0 }
+  }
+  .veil{ position:absolute; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(120% 70% at 50% 4%, rgba(243,205,132,.07), transparent 46%),
+      radial-gradient(120% 92% at 50% 46%, transparent 26%, rgba(4,7,14,.68) 100%); }
+  .screen{ position:absolute; inset:0; z-index:2; overflow-y:auto; scrollbar-width:none; }
+  .screen::-webkit-scrollbar{ display:none; }
+  .pad{ padding:0 20px calc(30px + env(safe-area-inset-bottom)); }
+
+  @media (prefers-reduced-motion: reduce){
+    .stream, .mote, .anchor, .flowdot, .gapline .pulse{ animation:none !important; }
+    .mote{ opacity:.5; }
+  }
+
+  /* ---------- chrome ---------- */
+  .topbar{ position:sticky; top:0; z-index:14; display:flex; align-items:center; gap:10px;
+    padding:15px 18px 11px; background:linear-gradient(to bottom, rgba(5,9,17,.92), rgba(5,9,17,.4) 68%, transparent);
+    backdrop-filter:blur(7px); }
+  .ibtn{ width:40px; height:40px; border-radius:12px; flex:0 0 auto; display:grid; place-items:center; cursor:pointer;
+    border:1px solid var(--hair); background:rgba(10,20,34,.55); color:var(--cream); }
+  .ibtn svg{ width:18px; height:18px; }
+  .ttl{ flex:1; min-width:0; text-align:center; }
+  .ttl .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.24em; text-transform:uppercase; color:var(--muted); }
+  .ttl .n{ font-family:'Newsreader',serif; font-size:18px; color:#fbf5e8; margin-top:1px; }
+  .streak{ flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:8px 11px; border-radius:99px;
+    background:rgba(243,205,132,.1); border:1px solid rgba(243,205,132,.3); }
+  .streak .fl{ width:7px; height:7px; border-radius:50%; background:var(--gold); box-shadow:0 0 9px 1px var(--gold); }
+  .streak b{ font-family:'Azeret Mono',monospace; font-size:11px; color:var(--gold-hi); font-weight:500; }
+
+  .eye{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted);
+    display:flex; align-items:center; gap:8px; margin:22px 4px 12px; }
+  .eye::after{ content:""; flex:1; height:1px; background:var(--hair); }
+
+  /* ---------- the anchor memory ---------- */
+  .anchorwrap{ position:relative; margin-top:16px; }
+  .anchor{ position:relative; padding:18px 18px 16px; border-radius:18px;
+    background:rgba(243,205,132,.05); border:1px solid rgba(243,205,132,.22);
+    animation:wake 6s ease-in-out infinite; }
+  @keyframes wake{
+    0%,100%{ box-shadow:0 0 0 0 rgba(243,205,132,0), 0 0 26px -12px rgba(243,205,132,.5) }
+    50%{ box-shadow:0 0 0 6px rgba(243,205,132,.045), 0 0 40px -10px rgba(243,205,132,.6) }
+  }
+  .anchor .words{ font-family:'Newsreader',serif; font-style:italic; font-weight:300; font-size:17.5px; line-height:1.55; color:#f6ecd7; }
+  .anchor .meta{ margin-top:14px; display:flex; flex-wrap:wrap; gap:7px; align-items:center; }
+  .anchor .shot{ width:100%; height:150px; border-radius:13px; object-fit:cover; display:block; margin-bottom:13px;
+    border:1px solid rgba(255,244,214,.28); }
+  .mchip{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:99px; font-size:11px;
+    font-family:'Azeret Mono',monospace; letter-spacing:.04em; color:var(--muted); background:var(--panel); border:1px solid var(--hair); }
+  .mchip svg{ width:12px; height:12px; opacity:.8; }
+  .mchip.gold{ color:var(--gold-hi); background:rgba(243,205,132,.1); border-color:rgba(243,205,132,.3); }
+  .datebig{ display:flex; align-items:baseline; gap:9px; margin-bottom:11px; flex-wrap:wrap; }
+  .datebig .yr{ font-family:'Azeret Mono',monospace; font-size:27px; font-weight:400; color:var(--cool-hi); letter-spacing:.02em; }
+  .datebig .src{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--cool); }
+
+  /* ---------- the current between anchor and options ---------- */
+  .flowgap{ position:relative; height:52px; display:grid; place-items:center; }
+  .flowline{ position:absolute; top:50%; inset-inline:38px; height:1px;
+    background:linear-gradient(90deg, rgba(243,205,132,.5), rgba(127,180,216,.35)); }
+  .flowdot{ position:absolute; top:calc(50% - 2.5px); width:5px; height:5px; border-radius:50%;
+    background:var(--gold-hi); box-shadow:0 0 10px 1px rgba(255,230,173,.8); animation:runline 3.2s linear infinite; }
+  .flowdot.d2{ animation-delay:1.05s; }
+  .flowdot.d3{ animation-delay:2.1s; }
+  @keyframes runline{ 0%{ left:38px; opacity:0 } 12%{ opacity:1 } 88%{ opacity:1 } 100%{ left:calc(100% - 38px); opacity:0 } }
+  .flowlabel{ position:relative; font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.2em;
+    text-transform:uppercase; color:var(--dim); background:#08111f; padding:4px 11px; border-radius:99px; border:1px solid var(--hair); }
+
+  .qhead{ text-align:center; margin:2px 0 14px; }
+  .qhead .q{ font-family:'Newsreader',serif; font-size:22px; color:#fbf5e8; }
+  .qhead .qs{ font-size:12px; color:var(--muted); margin-top:4px; }
+
+  /* ---------- the candidate memories ---------- */
+  .opts{ display:flex; flex-direction:column; gap:10px; }
+  .opt{ position:relative; padding:13px 14px; border-radius:15px; cursor:pointer; overflow:hidden;
+    background:rgba(9,17,29,.6); border:1px solid var(--hair); width:100%; text-align:start;
+    color:inherit; font:inherit;
+    transition:border-color .2s, background .2s, transform .15s, opacity .3s; }
+  .opt:hover{ border-color:rgba(255,255,255,.3); transform:translateY(-1px); }
+  .opt .row{ display:flex; align-items:flex-start; gap:12px; }
+  .opt .thumb{ width:46px; height:46px; border-radius:11px; flex:0 0 auto; position:relative; overflow:hidden;
+    border:1px solid rgba(255,244,214,.35); }
+  .opt .thumb i{ position:absolute; inset:0; background-size:cover; background-position:center; }
+  .opt .body{ flex:1; min-width:0; }
+  .opt .line{ font-family:'Newsreader',serif; font-size:15.5px; line-height:1.45; color:var(--cream); }
+  .opt .who{ font-size:11px; color:var(--gold); margin-top:5px; font-family:'Azeret Mono',monospace; letter-spacing:.03em; }
+  .opt .mk{ width:22px; height:22px; border-radius:50%; display:grid; place-items:center; flex:0 0 auto; opacity:0; transition:opacity .2s; }
+  .opt .mk svg{ width:13px; height:13px; }
+  .opt .verdict{ display:none; margin-top:11px; padding-top:10px; border-top:1px solid var(--hair);
+    align-items:center; gap:9px; font-size:11.5px; font-family:'Azeret Mono',monospace; letter-spacing:.03em; }
+  .opt.answered .verdict{ display:flex; }
+  .opt .verdict .yr{ font-size:14px; }
+  .opt.right{ border-color:rgba(243,205,132,.7); background:rgba(243,205,132,.13); box-shadow:0 0 26px -6px rgba(243,205,132,.5); }
+  .opt.right .mk{ opacity:1; background:linear-gradient(180deg,var(--gold-hi),var(--gold)); color:#1a1206; }
+  .opt.right .verdict{ color:var(--cool-hi); }
+  .opt.wrong{ border-color:rgba(127,180,216,.45); background:rgba(127,180,216,.07); animation:nudge .34s; }
+  .opt.wrong .mk{ opacity:1; color:var(--cool); }
+  .opt.wrong .verdict{ color:var(--cool); }
+  .opt.dim{ opacity:.38; }
+  @keyframes nudge{ 0%,100%{ transform:translateX(0) } 25%{ transform:translateX(-5px) } 75%{ transform:translateX(5px) } }
+
+  .thA i{ background:linear-gradient(150deg,#3d5470,#8fa6bd 55%,#d7c5a6); }
+  .thB i{ background:linear-gradient(150deg,#6b4a35,#b98a5f 55%,#f0d9b6); }
+  .thC i{ background:linear-gradient(150deg,#2f4a44,#6f9382 55%,#cfdcc9); }
+  .thD i{ background:linear-gradient(150deg,#4a3a5c,#8f76a8 55%,#ddd0e8); }
+
+  .hintbar{ margin-top:16px; text-align:center; font-size:11.5px; color:var(--dim); font-style:italic; font-family:'Newsreader',serif; }
+
+  /* ---------- reveal + the bridge to Tend ---------- */
+  .reveal{ display:none; }
+  .reveal.show{ display:block; }
+  .ribbon{ margin-top:6px; display:flex; align-items:flex-start; }
+  .stop{ flex:1; text-align:center; }
+  .stop .dot{ width:11px; height:11px; border-radius:50%; margin:0 auto 9px; }
+  .stop.a .dot{ background:var(--gold); box-shadow:0 0 12px 1px var(--gold); }
+  .stop.b .dot{ background:var(--gold-hi); box-shadow:0 0 14px 2px var(--gold-hi); }
+  .stop .yr{ font-family:'Azeret Mono',monospace; font-size:15px; color:var(--cool-hi); }
+  .stop .lb{ font-size:11px; color:var(--muted); margin-top:4px; line-height:1.35; }
+  .span{ flex:0 0 92px; padding-top:4px; }
+  .span .bar{ height:1px; background:linear-gradient(90deg,var(--gold),var(--gold-hi)); margin-bottom:9px; }
+  .span .amt{ font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--cool); text-align:center; }
+
+  .gapcard{ margin-top:22px; padding:16px; border-radius:16px;
+    background:rgba(201,162,255,.07); border:1px dashed rgba(201,162,255,.42); }
+  .gapcard .k{ display:flex; align-items:center; gap:8px; font-family:'Azeret Mono',monospace; font-size:9px;
+    letter-spacing:.18em; text-transform:uppercase; color:var(--edit); }
+  .gapcard .k .pip{ width:7px; height:7px; border-radius:50%; background:var(--edit); box-shadow:0 0 9px 1px var(--edit); }
+  .gapcard .h{ font-family:'Newsreader',serif; font-size:19px; color:var(--edit-hi); margin-top:9px; line-height:1.35; }
+  .gapcard .p{ font-family:'Newsreader',serif; font-size:14px; line-height:1.55; color:#e2d6f2; margin-top:8px; }
+  .gapline{ margin:14px 0 4px; height:26px; position:relative; }
+  .gapline .rail{ position:absolute; top:12px; inset-inline:0; height:1px; background:rgba(201,162,255,.3); }
+  .gapline .end{ position:absolute; top:8px; width:9px; height:9px; border-radius:50%; background:rgba(201,162,255,.55); }
+  .gapline .e1{ inset-inline-start:0; }
+  .gapline .e2{ inset-inline-end:0; }
+  .gapline .pulse{ position:absolute; top:6px; width:13px; height:13px; border-radius:50%;
+    border:1px solid var(--edit); animation:sweep 4.6s ease-in-out infinite; }
+  @keyframes sweep{ 0%,100%{ left:2%; opacity:.35 } 50%{ left:88%; opacity:1 } }
+
+  .btnrow{ display:flex; gap:10px; margin-top:18px; }
+  .btn{ flex:1; padding:14px; border-radius:14px; font-family:'Hanken Grotesk',sans-serif; font-size:14px; font-weight:600;
+    cursor:pointer; border:1px solid transparent; text-align:center; }
+  .btn.ghost{ background:transparent; border-color:var(--hair); color:var(--cream); }
+  .btn.primary{ background:linear-gradient(180deg,var(--gold-hi),var(--gold)); color:#1a1206; }
+  .btn.tend{ background:linear-gradient(180deg,var(--edit-hi),var(--edit)); color:#1c1030; }
+  .reelnote{ margin-top:13px; display:flex; align-items:center; gap:9px; justify-content:center;
+    font-size:11.5px; color:rgba(127,180,216,.8); font-family:'Azeret Mono',monospace; letter-spacing:.04em; }
+  .reelnote svg{ width:13px; height:13px; }
+
+  /* ---------- NOT ENOUGH DATA ---------- */
+  .locked-hero{ margin-top:28px; height:170px; border-radius:20px; position:relative; overflow:hidden; display:grid; place-items:center;
+    background:linear-gradient(135deg,#12233c,#0a1626); border:1px solid var(--hair); }
+  .locked-hero .tone{ position:absolute; inset:0; background:radial-gradient(80% 80% at 50% 34%, rgba(243,205,132,.15), transparent 70%); }
+  .locked-hero .ticks{ position:absolute; top:66%; inset-inline:26px; height:1px; background:rgba(255,255,255,.13); }
+  .locked-hero .tk{ position:absolute; top:-4px; width:1px; height:9px; background:rgba(255,255,255,.2); }
+  .locked-hero .one{ position:absolute; top:calc(66% - 6px); inset-inline-start:26px; width:13px; height:13px; border-radius:50%;
+    background:var(--gold); box-shadow:0 0 16px 2px rgba(243,205,132,.75); }
+  .locked-hero .glyph{ position:relative; color:var(--gold-hi); opacity:.9; margin-bottom:40px; }
+  .locked-hero .glyph svg{ width:52px; height:52px; }
+  .locked-title{ text-align:center; margin-top:22px; }
+  .locked-title .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--gold); }
+  .locked-title .h{ font-family:'Newsreader',serif; font-size:25px; color:#fbf5e8; margin-top:7px; line-height:1.25; }
+  .locked-body{ font-family:'Newsreader',serif; font-size:15.5px; line-height:1.6; color:#e7dcc6; text-align:center;
+    margin:14px auto 0; max-width:300px; }
+  .locked-body em{ font-style:italic; color:var(--gold-hi); }
+  .have{ margin:22px 0 0; display:flex; align-items:center; gap:13px; padding:14px 16px; border-radius:15px;
+    background:rgba(127,180,216,.07); border:1px solid rgba(127,180,216,.24); }
+  .have .num{ font-family:'Azeret Mono',monospace; font-size:26px; color:var(--cool-hi); flex:0 0 auto; }
+  .have .vt{ flex:1; }
+  .have .vt .n{ font-family:'Newsreader',serif; font-size:16px; color:var(--cream); line-height:1.35; }
+  .have .vt .s{ font-size:11px; color:var(--cool); margin-top:4px; font-family:'Azeret Mono',monospace; letter-spacing:.04em; }
+  .have .tag{ font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--cool-hi);
+    background:rgba(127,180,216,.12); border:1px solid rgba(127,180,216,.3); padding:6px 10px; border-radius:99px; flex:0 0 auto; }
+  .invite-cta{ margin-top:16px; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; padding:15px;
+    border-radius:15px; background:rgba(201,162,255,.09); border:1px dashed rgba(201,162,255,.45); color:var(--edit-hi);
+    font-family:'Newsreader',serif; font-size:16px; cursor:pointer; text-decoration:none; }
+  .invite-cta svg{ width:19px; height:19px; }
+  .locked-foot{ margin-top:18px; text-align:center; font-family:'Newsreader',serif; font-style:italic; font-size:13px; color:rgba(143,214,160,.65); line-height:1.5; }
+
+  /* ---------- ERROR ---------- */
+  .errcard{ margin-top:26px; padding:18px; border-radius:16px; background:rgba(9,17,29,.6); border:1px solid var(--hair); text-align:center; }
+  .errcard .h{ font-family:'Newsreader',serif; font-size:18px; color:var(--cream); }
+  .errcard .p{ font-size:12.5px; color:var(--muted); margin-top:7px; line-height:1.5; }
+  .errcard .btn{ max-width:200px; margin:14px auto 0; }
+
+  /* ---------- language sheet (live chrome, same idiom as the other games) ---------- */
+  .scrim{ position:absolute; inset:0; z-index:30; background:rgba(3,6,12,.62); backdrop-filter:blur(3px);
+    opacity:0; pointer-events:none; transition:opacity .22s; }
+  .scrim.show{ opacity:1; pointer-events:auto; }
+  .sheet{ position:absolute; z-index:31; inset-inline:0; bottom:0; background:linear-gradient(180deg,#0f1e33,#081120);
+    border-top:1px solid var(--hair); border-radius:22px 22px 0 0; padding:10px 18px calc(24px + env(safe-area-inset-bottom));
+    transform:translateY(102%); transition:transform .28s cubic-bezier(.22,.8,.3,1); max-height:76%; overflow-y:auto; scrollbar-width:none; }
+  .sheet::-webkit-scrollbar{ display:none; }
+  .sheet.show{ transform:translateY(0); }
+  .grip-h{ width:40px; height:4px; border-radius:99px; background:rgba(255,255,255,.2); margin:6px auto 15px; }
+  .sheet h3{ font-family:'Newsreader',serif; font-weight:400; font-size:21px; color:#fbf5e8; margin-bottom:4px; }
+  .sheet .sub{ font-size:12.5px; color:var(--muted); margin-bottom:16px; line-height:1.45; }
+  .lang-opt{ display:flex; align-items:center; gap:14px; width:100%; padding:14px 15px; border-radius:14px; cursor:pointer;
+    background:rgba(255,255,255,.04); border:1px solid var(--hair); color:var(--cream); margin-bottom:9px; text-align:start; }
+  .lang-opt.on{ border-color:rgba(243,205,132,.55); background:rgba(243,205,132,.08); }
+  .lang-opt .native{ font-family:'Newsreader',serif; font-size:18px; } .lang-opt .en{ font-size:11.5px; color:var(--muted); margin-top:1px; }
+  .lang-opt .tick{ margin-inline-start:auto; color:var(--gold); opacity:0; } .lang-opt.on .tick{ opacity:1; } .lang-opt .tick svg{ width:18px; height:18px; }
+
+  /* full-viewport page (drop the mock device frame) */
+  html,body{ background:#04070e; margin:0; }
+  body{ gap:0; padding:0; }
+  .stagewrap{ gap:0; width:100%; }
+  .device{ width:100vw!important; height:100dvh!important; max-width:none!important; border-radius:0!important; border:none!important; box-shadow:none!important; }
+</style>
+</head>
+<body>
+  <div class="stagewrap">
+    <div class="device" id="dev">
+      <div class="current" aria-hidden="true">
+        <div class="stream s1"></div>
+        <div class="stream s2"></div>
+        <div class="stream s3"></div>
+        <div class="mote" style="top:14%; animation-duration:19s; animation-delay:0s"></div>
+        <div class="mote" style="top:29%; animation-duration:26s; animation-delay:3s"></div>
+        <div class="mote" style="top:47%; animation-duration:22s; animation-delay:7s"></div>
+        <div class="mote" style="top:63%; animation-duration:31s; animation-delay:1.5s"></div>
+        <div class="mote" style="top:78%; animation-duration:24s; animation-delay:9s"></div>
+        <div class="mote" style="top:90%; animation-duration:29s; animation-delay:5s"></div>
+      </div>
+      <div class="veil"></div>
+      <div class="screen" id="screen">
+        <div class="topbar">
+          <button class="ibtn" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path class="backarrow" d="M15 18l-6-6 6-6"/></svg></button>
+          <div class="ttl"><div class="k mono" data-t="tk"></div><div class="n serif" data-t="tn"></div></div>
+          <button class="ibtn" data-act="lang" aria-label="Language"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></button>
+          <div class="streak" id="streak" hidden><span class="fl"></span><b id="streakN">×1</b></div>
+        </div>
+        <div class="pad">
+          <div id="play" style="display:none"></div>
+          <div id="locked" style="display:none"></div>
+          <div id="error" style="display:none"></div>
+        </div>
+      </div>
+      <div class="scrim"></div>
+      <section class="sheet" data-sheet="lang" role="dialog" aria-modal="true" aria-label="Language"></section>
+    </div>
+  </div>
+
+<script>
+(function(){
+  'use strict';
+  const SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
+  const sb=window.supabase.createClient(SB_URL,SB_KEY);
+  const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+  const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+  const qs=new URLSearchParams(location.search);
+  const PERSON_ID=qs.get('id')||qs.get('person')||null;
+  const START_SEED=qs.get('seed')||null;
+  const LANGS=['en','ru','he'];
+
+  /* ---------- i18n (EN / RU / HE) — content shown once, in the chosen language ---------- */
+  const T={
+    en:{ dir:'ltr', native:'English', label:'English',
+      tk:'Story · a game', tn:'What Happened Next?',
+      youAreHere:'You are here', dateSrc:'date on the memory',
+      toldBy:n=>`Told by ${n}`, aboutP:n=>`about ${n}`,
+      andThen:'and then…',
+      q:'Which came next?',
+      qsPerson:(n,name)=>`${n} memories of ${esc(name)}. Only one follows straight after.`,
+      qsFamily:n=>`${n} memories from the family. Only one follows straight after.`,
+      amemory:'A memory',
+      vNext:'the very next one', vEarlier:'earlier · this one comes before', vLater:'later · but not the next one',
+      yearsLater:n=>n===1?'a year later':`${n} years later`, sameYear:'the same year',
+      hint:'Nothing is lost by guessing. The order is only what the family remembers.',
+      order:'The order, as it stands',
+      spanYears:n=>n===1?'1 year':`${n} years`, spanSame:'same year',
+      gapK:'Waiting to be told',
+      gapH:(a,b)=>`Between ${a} and ${b} there is nothing here.`,
+      gapHOpen:a=>`After ${a}, nothing has been told yet.`,
+      gapP:(n,name)=>`${n} ${n===1?'year':'years'} of ${esc(name)}'s life that no one has written down yet. You were there for some of it.`,
+      gapPFamily:n=>`${n} ${n===1?'year':'years'} of the family's life that no one has written down yet. You were there for some of it.`,
+      gapPOpen:'What came after has not been written down yet. You were there for some of it.',
+      tend:'Add what happened next',
+      another:'Another pair', toReel:'See their reel', reelnote:'Saved to your Journal',
+      lockK:'The game is asleep', lockH:'Not enough dates yet',
+      lockBody:'To ask what happened next, memories need <em>years on them</em>. There are not enough dated memories here yet.',
+      needL:'It’s waiting for',
+      haveN:n=>n===1?'memory with a date':'memories with a date',
+      haveS:'counted by the app', tag:'asleep',
+      invite:'Put a year to a memory',
+      lockFoot:'The moment another memory gets a year,<br>the game wakes on its own.',
+      errH:'The engine did not answer', errB:'The question could not be gathered just now. Give it another moment.',
+      retry:'Try again',
+      langtitle:'Language', langsub:'Titles, prompts and the whole game follow the language you choose.' },
+    ru:{ dir:'ltr', native:'Русский', label:'Russian',
+      tk:'История · игра', tn:'Что было дальше?',
+      youAreHere:'Вы здесь', dateSrc:'дата на воспоминании',
+      toldBy:n=>`Рассказал ${n}`, aboutP:n=>`о ${n}`,
+      andThen:'а потом…',
+      q:'Что было следующим?',
+      qsPerson:(n,name)=>`${n} воспоминаний о ${esc(name)}. Только одно идёт сразу следом.`,
+      qsFamily:n=>`${n} воспоминаний семьи. Только одно идёт сразу следом.`,
+      amemory:'Воспоминание',
+      vNext:'то самое следующее', vEarlier:'раньше · это было до', vLater:'позже · но не следующее',
+      yearsLater:n=>n===1?'через год':`через ${n} лет`, sameYear:'тот же год',
+      hint:'Ошибиться ничего не стоит. Порядок — лишь то, что помнит семья.',
+      order:'Порядок, как он есть',
+      spanYears:n=>n===1?'1 год':`${n} лет`, spanSame:'тот же год',
+      gapK:'Ждёт рассказа',
+      gapH:(a,b)=>`Между ${a} и ${b} здесь пусто.`,
+      gapHOpen:a=>`После ${a} ещё ничего не рассказано.`,
+      gapP:(n,name)=>`${n} лет жизни ${esc(name)}, которые никто ещё не записал. Часть из них вы застали.`,
+      gapPFamily:n=>`${n} лет семейной жизни, которые никто ещё не записал. Часть из них вы застали.`,
+      gapPOpen:'То, что было дальше, ещё никто не записал. Часть из этого вы застали.',
+      tend:'Добавить, что было дальше',
+      another:'Ещё пара', toReel:'Посмотреть их плёнку', reelnote:'Сохранено в ваш Журнал',
+      lockK:'Игра спит', lockH:'Пока слишком мало дат',
+      lockBody:'Чтобы спросить «что было дальше», у воспоминаний должны быть <em>годы</em>. Пока датированных воспоминаний не хватает.',
+      needL:'Ждёт',
+      haveN:n=>n===1?'воспоминание с датой':'воспоминаний с датой',
+      haveS:'посчитано приложением', tag:'спит',
+      invite:'Поставить год воспоминанию',
+      lockFoot:'Как только у ещё одного воспоминания появится год,<br>игра проснётся сама.',
+      errH:'Движок не ответил', errB:'Сейчас не получилось собрать вопрос. Попробуйте ещё раз.',
+      retry:'Попробовать снова',
+      langtitle:'Язык', langsub:'Заголовки, вопросы и вся игра — на выбранном языке.' },
+    he:{ dir:'rtl', native:'עברית', label:'Hebrew',
+      tk:'סיפור · משחק', tn:'מה קרה אחר כך?',
+      youAreHere:'אתם כאן', dateSrc:'התאריך שעל הזיכרון',
+      toldBy:n=>`סיפר ${n}`, aboutP:n=>`על ${n}`,
+      andThen:'ואז…',
+      q:'מה בא אחר כך?',
+      qsPerson:(n,name)=>`${n} זיכרונות של ${esc(name)}. רק אחד בא מיד אחריו.`,
+      qsFamily:n=>`${n} זיכרונות מהמשפחה. רק אחד בא מיד אחריו.`,
+      amemory:'זיכרון',
+      vNext:'זה הבא בתור', vEarlier:'מוקדם יותר · זה קרה לפני', vLater:'מאוחר יותר · אבל לא הבא בתור',
+      yearsLater:n=>n===1?'שנה אחר כך':`${n} שנים אחר כך`, sameYear:'אותה שנה',
+      hint:'אין מה להפסיד בניחוש. הסדר הוא רק מה שהמשפחה זוכרת.',
+      order:'הסדר, כפי שהוא נשמר',
+      spanYears:n=>n===1?'שנה אחת':`${n} שנים`, spanSame:'אותה שנה',
+      gapK:'מחכה שיסופר',
+      gapH:(a,b)=>`בין ${a} ל־${b} אין כאן דבר.`,
+      gapHOpen:a=>`אחרי ${a} עוד לא סופר דבר.`,
+      gapP:(n,name)=>`${n} שנים מחייה של ${esc(name)} שאיש עדיין לא כתב. חלק מהן אתם זוכרים.`,
+      gapPFamily:n=>`${n} שנים מחיי המשפחה שאיש עדיין לא כתב. חלק מהן אתם זוכרים.`,
+      gapPOpen:'מה שקרה אחר כך עוד לא נכתב. חלק מזה אתם זוכרים.',
+      tend:'הוסיפו מה קרה אחר כך',
+      another:'זוג נוסף', toReel:'לצפות בסרט שלהם', reelnote:'נשמר ביומן שלכם',
+      lockK:'המשחק ישן', lockH:'עדיין אין מספיק תאריכים',
+      lockBody:'כדי לשאול «מה קרה אחר כך», לזיכרונות דרושות <em>שנים</em>. עדיין אין כאן מספיק זיכרונות מתוארכים.',
+      needL:'מחכה ל',
+      haveN:n=>n===1?'זיכרון עם תאריך':'זיכרונות עם תאריך',
+      haveS:'נספר על ידי האפליקציה', tag:'ישן',
+      invite:'לתת שנה לזיכרון',
+      lockFoot:'ברגע שזיכרון נוסף יקבל שנה,<br>המשחק יתעורר מעצמו.',
+      errH:'המנוע לא ענה', errB:'לא הצלחנו להרכיב שאלה כרגע. נסו שוב בעוד רגע.',
+      retry:'לנסות שוב',
+      langtitle:'שפה', langsub:'הכותרות, השאלות וכל המשחק עוברים לשפה שתבחרו.' }
+  };
+  const d=()=>T[state.lang];
+
+  const I={
+    back:'M15 18l-6-6 6-6', backR:'M9 18l6-6-6-6',
+    pin:'<path d="M12 21s-6-5.7-6-10a6 6 0 1112 0c0 4.3-6 10-6 10z"/><circle cx="12" cy="11" r="2"/>',
+    check:'<path d="M20 6L9 17l-5-5"/>',
+    cross:'<path d="M6 6l12 12M18 6L6 18"/>',
+    clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
+    plus:'<path d="M12 5v14M5 12h14"/>',
+    reel:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/>'
+  };
+  const sv=(p,w)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w||1.6}" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+
+  /* ---------- state ---------- */
+  const state={ lang:'en', seed:null, round:null, extra:null, streak:0, streakShown:false, answered:false };
+
+  function freshSeed(){ try{ if(window.crypto&&crypto.getRandomValues){ const a=new Uint32Array(1); crypto.getRandomValues(a); return a[0]>>>0; } }catch(e){} return (Math.floor(Math.random()*0x7fffffff))>>>0; }
+  function show(which){ ['play','locked','error'].forEach(s=>{ $('#'+s).style.display = s===which?'block':'none'; }); }
+
+  /* a year out of whatever the memory carries — rendering only, never generation */
+  function yearOf(v){
+    if(v==null) return null;
+    if(typeof v==='number' && v>500 && v<3000) return v;
+    const m=String(v).match(/(1[0-9]{3}|20[0-9]{2})/);
+    return m?parseInt(m[1],10):null;
+  }
+  function whenOfMeta(meta){
+    if(!meta) return null;
+    if(typeof meta==='string'){ try{ meta=JSON.parse(meta); }catch(e){ return meta; } }
+    return meta.when||meta.date||meta.year||null;
+  }
+
+  /* ---------- chrome ---------- */
+  function paintChrome(){ const L=d();
+    document.documentElement.lang=state.lang; document.documentElement.dir=L.dir;
+    $('#screen').setAttribute('dir',L.dir); $('#screen').setAttribute('lang',state.lang);
+    $$('[data-t]').forEach(el=>{ el.textContent=L[el.getAttribute('data-t')]; });
+    $('.backarrow').setAttribute('d', L.dir==='rtl'?I.backR:I.back);
+    const st=$('#streak'); st.hidden=!state.streakShown; $('#streakN').textContent='×'+Math.max(1,state.streak);
+  }
+
+  /* ---------- enrichment: real rows only, and nothing that gives the answer away ----------
+     Tellers, photos and the subject's name are safe before the guess.
+     The OPTION YEARS are deliberately NOT fetched here — they are the answer. */
+  async function enrich(res){
+    const ids=[].concat(res.used_rows&&res.used_rows.artefacts||[]);
+    const anchorId=ids[0]||null;
+    const out={ personName:null, tellers:{}, photos:{}, anchorTeller:null, anchorId:anchorId };
+    const jobs=[
+      res.person_id ? sb.from('people').select('display_name,called_name').eq('id',res.person_id).maybeSingle() : Promise.resolve(null),
+      ids.length ? sb.from('artefacts').select('id,contributor_id').in('id',ids) : Promise.resolve(null)
+    ];
+    const paths=[];
+    if(res.prompt&&res.prompt.storage_path) paths.push(['__anchor__',res.prompt.storage_path]);
+    res.options.forEach(o=>{ if(o.storage_path) paths.push([o.id,o.storage_path]); });
+    paths.forEach(p=>{ jobs.push(sb.storage.from('family').createSignedUrl(p[1],3600)); });
+
+    const r=await Promise.all(jobs.map(p=>Promise.resolve(p).catch(()=>null)));
+    const pr=r[0]&&r[0].data;
+    if(pr) out.personName=(pr.called_name&&pr.called_name.trim())||(pr.display_name&&pr.display_name.trim())||null;
+    paths.forEach((p,i)=>{ const s=r[2+i]; const u=s&&s.data&&s.data.signedUrl; if(u) out.photos[p[0]]=u; });
+
+    const arts=(r[1]&&r[1].data)||[];
+    const cids=[...new Set(arts.map(a=>a.contributor_id).filter(Boolean))];
+    let names={};
+    if(cids.length){
+      try{
+        const {data:pp}=await sb.from('people').select('id,display_name,called_name').in('id',cids);
+        (pp||[]).forEach(p=>{ names[p.id]=(p.called_name&&p.called_name.trim())||(p.display_name&&p.display_name.trim())||''; });
+      }catch(e){}
+    }
+    // contributor_id = who TOLD it (a person). Never the uploading account.
+    arts.forEach(a=>{ const n=a.contributor_id&&names[a.contributor_id]; if(n) out.tellers[a.id]=n; });
+    out.anchorTeller=anchorId?(out.tellers[anchorId]||null):null;
+    return out;
+  }
+
+  /* the years behind the options — fetched only AFTER the guess is committed */
+  async function fetchOptionYears(ids){
+    const map={};
+    try{
+      const {data}=await sb.from('artefacts').select('id,metadata').in('id',ids);
+      (data||[]).forEach(a=>{ const y=yearOf(whenOfMeta(a.metadata)); if(y!=null) map[a.id]=y; });
+    }catch(e){}
+    return map;
+  }
+
+  /* ---------- PLAY ---------- */
+  const THUMBS=['thA','thB','thC','thD'];
+
+  function renderPlay(res,ex){
+    const L=d(), p=res.prompt||{};
+    const name=ex.personName;
+    const anchorPhoto=ex.photos['__anchor__'];
+    const chips=[];
+    if(ex.anchorTeller) chips.push(`<span class="mchip gold">${esc(L.toldBy(ex.anchorTeller))}</span>`);
+    if(p.where) chips.push(`<span class="mchip">${sv(I.pin,1.6)}${esc(p.where)}</span>`);
+    if(name) chips.push(`<span class="mchip">${esc(L.aboutP(name))}</span>`);
+
+    const opts=res.options.map((o,i)=>{
+      const photo=ex.photos[o.id];
+      const teller=ex.tellers[o.id];
+      const text=String(o.label==null?'':o.label).trim()||L.amemory;
+      return `
+      <button class="opt" type="button" data-i="${i}">
+        <div class="row">
+          <div class="thumb ${THUMBS[i%4]}"><i${photo?` style="background-image:url('${esc(photo)}')"`:''}></i></div>
+          <div class="body">
+            <div class="line serif">${esc(text)}</div>
+            ${teller?`<div class="who">${esc(L.toldBy(teller))}</div>`:''}
+          </div>
+          <div class="mk"></div>
+        </div>
+        <div class="verdict"></div>
+      </button>`;
+    }).join('');
+
+    $('#play').innerHTML=`
+      <div class="eye">${esc(L.youAreHere)}</div>
+      <div class="anchorwrap">
+        <div class="anchor">
+          ${anchorPhoto?`<img class="shot" src="${esc(anchorPhoto)}" alt="">`:''}
+          <div class="datebig">
+            <span class="yr">${esc(p.when||p.year||'')}</span>
+            <span class="src">${esc(L.dateSrc)}</span>
+          </div>
+          ${p.memory_text?`<div class="words">${esc(p.memory_text)}</div>`:''}
+          <div class="meta">${chips.join('')}</div>
+        </div>
+      </div>
+
+      <div class="flowgap" aria-hidden="true">
+        <div class="flowline"></div>
+        <div class="flowdot"></div><div class="flowdot d2"></div><div class="flowdot d3"></div>
+        <div class="flowlabel">${esc(L.andThen)}</div>
+      </div>
+
+      <div class="qhead">
+        <div class="q serif">${esc(L.q)}</div>
+        <div class="qs">${name?L.qsPerson(res.options.length,name):esc(L.qsFamily(res.options.length))}</div>
+      </div>
+
+      <div class="opts" id="opts">${opts}</div>
+      <div class="hintbar serif">${esc(L.hint)}</div>
+      <div class="reveal" id="reveal"></div>`;
+  }
+
+  /* ---------- the guess ---------- */
+  async function onGuess(idx){
+    const res=state.round; if(!res||state.answered) return;
+    const L=d(), list=$('#opts'); if(!list) return;
+    const cards=[...list.children];
+    const card=cards[idx]; if(!card) return;
+    const correct = idx===res.answer_index;
+
+    if(!correct){
+      card.classList.add('wrong');   // no 'answered' yet — the verdict line stays sealed
+      card.querySelector('.mk').innerHTML=sv(I.cross,2.2);
+      setTimeout(()=>card.classList.remove('wrong'), 900);
+      return;                                        // a wrong guess costs nothing; try again
+    }
+
+    state.answered=true;
+    state.streak++; state.streakShown=true; paintChrome();
+    cards.forEach(c=>{ if(c!==card) c.classList.add('dim'); });
+    card.classList.add('right');
+    card.querySelector('.mk').innerHTML=sv(I.check,2.4);
+
+    // now — and only now — the years may be shown
+    const years=await fetchOptionYears(res.options.map(o=>o.id));
+    const anchorYear=yearOf(res.prompt&&(res.prompt.year!=null?res.prompt.year:res.prompt.when));
+    const correctYear=years[res.answer_id]!=null?years[res.answer_id]:yearOf(res.answer_when);
+
+    cards.forEach((c,i)=>{
+      const o=res.options[i], y=years[o.id];
+      c.classList.add('answered');
+      if(i!==idx){ c.querySelector('.mk').innerHTML=sv(I.cross,2.2); c.classList.add('wrong'); }
+      let phrase;
+      if(i===idx){
+        const gap=(anchorYear!=null&&y!=null)?(y-anchorYear):null;
+        phrase = (gap!=null&&gap>0) ? `${L.yearsLater(gap)} · ${L.vNext}` : `${L.sameYear} · ${L.vNext}`;
+        if(gap==null) phrase=L.vNext;
+      } else if(y!=null&&anchorYear!=null){
+        phrase = y<anchorYear ? L.vEarlier : L.vLater;
+      } else {
+        phrase = L.vLater;
+      }
+      c.querySelector('.verdict').innerHTML=`${y!=null?`<span class="yr">${esc(y)}</span>`:''}<span>${esc(phrase)}</span>`;
+    });
+
+    setTimeout(()=>renderReveal(anchorYear,correctYear,years), reduceMotion?0:520);
+  }
+
+  /* ---------- reveal + the bridge to Tend ---------- */
+  function renderReveal(anchorYear,correctYear,years){
+    const L=d(), res=state.round, ex=state.extra;
+    const name=ex&&ex.personName;
+    const anchorText=(res.prompt&&res.prompt.memory_text)||(res.prompt&&res.prompt.where)||L.amemory;
+    const nextOpt=res.options[res.answer_index];
+    const nextText=String(nextOpt.label==null?'':nextOpt.label).trim()||L.amemory;
+
+    let ribbon='';
+    if(anchorYear!=null&&correctYear!=null){
+      const span=correctYear-anchorYear;
+      ribbon=`
+        <div class="eye" style="margin-top:26px">${esc(L.order)}</div>
+        <div class="ribbon">
+          <div class="stop a"><div class="dot"></div><div class="yr">${esc(anchorYear)}</div><div class="lb serif">${esc(anchorText)}</div></div>
+          <div class="span"><div class="bar"></div><div class="amt">${esc(span>0?L.spanYears(span):L.spanSame)}</div></div>
+          <div class="stop b"><div class="dot"></div><div class="yr">${esc(correctYear)}</div><div class="lb serif">${esc(nextText)}</div></div>
+        </div>`;
+    }
+
+    /* the gap is measured from the round's real years — never invented */
+    let gapH, gapP;
+    const after=Object.keys(years).map(k=>years[k]).filter(y=>correctYear!=null&&y>correctYear).sort((a,b)=>a-b);
+    if(correctYear!=null&&after.length&&(after[0]-correctYear)>=2){
+      const n=after[0]-correctYear;
+      gapH=L.gapH(correctYear,after[0]);
+      gapP=name?L.gapP(n,name):L.gapPFamily(n);
+    } else {
+      gapH=correctYear!=null?L.gapHOpen(correctYear):L.gapK;
+      gapP=L.gapPOpen;
+    }
+
+    const addHref='contribute-add-real.html'+(res.person_id?('?id='+encodeURIComponent(res.person_id)):'');
+    $('#reveal').innerHTML=`
+      ${ribbon}
+      <div class="gapcard">
+        <div class="k"><span class="pip"></span>${esc(L.gapK)}</div>
+        <div class="h serif">${esc(gapH)}</div>
+        <div class="gapline" aria-hidden="true">
+          <div class="rail"></div><div class="end e1"></div><div class="end e2"></div><div class="pulse"></div>
+        </div>
+        <div class="p serif">${esc(gapP)}</div>
+        <a class="btn tend" style="display:block; margin-top:14px; text-decoration:none" href="${esc(addHref)}">${esc(L.tend)}</a>
+      </div>
+      <div class="btnrow">
+        <button class="btn ghost" type="button" data-act="next">${esc(L.another)}</button>
+        <button class="btn primary" type="button" data-act="reel">${esc(L.toReel)}</button>
+      </div>
+      <div class="reelnote">${sv(I.reel,1.7)}${esc(L.reelnote)}</div>`;
+    $('#reveal').classList.add('show');
+    $('#reveal').scrollIntoView({behavior:reduceMotion?'auto':'smooth', block:'nearest'});
+  }
+
+  /* ---------- LOCKED (not_enough_data) — surfaces the engine's human need string ---------- */
+  function renderLocked(res){
+    const L=d();
+    const det=(res&&res.detail)||{};
+    const have=typeof det.dated_memories==='number'?det.dated_memories:0;
+    const need=(res&&res.need)||'';
+    $('#locked').innerHTML=`
+      <div class="locked-hero" aria-hidden="true">
+        <div class="tone"></div>
+        <div class="ticks">
+          <span class="tk" style="left:0"></span><span class="tk" style="left:25%"></span>
+          <span class="tk" style="left:50%"></span><span class="tk" style="left:75%"></span>
+          <span class="tk" style="left:100%"></span>
+        </div>
+        <div class="one"></div>
+        <div class="glyph">${sv(I.clock,1.4)}</div>
+      </div>
+      <div class="locked-title">
+        <div class="k">${esc(L.lockK)}</div>
+        <div class="h serif">${esc(L.lockH)}</div>
+      </div>
+      <div class="locked-body serif">${L.lockBody}</div>
+      ${need?`<div class="locked-body serif" style="margin-top:12px"><em>${esc(L.needL)}: ${esc(need)}</em></div>`:''}
+      <div class="have">
+        <div class="num">${esc(have)}</div>
+        <div class="vt">
+          <div class="n serif">${esc(L.haveN(have))}</div>
+          <div class="s">${esc(L.haveS)}</div>
+        </div>
+        <div class="tag">${esc(L.tag)}</div>
+      </div>
+      <a class="invite-cta serif" href="contribute-add-real.html${PERSON_ID?('?id='+encodeURIComponent(PERSON_ID)):''}">${sv(I.plus,1.6)}${esc(L.invite)}</a>
+      <div class="locked-foot serif">${L.lockFoot}</div>`;
+  }
+
+  /* ---------- ERROR ---------- */
+  function renderError(){
+    const L=d();
+    $('#error').innerHTML=`
+      <div class="errcard">
+        <div class="h serif">${esc(L.errH)}</div>
+        <div class="p">${esc(L.errB)}</div>
+        <button class="btn ghost" type="button" data-act="retry">${esc(L.retry)}</button>
+      </div>`;
+  }
+
+  /* ---------- load a round (ENGINE — Rule 8: nothing here is hard-coded) ---------- */
+  async function loadRound(seed){
+    state.seed=seed; state.answered=false; state.round=null; state.extra=null;
+    let res;
+    try{ res=await window.LFGames.whatHappenedNext(sb,{ id:PERSON_ID, personId:PERSON_ID, seed:seed }); }
+    catch(e){ res={status:'error', message:(e&&e.message)||String(e)}; }
+
+    if(res && res.status==='ok'){
+      let ex;
+      try{ ex=await enrich(res); }catch(e){ ex={personName:null,tellers:{},photos:{},anchorTeller:null}; }
+      state.round=res; state.extra=ex;
+      renderPlay(res,ex); show('play');
+    } else if(res && res.status==='not_enough_data'){
+      renderLocked(res); show('locked');
+    } else {
+      renderError(); show('error');
+    }
+    paintChrome();
+  }
+
+  /* ---------- language sheet ---------- */
+  const showSheet=()=>{ $('.scrim').classList.add('show'); $('.sheet[data-sheet="lang"]').classList.add('show'); };
+  const hideSheets=()=>{ $('.scrim').classList.remove('show'); $$('.sheet').forEach(s=>s.classList.remove('show')); };
+  window.__lfClose=()=>{ if($('.sheet.show')){ hideSheets(); return true; } return false; };
+  function openLang(){ const L=d(); const sh=$('.sheet[data-sheet="lang"]');
+    sh.innerHTML=`<div class="grip-h"></div><h3>${esc(L.langtitle)}</h3><div class="sub">${esc(L.langsub)}</div>
+      ${LANGS.map(k=>`<button class="lang-opt ${k===state.lang?'on':''}" type="button" data-lang="${k}"><span><span class="native">${esc(T[k].native)}</span><span class="en" style="display:block">${esc(T[k].label)}</span></span><span class="tick">${sv(I.check,2)}</span></button>`).join('')}`;
+    sh.querySelectorAll('[data-lang]').forEach(b=>b.onclick=async()=>{ await setLang(b.dataset.lang); hideSheets(); });
+    showSheet(); }
+  async function setLang(lang){ if(!T[lang]||lang===state.lang) return; state.lang=lang;
+    try{ localStorage.setItem('lf_lang',lang); }catch(e){}
+    try{ const {data:{session}}=await sb.auth.getSession(); if(session&&session.user){ await sb.from('profiles').update({preferred_lang:lang}).eq('id',session.user.id); } }catch(e){}
+    paintChrome();
+    // same seed reproduces the same round in the new language (deterministic engine)
+    await loadRound(state.seed!=null?state.seed:freshSeed());
+  }
+
+  /* ---------- click wiring ---------- */
+  function wire(){
+    $('#dev').addEventListener('click', e=>{
+      const opt=e.target.closest('.opt');
+      if(opt){ onGuess(parseInt(opt.getAttribute('data-i'),10)); return; }
+      const a=e.target.closest('[data-act]'); if(!a) return;
+      const act=a.dataset.act;
+      if(act==='back'){ if(history.length>1) history.back(); else location.href='person-real.html'; return; }
+      if(act==='lang'){ openLang(); return; }
+      if(act==='next'){ loadRound(freshSeed()); return; }
+      if(act==='retry'){ loadRound(state.seed!=null?state.seed:freshSeed()); return; }
+      if(act==='reel'){ const id=state.round&&state.round.person_id;
+        location.href = id?('reel-real.html?id='+encodeURIComponent(id)):'reel-real.html'; return; }
+    });
+    $('.scrim').addEventListener('click', hideSheets);
+  }
+
+  /* ---------- boot: session gate → load round ---------- */
+  async function boot(){
+    const stored=(function(){ try{ return localStorage.getItem('lf_lang'); }catch(e){ return null; } })();
+    if(stored&&T[stored]) state.lang=stored; else { const dl=(navigator.language||'en').slice(0,2); if(T[dl]) state.lang=dl; }
+    paintChrome();
+    let session=null;
+    try{ const r=await sb.auth.getSession(); session=r.data&&r.data.session; }catch(e){ session=null; }
+    if(!session){ location.replace('index.html'); return; }
+    try{ const {data:pr}=await sb.from('profiles').select('preferred_lang').eq('id',session.user.id).maybeSingle(); if(pr&&pr.preferred_lang&&!stored&&T[pr.preferred_lang]) state.lang=pr.preferred_lang; }catch(e){}
+    paintChrome();
+    await loadRound(START_SEED!=null?START_SEED:freshSeed());
+  }
+
+  wire(); boot();
+})();
+</script>
+<script src="lf-nav.js" data-here="" data-parent="person-real.html"></script>
+</body></html>
