@@ -41,7 +41,7 @@
              ['tree','⋔','The tree','tree-real.html'],
              ['play','❂','Find them in a crowd','crowd-real.html'],
              ['when','◷','The timeline','timeline-real.html'],
-             ['add','✎','Add a memory','prototype.html']];
+             ['add','✎','Add a memory','contribute-real.html']];
   var wrap=document.createElement('div'); wrap.id='lfnav';
   var panel=document.createElement('div'); panel.id='lfnavPanel';
   items.forEach(function(it){
