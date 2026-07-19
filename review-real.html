@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>The Living Forest — the review queue</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body{ background:#04070e; }
+  :root{
+    --cream:#f4ecdb; --muted:#9db0cc; --dim:#6f83a3; --hair:#ffffff18; --panel:#ffffff0b;
+    --gold:#f3cd84; --gold-hi:#ffe6ad; --cool:#7fb4d8; --cool-hi:#a9d2ee;
+    --edit:#c9a2ff; --edit-hi:#ddc6ff; --edit-soft:#efe6ff; --leaf:#8fd6a0; --leaf-hi:#b6ecc4; --autotr:#9a8bbd; --coral:#ff8a80; --coral-hi:#ffb0a8;
+  }
+  body{ font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--cream); min-height:100dvh;
+    display:flex; align-items:flex-start; justify-content:center; gap:40px; padding:34px 20px 90px;
+    background:radial-gradient(150% 100% at 50% -6%, #241636 0%, #120e28 46%, #04070e 100%);
+    -webkit-user-select:none; user-select:none; flex-wrap:wrap; position:relative; overflow-x:hidden; }
+  .serif{ font-family:'Newsreader',Georgia,serif; }
+  .screen[dir="rtl"]{ direction:rtl; }
+  .screen[dir="rtl"] .serif,.screen[dir="rtl"] .qval,.screen[dir="rtl"] .warm,.screen[dir="rtl"] .heroname{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
+
+  .stagewrap{ display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .device{ position:relative; width:390px; height:820px; border-radius:42px; overflow:hidden; flex:0 0 auto;
+    background:#04070e; box-shadow:0 40px 120px -50px #000, 0 0 0 9px #14141b, 0 0 0 10px #2b2b34; }
+
+  /* ===== ALIVE : in-device atmosphere — a violet night-vigil with drifting seed-light ===== */
+  .atmo{ position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+  .aur{ position:absolute; border-radius:50%; filter:blur(48px); opacity:.6; mix-blend-mode:screen; }
+  .aur.a1{ width:320px; height:320px; left:-80px; top:-52px; background:radial-gradient(circle, rgba(201,162,255,.9), transparent 68%); animation:vigilA 23s ease-in-out infinite; }
+  .aur.a2{ width:300px; height:300px; right:-92px; top:150px; background:radial-gradient(circle, rgba(143,214,160,.72), transparent 66%); animation:vigilB 28s ease-in-out infinite; }
+  .aur.a3{ width:300px; height:300px; left:-50px; bottom:-60px; background:radial-gradient(circle, rgba(243,205,132,.66), transparent 66%); animation:vigilA 32s ease-in-out infinite reverse; }
+  .motes,.motes2{ position:absolute; inset:-12%; z-index:1; pointer-events:none; mix-blend-mode:screen;
+    -webkit-mask:linear-gradient(to top, transparent, #000 18%, #000 82%, transparent);
+            mask:linear-gradient(to top, transparent, #000 18%, #000 82%, transparent); }
+  .motes{ opacity:.8; animation:moteSway 26s ease-in-out infinite;
+    background:
+      radial-gradient(2px 2px at 15% 30%, rgba(221,198,255,.9), transparent 60%),
+      radial-gradient(1.7px 1.7px at 70% 18%, rgba(255,230,173,.8), transparent 60%),
+      radial-gradient(2px 2px at 40% 72%, rgba(182,236,196,.8), transparent 60%),
+      radial-gradient(1.6px 1.6px at 86% 54%, rgba(201,162,255,.85), transparent 60%),
+      radial-gradient(1.5px 1.5px at 26% 90%, rgba(255,208,160,.7), transparent 60%); }
+  .motes2{ opacity:.55; animation:moteSway2 37s ease-in-out infinite;
+    background:
+      radial-gradient(1.4px 1.4px at 55% 40%, rgba(221,198,255,.7), transparent 60%),
+      radial-gradient(1.3px 1.3px at 22% 60%, rgba(207,224,255,.6), transparent 60%),
+      radial-gradient(1.5px 1.5px at 78% 78%, rgba(182,236,196,.6), transparent 60%),
+      radial-gradient(1.3px 1.3px at 90% 28%, rgba(255,230,173,.55), transparent 60%); }
+  .stars{ position:absolute; inset:0; z-index:0; opacity:.5; animation:twinkle 8s ease-in-out infinite;
+    background-image:radial-gradient(1px 1px at 18% 12%, #cfe0ff88, transparent), radial-gradient(1px 1px at 66% 7%, #cfe0ff66, transparent),
+      radial-gradient(1px 1px at 84% 26%, #ddc6ff55, transparent), radial-gradient(1px 1px at 30% 40%, #cfe0ff44, transparent),
+      radial-gradient(1px 1px at 10% 58%, #cfe0ff44, transparent), radial-gradient(1px 1px at 88% 62%, #cfe0ff44, transparent); }
+  .atmo-veil{ position:absolute; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(120% 70% at 50% 6%, rgba(201,162,255,.06), transparent 42%), radial-gradient(120% 92% at 50% 42%, transparent 26%, rgba(4,7,14,.62) 100%); }
+  @keyframes vigilA{ 0%{transform:translate(-4%,-2%) scale(1);} 50%{transform:translate(5%,4%) scale(1.16);} 100%{transform:translate(-4%,-2%) scale(1);} }
+  @keyframes vigilB{ 0%{transform:translate(4%,2%) scale(1.06);} 50%{transform:translate(-6%,-5%) scale(1.24);} 100%{transform:translate(4%,2%) scale(1.06);} }
+  @keyframes moteSway{ 0%{transform:translate(0,0);} 25%{transform:translate(2%,-3%);} 50%{transform:translate(-2%,-6%);} 75%{transform:translate(1.5%,-3%);} 100%{transform:translate(0,0);} }
+  @keyframes moteSway2{ 0%{transform:translate(0,0);} 33%{transform:translate(-2.5%,-4%);} 66%{transform:translate(2%,-7%);} 100%{transform:translate(0,0);} }
+  @keyframes twinkle{ 0%,100%{opacity:.36;} 50%{opacity:.66;} }
+
+  .screen{ position:absolute; inset:0; z-index:2; overflow-y:auto; scrollbar-width:none; }
+  .screen::-webkit-scrollbar{ display:none; }
+  .pad{ padding:0 18px calc(40px + env(safe-area-inset-bottom)); }
+
+  .topbar{ position:sticky; top:0; z-index:14; display:flex; align-items:center; gap:10px;
+    padding:15px 16px 11px; background:linear-gradient(to bottom, rgba(9,7,22,.92), rgba(9,7,22,.5) 68%, transparent); backdrop-filter:blur(9px); }
+  .ibtn{ width:40px; height:40px; border-radius:12px; flex:0 0 auto; display:grid; place-items:center; cursor:pointer; border:1px solid var(--hair); background:rgba(18,14,40,.55); color:var(--cream); transition:border-color .2s; }
+  .ibtn:hover{ border-color:rgba(255,255,255,.34); } .ibtn svg{ width:18px; height:18px; }
+  .ttl{ flex:1; min-width:0; }
+  .ttl .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.24em; text-transform:uppercase; color:var(--muted); }
+  .ttl .n{ font-family:'Newsreader',serif; font-size:17px; color:#fbf5e8; margin-top:1px; }
+  .langpill{ display:inline-flex; align-items:center; gap:6px; font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; padding:8px 11px; border-radius:99px; cursor:pointer; border:1px solid var(--hair); background:rgba(18,14,40,.55); color:var(--muted); flex:0 0 auto; }
+
+  .keeperbar{ position:relative; overflow:hidden; display:flex; align-items:center; gap:11px; margin:4px 0 2px; padding:12px 14px; border-radius:14px;
+    background:linear-gradient(120deg, rgba(201,162,255,.16), rgba(18,14,40,.5)); border:1px solid rgba(201,162,255,.34); backdrop-filter:blur(6px); }
+  .keeperbar::after{ content:""; position:absolute; top:0; bottom:0; width:40%; left:-50%; pointer-events:none;
+    background:linear-gradient(100deg, transparent, rgba(221,198,255,.22), transparent); animation:sweep 6.5s ease-in-out infinite; }
+  @keyframes sweep{ 0%{ left:-55%; } 60%,100%{ left:130%; } }
+  .keeperbar .kshield{ width:34px; height:34px; border-radius:10px; flex:0 0 auto; display:grid; place-items:center; background:rgba(201,162,255,.16); border:1px solid rgba(201,162,255,.4); color:var(--edit-hi); }
+  .keeperbar .kshield svg{ width:18px; height:18px; }
+  .keeperbar .kt{ font-size:11.5px; line-height:1.4; color:#cbbce6; } .keeperbar .kt b{ color:var(--edit-hi); font-weight:600; }
+
+  .tendtoast{ display:flex; align-items:center; gap:10px; margin:12px 2px 2px; padding:11px 13px; border-radius:13px;
+    background:rgba(143,214,160,.1); border:1px solid rgba(143,214,160,.34); }
+  .tendtoast svg{ width:16px; height:16px; color:var(--leaf); flex:0 0 auto; }
+  .tendtoast span{ font-size:11.5px; color:#bfe0c8; line-height:1.4; } .tendtoast span b{ color:var(--leaf-hi); font-weight:600; }
+  .tendtoast .gold{ color:var(--gold-hi); font-weight:600; }
+
+  .warm{ font-family:'Newsreader',serif; font-size:24px; line-height:1.24; color:#f6efe0; margin:16px 2px 6px; }
+  .warm em{ font-style:italic; color:var(--edit-hi); }
+  .warmsub{ font-size:13px; color:var(--muted); line-height:1.5; margin:0 2px 14px; }
+  .filters{ display:flex; gap:8px; flex-wrap:wrap; margin:0 0 6px; }
+  .fchip{ display:inline-flex; align-items:center; gap:7px; font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase; padding:7px 11px; border-radius:99px; cursor:pointer;
+    color:var(--muted); background:rgba(18,14,40,.5); border:1px solid var(--hair); }
+  .fchip .c{ color:var(--edit-hi); font-weight:600; }
+  .fchip.on{ color:#1a0f2e; background:linear-gradient(180deg,var(--edit-hi),var(--edit)); border-color:transparent; }
+  .fchip.on .c{ color:#1a0f2e; }
+
+  .grouphd{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--dim); margin:22px 2px 11px; display:flex; align-items:center; gap:10px; }
+  .grouphd .gi{ width:22px; height:22px; border-radius:7px; display:grid; place-items:center; background:rgba(201,162,255,.1); border:1px solid rgba(201,162,255,.28); color:var(--edit-hi); flex:0 0 auto; }
+  .grouphd .gi svg{ width:13px; height:13px; }
+  .grouphd .cnt{ color:var(--edit-hi); }
+  .grouphd .line{ flex:1; height:1px; background:var(--hair); }
+
+  .qcard{ position:relative; padding:15px; border-radius:18px; margin-bottom:11px;
+    background:rgba(201,162,255,.07); border:1px solid rgba(201,162,255,.3); backdrop-filter:blur(6px);
+    animation:waitPulse 4.2s ease-in-out infinite; }
+  .qcard:nth-of-type(2){ animation-delay:.5s; } .qcard:nth-of-type(3){ animation-delay:1s; } .qcard:nth-of-type(4){ animation-delay:1.5s; }
+  @keyframes waitPulse{ 0%,100%{ box-shadow:0 0 0 1px rgba(201,162,255,.16), 0 0 22px -16px rgba(201,162,255,.5); } 50%{ box-shadow:0 0 0 1px rgba(201,162,255,.4), 0 0 40px -6px rgba(201,162,255,.8); } }
+  .qtop{ display:flex; align-items:center; gap:9px; margin-bottom:9px; }
+  .qtype{ font-family:'Azeret Mono',monospace; font-size:8.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+  .qtype b{ color:var(--edit-hi); font-weight:500; }
+  .waitchip{ margin-inline-start:auto; display:inline-flex; align-items:center; gap:6px; font-family:'Azeret Mono',monospace; font-size:8.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--edit-hi); padding:4px 9px; border-radius:99px; background:rgba(201,162,255,.12); border:1px solid rgba(201,162,255,.36); }
+  .waitchip .d{ width:6px; height:6px; border-radius:50%; background:var(--edit); box-shadow:0 0 7px 1px var(--edit); animation:dotPulse 2.6s ease-in-out infinite; }
+  @keyframes dotPulse{ 0%,100%{ transform:scale(1); opacity:.9; } 50%{ transform:scale(1.4); opacity:1; } }
+  .qbody{ display:flex; gap:12px; align-items:flex-start; }
+  .qthumb{ width:52px; height:52px; border-radius:12px; flex:0 0 auto; overflow:hidden; background:rgba(14,18,38,.7); border:1px solid var(--hair); display:grid; place-items:center; color:var(--edit-hi); }
+  .qthumb svg{ width:24px; height:24px; } .qthumb .im{ width:100%; height:100%; } .qthumb .im svg,.qthumb .im img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .qthumb .play{ position:absolute; }
+  .qmain{ flex:1; min-width:0; }
+  .qval{ font-family:'Newsreader',serif; font-size:22px; line-height:1.18; color:var(--edit-hi); word-break:break-word; }
+  .qval .quiet{ color:var(--muted); font-size:15px; font-style:italic; }
+  .qval .sm{ font-size:14px; color:var(--muted); font-style:italic; }
+  .qfor{ font-size:12.5px; color:var(--cream); margin-top:5px; line-height:1.4; } .qfor b{ color:#fbf5e8; font-weight:600; }
+  .qwho{ display:flex; align-items:center; gap:7px; margin-top:8px; font-size:11.5px; color:var(--muted); flex-wrap:wrap; }
+  .qwho .av{ width:20px; height:20px; border-radius:50%; overflow:hidden; flex:0 0 auto; border:1px solid var(--hair); display:grid; place-items:center; color:var(--muted); background:rgba(14,18,38,.7); } .qwho .av svg{ width:13px; height:13px; }
+  .qwho .by{ color:var(--gold); font-weight:600; }
+  .qwho .via{ color:var(--dim); }
+  .qwho .via b{ color:var(--cool-hi); font-weight:500; }
+  .qacts{ display:flex; gap:9px; margin-top:13px; }
+  .approve{ background:linear-gradient(180deg,var(--leaf-hi),var(--leaf)); color:#0c2013; box-shadow:0 8px 26px -14px rgba(143,214,160,.8); flex:1; display:flex; align-items:center; justify-content:center; gap:7px; padding:11px; border-radius:12px; cursor:pointer; font-size:13px; font-weight:600; border:1px solid transparent; }
+  .approve svg{ width:15px; height:15px; }
+  .decline{ background:transparent; border:1px solid rgba(255,138,128,.36); color:var(--coral-hi); flex:0 0 auto; padding:11px 16px; border-radius:12px; cursor:pointer; font-size:13px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:7px; }
+  .decline svg{ width:15px; height:15px; }
+  .decline:hover{ border-color:rgba(255,138,128,.6); }
+  .toapprove{ display:inline-flex; align-items:center; gap:6px; margin-top:11px; font-size:11px; color:var(--dim); }
+  .toapprove svg{ width:13px; height:13px; color:var(--leaf); } .toapprove .g{ color:var(--gold-hi); font-weight:600; }
+
+  .voicewave{ display:flex; align-items:center; gap:2px; margin-top:7px; height:14px; }
+  .voicewave i{ width:2px; border-radius:2px; background:rgba(201,162,255,.5); }
+  .miniplay{ width:34px; height:34px; border-radius:50%; flex:0 0 auto; display:grid; place-items:center; cursor:pointer; margin-inline-start:auto;
+    background:radial-gradient(circle at 42% 34%, rgba(201,162,255,.34), rgba(201,162,255,.1)); border:1px solid rgba(201,162,255,.5); color:var(--edit-hi); }
+  .miniplay svg{ width:15px; height:15px; }
+
+  .tended{ margin:26px 2px 0; padding:34px 20px; border-radius:22px; text-align:center;
+    background:linear-gradient(160deg, rgba(143,214,160,.14), rgba(18,14,40,.45)); border:1px solid rgba(143,214,160,.3); backdrop-filter:blur(6px); }
+  .tended .tc{ width:82px; height:82px; margin:0 auto 18px; border-radius:50%; display:grid; place-items:center; color:var(--leaf-hi);
+    background:radial-gradient(circle at 42% 34%, rgba(143,214,160,.26), transparent 68%); border:1px solid rgba(143,214,160,.44); animation:leafGlow 5s ease-in-out infinite; }
+  .tended .tc svg{ width:38px; height:38px; }
+  @keyframes leafGlow{ 0%,100%{ box-shadow:0 0 34px -12px rgba(143,214,160,.6); } 50%{ box-shadow:0 0 58px -2px rgba(143,214,160,.9); } }
+  .tended .tt{ font-family:'Newsreader',serif; font-size:25px; line-height:1.24; color:#eaf6ec; }
+  .tended .tt em{ font-style:italic; color:var(--leaf-hi); }
+  .tended .tsub{ font-size:13px; color:var(--muted); margin-top:11px; line-height:1.55; }
+  .tallies{ display:flex; gap:10px; margin-top:20px; }
+  .tally{ flex:1; padding:14px 10px; border-radius:14px; background:rgba(18,14,40,.5); border:1px solid var(--hair); }
+  .tally .num{ font-family:'Newsreader',serif; font-size:24px; color:var(--leaf-hi); }
+  .tally .lab{ font-family:'Azeret Mono',monospace; font-size:8px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-top:5px; line-height:1.3; }
+  .whereitwent{ display:flex; align-items:flex-start; gap:10px; margin-top:16px; padding:13px 14px; border-radius:13px; background:rgba(243,205,132,.06); border:1px solid rgba(243,205,132,.24); text-align:start; }
+  .whereitwent svg{ width:17px; height:17px; color:var(--gold); flex:0 0 auto; margin-top:1px; }
+  .whereitwent p{ font-size:12px; color:#e6d9bd; line-height:1.5; } .whereitwent p b{ color:var(--gold-hi); font-weight:600; }
+
+  /* gentle non-keeper wall */
+  .notkeeper{ margin:40px 2px 0; padding:34px 22px; border-radius:22px; text-align:center;
+    background:linear-gradient(160deg, rgba(201,162,255,.12), rgba(18,14,40,.45)); border:1px solid rgba(201,162,255,.3); backdrop-filter:blur(6px); }
+  .notkeeper .nc{ width:76px; height:76px; margin:0 auto 18px; border-radius:50%; display:grid; place-items:center; color:var(--edit-hi);
+    background:radial-gradient(circle at 42% 34%, rgba(201,162,255,.22), transparent 68%); border:1px solid rgba(201,162,255,.42); }
+  .notkeeper .nc svg{ width:34px; height:34px; }
+  .notkeeper .nt{ font-family:'Newsreader',serif; font-size:23px; line-height:1.25; color:#f2ecff; }
+  .notkeeper .ns{ font-size:13px; color:var(--muted); margin-top:11px; line-height:1.55; }
+  .notkeeper .nback{ display:inline-flex; align-items:center; gap:8px; margin-top:20px; padding:11px 18px; border-radius:12px; cursor:pointer;
+    background:linear-gradient(180deg,var(--edit-hi),var(--edit)); color:#1a0f2e; font-size:13px; font-weight:600; border:none; }
+
+  .foot{ margin-top:24px; text-align:center; }
+  .foot .l{ font-family:'Newsreader',serif; font-style:italic; font-size:13px; color:rgba(201,162,255,.6); }
+
+  /* ===== overlays (lang sheet · toast · gate) ===== */
+  .scrim{ position:absolute; inset:0; z-index:30; background:rgba(4,7,14,.66); backdrop-filter:blur(3px); opacity:0; pointer-events:none; transition:opacity .28s ease; }
+  .scrim.show{ opacity:1; pointer-events:auto; }
+  .sheet{ position:absolute; z-index:31; inset-inline:0; bottom:0; background:linear-gradient(180deg,#160f30,#0a0820);
+    border:1px solid var(--hair); border-bottom:none; border-radius:22px 22px 0 0; padding:10px 20px calc(22px + env(safe-area-inset-bottom));
+    transform:translateY(103%); transition:transform .34s cubic-bezier(.16,.8,.28,1); box-shadow:0 -24px 70px -30px #000; max-height:90%; overflow-y:auto; scrollbar-width:none; }
+  .sheet::-webkit-scrollbar{ display:none; }
+  .sheet.show{ transform:translateY(0); }
+  .grip{ width:40px; height:4px; border-radius:99px; background:rgba(255,255,255,.2); margin:6px auto 15px; }
+  .sheet h3{ font-family:'Newsreader',serif; font-weight:400; font-size:21px; color:#fbf5e8; margin-bottom:4px; }
+  .sheet .sub{ font-size:12.5px; color:var(--muted); margin-bottom:16px; line-height:1.45; }
+  .lang-opt{ display:flex; align-items:center; gap:14px; width:100%; padding:14px 15px; border-radius:14px;
+    background:var(--panel); border:1px solid var(--hair); color:var(--cream); cursor:pointer; margin-bottom:9px; text-align:start; }
+  .lang-opt.on{ border-color:rgba(201,162,255,.55); background:rgba(201,162,255,.08); }
+  .lang-opt .native{ font-family:'Newsreader',serif; font-size:18px; } .lang-opt .en{ font-size:11.5px; color:var(--muted); margin-top:1px; }
+  .lang-opt .tick{ margin-inline-start:auto; color:var(--edit-hi); opacity:0; } .lang-opt.on .tick{ opacity:1; } .lang-opt .tick svg{ width:18px; height:18px; }
+
+  .toast{ position:absolute; z-index:40; left:50%; transform:translate(-50%,20px); bottom:24px; display:flex; align-items:center; gap:10px;
+    padding:12px 17px; border-radius:99px; background:rgba(28,18,46,.92); backdrop-filter:blur(12px); border:1px solid rgba(201,162,255,.45);
+    color:var(--edit-soft); font-size:13px; opacity:0; pointer-events:none; transition:opacity .3s, transform .3s; box-shadow:0 18px 44px -18px #000; max-width:88%; }
+  .toast.show{ opacity:1; transform:translate(-50%,0); }
+  .toast .fl{ width:8px; height:8px; border-radius:50%; background:var(--leaf); box-shadow:0 0 10px 2px var(--leaf); flex:0 0 auto; }
+
+  .gate{ position:absolute; inset:0; z-index:60; display:flex; align-items:center; justify-content:center; padding:24px; background:rgba(4,7,14,.9); backdrop-filter:blur(6px); }
+  .gate .card{ width:100%; max-width:320px; background:linear-gradient(180deg,#160f30,#0a0820); border:1px solid var(--hair); border-radius:20px; padding:24px; text-align:center; }
+  .gate h3{ font-family:'Newsreader',serif; font-weight:400; font-size:22px; color:#fbf5e8; }
+  .gate .gsub{ font-size:12.5px; color:var(--muted); margin:6px 0 16px; line-height:1.45; }
+  .gate input{ width:100%; margin-bottom:10px; background:rgba(6,14,26,.7); border:1px solid var(--hair); border-radius:12px; padding:12px; color:var(--cream); font-family:inherit; font-size:14px; }
+  .gate .gbtn{ width:100%; padding:13px; border-radius:12px; border:none; cursor:pointer; font-family:'Hanken Grotesk',sans-serif; font-size:14px; font-weight:600; background:linear-gradient(180deg,var(--edit-hi),var(--edit)); color:#1a0f2e; }
+  .gate .gerr{ color:#ff9a8a; font-size:12px; min-height:16px; margin-top:8px; }
+
+  @media (prefers-reduced-motion: reduce){
+    .aur,.motes,.motes2,.stars,.qcard,.waitchip .d,.tended .tc,.keeperbar::after{ animation:none !important; }
+  }
+
+  /* full-viewport page (drop the mock device frame) */
+  html,body{ background:#04070e; margin:0; }
+  body{ gap:0; padding:0; }
+  .stagewrap{ gap:0; width:100%; }
+  .device{ width:100vw!important; height:100dvh!important; max-width:none!important; border-radius:0!important; border:none!important; box-shadow:none!important; }
+</style>
+</head>
+<body>
+  <div class="stagewrap">
+    <div class="device" id="dev">
+      <div class="atmo"><span class="aur a1"></span><span class="aur a2"></span><span class="aur a3"></span></div>
+      <div class="stars"></div><div class="motes"></div><div class="motes2"></div><div class="atmo-veil"></div>
+      <div class="screen" id="screen" dir="ltr">
+        <div class="topbar">
+          <button class="ibtn" data-act="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+          <div class="ttl"><div class="k" id="tK">Keeper</div><div class="n" id="tN">Waiting for you</div></div>
+          <button class="langpill" data-act="lang" id="langpill">EN <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px"><path d="M6 9l6 6 6-6"/></svg></button>
+        </div>
+        <div class="pad" id="pad"></div>
+      </div>
+      <div class="scrim" data-act="close"></div>
+      <section class="sheet" data-sheet="lang" role="dialog" aria-modal="true" aria-label="Language"></section>
+      <div class="toast"><span class="fl"></span><span class="toastmsg"></span></div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  'use strict';
+  const SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
+  const sb=window.supabase.createClient(SB_URL,SB_KEY);
+  const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+  const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+  const LANGS=['en','ru','he'];
+  let user=null, pending=null, activeFilter='all', tallies={welcomed:0,people:0};
+  const state={ lang:'en', keeper:false };
+
+  /* ---------- icons ---------- */
+  const IC={
+    person:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="3.4"/><path d="M6 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>',
+    newcomer:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/><path d="M19 4v4M17 6h4"/></svg>',
+    name:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h9M8 3v2M6 5c0 5-2 8-4 9"/><path d="M13 19l4-9 4 9M14.5 15h5"/></svg>',
+    memory:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v12H8l-4 4z"/></svg>',
+    fact:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 016 6c0 4-6 12-6 12S6 13 6 9a6 6 0 016-6z"/><circle cx="12" cy="9" r="1.6"/></svg>',
+    place:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.7-6-10a6 6 0 1112 0c0 4.3-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>',
+    photo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="9" cy="12" r="2.4"/><path d="M3 18l5-4 3 2 4-4 6 5"/></svg>',
+    voice:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3 3 0 003-3V7a3 3 0 00-6 0v5a3 3 0 003 3z"/><path d="M6 11a6 6 0 0012 0M12 18v3"/></svg>',
+    doc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8h10M7 12h6"/><path d="M4 4h16v12H8l-4 4z"/></svg>',
+    life:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg>',
+    ok:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>',
+    no:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V6z"/><path d="M9 12l2 2 4-4"/></svg>',
+    play:'<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z"/></svg>',
+    leaf:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c0-6 3-10 8-11-1 6-4 9-8 9zM12 21c0-5-2.5-8.5-7-9.5 1 5 3.5 8 7 8.5zM12 21v-4"/></svg>',
+    check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>'
+  };
+
+  /* ---------- i18n ---------- */
+  const T={
+    en:{ dir:'ltr', native:'English', en:'English',
+      topK:'Keeper', topN:'Waiting for you',
+      gateTitle:'The keeper’s gate', gateSub:'Sign in to see what the family is waiting to have welcomed.', signin:'Sign in',
+      keeperbar:['Only you see this. ','Nothing here is in the forest yet',' — it blooms when you approve it.'],
+      keeperbarEmpty:['Only you see this. Right now there is ','nothing to decide','.'],
+      notKeeperT:'This is the keeper’s quiet corner.', notKeeperS:'Only the keeper reviews what the family suggests. Everything you add is safe — it simply waits here for the keeper to welcome it.', backToForest:'Back to the forest',
+      warm:n=>`${num(n,'en')} ${n===1?'gift is':'gifts are'} <em>waiting</em> for you.`,
+      warmSub:'Take them in any order. Each one is someone reaching toward the family — held safe until you say yes.',
+      all:'All', groups:{ newcomers:'Newcomers', names:'Names', memories:'Memories', facts:'Facts' },
+      cntNew:'proposed people', cntNames:'name parts', cntMem:'waiting', cntFacts:'waiting',
+      waiting:'Waiting', approve:'Approve', decline:'Decline', approved:'Welcomed — it lives in the forest now', declined:'Set aside',
+      toapprove:'Approve and it joins the forest in <span class="g">gold</span>, for the family.',
+      suggestedBy:'Suggested by', toldBy:'Told by', uploadedBy:'uploaded by', someone:'a family member', ago:'',
+      newcomerFor:'Someone the forest doesn’t hold yet', forWhom:'for',
+      tendedT:'Nothing is waiting. <em>The forest is tended.</em>',
+      tendedS:'Every gift the family brought has found its place. When someone adds the next name, face or story, it will arrive here — and you’ll be the first to know.',
+      tWelcomed:'welcomed<br>this week', tPeople:'people in<br>the forest', tWaiting:'waiting<br>right now',
+      whereWent:'What you welcomed now lives in the forest in <b>gold</b> — the family’s own voice — for everyone to find.',
+      foot:'A gift held in violet is not lost — it is waiting to be welcomed.', footEmpty:'An empty queue is the sound of a family that keeps reaching for each other.',
+      langtitle:'Language', langsub:'Names, labels and details all follow the language you choose.',
+      voiceRec:'A voice recording', photoRec:'A photograph', theImage:'the image itself',
+      living:['no longer living','still living'], prec:{exact:'exact date',month:'to the month',year:'to the year',approx:'approximate',unknown:'unknown'},
+      fld:{ given:'given name', family:'family name', patronymic:'patronymic', maiden:'maiden name', called:'called', honorific:'honorific', nickname:'nickname', display:'display name',
+            lived:'lived in', pbirth:'born in', birth:'born', death:'died', birth_prec:'date precision', living:'still living?', gender:'gender', occupation:'occupation', bio:'about', langspoken:'languages spoken', source:'source', face:'the portrait', custom:'a detail', kin:'relation', field:'detail' } },
+    ru:{ dir:'ltr', native:'Русский', en:'Russian',
+      topK:'Хранитель', topN:'Ждёт вас',
+      gateTitle:'Врата хранителя', gateSub:'Войдите, чтобы увидеть, что семья ждёт одобрить.', signin:'Войти',
+      keeperbar:['Это видите только вы. ','Ничего здесь ещё нет в лесу',' — оно расцветёт, когда вы одобрите.'],
+      keeperbarEmpty:['Это видите только вы. Сейчас ','нечего решать','.'],
+      notKeeperT:'Это тихий уголок хранителя.', notKeeperS:'Только хранитель просматривает предложенное семьёй. Всё, что вы добавляете, в сохранности — оно ждёт здесь.', backToForest:'Назад в лес',
+      warm:n=>`${num(n,'ru')} ${plRu(n,'подарок','подарка','подарков')} <em>ждёт</em> вас.`,
+      warmSub:'Берите в любом порядке. Каждый — это кто-то, кто тянется к семье, — в сохранности, пока вы не скажете да.',
+      all:'Всё', groups:{ newcomers:'Новые', names:'Имена', memories:'Воспоминания', facts:'Факты' },
+      cntNew:'новых людей', cntNames:'частей имени', cntMem:'ждёт', cntFacts:'ждёт',
+      waiting:'Ожидает', approve:'Одобрить', decline:'Отклонить', approved:'Принято — теперь это в лесу', declined:'Отложено',
+      toapprove:'Одобрите — и это войдёт в лес <span class="g">золотом</span>, для семьи.',
+      suggestedBy:'Предложил', toldBy:'Рассказал', uploadedBy:'загрузил', someone:'член семьи', ago:'',
+      newcomerFor:'Тот, кого лес ещё не знает', forWhom:'для',
+      tendedT:'Ничего не ждёт. <em>Лес ухожен.</em>',
+      tendedS:'Каждый дар семьи нашёл своё место. Когда кто-то добавит следующее имя, лицо или историю, оно появится здесь.',
+      tWelcomed:'принято<br>за неделю', tPeople:'людей<br>в лесу', tWaiting:'ждёт<br>сейчас',
+      whereWent:'Принятое теперь живёт в лесу <b>золотом</b> — голосом семьи — для всех.',
+      foot:'Дар, хранимый в фиолетовом, не потерян — он ждёт.', footEmpty:'Пустая очередь — звук семьи, которая тянется друг к другу.',
+      langtitle:'Язык', langsub:'Имена, подписи и детали — на выбранном языке.',
+      voiceRec:'Голосовая запись', photoRec:'Фотография', theImage:'само изображение',
+      living:['уже не живёт','ещё живёт'], prec:{exact:'точная дата',month:'до месяца',year:'до года',approx:'приблизительно',unknown:'неизв.'},
+      fld:{ given:'имя', family:'фамилия', patronymic:'отчество', maiden:'девичья', called:'зовут', honorific:'титул', nickname:'прозвище', display:'отображаемое',
+            lived:'жил(а) в', pbirth:'место рождения', birth:'родился', death:'умер', birth_prec:'точность даты', living:'ещё жив?', gender:'пол', occupation:'занятие', bio:'о человеке', langspoken:'языки', source:'источник', face:'портрет', custom:'деталь', kin:'связь', field:'деталь' } },
+    he:{ dir:'rtl', native:'עברית', en:'Hebrew',
+      topK:'שומר', topN:'מחכה לך',
+      gateTitle:'שער השומר', gateSub:'היכנסו כדי לראות מה המשפחה מחכה שיתקבל.', signin:'כניסה',
+      keeperbar:['רק אתה רואה את זה. ','שום דבר כאן עדיין לא ביער',' — הוא נפתח כשתאשר אותו.'],
+      keeperbarEmpty:['רק אתה רואה את זה. כרגע ','אין מה להחליט','.'],
+      notKeeperT:'זו הפינה השקטה של השומר.', notKeeperS:'רק השומר עובר על מה שהמשפחה מציעה. כל מה שאתה מוסיף שמור — הוא פשוט מחכה כאן.', backToForest:'חזרה ליער',
+      warm:n=>`${num(n,'he')} ${n===1?'מתנה מחכה':'מתנות <em>מחכות</em>'} לך.`,
+      warmSub:'קח אותן בכל סדר. כל אחת היא מישהו שמושיט יד למשפחה — שמורה עד שתאמר כן.',
+      all:'הכל', groups:{ newcomers:'חדשים', names:'שמות', memories:'זכרונות', facts:'עובדות' },
+      cntNew:'אנשים מוצעים', cntNames:'חלקי שם', cntMem:'ממתינים', cntFacts:'ממתינות',
+      waiting:'ממתין', approve:'אשר', decline:'דחה', approved:'התקבל — כעת זה ביער', declined:'הונח בצד',
+      toapprove:'אשר וזה יצטרף ליער ב<span class="g">זהב</span>, למשפחה.',
+      suggestedBy:'הוצע על ידי', toldBy:'סופר על ידי', uploadedBy:'הועלה על ידי', someone:'בן משפחה', ago:'',
+      newcomerFor:'מישהו שהיער עדיין לא מכיר', forWhom:'עבור',
+      tendedT:'שום דבר לא מחכה. <em>היער מטופח.</em>',
+      tendedS:'כל מתנה שהמשפחה הביאה מצאה את מקומה. כשמישהו יוסיף שם, פנים או סיפור, זה יגיע לכאן.',
+      tWelcomed:'התקבל<br>השבוע', tPeople:'אנשים<br>ביער', tWaiting:'מחכה<br>כרגע',
+      whereWent:'מה שקיבלת כעת חי ביער ב<b>זהב</b> — קולה של המשפחה — לכולם.',
+      foot:'מתנה השמורה בסגול אינה אבודה — היא מחכה שיקבלו אותה.', footEmpty:'תור ריק הוא הצליל של משפחה שממשיכה להושיט יד.',
+      langtitle:'שפה', langsub:'שמות, תוויות ופרטים עוקבים אחר השפה שתבחר.',
+      voiceRec:'הקלטת קול', photoRec:'תצלום', theImage:'התמונה עצמה',
+      living:['כבר לא בחיים','עדיין בחיים'], prec:{exact:'תאריך מדויק',month:'עד חודש',year:'עד שנה',approx:'בערך',unknown:'לא ידוע'},
+      fld:{ given:'שם פרטי', family:'שם משפחה', patronymic:'שם האב', maiden:'שם נעורים', called:'קוראים', honorific:'תואר', nickname:'כינוי', display:'שם לתצוגה',
+            lived:'גר ב', pbirth:'מקום לידה', birth:'נולד', death:'נפטר', birth_prec:'דיוק תאריך', living:'עדיין בחיים?', gender:'מגדר', occupation:'עיסוק', bio:'אודות', langspoken:'שפות', source:'מקור', face:'דיוקן', custom:'פרט', kin:'קשר', field:'פרט' } }
+  };
+  const d=()=>T[state.lang];
+  function num(n,l){ if(l==='ru'){ const m={0:'Ноль',1:'Один',2:'Два',3:'Три',4:'Четыре',5:'Пять',6:'Шесть',7:'Семь',8:'Восемь',9:'Девять'}; return m[n]||String(n); }
+    return String(n); }
+  function plRu(n,a,b,c){ const m10=n%10,m100=n%100; if(m10===1&&m100!==11)return a; if(m10>=2&&m10<=4&&(m100<10||m100>=20))return b; return c; }
+
+  /* ---------- field classification ---------- */
+  const NAME_FIELDS=['given','family','patronymic','maiden','called','honorific','nickname','display'];
+  const fldLabel=(f)=> (d().fld[f]||d().fld.field||f);
+  function langTag(l){ return (l&&l!=='und'&&l!=='undefined')?(' ('+String(l).toUpperCase()+')'):''; }
+
+  function factValue(f){ const L=d();
+    if(f.field==='living') return L.living[f.value==='1'?1:0];
+    if(f.field==='birth_prec') return L.prec[f.value]||f.value||'';
+    if(f.field==='face') return L.theImage;
+    return f.value||'';
+  }
+
+  /* ---------- name resolution (Rule 6) ---------- */
+  function personName(id){ return (pending&&pending.peopleMap[id])||''; }
+  function accountName(id){ return (id&&pending&&pending.profMap[id])||''; }
+
+  /* ---------- data ---------- */
+  async function loadData(){
+    const out={ people:[], newcomers:[], facts:[], nvs:[], arts:[], peopleMap:{}, profMap:{} };
+    // all people -> name map + newcomers
+    try{ const {data}=await sb.from('people').select('*'); (data||[]).forEach(p=>{ out.peopleMap[p.id]=p.display_name||p.name||''; if(p.status&&p.status!=='published') out.newcomers.push(p); }); }catch(e){}
+    // pending person_facts
+    try{ const {data}=await sb.from('person_facts').select('id,person_id,group_id,field,lang,value,ord,status,created_by,created_at').not('status','eq','published'); out.facts=data||[]; }catch(e){ out.facts=[]; }
+    // pending name_variants (being retired, but read defensively)
+    try{ const {data}=await sb.from('name_variants').select('*').not('status','eq','published'); out.nvs=data||[]; }catch(e){ out.nvs=[]; }
+    // pending artefacts (photo/voice)
+    try{ const {data}=await sb.from('artefacts').select('*').not('pub_status','eq','published'); out.arts=(data||[]).filter(a=>a.kind==='photo'||a.kind==='voice'); }catch(e){ out.arts=[]; }
+    // profiles for uploader/suggester names
+    try{ const {data}=await sb.from('profiles').select('id,display_name'); (data||[]).forEach(p=>{ out.profMap[p.id]=p.display_name||''; }); }catch(e){}
+    // tallies
+    out.peopleCount=Object.keys(out.peopleMap).length;
+    try{ const since=new Date(Date.now()-7*864e5).toISOString(); const {count}=await sb.from('person_facts').select('id',{count:'exact',head:true}).eq('status','published').gte('published_at',since); tallies.welcomed=count||0; }catch(e){ tallies.welcomed=0; }
+    tallies.people=out.peopleCount;
+    pending=out;
+  }
+
+  /* ---------- grouping ---------- */
+  function buildItems(){
+    const items={ newcomers:[], names:[], memories:[], facts:[] };
+    // newcomers
+    pending.newcomers.forEach(p=>{ items.newcomers.push({ kind:'person', id:p.id, group:'newcomers',
+      value:p.display_name||p.name||'—', suggester:accountName(p.created_by), created_at:p.created_at }); });
+    // name_variants -> names
+    pending.nvs.forEach(v=>{ const f=v.field||v.kind||'name'; const val=v.value||v.name||v.variant||v.text||'';
+      items.names.push({ kind:'nv', id:v.id, group:'names', field:f, lang:v.lang, value:val, personId:v.person_id, suggester:accountName(v.created_by), created_at:v.created_at }); });
+    // person_facts -> names / facts ; custom pairs grouped
+    const customByGroup={};
+    pending.facts.forEach(f=>{
+      if(f.field==='custom_label'||f.field==='custom_value'){ const g=f.group_id||f.id; (customByGroup[g]=customByGroup[g]||{group_id:g,rows:[],personId:f.person_id,created_by:f.created_by,created_at:f.created_at}).rows.push(f); return; }
+      const grp = NAME_FIELDS.includes(f.field) ? 'names' : 'facts';
+      items[grp].push({ kind:'fact', id:f.id, group:grp, field:f.field, lang:f.lang, value:factValue(f), personId:f.person_id, suggester:accountName(f.created_by), created_at:f.created_at, raw:f });
+    });
+    Object.values(customByGroup).forEach(c=>{ const lab=(c.rows.find(r=>r.field==='custom_label')||{}).value||''; const val=(c.rows.find(r=>r.field==='custom_value')||{}).value||'';
+      items.facts.push({ kind:'group', id:c.group_id, group:'facts', field:'custom', customLabel:lab, value:val, personId:c.personId, suggester:accountName(c.created_by), created_at:c.created_at }); });
+    // artefacts -> memories
+    pending.arts.forEach(a=>{ const md=a.metadata||{}; const cap=a.title||md.caption||md.title||a.body||'';
+      items.memories.push({ kind:'artefact', id:a.id, group:'memories', mediaKind:a.kind, value:cap, when:md.when||'', where:md.where||'', storage:a.storage_path||'',
+        tellerPerson:personName(a.contributor_id), uploaderAccount:accountName(a.contributor_user||a.created_by), created_at:a.created_at }); });
+    return items;
+  }
+
+  /* ---------- render ---------- */
+  function agoText(iso){ if(!iso) return ''; const ms=Date.now()-new Date(iso).getTime(); if(isNaN(ms)) return ''; const day=Math.floor(ms/864e5);
+    const L=state.lang; if(day<=0){ return L==='ru'?'сегодня':L==='he'?'היום':'today'; }
+    if(L==='ru') return day+' '+plRu(day,'день назад','дня назад','дней назад');
+    if(L==='he') return 'לפני '+day+(day===1?' יום':' ימים');
+    return day+(day===1?' day ago':' days ago'); }
+
+  function whoLine(it){ const L=d();
+    if(it.kind==='artefact'){ let s='';
+      if(it.tellerPerson) s+=`${esc(L.toldBy)} <span class="by">${esc(it.tellerPerson)}</span>`;
+      else s+=`<span class="by">${esc(L.someone)}</span>`;
+      if(it.uploaderAccount) s+=` <span class="via">· ${esc(L.uploadedBy)} <b>${esc(it.uploaderAccount)}</b></span>`;
+      return s;
+    }
+    const who=it.suggester||L.someone;
+    let s=`<span class="av">${IC.person}</span>${esc(L.suggestedBy)} <span class="by">${esc(who)}</span>`;
+    const ago=agoText(it.created_at); if(ago) s+=` <span class="via">· ${esc(ago)}</span>`;
+    return s;
+  }
+
+  function forLine(it){ const L=d();
+    if(it.kind==='person') return `<div class="qfor">${esc(L.newcomerFor)}</div>`;
+    if(it.kind==='artefact'){ let bits=[]; if(it.mediaKind==='voice') bits.push(L.voiceRec); else bits.push(L.photoRec); if(it.when) bits.push(String(it.when)); return `<div class="qfor">${esc(bits.join(' · '))}</div>`; }
+    const nm=personName(it.personId); if(nm) return `<div class="qfor">${esc(L.forWhom)} <b>${esc(nm)}</b></div>`;
+    return '';
+  }
+
+  function qtypeLine(it){ const L=d();
+    if(it.kind==='person') return `${esc(L.groups.newcomers)} · <b>${esc(L.fld.field)}</b>`;
+    if(it.kind==='artefact') return `${esc(L.groups.memories)} · <b>${esc(it.mediaKind==='voice'?L.voiceRec:L.photoRec)}</b>`;
+    if(it.kind==='group') return `${esc(L.groups.facts)} · <b>${esc(it.customLabel||L.fld.custom)}</b>`;
+    const grpName = it.group==='names'?L.groups.names:L.groups.facts;
+    return `${esc(grpName)} · <b>${esc(fldLabel(it.field))}${esc(langTag(it.lang))}</b>`;
+  }
+
+  function valMarkup(it){
+    if(it.kind==='artefact'){ return it.value ? `<span class="quiet">“${esc(it.value)}”</span>` : `<span class="quiet">${esc(it.mediaKind==='voice'?d().voiceRec:d().photoRec)}</span>`; }
+    if(it.kind==='group'){ return `${esc(it.value||'—')}`; }
+    return esc(it.value||'—');
+  }
+
+  function thumbMarkup(it){
+    if(it.kind==='person') return IC.newcomer;
+    if(it.kind==='artefact'){ if(it.mediaKind==='voice') return IC.voice; return `<span class="im" data-thumb="${esc(it.storage)}">${IC.photo}</span>`; }
+    if(it.kind==='nv') return IC.name;
+    if(it.group==='names') return IC.name;
+    if(it.field==='lived'||it.field==='pbirth') return IC.place;
+    if(['birth','death','birth_prec','living','gender'].includes(it.field)) return IC.life;
+    return IC.fact;
+  }
+
+  function cardHTML(it){ const L=d();
+    const ref = it.kind+':'+it.id;
+    const voiceExtra = (it.kind==='artefact'&&it.mediaKind==='voice') ? `<button class="miniplay" data-play="${esc(it.storage)}" aria-label="Play">${IC.play}</button>` : '';
+    return `<div class="qcard">
+      <div class="qtop"><span class="qtype">${qtypeLine(it)}</span><span class="waitchip"><span class="d"></span>${esc(L.waiting)}</span></div>
+      <div class="qbody">
+        <div class="qthumb">${thumbMarkup(it)}</div>
+        <div class="qmain">
+          <div class="qval">${valMarkup(it)}</div>
+          ${forLine(it)}
+          <div class="qwho">${whoLine(it)}${voiceExtra}</div>
+        </div>
+      </div>
+      <div class="qacts">
+        <button class="decline" data-decline="${esc(ref)}">${IC.no} ${esc(L.decline)}</button>
+        <button class="approve" data-approve="${esc(ref)}">${IC.ok} ${esc(L.approve)}</button>
+      </div>
+    </div>`;
+  }
+
+  function groupHTML(key,icon,noun,arr){ if(!arr.length) return '';
+    const L=d();
+    return `<div class="grouphd"><span class="gi">${icon}</span>${esc(L.groups[key])} · <span class="cnt">${arr.length} ${esc(noun)}</span><span class="line"></span></div>`
+      + arr.map(cardHTML).join('');
+  }
+
+  function render(){
+    const L=d(); const sc=$('#screen');
+    document.documentElement.lang=state.lang; document.documentElement.dir=L.dir; sc.dir=L.dir;
+    $('#tK').textContent=L.topK; $('#tN').textContent=L.topN;
+    $('#langpill').firstChild.nodeValue=state.lang.toUpperCase()+' ';
+    const pad=$('#pad');
+
+    if(!user){ pad.innerHTML=''; return; }            // gate is shown separately
+    if(!state.keeper){ pad.innerHTML=notKeeperHTML(); return; }
+
+    const items=buildItems();
+    const counts={ newcomers:items.newcomers.length, names:items.names.length, memories:items.memories.length, facts:items.facts.length };
+    const total=counts.newcomers+counts.names+counts.memories+counts.facts;
+
+    if(total===0){ pad.innerHTML=emptyHTML(); attachThumbs(); return; }
+
+    let h=`<div class="keeperbar"><span class="kshield">${IC.shield}</span><div class="kt">${L.keeperbar[0]}<b>${L.keeperbar[1]}</b>${L.keeperbar[2]}</div></div>`;
+    h+=`<div class="warm">${L.warm(total)}</div><div class="warmsub">${esc(L.warmSub)}</div>`;
+    h+=`<div class="filters">`;
+    h+=`<span class="fchip${activeFilter==='all'?' on':''}" data-filter="all">${esc(L.all)} <span class="c">${total}</span></span>`;
+    if(counts.newcomers) h+=`<span class="fchip${activeFilter==='newcomers'?' on':''}" data-filter="newcomers">${esc(L.groups.newcomers)} <span class="c">${counts.newcomers}</span></span>`;
+    if(counts.names) h+=`<span class="fchip${activeFilter==='names'?' on':''}" data-filter="names">${esc(L.groups.names)} <span class="c">${counts.names}</span></span>`;
+    if(counts.memories) h+=`<span class="fchip${activeFilter==='memories'?' on':''}" data-filter="memories">${esc(L.groups.memories)} <span class="c">${counts.memories}</span></span>`;
+    if(counts.facts) h+=`<span class="fchip${activeFilter==='facts'?' on':''}" data-filter="facts">${esc(L.groups.facts)} <span class="c">${counts.facts}</span></span>`;
+    h+=`</div>`;
+
+    const show=k=>(activeFilter==='all'||activeFilter===k);
+    if(show('newcomers')) h+=groupHTML('newcomers',IC.newcomer,L.cntNew,items.newcomers);
+    if(show('names'))     h+=groupHTML('names',IC.name,L.cntNames,items.names);
+    if(show('memories'))  h+=groupHTML('memories',IC.memory,L.cntMem,items.memories);
+    if(show('facts'))     h+=groupHTML('facts',IC.fact,L.cntFacts,items.facts);
+    h+=`<div class="foot"><div class="l">${esc(L.foot)}</div></div>`;
+    pad.innerHTML=h;
+    attachThumbs();
+  }
+
+  function notKeeperHTML(){ const L=d();
+    return `<div class="notkeeper"><div class="nc">${IC.shield}</div>
+      <div class="nt">${esc(L.notKeeperT)}</div>
+      <div class="ns">${esc(L.notKeeperS)}</div>
+      <button class="nback" data-act="back">${IC.leaf} ${esc(L.backToForest)}</button></div>`;
+  }
+
+  function emptyHTML(){ const L=d();
+    return `<div class="keeperbar"><span class="kshield">${IC.shield}</span><div class="kt">${L.keeperbarEmpty[0]}<b>${L.keeperbarEmpty[1]}</b>${L.keeperbarEmpty[2]}</div></div>
+      <div class="tended">
+        <div class="tc">${IC.leaf}</div>
+        <div class="tt">${L.tendedT}</div>
+        <div class="tsub">${esc(L.tendedS)}</div>
+        <div class="tallies">
+          <div class="tally"><div class="num">${tallies.welcomed}</div><div class="lab">${L.tWelcomed}</div></div>
+          <div class="tally"><div class="num">${tallies.people}</div><div class="lab">${L.tPeople}</div></div>
+          <div class="tally"><div class="num">0</div><div class="lab">${L.tWaiting}</div></div>
+        </div>
+        <div class="whereitwent">${IC.check}<p>${L.whereWent}</p></div>
+      </div>
+      <div class="foot"><div class="l">${esc(L.footEmpty)}</div></div>`;
+  }
+
+  async function attachThumbs(){ for(const el of $$('.im[data-thumb]')){ const path=el.getAttribute('data-thumb'); if(!path) continue;
+    try{ const s=await sb.storage.from('family').createSignedUrl(path,3600); const u=s&&s.data&&s.data.signedUrl; if(u){ const img=new Image(); img.onload=()=>{ el.innerHTML=''; el.appendChild(img); }; img.src=u; } }catch(e){} } }
+
+  /* ---------- keeper actions (per-field / per-row, Rule 3) ---------- */
+  async function approveRef(ref){ if(!user||!state.keeper) return; const [kind,id]=ref.split(':'); const now=new Date().toISOString();
+    if(kind==='fact'){ const f=(pending.facts||[]).find(x=>x.id===id); if(f){ const patch={};
+        if(f.field==='birth')patch.birth_date=f.value||null; if(f.field==='death')patch.death_date=f.value||null;
+        if(f.field==='birth_prec')patch.birth_certainty=f.value||null; if(f.field==='living')patch.is_living=(f.value==='1');
+        if(f.field==='gender')patch.sex=f.value||null; if(f.field==='face'){ try{ patch.primary_asset=JSON.parse(f.value).storage_path; }catch(e){} }
+        if(Object.keys(patch).length && f.person_id){ try{ await sb.from('people').update(patch).eq('id',f.person_id); }catch(e){} }
+        try{ await sb.from('person_facts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){} } }
+    else if(kind==='group'){ for(const ff of (pending.facts||[]).filter(x=>x.group_id===id&&x.status!=='published')){ try{ await sb.from('person_facts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',ff.id); }catch(e){} } }
+    else if(kind==='nv'){ try{ await sb.from('name_variants').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){} }
+    else if(kind==='artefact'){ try{ await sb.from('artefacts').update({pub_status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){ try{ await sb.from('artefacts').update({pub_status:'published',reviewed_by:user.id}).eq('id',id); }catch(e2){} } }
+    else if(kind==='person'){ try{ await sb.from('people').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){ try{ await sb.from('people').update({status:'published'}).eq('id',id); }catch(e2){} } }
+    await reload(); toast(d().approved,true);
+  }
+  async function declineRef(ref){ if(!user||!state.keeper) return; const [kind,id]=ref.split(':');
+    if(kind==='fact'){ try{ await sb.from('person_facts').delete().eq('id',id); }catch(e){} }
+    else if(kind==='group'){ for(const ff of (pending.facts||[]).filter(x=>x.group_id===id)){ try{ await sb.from('person_facts').delete().eq('id',ff.id); }catch(e){} } }
+    else if(kind==='nv'){ try{ await sb.from('name_variants').delete().eq('id',id); }catch(e){} }
+    else if(kind==='artefact'){ try{ await sb.from('artefacts').update({pub_status:'rejected'}).eq('id',id); }catch(e){} }
+    else if(kind==='person'){ try{ await sb.from('people').update({status:'rejected'}).eq('id',id); }catch(e){} }
+    await reload(); toast(d().declined,false);
+  }
+
+  /* ---------- audio ---------- */
+  let audio=null;
+  async function playVoice(path){ if(!path) return; try{ const s=await sb.storage.from('family').createSignedUrl(path,3600); const u=s&&s.data&&s.data.signedUrl; if(!u) return; if(audio){ audio.pause(); } audio=new Audio(u); audio.play().catch(()=>{}); }catch(e){} }
+
+  /* ---------- language sheet ---------- */
+  function openLang(){ const sh=$('.sheet[data-sheet="lang"]'); const L=d();
+    sh.innerHTML=`<div class="grip"></div><h3>${esc(L.langtitle)}</h3><div class="sub">${esc(L.langsub)}</div>`
+      + LANGS.map(l=>`<button class="lang-opt${l===state.lang?' on':''}" data-setlang="${l}"><span><span class="native">${esc(T[l].native)}</span><span class="en">${esc(T[l].en)}</span></span><span class="tick">${IC.check}</span></button>`).join('');
+    $('.scrim').classList.add('show'); sh.classList.add('show');
+  }
+  function hideSheets(){ $('.scrim').classList.remove('show'); $$('.sheet').forEach(s=>s.classList.remove('show')); }
+  function setLang(l){ if(!T[l]) return; state.lang=l; try{ localStorage.setItem('lf_lang',l); }catch(e){} if(user) try{ sb.from('profiles').update({preferred_lang:l}).eq('id',user.id); }catch(e){} hideSheets(); render(); }
+
+  /* ---------- toast ---------- */
+  let toTimer=null;
+  function toast(msg,good){ const t=$('.toast'); t.querySelector('.toastmsg').textContent=msg;
+    t.querySelector('.fl').style.background=good===false?'var(--coral)':'var(--leaf)';
+    t.querySelector('.fl').style.boxShadow=good===false?'0 0 10px 2px var(--coral)':'0 0 10px 2px var(--leaf)';
+    t.classList.add('show'); clearTimeout(toTimer); toTimer=setTimeout(()=>t.classList.remove('show'),2600); }
+
+  /* ---------- wiring ---------- */
+  function wire(){ const root=$('#dev');
+    root.addEventListener('click', async e=>{
+      const ap=e.target.closest('[data-approve]'); if(ap){ await approveRef(ap.getAttribute('data-approve')); return; }
+      const dc=e.target.closest('[data-decline]'); if(dc){ await declineRef(dc.getAttribute('data-decline')); return; }
+      const fl=e.target.closest('[data-filter]'); if(fl){ activeFilter=fl.getAttribute('data-filter'); render(); return; }
+      const pl=e.target.closest('[data-play]'); if(pl){ playVoice(pl.getAttribute('data-play')); return; }
+      const sl=e.target.closest('[data-setlang]'); if(sl){ setLang(sl.getAttribute('data-setlang')); return; }
+      const a=e.target.closest('[data-act]'); if(!a) return; const act=a.dataset.act;
+      if(act==='back'){ if(history.length>1) history.back(); else location.href='index.html'; return; }
+      if(act==='lang'){ openLang(); return; }
+      if(act==='close'){ hideSheets(); return; }
+    });
+  }
+
+  /* ---------- gate + boot ---------- */
+  async function reload(){ await loadData(); render(); }
+  function showGate(){ const L=d(); let g=$('#gate'); if(!g){ g=document.createElement('div'); g.id='gate'; g.className='gate'; $('#dev').appendChild(g); }
+    g.innerHTML=`<div class="card">
+      <h3>${esc(L.gateTitle)}</h3><div class="gsub">${esc(L.gateSub)}</div>
+      <input id="gEmail" type="email" autocomplete="email" placeholder="you@example.com">
+      <input id="gPass" type="password" autocomplete="current-password" placeholder="••••••••">
+      <button id="gBtn" class="gbtn">${esc(L.signin)}</button>
+      <div class="gerr" id="gErr"></div></div>`;
+    $('#gBtn').onclick=async()=>{ const {error}=await sb.auth.signInWithPassword({email:$('#gEmail').value.trim(),password:$('#gPass').value}); if(error){ $('#gErr').textContent=error.message; return; } g.remove(); boot(); };
+  }
+  async function boot(){ const {data:{session}}=await sb.auth.getSession();
+    const stored=localStorage.getItem('lf_lang'); if(stored&&T[stored]) state.lang=stored; else { const dl=(navigator.language||'en').slice(0,2); if(T[dl]) state.lang=dl; }
+    if(!session){ user=null; render(); showGate(); return; }
+    user=session.user;
+    try{ const {data:pr}=await sb.from('profiles').select('is_keeper,preferred_lang').eq('id',user.id).maybeSingle();
+      if(pr){ state.keeper=!!pr.is_keeper; if(state.keeper){ window.__lfKeeper=true; try{document.dispatchEvent(new Event('lf-keeper-ready'));}catch(e){} } if(pr.preferred_lang&&!stored&&T[pr.preferred_lang]) state.lang=pr.preferred_lang; } }catch(e){}
+    if(!state.keeper){ render(); return; }
+    await loadData(); render();
+  }
+  wire(); boot();
+})();
+</script>
+<script src="lf-nav.js" data-here="" data-parent="index.html"></script>
+</body></html>
