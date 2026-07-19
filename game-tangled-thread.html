@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>The Tangled Thread · The Living Forest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  /* ===== Design: "Game - The Tangled Thread (play)" — reproduced verbatim ===== */
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body{ background:#04070e; }
+  :root{
+    --cream:#f4ecdb; --muted:#9db0cc; --dim:#6f83a3; --hair:#ffffff18; --panel:#ffffff0b;
+    --gold:#f3cd84; --gold-hi:#ffe6ad; --cool:#7fb4d8; --cool-hi:#a9d2ee;
+    --edit:#c9a2ff; --edit-hi:#ddc6ff; --edit-soft:#efe6ff; --leaf:#8fd6a0; --xtl:#9a8bbd;
+    --warm:#e7a35a;
+  }
+  body{ font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--cream); min-height:100dvh;
+    display:flex; align-items:flex-start; justify-content:center; gap:40px; padding:34px 20px 90px;
+    background:radial-gradient(150% 100% at 50% -6%, #12233c 0%, #0a1526 44%, #04070e 100%);
+    -webkit-user-select:none; user-select:none; flex-wrap:wrap; }
+  .serif{ font-family:'Newsreader',Georgia,serif; }
+  .mono{ font-family:'Azeret Mono',monospace; }
+  .screen[dir="rtl"] .serif{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
+
+  .stagewrap{ display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .caption{ font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--dim); }
+  .device{ position:relative; width:390px; height:820px; border-radius:42px; overflow:hidden; flex:0 0 auto;
+    background:#04070e; box-shadow:0 40px 120px -50px #000, 0 0 0 9px #14141b, 0 0 0 10px #2b2b34; }
+  .veil{ position:absolute; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(120% 70% at 50% 4%, rgba(243,205,132,.08), transparent 46%),
+      radial-gradient(120% 92% at 50% 46%, transparent 30%, rgba(4,7,14,.62) 100%); }
+  .screen{ position:absolute; inset:0; z-index:2; overflow-y:auto; scrollbar-width:none; }
+  .screen::-webkit-scrollbar{ display:none; }
+  .pad{ padding:0 20px calc(30px + env(safe-area-inset-bottom)); }
+
+  .topbar{ position:sticky; top:0; z-index:14; display:flex; align-items:center; gap:10px;
+    padding:15px 18px 11px; background:linear-gradient(to bottom, rgba(5,9,17,.92), rgba(5,9,17,.4) 68%, transparent);
+    backdrop-filter:blur(7px); }
+  .ibtn{ width:40px; height:40px; border-radius:12px; flex:0 0 auto; display:grid; place-items:center; cursor:pointer;
+    border:1px solid var(--hair); background:rgba(10,20,34,.55); color:var(--cream); }
+  .ibtn svg{ width:18px; height:18px; }
+  .ttl{ flex:1; min-width:0; text-align:center; }
+  .ttl .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.24em; text-transform:uppercase; color:var(--muted); }
+  .ttl .n{ font-family:'Newsreader',serif; font-size:18px; color:#fbf5e8; margin-top:1px; }
+  .cool-pill{ flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:8px 11px; border-radius:99px;
+    background:rgba(127,180,216,.1); border:1px solid rgba(127,180,216,.3); }
+  .cool-pill .fl{ width:7px; height:7px; border-radius:50%; background:var(--cool); box-shadow:0 0 9px 1px var(--cool); }
+  .cool-pill b{ font-family:'Azeret Mono',monospace; font-size:10px; color:var(--cool-hi); font-weight:500; letter-spacing:.06em; }
+
+  /* the ask */
+  .ask{ margin-top:18px; padding:16px 16px 15px; border-radius:16px;
+    background:rgba(127,180,216,.06); border:1px solid rgba(127,180,216,.24); }
+  .ask .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--cool);
+    display:flex; align-items:center; gap:7px; margin-bottom:8px; }
+  .ask .k .pl{ display:inline-grid; place-items:center; width:16px; height:16px; border-radius:5px; background:rgba(127,180,216,.16); color:var(--cool-hi); }
+  .ask .k .pl svg{ width:11px; height:11px; }
+  .ask .q{ font-family:'Newsreader',serif; font-size:19px; line-height:1.4; color:#eef4fa; }
+  .ask .q em{ font-style:italic; color:var(--cool-hi); }
+
+  /* the map */
+  .tmap{ position:relative; height:352px; border-radius:18px; overflow:hidden; margin-top:16px;
+    border:1px solid var(--hair); background:linear-gradient(150deg,#0c1a2c,#0a1626 60%,#0b1524); }
+  .tmap .grid{ position:absolute; inset:0; opacity:.5;
+    background-image:linear-gradient(rgba(127,180,216,.1) 1px,transparent 1px),linear-gradient(90deg,rgba(127,180,216,.1) 1px,transparent 1px);
+    background-size:38px 38px; }
+  .tmap .coast{ position:absolute; inset:0; opacity:.5; background:
+    radial-gradient(60% 44% at 22% 82%, rgba(143,214,160,.12), transparent 60%),
+    radial-gradient(50% 40% at 84% 20%, rgba(127,180,216,.14), transparent 62%); }
+  .tmap .badge{ position:absolute; top:11px; inset-inline-start:12px; font-family:'Azeret Mono',monospace; font-size:9px;
+    letter-spacing:.14em; text-transform:uppercase; color:rgba(127,180,216,.8); display:flex; align-items:center; gap:6px; }
+  .tmap .badge svg{ width:12px; height:12px; }
+
+  .thread-layer{ position:absolute; inset:0; z-index:2; pointer-events:none; }
+  .thread-layer path{ fill:none; stroke:url(#tg); stroke-width:2.4; stroke-linecap:round;
+    stroke-dasharray:520; stroke-dashoffset:520; }
+  .thread-layer.draw path{ animation:drawthread 1.1s cubic-bezier(.6,0,.2,1) forwards; }
+  @keyframes drawthread{ to{ stroke-dashoffset:0; } }
+
+  .placepin{ position:absolute; z-index:3; transform:translate(-50%,-50%); left:50%; top:33%; text-align:center; }
+  .placepin .ring{ width:34px; height:34px; margin:0 auto; border-radius:50%; position:relative; display:grid; place-items:center;
+    background:rgba(243,205,132,.14); border:1px solid rgba(243,205,132,.5); color:var(--gold-hi); }
+  .placepin .ring::after{ content:""; position:absolute; inset:-6px; border-radius:50%; border:1px solid rgba(243,205,132,.3);
+    animation:pulse 2.6s ease-out infinite; }
+  @keyframes pulse{ 0%{ transform:scale(.8); opacity:.7; } 100%{ transform:scale(1.7); opacity:0; } }
+  @media (prefers-reduced-motion: reduce){ .placepin .ring::after{ animation:none; } }
+  .placepin .ring svg{ width:16px; height:16px; }
+  .placepin .pl{ font-family:'Newsreader',serif; font-size:14px; color:#fbf5e8; margin-top:5px; text-shadow:0 1px 5px #000; white-space:nowrap; }
+
+  .tnode{ position:absolute; z-index:4; transform:translate(-50%,-50%); text-align:center; cursor:pointer; width:66px;
+    background:transparent; border:none; padding:0; color:inherit; font:inherit; }
+  .tnode .disc{ width:42px; height:42px; margin:0 auto; border-radius:50%; position:relative; overflow:hidden;
+    border:1.5px solid rgba(255,244,214,.45); transition:transform .18s, border-color .2s, box-shadow .2s; }
+  .tnode .disc i{ position:absolute; inset:0; }
+  .tnode:hover .disc{ transform:scale(1.08); border-color:rgba(255,255,255,.7); }
+  .tnode .nl{ font-family:'Newsreader',serif; font-size:11.5px; color:#dbe6f5; margin-top:4px; text-shadow:0 1px 4px #000; white-space:nowrap; }
+  .tnode.sel .disc{ border-color:var(--cool-hi); box-shadow:0 0 0 3px rgba(127,180,216,.35), 0 0 18px 2px rgba(127,180,216,.5); }
+  .tnode.warm .disc{ border-color:var(--warm); box-shadow:0 0 0 3px rgba(231,163,90,.3), 0 0 18px 2px rgba(231,163,90,.45); }
+  .tnode.cold .disc{ opacity:.5; }
+  .tnode.solved .disc{ border-color:var(--gold-hi); box-shadow:0 0 0 3px rgba(243,205,132,.4), 0 0 22px 3px rgba(243,205,132,.6); }
+  .tnode .yr{ position:absolute; top:-6px; inset-inline-end:-4px; font-family:'Azeret Mono',monospace; font-size:8px;
+    background:rgba(4,7,14,.85); border:1px solid var(--hair); color:var(--muted); border-radius:99px; padding:1px 4px; opacity:0; transition:opacity .2s; }
+  .tnode.solved .yr, .tnode.sel .yr{ opacity:1; }
+
+  .avA i{ background:radial-gradient(70% 60% at 40% 32%, #f0d3ad, #b07d55 70%, #6f4c33); }
+  .avB i{ background:radial-gradient(70% 60% at 40% 32%, #d9e2ef, #8fa6b8 70%, #566579); }
+  .avC i{ background:radial-gradient(70% 60% at 40% 32%, #f0dcc0, #c08a70 70%, #7a5040); }
+  .avD i{ background:radial-gradient(70% 60% at 40% 32%, #dfe6da, #9fb0a0 70%, #5f6f62); }
+  .avE i{ background:radial-gradient(70% 60% at 40% 32%, #e7d3b6, #a98a5f 70%, #6d5436); }
+  .avF i{ background:radial-gradient(70% 60% at 40% 32%, #d5c8e6, #9184ad 70%, #5c5170); }
+
+  /* warm / cold read-out */
+  .warmth{ display:none; margin-top:14px; padding:13px 15px; border-radius:14px; align-items:flex-start; gap:11px;
+    border:1px solid; }
+  .warmth.show{ display:flex; }
+  .warmth.cold{ background:rgba(127,180,216,.08); border-color:rgba(127,180,216,.32); }
+  .warmth.warm{ background:rgba(231,163,90,.09); border-color:rgba(231,163,90,.36); }
+  .warmth .ic{ width:34px; height:34px; border-radius:10px; flex:0 0 auto; display:grid; place-items:center; }
+  .warmth.cold .ic{ background:rgba(127,180,216,.14); color:var(--cool-hi); }
+  .warmth.warm .ic{ background:rgba(231,163,90,.16); color:#f2c088; }
+  .warmth .ic svg{ width:17px; height:17px; }
+  .warmth .wt .h{ font-family:'Newsreader',serif; font-size:16px; color:#f3ecdd; }
+  .warmth.cold .wt .h{ color:#dcebf7; }
+  .warmth .wt .s{ font-size:12px; line-height:1.45; color:var(--muted); margin-top:3px; }
+
+  .hintbar{ margin-top:14px; text-align:center; font-size:11.5px; color:var(--dim); font-style:italic; font-family:'Newsreader',serif; }
+
+  /* solved payoff */
+  .solved-card{ display:none; margin-top:16px; padding:16px; border-radius:16px;
+    background:linear-gradient(120deg, rgba(243,205,132,.1), rgba(127,180,216,.06)); border:1px solid rgba(243,205,132,.3); }
+  .solved-card.show{ display:block; }
+  .solved-card .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--leaf); text-align:center; }
+  .solved-card .h{ font-family:'Newsreader',serif; font-size:21px; line-height:1.35; color:#fbf5e8; text-align:center; margin-top:8px; }
+  .solved-card .h em{ font-style:italic; color:var(--gold-hi); }
+  .pair-row{ display:flex; align-items:center; justify-content:center; gap:10px; margin-top:16px; }
+  .pface{ width:52px; height:52px; border-radius:50%; overflow:hidden; position:relative; border:1px solid rgba(255,244,214,.7); flex:0 0 auto; }
+  .pface i{ position:absolute; inset:0; }
+  .pair-row .link{ flex:1; max-width:70px; height:2px; position:relative; background:linear-gradient(90deg,var(--gold),var(--cool)); border-radius:2px; }
+  .pair-row .link::after{ content:""; position:absolute; top:50%; left:50%; width:6px; height:6px; border-radius:50%; background:var(--cool-hi); transform:translate(-50%,-50%); box-shadow:0 0 8px 1px rgba(127,180,216,.7); }
+  .pnames{ display:flex; align-items:center; justify-content:center; gap:8px; margin-top:9px; font-family:'Newsreader',serif; font-size:13px; color:var(--muted); }
+  .pnames b{ color:var(--cream); font-weight:400; }
+  .btnrow{ display:flex; gap:10px; margin-top:18px; }
+  .btn{ flex:1; padding:14px; border-radius:14px; font-family:'Hanken Grotesk',sans-serif; font-size:14px; font-weight:600;
+    cursor:pointer; border:1px solid transparent; text-align:center; }
+  .btn.ghost{ background:transparent; border-color:var(--hair); color:var(--cream); }
+  .btn.primary{ background:linear-gradient(180deg,var(--gold-hi),var(--gold)); color:#1a1206; }
+  .reelnote{ margin-top:12px; display:flex; align-items:center; gap:9px; justify-content:center;
+    font-size:11.5px; color:rgba(127,180,216,.8); font-family:'Azeret Mono',monospace; letter-spacing:.04em; }
+  .reelnote svg{ width:13px; height:13px; }
+
+  /* NOT ENOUGH DATA (today — places-lived is empty) */
+  .locked-hero{ margin-top:30px; height:200px; border-radius:20px; position:relative; overflow:hidden;
+    border:1px solid var(--hair); background:linear-gradient(150deg,#0c1a2c,#0a1626); }
+  .locked-hero .grid{ position:absolute; inset:0; opacity:.4;
+    background-image:linear-gradient(rgba(127,180,216,.1) 1px,transparent 1px),linear-gradient(90deg,rgba(127,180,216,.1) 1px,transparent 1px);
+    background-size:32px 32px; }
+  .locked-hero .tone{ position:absolute; inset:0; background:radial-gradient(70% 70% at 50% 40%, rgba(127,180,216,.12), transparent 70%); }
+  .locked-hero .emptypin{ position:absolute; left:50%; top:44%; transform:translate(-50%,-50%); width:38px; height:38px;
+    border-radius:50%; border:1.5px dashed rgba(127,180,216,.5); display:grid; place-items:center; color:rgba(127,180,216,.7); }
+  .locked-hero .emptypin svg{ width:18px; height:18px; }
+  .locked-hero .ghost-node{ position:absolute; width:26px; height:26px; border-radius:50%; border:1.5px dashed rgba(255,255,255,.16); }
+  .locked-title{ text-align:center; margin-top:22px; }
+  .locked-title .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--cool); }
+  .locked-title .h{ font-family:'Newsreader',serif; font-size:25px; color:#fbf5e8; margin-top:7px; }
+  .locked-body{ font-family:'Newsreader',serif; font-size:15.5px; line-height:1.6; color:#e7dcc6; text-align:center;
+    margin:14px auto 0; max-width:306px; }
+  .locked-body em{ font-style:italic; color:var(--cool-hi); }
+  .keeper-cta{ margin-top:20px; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; padding:15px;
+    border-radius:15px; background:rgba(201,162,255,.08); border:1px dashed rgba(201,162,255,.42); color:var(--edit-hi);
+    font-family:'Newsreader',serif; font-size:16px; cursor:pointer; }
+  .keeper-cta svg{ width:19px; height:19px; }
+  .keeper-only{ margin-top:11px; display:flex; align-items:center; gap:8px; justify-content:center;
+    font-family:'Azeret Mono',monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--edit); }
+  .keeper-only svg{ width:13px; height:13px; }
+  .locked-foot{ margin-top:18px; text-align:center; font-family:'Newsreader',serif; font-style:italic; font-size:13px; color:rgba(143,214,160,.6); line-height:1.5; }
+
+  /* ===== additions for the live page ===== */
+  /* full-viewport page (drop the mock device frame) */
+  html,body{ margin:0; }
+  body{ gap:0; padding:0; }
+  .stagewrap{ gap:0; width:100%; }
+  .device{ width:100vw!important; height:100dvh!important; max-width:none!important; border-radius:0!important; border:none!important; box-shadow:none!important; }
+
+  /* compact language switch (topbar) */
+  .langsw{ flex:0 0 auto; display:flex; align-items:center; gap:2px; padding:3px; border-radius:99px;
+    background:rgba(10,20,34,.55); border:1px solid var(--hair); }
+  .langsw button{ font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.04em; color:var(--muted);
+    background:transparent; border:none; cursor:pointer; padding:4px 7px; border-radius:99px; }
+  .langsw button.on{ color:#1a1206; background:linear-gradient(180deg,var(--cool-hi),var(--cool)); }
+
+  .state[hidden]{ display:none; }
+  .loading{ margin-top:60px; text-align:center; color:var(--dim); font-family:'Newsreader',serif; font-style:italic; font-size:15px; }
+
+  /* gentle error (reuses locked language) */
+  .err-body{ font-family:'Newsreader',serif; font-size:15.5px; line-height:1.6; color:#e7dcc6; text-align:center; margin:14px auto 0; max-width:306px; }
+  .err-body em{ color:var(--cool-hi); font-style:italic; }
+
+  /* Hebrew/RTL: give every Newsreader text block the Hebrew serif (matches design's .serif rule) */
+  .screen[dir="rtl"] .ask .q,
+  .screen[dir="rtl"] .warmth .wt .h,
+  .screen[dir="rtl"] .warmth .wt .s,
+  .screen[dir="rtl"] .solved-card .h,
+  .screen[dir="rtl"] .locked-title .h,
+  .screen[dir="rtl"] .locked-body,
+  .screen[dir="rtl"] .locked-foot,
+  .screen[dir="rtl"] .err-body,
+  .screen[dir="rtl"] .hintbar{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
+</style>
+</head>
+<body>
+  <div class="stagewrap">
+    <div class="device" id="dev">
+      <div class="veil"></div>
+      <div class="screen" id="screen">
+        <div class="topbar">
+          <div class="ibtn" id="backBtn" role="button" tabindex="0" aria-label="Back">
+            <svg id="backIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </div>
+          <div class="ttl"><div class="k" id="ttlK">Places · a game</div><div class="n serif" id="ttlN">The Tangled Thread</div></div>
+          <div class="langsw" id="langsw">
+            <button data-lang="en">EN</button><button data-lang="ru">RU</button><button data-lang="he">עב</button>
+          </div>
+          <div class="cool-pill" id="triesPill" hidden><span class="fl"></span><b id="triesB">3</b></div>
+        </div>
+        <div class="pad">
+
+          <!-- LOADING -->
+          <div class="state" id="stateLoad"><div class="loading" id="loadTxt">Weaving the map…</div></div>
+
+          <!-- PLAY -->
+          <div class="state" id="statePlay" hidden>
+            <div class="ask">
+              <div class="k"><span class="pl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.7-6-10a6 6 0 1112 0c0 4.3-6 10-6 10z"/></svg></span><span id="askK">A thread across the map</span></div>
+              <div class="q" id="askQ"></div>
+            </div>
+
+            <div class="tmap" id="tmap">
+              <div class="grid"></div><div class="coast"></div>
+              <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg><span id="badgeTxt">Where they lived</span></div>
+              <svg class="thread-layer" id="thread" viewBox="0 0 350 352" preserveAspectRatio="none"><defs><linearGradient id="tg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f3cd84"/><stop offset="1" stop-color="#7fb4d8"/></linearGradient></defs><path id="tpath" d=""/></svg>
+              <div class="placepin"><div class="ring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.7-6-10a6 6 0 1112 0c0 4.3-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg></div><div class="pl serif" id="placeLabel"></div></div>
+              <!-- nodes injected by JS -->
+            </div>
+
+            <div class="warmth" id="warmth"><div class="ic" id="warmIc"></div><div class="wt"><div class="h" id="warmH"></div><div class="s" id="warmS"></div></div></div>
+            <div class="hintbar serif" id="hint"></div>
+
+            <div class="solved-card" id="solved">
+              <div class="k mono" id="solvedK">The thread is drawn</div>
+              <div class="h serif" id="solvedH"></div>
+              <div class="pair-row"><div class="pface" id="pfaceA"><i></i></div><div class="link"></div><div class="pface" id="pfaceB"><i></i></div></div>
+              <div class="pnames serif" id="pnames"></div>
+              <div class="btnrow">
+                <button class="btn ghost" id="btnAnother">Another thread</button>
+                <button class="btn primary" id="btnSee">See the connection</button>
+              </div>
+              <div class="reelnote mono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7h6M9 11h6M9 15h4"/><rect x="5" y="3" width="14" height="18" rx="2"/></svg><span id="reelTxt">Woven into your Journal</span></div>
+            </div>
+          </div>
+
+          <!-- NOT ENOUGH DATA -->
+          <div class="state" id="stateLocked" hidden>
+            <div class="locked-hero">
+              <div class="grid"></div><div class="tone"></div>
+              <div class="ghost-node" style="left:22%; top:28%"></div>
+              <div class="ghost-node" style="left:74%; top:34%"></div>
+              <div class="ghost-node" style="left:64%; top:70%"></div>
+              <div class="ghost-node" style="left:30%; top:66%"></div>
+              <div class="emptypin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.7-6-10a6 6 0 1112 0c0 4.3-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg></div>
+            </div>
+            <div class="locked-title"><div class="k mono" id="lockK">The map is still bare</div><div class="h serif" id="lockH">No shared places yet</div></div>
+            <div class="locked-body" id="lockBody"></div>
+            <div class="keeper-cta" id="keeperCta" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.7-6-10a6 6 0 1112 0c0 4.3-6 10-6 10z"/><circle cx="12" cy="11" r="2"/><path d="M12 8v0"/></svg><span id="keeperCtaTxt">Add where people lived</span></div>
+            <div class="keeper-only" id="keeperOnly"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V6z"/><path d="M9 12l2 2 4-4"/></svg><span id="keeperOnlyTxt">The keeper fills these in</span></div>
+            <div class="locked-foot serif" id="lockFoot"></div>
+          </div>
+
+          <!-- ERROR -->
+          <div class="state" id="stateError" hidden>
+            <div class="locked-hero">
+              <div class="grid"></div><div class="tone"></div>
+              <div class="emptypin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17v0"/><circle cx="12" cy="12" r="9"/></svg></div>
+            </div>
+            <div class="locked-title"><div class="k mono" id="errK">The thread slipped</div><div class="h serif" id="errH">Something tangled</div></div>
+            <div class="err-body" id="errBody"></div>
+            <div class="keeper-cta" id="btnRetry" style="border-style:solid;border-color:rgba(127,180,216,.42);background:rgba(127,180,216,.08);color:var(--cool-hi)"><span id="retryTxt">Try again</span></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script src="lf-games.js"></script>
+<script>
+'use strict';
+(function(){
+  var SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
+  var sb=window.supabase.createClient(SB_URL,SB_KEY);
+
+  // ---- i18n -------------------------------------------------------------
+  var T={
+    en:{
+      dir:'ltr', back:'M15 18l-6-6 6-6',
+      ttlK:'Places · a game', ttlN:'The Tangled Thread',
+      loadTxt:'Weaving the map…',
+      askK:'A thread across the map',
+      askQ:function(p){ return 'Two people once lived in <em>'+p+'</em> — years apart, and never met. Find the pair.'; },
+      badge:'Where they lived',
+      hint:'Pick two people you think both walked this city.',
+      tries:function(n){ return n+' left'; },
+      warmH:'Warm — one of them belongs here',
+      warmS:function(p){ return 'One did live in '+p+'. The other never did — keep the city, change the partner.'; },
+      coldH:'Cold — neither walked this city',
+      coldS:function(p){ return 'Their roads ran elsewhere. Look for two whose paths both cross '+p+'.'; },
+      solvedK:'The thread is drawn',
+      solvedH:function(p){ return 'They both walked <em>'+p+'</em> — a lifetime apart, and never once met.'; },
+      another:'Another thread', see:'See the connection', reel:'Woven into your Journal',
+      lockK:'The map is still bare', lockH:'No shared places yet',
+      lockBody:'This hunt needs to know <em>where people lived</em>. No shared cities have been added yet — so there’s no place two strangers could have crossed.',
+      keeperCta:'Add where people lived', keeperOnly:'The keeper fills these in',
+      lockFoot:'The first time two people share a city,<br>the thread appears between them.',
+      errK:'The thread slipped', errH:'Something tangled',
+      errBody:'We couldn’t weave the map just now. <em>Try again</em> in a moment.', retry:'Try again'
+    },
+    ru:{
+      dir:'ltr', back:'M15 18l-6-6 6-6',
+      ttlK:'Места · игра', ttlN:'Запутанная нить',
+      loadTxt:'Ткём карту…',
+      askK:'Нить через карту',
+      askQ:function(p){ return 'Двое когда-то жили в <em>'+p+'</em> — в разные годы и никогда не встречались. Найдите пару.'; },
+      badge:'Где они жили',
+      hint:'Выберите двоих, кто, по-вашему, ходил по этому городу.',
+      tries:function(n){ return 'осталось '+n; },
+      warmH:'Тепло — один из них отсюда',
+      warmS:function(p){ return 'Один действительно жил в '+p+'. Другой — нет. Оставьте город, смените напарника.'; },
+      coldH:'Холодно — ни один тут не жил',
+      coldS:function(p){ return 'Их дороги шли иначе. Ищите двоих, чьи пути пересекают '+p+'.'; },
+      solvedK:'Нить протянута',
+      solvedH:function(p){ return 'Оба ходили по <em>'+p+'</em> — целую жизнь порознь, и ни разу не встретились.'; },
+      another:'Другая нить', see:'Показать связь', reel:'Вплетено в ваш дневник',
+      lockK:'Карта пока пуста', lockH:'Общих мест пока нет',
+      lockBody:'Этой охоте нужно знать, <em>где люди жили</em>. Общих городов ещё не добавили — поэтому нет места, где могли бы пересечься двое незнакомцев.',
+      keeperCta:'Добавить, где жили люди', keeperOnly:'Это заполняет хранитель',
+      lockFoot:'Как только двое разделят город,<br>между ними появится нить.',
+      errK:'Нить сорвалась', errH:'Что-то запуталось',
+      errBody:'Не удалось соткать карту сейчас. <em>Попробуйте снова</em> через мгновение.', retry:'Попробовать снова'
+    },
+    he:{
+      dir:'rtl', back:'M9 18l6-6-6-6',
+      ttlK:'מקומות · משחק', ttlN:'החוט הסבוך',
+      loadTxt:'אורגים את המפה…',
+      askK:'חוט על פני המפה',
+      askQ:function(p){ return 'שניים חיו פעם ב<em>'+p+'</em> — בהפרש שנים, ומעולם לא נפגשו. מצאו את הזוג.'; },
+      badge:'איפה הם חיו',
+      hint:'בחרו שניים שלדעתכם שניהם הלכו בעיר הזו.',
+      tries:function(n){ return 'נותרו '+n; },
+      warmH:'חם — אחד מהם שייך לכאן',
+      warmS:function(p){ return 'אחד באמת חי ב'+p+'. השני מעולם לא. השאירו את העיר, החליפו את בן הזוג.'; },
+      coldH:'קר — אף אחד לא הלך בעיר הזו',
+      coldS:function(p){ return 'דרכיהם עברו במקום אחר. חפשו שניים שדרכיהם חוצות את '+p+'.'; },
+      solvedK:'החוט נטווה',
+      solvedH:function(p){ return 'שניהם הלכו ברחובות <em>'+p+'</em> — חיים שלמים במרחק, ומעולם לא נפגשו.'; },
+      another:'חוט אחר', see:'הציגו את הקשר', reel:'נארג ביומן שלך',
+      lockK:'המפה עדיין ריקה', lockH:'אין עדיין מקומות משותפים',
+      lockBody:'הצייד הזה צריך לדעת <em>איפה אנשים חיו</em>. עדיין לא נוספו ערים משותפות — אז אין מקום ששני זרים יכלו לחצות בו.',
+      keeperCta:'הוסיפו איפה אנשים חיו', keeperOnly:'שומר הזיכרונות ממלא אלה',
+      lockFoot:'ברגע שהראשון ששניים יחלקו עיר,<br>החוט יופיע ביניהם.',
+      errK:'החוט חמק', errH:'משהו הסתבך',
+      errBody:'לא הצלחנו לארוג את המפה כרגע. <em>נסו שוב</em> בעוד רגע.', retry:'נסו שוב'
+    }
+  };
+
+  var AV=['avA','avB','avC','avD','avE','avF'];
+  var FLAME='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c2 3 5 5 5 9a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 3 3-1-3 0-5 0-8z"/></svg>';
+  var SNOW='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 8l14 8M19 8L5 16M8 4l4 3 4-3M8 20l4-3 4 3"/></svg>';
+
+  // ---- state ------------------------------------------------------------
+  var state={ lang:'en', keeper:false, user:null };
+  var round=null, curState='load';
+  var sel=[], tries=3, done=false;
+  var $=function(id){ return document.getElementById(id); };
+  var params=new URLSearchParams(location.search);
+  var scopeId=params.get('id')||null;
+  var urlSeed=params.get('seed'); // optional replay
+
+  // ---- helpers ----------------------------------------------------------
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function firstName(label){ label=String(label||'').trim(); return label.split(/\s+/)[0]||label||'—'; }
+  function showState(name){
+    curState=name;
+    ['stateLoad','statePlay','stateLocked','stateError'].forEach(function(id){ $(id).hidden=true; });
+    var map={ load:'stateLoad', play:'statePlay', locked:'stateLocked', error:'stateError' };
+    $(map[name]).hidden=false;
+    $('triesPill').hidden = (name!=='play' || done);
+  }
+
+  // ---- language ---------------------------------------------------------
+  function applyStatic(){
+    var L=T[state.lang];
+    var sc=$('screen');
+    sc.setAttribute('dir', L.dir); sc.setAttribute('lang', state.lang);
+    document.documentElement.setAttribute('lang', state.lang);
+    document.documentElement.setAttribute('dir', L.dir);
+    $('backIcon').innerHTML='<path d="'+L.back+'"/>';
+    $('ttlK').textContent=L.ttlK; $('ttlN').textContent=L.ttlN;
+    $('loadTxt').textContent=L.loadTxt;
+    $('askK').textContent=L.askK; $('badgeTxt').textContent=L.badge;
+    $('hint').textContent=L.hint;
+    $('solvedK').textContent=L.solvedK; $('reelTxt').textContent=L.reel;
+    $('btnAnother').textContent=L.another; $('btnSee').textContent=L.see;
+    $('lockK').textContent=L.lockK; $('lockH').textContent=L.lockH;
+    $('lockBody').innerHTML=L.lockBody;
+    $('keeperCtaTxt').textContent=L.keeperCta; $('keeperOnlyTxt').textContent=L.keeperOnly;
+    $('lockFoot').innerHTML=L.lockFoot;
+    $('errK').textContent=L.errK; $('errH').textContent=L.errH;
+    $('errBody').innerHTML=L.errBody; $('retryTxt').textContent=L.retry;
+    Array.prototype.forEach.call($('langsw').children, function(b){ b.classList.toggle('on', b.dataset.lang===state.lang); });
+  }
+  function setLang(l){
+    if(!T[l]) return;
+    state.lang=l;
+    try{ localStorage.setItem('lf_lang', l); }catch(e){}
+    if(state.user){ sb.from('profiles').update({preferred_lang:l}).eq('id',state.user.id).then(function(){},function(){}); }
+    applyStatic();
+    // re-render the active data-driven state in the new language
+    if(round && round.status==='ok') renderPlay(round);
+    else if(round && round.status==='not_enough_data') renderLocked(round);
+  }
+
+  // ---- rounds -----------------------------------------------------------
+  function newRound(seed){
+    done=false; sel=[]; tries=3;
+    showState('load');
+    var opts={ id:scopeId };
+    if(seed!=null) opts.seed=seed;
+    else if(urlSeed!=null){ opts.seed=urlSeed; urlSeed=null; } // honour ?seed= once
+    window.LFGames.tangledThread(sb, opts).then(function(res){
+      round=res;
+      if(!res || res.status==='error') return renderError(res&&res.message);
+      if(res.status==='not_enough_data') return renderLocked(res);
+      if(res.status==='ok') return renderPlay(res);
+      renderError('unknown status');
+    }, function(e){ renderError(e&&e.message||e); });
+  }
+
+  function renderError(){ showState('error'); }
+
+  function renderLocked(res){
+    // surface the human need warmly (never raw JSON) — the localized body carries the meaning;
+    // keeper action is gated.
+    $('keeperCta').hidden = !state.keeper;
+    $('keeperOnly').hidden = !!state.keeper;
+    showState('locked');
+  }
+
+  // deterministic scatter around the central place pin (seeded by the round)
+  function layout(n, seed){
+    var rng=window.LFGames._util.makeRng(window.LFGames._util.resolveSeed(seed));
+    var pos=[], cx=50, cy=43;
+    for(var i=0;i<n;i++){
+      var ang=(i/Math.max(1,n))*Math.PI*2 + rng()*0.7 + 0.3;
+      var rr=29+rng()*11;
+      var x=cx+Math.cos(ang)*rr;
+      var y=cy+Math.sin(ang)*(rr*0.74);
+      x=Math.max(14,Math.min(86,x)); y=Math.max(15,Math.min(82,y));
+      pos.push({x:x,y:y});
+    }
+    return pos;
+  }
+
+  function renderPlay(res){
+    var L=T[state.lang];
+    var place=res.prompt&&res.prompt.place ? res.prompt.place : '';
+    $('askQ').innerHTML=L.askQ(esc(place));
+    $('placeLabel').textContent=place;
+
+    // classify candidates against the engine's answer + proximity (never revealed on screen)
+    var pairIds=(res.pair||[]).map(function(p){ return p.id; });
+    var prox=res.proximity||{};
+    function classOf(id){
+      if(pairIds.indexOf(id)>=0) return 'pair';
+      if(prox[id] && prox[id].shared_place) return 'warm';
+      return 'cold';
+    }
+    // choose the cast: always both of the pair, then warm, then cold, capped for a readable map
+    var cands=(res.candidates||[]).slice();
+    var CAP=8, chosen=[], seen={};
+    cands.forEach(function(c){ if(pairIds.indexOf(c.id)>=0 && !seen[c.id]){ chosen.push(c); seen[c.id]=1; } });
+    cands.forEach(function(c){ if(!seen[c.id] && classOf(c.id)==='warm' && chosen.length<CAP){ chosen.push(c); seen[c.id]=1; } });
+    cands.forEach(function(c){ if(!seen[c.id] && chosen.length<CAP){ chosen.push(c); seen[c.id]=1; } });
+    chosen=window.LFGames._util.shuffle(chosen, window.LFGames._util.resolveSeed(res.seed));
+
+    var pos=layout(chosen.length, res.seed);
+    var tmap=$('tmap');
+    // clear any previously injected nodes
+    Array.prototype.slice.call(tmap.querySelectorAll('.tnode')).forEach(function(n){ n.remove(); });
+    // reset thread + panels
+    $('thread').classList.remove('draw'); $('tpath').setAttribute('d','');
+    $('warmth').className='warmth'; $('solved').className='solved-card';
+    $('hint').style.display=''; $('hint').textContent=L.hint;
+    tries=3; done=false; sel=[];
+    $('triesPill').hidden=false; $('triesB').textContent=L.tries(tries);
+
+    chosen.forEach(function(c, i){
+      var b=document.createElement('button');
+      b.className='tnode';
+      b.dataset.cls=classOf(c.id);
+      b.dataset.id=c.id;
+      b.style.left=pos[i].x+'%'; b.style.top=pos[i].y+'%';
+      b.innerHTML='<div class="disc '+AV[i%AV.length]+'"><i></i></div><span class="yr"></span><span class="nl serif">'+esc(firstName(c.label))+'</span>';
+      b.addEventListener('click', function(){ onPick(b); });
+      tmap.appendChild(b);
+    });
+
+    // stash the pair for the payoff (names/avatars), by display order
+    renderPlay._pair=(res.pair||[]).map(function(p){ return { id:p.id, label:p.label }; });
+    renderPlay._place=place;
+
+    showState('play');
+  }
+
+  function center(node){
+    var map=$('tmap'); var mr=map.getBoundingClientRect(); var r=node.getBoundingClientRect();
+    return { x:(r.left+r.width/2-mr.left)/mr.width*350, y:(r.top+r.height/2-mr.top)/mr.height*352 };
+  }
+  function readout(cls, h, s, ic){
+    var w=$('warmth'); w.className='warmth show '+cls;
+    $('warmIc').innerHTML=ic; $('warmH').textContent=h; $('warmS').textContent=s;
+  }
+  function clearSel(){ sel.forEach(function(n){ n.classList.remove('sel'); }); sel=[]; }
+
+  function onPick(n){
+    if(done) return;
+    if(n.classList.contains('sel')){ n.classList.remove('sel'); sel=sel.filter(function(x){ return x!==n; }); return; }
+    if(sel.length===2) return;
+    n.classList.add('sel'); sel.push(n);
+    $('warmth').classList.remove('show');
+    if(sel.length===2) setTimeout(evaluate, 220);
+  }
+
+  function evaluate(){
+    var L=T[state.lang], place=renderPlay._place||'';
+    var clss=sel.map(function(n){ return n.dataset.cls; });
+    var pairHits=clss.filter(function(c){ return c==='pair'; }).length;
+    if(pairHits===2){
+      done=true;
+      $('warmth').classList.remove('show');
+      $('hint').style.display='none';
+      $('triesPill').hidden=true;
+      sel.forEach(function(n){ n.classList.remove('sel'); n.classList.add('solved'); });
+      var a=center(sel[0]), b=center(sel[1]);
+      var mx=(a.x+b.x)/2, my=(a.y+b.y)/2-46;
+      $('tpath').setAttribute('d','M'+a.x+' '+a.y+' Q '+mx+' '+my+' '+b.x+' '+b.y);
+      $('thread').classList.add('draw');
+      fillSolved();
+      setTimeout(function(){ $('solved').classList.add('show'); }, 650);
+      return;
+    }
+    tries=Math.max(0, tries-1);
+    $('triesB').textContent=L.tries(tries);
+    if(pairHits===1 || clss.indexOf('warm')>=0){
+      readout('warm', L.warmH, L.warmS(place), FLAME);
+    } else {
+      readout('cold', L.coldH, L.coldS(place), SNOW);
+    }
+    setTimeout(clearSel, 260);
+  }
+
+  function fillSolved(){
+    var L=T[state.lang], place=renderPlay._place||'';
+    var pair=renderPlay._pair||[];
+    $('solvedH').innerHTML=L.solvedH(esc(place));
+    // avatars: mirror the two solved nodes' avatar classes
+    var solvedNodes=sel;
+    var avA=(solvedNodes[0].querySelector('.disc').className.match(/av[A-F]/)||['avB'])[0];
+    var avB=(solvedNodes[1].querySelector('.disc').className.match(/av[A-F]/)||['avC'])[0];
+    $('pfaceA').className='pface '+avA; $('pfaceB').className='pface '+avB;
+    var nA=firstName((pair[0]||{}).label), nB=firstName((pair[1]||{}).label);
+    $('pnames').innerHTML='<b>'+esc(nA)+'</b> <span style="opacity:.5">—</span> <b>'+esc(nB)+'</b>';
+  }
+
+  // ---- wiring -----------------------------------------------------------
+  function goBack(){ if(window.__lfClose){ window.__lfClose(); } else { try{ history.back(); }catch(e){ location.href='person-real.html'; } } }
+  $('backBtn').addEventListener('click', goBack);
+  $('backBtn').addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); goBack(); } });
+  $('btnAnother').addEventListener('click', function(){ newRound(); });
+  $('btnSee').addEventListener('click', function(){
+    var pair=renderPlay._pair||[];
+    if(pair[0] && pair[0].id) location.href='person-real.html?id='+encodeURIComponent(pair[0].id);
+    else goBack();
+  });
+  $('btnRetry').addEventListener('click', function(){ newRound(); });
+  $('keeperCta').addEventListener('click', function(){ if(state.keeper) location.href='contribute-real.html'; });
+  Array.prototype.forEach.call($('langsw').children, function(b){ b.addEventListener('click', function(){ setLang(b.dataset.lang); }); });
+
+  // ---- boot -------------------------------------------------------------
+  function boot(){
+    var stored=null; try{ stored=localStorage.getItem('lf_lang'); }catch(e){}
+    if(stored && T[stored]) state.lang=stored;
+    else { var dl=(navigator.language||'en').slice(0,2); if(T[dl]) state.lang=dl; }
+    applyStatic();
+    sb.auth.getSession().then(function(r){
+      var session=r&&r.data&&r.data.session;
+      if(!session){ location.replace('index.html'); return; }
+      state.user=session.user;
+      sb.from('profiles').select('is_keeper,preferred_lang').eq('id',state.user.id).maybeSingle().then(function(pr){
+        var p=pr&&pr.data;
+        if(p){ state.keeper=!!p.is_keeper; if(p.preferred_lang && !stored && T[p.preferred_lang]){ state.lang=p.preferred_lang; applyStatic(); } }
+        newRound();
+      }, function(){ newRound(); });
+    }, function(){ renderError(); });
+  }
+  boot();
+})();
+</script>
+<script src="lf-nav.js" data-here="" data-parent="person-real.html"></script>
+</body>
+</html>
