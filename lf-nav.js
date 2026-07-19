@@ -11,7 +11,7 @@
   function inAppRef(){
     try{ if(!document.referrer) return false;
       var u=new URL(document.referrer);
-      return u.origin===location.origin && /((home-real|person-real|place-real|moment-real|crowd-real|timeline-real|search-real|tree-real|contribute-real|curators-real|game-missing-voice|game-tangled-thread|game-who-is-who|index|preview|preview-globe|prototype)\.html?|\/)$/.test(u.pathname);
+      return u.origin===location.origin && /((home-real|person-real|place-real|moment-real|crowd-real|timeline-real|search-real|tree-real|contribute-real|contribute-add-real|curators-real|game-missing-voice|game-tangled-thread|game-who-is-who|index|preview|preview-globe|prototype)\.html?|\/)$/.test(u.pathname);
     }catch(e){ return false; }
   }
   function goBack(){
@@ -41,7 +41,7 @@
              ['tree','⋔','The tree','tree-real.html'],
              ['play','❂','Find them in a crowd','crowd-real.html'],
              ['when','◷','The timeline','timeline-real.html'],
-             ['add','✎','Add a memory','contribute-real.html']];
+             ['add','✎','Add a memory','contribute-add-real.html']];
   var wrap=document.createElement('div'); wrap.id='lfnav';
   var panel=document.createElement('div'); panel.id='lfnavPanel';
   items.forEach(function(it){
