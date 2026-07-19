@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>The Tree &amp; who they knew — The Living Forest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body{ background:#04070e; }
+  :root{
+    --cream:#f4ecdb; --muted:#9db0cc; --dim:#6f83a3; --hair:#ffffff18; --panel:#ffffff0b;
+    --gold:#f3cd84; --gold-hi:#ffe6ad; --cool:#7fb4d8; --cool-hi:#a9d2ee;
+    --edit:#c9a2ff; --edit-hi:#ddc6ff; --leaf:#8fd6a0; --autotr:#9a8bbd;
+  }
+  body{ font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--cream); min-height:100dvh;
+    background:radial-gradient(150% 100% at 50% -6%, #12233c 0%, #0a1526 44%, #04070e 100%);
+    -webkit-user-select:none; user-select:none; overflow:hidden; }
+  .serif{ font-family:'Newsreader',Georgia,serif; }
+  .mono{ font-family:'Azeret Mono',monospace; }
+
+  /* one living device, full-bleed on phones, bezelled on desktop */
+  .device{ position:relative; width:100vw; height:100dvh; overflow:hidden; background:#04070e; }
+  @media (min-width:520px){
+    body{ display:flex; align-items:center; justify-content:center; }
+    .device{ width:390px; height:820px; max-height:96dvh; border-radius:42px;
+      box-shadow:0 40px 120px -50px #000, 0 0 0 9px #14141b, 0 0 0 10px #2b2b34; }
+  }
+  .screen[dir="rtl"]{ direction:rtl; }
+  .screen[dir="rtl"] .serif,.screen[dir="rtl"] .tname,.screen[dir="rtl"] .kh,.screen[dir="rtl"] .ttl .n{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
+
+  .atmo-veil{ position:absolute; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(120% 70% at 50% 6%, rgba(143,214,160,.06), transparent 42%), radial-gradient(120% 92% at 50% 42%, transparent 34%, rgba(4,7,14,.5) 100%); }
+  .stars{ position:absolute; inset:0; z-index:0; opacity:.55;
+    background-image:radial-gradient(1px 1px at 18% 12%, #cfe0ff88, transparent), radial-gradient(1px 1px at 66% 7%, #cfe0ff66, transparent),
+      radial-gradient(1px 1px at 84% 26%, #ffe6ad55, transparent), radial-gradient(1px 1px at 30% 40%, #cfe0ff44, transparent),
+      radial-gradient(1px 1px at 10% 58%, #cfe0ff44, transparent), radial-gradient(1px 1px at 88% 62%, #cfe0ff44, transparent),
+      radial-gradient(1px 1px at 50% 84%, #cfe0ff33, transparent); }
+  .screen{ position:absolute; inset:0; z-index:2; overflow-y:auto; scrollbar-width:none; }
+  .screen::-webkit-scrollbar{ display:none; }
+  .pad{ padding:0 18px calc(56px + env(safe-area-inset-bottom)); }
+
+  .topbar{ position:sticky; top:0; z-index:14; display:flex; align-items:center; gap:10px;
+    padding:15px 16px 11px; background:linear-gradient(to bottom, rgba(5,9,17,.92), rgba(5,9,17,.5) 68%, transparent); backdrop-filter:blur(7px); }
+  .ibtn{ width:40px; height:40px; border-radius:12px; flex:0 0 auto; display:grid; place-items:center; cursor:pointer;
+    border:1px solid var(--hair); background:rgba(10,20,34,.55); color:var(--cream); transition:border-color .2s; }
+  .ibtn:hover{ border-color:rgba(255,255,255,.34); } .ibtn svg{ width:18px; height:18px; }
+  .screen[dir="rtl"] .ibtn.back svg{ transform:scaleX(-1); }
+  .ttl{ flex:1; min-width:0; }
+  .ttl .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.24em; text-transform:uppercase; color:var(--muted); }
+  .ttl .n{ font-family:'Newsreader',serif; font-size:17px; color:#fbf5e8; margin-top:1px; }
+  .langpill{ display:inline-flex; align-items:center; gap:6px; font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+    padding:8px 11px; border-radius:99px; cursor:pointer; border:1px solid var(--hair); background:rgba(10,20,34,.55); color:var(--muted); flex:0 0 auto; }
+  .langpill:hover{ border-color:rgba(255,255,255,.3); color:var(--cream); }
+
+  .lens{ display:flex; gap:6px; margin:8px 0 4px; padding:4px; border-radius:13px; background:rgba(8,16,28,.6); border:1px solid var(--hair); }
+  .lens button{ flex:1; border:none; background:transparent; color:var(--muted); cursor:pointer; padding:9px 4px; border-radius:9px;
+    font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.16em; text-transform:uppercase; display:flex; align-items:center; justify-content:center; gap:6px; }
+  .lens button svg{ width:14px; height:14px; }
+  .lens button.on{ background:rgba(143,214,160,.14); color:var(--leaf); }
+
+  .treewrap{ position:relative; height:600px; margin:10px -6px 0; }
+  .treewrap svg.links{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; z-index:1; }
+  .tnode{ position:absolute; transform:translate(-50%,-50%); z-index:2; width:74px; text-align:center; cursor:pointer; }
+  .tface{ width:50px; height:50px; border-radius:50%; margin:0 auto; overflow:hidden; position:relative;
+    border:1px solid rgba(255,244,214,.65); box-shadow:0 0 16px -3px rgba(255,232,180,.4); transition:box-shadow .3s, transform .22s; }
+  .tface svg,.tface canvas,.tface img{ width:100%; height:100%; display:block; object-fit:cover; }
+  .tnode:hover .tface{ transform:scale(1.07); }
+  .tnode.cool .tface{ border-color:rgba(169,210,238,.7); box-shadow:0 0 16px -3px rgba(127,180,216,.4); }
+  .tname{ font-family:'Newsreader',serif; font-size:12.5px; color:#eaddc4; margin-top:5px; line-height:1.12; }
+  .tsub{ font-family:'Azeret Mono',monospace; font-size:7.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); margin-top:2px; }
+  .tnode.you .tface{ border:2px solid var(--leaf); box-shadow:0 0 22px -2px rgba(143,214,160,.7); }
+  .tnode.you .tname{ color:var(--leaf); }
+  .tnode.hole{ cursor:default; }
+  .tnode.hole .tface{ border:1.5px dashed rgba(157,176,204,.5); box-shadow:none; background:rgba(12,22,38,.6); display:grid; place-items:center; }
+  .tnode.hole .tface .q{ font-family:'Newsreader',serif; font-size:22px; color:var(--dim); }
+  .tnode.hole .tname{ color:var(--dim); font-style:italic; }
+  .tnode.pending .tface{ border:1.5px dashed rgba(201,162,255,.65); box-shadow:0 0 16px -4px rgba(201,162,255,.5); }
+  .tnode.pending .tname{ color:var(--edit-hi); }
+  .tnode .waitchip{ display:inline-flex; align-items:center; gap:4px; margin-top:3px; padding:2px 6px; border-radius:99px;
+    background:rgba(201,162,255,.12); border:1px solid rgba(201,162,255,.4); font-family:'Azeret Mono',monospace; font-size:7px; letter-spacing:.1em; text-transform:uppercase; color:var(--edit-hi); }
+  .tnode.lit .tface{ border:2px solid var(--gold-hi); box-shadow:0 0 26px 0 rgba(255,230,173,.75); }
+  .tnode.dimmed{ opacity:.32; }
+
+  .legend{ display:flex; flex-wrap:wrap; gap:9px 14px; margin:6px 2px 0; padding:11px 12px; border-radius:12px; background:rgba(9,17,29,.44); border:1px solid var(--hair); }
+  .legend .li{ display:inline-flex; align-items:center; gap:7px; font-size:10.5px; color:var(--muted); }
+  .legend .li .sw{ width:11px; height:11px; border-radius:50%; flex:0 0 auto; }
+  .sw.g{ border:2px solid var(--leaf); } .sw.h{ border:1.5px dashed rgba(157,176,204,.6); } .sw.p{ border:1.5px dashed rgba(201,162,255,.7); } .sw.t{ border:2px solid var(--gold-hi); box-shadow:0 0 8px rgba(255,230,173,.7); }
+
+  .homebtn{ display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin-top:12px; padding:13px; border-radius:14px; cursor:pointer;
+    background:linear-gradient(180deg, rgba(243,205,132,.14), rgba(243,205,132,.06)); border:1px solid rgba(243,205,132,.4); color:var(--gold-hi);
+    font-family:'Hanken Grotesk',sans-serif; font-weight:600; font-size:13.5px; }
+  .homebtn:disabled{ opacity:.45; cursor:default; }
+  .homebtn svg{ width:16px; height:16px; }
+
+  .whohero{ display:flex; align-items:center; gap:13px; margin-top:6px; padding:14px; border-radius:16px;
+    background:linear-gradient(120deg, rgba(243,205,132,.1), rgba(127,180,216,.04)); border:1px solid rgba(243,205,132,.28); }
+  .whohero .wf{ width:58px; height:58px; border-radius:50%; overflow:hidden; flex:0 0 auto; border:1px solid rgba(255,244,214,.6); box-shadow:0 0 20px -4px rgba(255,232,180,.5); }
+  .whohero .wf svg,.whohero .wf canvas,.whohero .wf img{ width:100%; height:100%; display:block; object-fit:cover; }
+  .whohero .wt .wn{ font-family:'Newsreader',serif; font-size:21px; color:#fbf5e8; }
+  .whohero .wt .ws{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .whohero .wt .ws b{ color:var(--leaf); font-weight:600; }
+
+  .grp{ margin-top:18px; }
+  .grp .gh{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--dim); margin:0 2px 10px; display:flex; align-items:center; gap:9px; }
+  .grp .gh .line{ flex:1; height:1px; background:var(--hair); }
+  .kcard{ display:flex; align-items:center; gap:12px; padding:11px 12px; border-radius:14px; cursor:pointer;
+    background:rgba(9,17,29,.5); border:1px solid var(--hair); margin-bottom:9px; transition:border-color .2s, transform .2s; }
+  .kcard:hover{ border-color:rgba(243,205,132,.4); transform:translateY(-1px); }
+  .kcard .kf{ width:46px; height:46px; border-radius:50%; overflow:hidden; flex:0 0 auto; border:1px solid rgba(255,244,214,.5); }
+  .kcard .kf svg,.kcard .kf canvas,.kcard .kf img{ width:100%; height:100%; display:block; object-fit:cover; }
+  .kcard .kb{ flex:1; min-width:0; }
+  .kcard .kh{ font-family:'Newsreader',serif; font-size:17px; color:#fbf5e8; line-height:1.1; }
+  .kcard .krel{ display:flex; align-items:center; gap:7px; margin-top:3px; font-size:11.5px; color:var(--muted); }
+  .prov{ display:inline-flex; align-items:center; gap:6px; font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.06em; }
+  .prov .d{ width:6px; height:6px; border-radius:50%; flex:0 0 auto; }
+  .prov.gold{ color:var(--gold); } .prov.gold .d{ background:var(--gold); box-shadow:0 0 7px 1px var(--gold); }
+  .prov.cool{ color:var(--cool); } .prov.cool .d{ background:var(--cool); box-shadow:0 0 7px 1px rgba(127,180,216,.7); }
+  .prov.edit{ color:var(--edit-hi); } .prov.edit .d{ background:var(--edit); box-shadow:0 0 7px 1px var(--edit); }
+  .kcard .go{ color:var(--dim); flex:0 0 auto; } .kcard .go svg{ width:16px; height:16px; }
+  .screen[dir="rtl"] .kcard .go{ transform:scaleX(-1); }
+  .kcard.photo{ background:rgba(127,180,216,.06); border-color:rgba(127,180,216,.28); align-items:flex-start; }
+  .kcard.photo .note{ font-family:'Newsreader',serif; font-style:italic; font-size:12.5px; color:#cfe0f2; line-height:1.45; margin-top:5px; }
+  .kcard.photo .cnt{ display:inline-flex; align-items:center; gap:6px; margin-top:7px; font-family:'Azeret Mono',monospace; font-size:8.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--cool); }
+  .kcard.pending{ background:rgba(201,162,255,.08); border:1px dashed rgba(201,162,255,.42); }
+  .keeperbar{ display:flex; align-items:center; gap:8px; margin-top:9px; }
+  .kbtn{ display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border-radius:9px; cursor:pointer; font-size:11.5px; font-weight:600; border:1px solid transparent; }
+  .kbtn.ok{ background:rgba(143,214,160,.16); border-color:rgba(143,214,160,.4); color:#a9e6ba; }
+  .kbtn.no{ background:transparent; border-color:var(--hair); color:var(--muted); }
+  .kbtn svg{ width:13px; height:13px; }
+
+  .sparse{ margin-top:16px; padding:16px; border-radius:16px; border:1px dashed rgba(243,205,132,.34); background:rgba(243,205,132,.04); text-align:center; }
+  .sparse .sw2{ font-family:'Newsreader',serif; font-size:16px; line-height:1.45; color:#f2e6c8; }
+  .sparse .cta{ margin-top:12px; display:inline-flex; align-items:center; gap:7px; font-size:13px; font-weight:600; color:#1a1206;
+    background:linear-gradient(180deg,var(--gold-hi),var(--gold)); padding:10px 15px; border-radius:99px; cursor:pointer; }
+  .sparse .cta svg{ width:15px; height:15px; }
+
+  .foot{ margin-top:22px; text-align:center; }
+  .foot .l{ font-family:'Newsreader',serif; font-style:italic; font-size:13px; color:rgba(143,214,160,.55); }
+
+  .note-empty{ margin-top:14px; padding:13px 14px; border-radius:12px; border:1px dashed rgba(157,176,204,.35); background:rgba(9,17,29,.4);
+    font-size:12.5px; line-height:1.5; color:var(--muted); text-align:center; }
+
+  .scrim{ position:absolute; inset:0; z-index:30; background:rgba(4,7,14,.66); backdrop-filter:blur(3px); opacity:0; pointer-events:none; transition:opacity .28s; }
+  .scrim.show{ opacity:1; pointer-events:auto; }
+  .sheet{ position:absolute; z-index:31; inset-inline:0; bottom:0; background:linear-gradient(180deg,#0f1e33,#081120);
+    border:1px solid var(--hair); border-bottom:none; border-radius:22px 22px 0 0; padding:10px 20px calc(22px + env(safe-area-inset-bottom));
+    transform:translateY(103%); transition:transform .34s cubic-bezier(.16,.8,.28,1); box-shadow:0 -24px 70px -30px #000; max-height:82%; overflow-y:auto; }
+  .sheet.show{ transform:translateY(0); }
+  .grip{ width:40px; height:4px; border-radius:99px; background:rgba(255,255,255,.2); margin:6px auto 15px; }
+  .sheet h3{ font-family:'Newsreader',serif; font-weight:400; font-size:21px; color:#fbf5e8; margin-bottom:4px; }
+  .sheet .ssub{ font-size:12.5px; color:var(--muted); margin-bottom:16px; }
+  .lang-opt,.act-opt{ display:flex; align-items:center; gap:14px; width:100%; padding:14px 15px; border-radius:14px; background:var(--panel); border:1px solid var(--hair); color:var(--cream); cursor:pointer; margin-bottom:9px; text-align:start; }
+  .lang-opt.on{ border-color:rgba(243,205,132,.55); background:rgba(243,205,132,.08); }
+  .lang-opt .native{ font-family:'Newsreader',serif; font-size:18px; } .lang-opt .en{ font-size:11.5px; color:var(--muted); margin-top:1px; }
+  .lang-opt .tick{ margin-inline-start:auto; color:var(--gold); opacity:0; } .lang-opt.on .tick{ opacity:1; } .lang-opt .tick svg{ width:18px; height:18px; }
+  .act-opt .ai{ width:34px; height:34px; border-radius:10px; display:grid; place-items:center; flex:0 0 auto; border:1px solid var(--hair); background:rgba(10,20,34,.5); color:var(--gold-hi); }
+  .act-opt .ai svg{ width:17px; height:17px; }
+  .act-opt .at{ font-size:14px; font-weight:600; } .act-opt .as{ font-size:11px; color:var(--muted); margin-top:1px; }
+  .act-opt .go{ margin-inline-start:auto; color:var(--dim); } .act-opt .go svg{ width:15px; height:15px; }
+  .screen[dir="rtl"] .act-opt .go{ transform:scaleX(-1); }
+
+  .toast{ position:absolute; left:50%; bottom:84px; transform:translateX(-50%) translateY(12px); z-index:40; opacity:0; pointer-events:none;
+    background:rgba(9,17,29,.95); border:1px solid var(--hair); color:var(--cream); font-size:12.5px; padding:9px 15px; border-radius:99px; transition:opacity .25s, transform .25s; }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* ALIVE — signature atmosphere (verbatim from the design) */
+  .sky{ position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+  .aurora{ position:absolute; border-radius:50%; filter:blur(54px); mix-blend-mode:screen; will-change:transform; }
+  .a1{ width:320px; height:320px; left:-80px; top:-40px; background:radial-gradient(circle,#4a3ad0,transparent 68%); opacity:.5; animation:drift1 28s ease-in-out infinite; }
+  .a2{ width:340px; height:340px; right:-100px; top:150px; background:radial-gradient(circle,#8a4fd8,transparent 68%); opacity:.46; animation:drift2 34s ease-in-out infinite; }
+  .a3{ width:300px; height:300px; left:0; bottom:-70px; background:radial-gradient(circle,#d264a8,transparent 66%); opacity:.4; animation:drift3 30s ease-in-out infinite; }
+  .a4{ width:220px; height:220px; right:-40px; top:-30px; background:radial-gradient(circle,#2f9fb0,transparent 64%); opacity:.44; animation:drift2 24s ease-in-out infinite reverse; }
+  .a5{ width:260px; height:260px; left:30%; bottom:-40px; background:radial-gradient(circle,#6fce8f,transparent 66%); opacity:.28; animation:drift1 26s ease-in-out infinite reverse; }
+  @keyframes drift1{ 0%,100%{ transform:translate(-6%,-4%) scale(1); } 50%{ transform:translate(9%,7%) scale(1.22); } }
+  @keyframes drift2{ 0%,100%{ transform:translate(5%,8%) scale(1.12); } 50%{ transform:translate(-9%,-5%) scale(.92); } }
+  @keyframes drift3{ 0%,100%{ transform:translate(0,6%) scale(1); } 50%{ transform:translate(7%,-6%) scale(1.18); } }
+  .motes{ position:absolute; inset:0; }
+  .mote{ position:absolute; opacity:0; animation:rise var(--d,14s) linear infinite; }
+  .mote b{ display:block; width:var(--s,4px); height:var(--s,4px); border-radius:50%;
+    background:radial-gradient(circle,#fff 12%,var(--c,#8fd6a0) 55%,transparent 74%);
+    box-shadow:0 0 9px 1px var(--c,#8fd6a0); animation:tw var(--tw,3.4s) ease-in-out infinite; }
+  @keyframes rise{ 0%{ transform:translate(0,12px) scale(.6); opacity:0; } 10%{ opacity:.9; } 86%{ opacity:.85; } 100%{ transform:translate(var(--dx,0),-720px) scale(1.05); opacity:0; } }
+  @keyframes tw{ 0%,100%{ opacity:.3; transform:scale(.8); } 50%{ opacity:1; transform:scale(1.2); } }
+  .stars{ animation:starbreathe 7s ease-in-out infinite; }
+  @keyframes starbreathe{ 0%,100%{ opacity:.34; } 50%{ opacity:.76; } }
+  .tface{ animation:nfloat var(--nf,6s) ease-in-out infinite; }
+  @keyframes nfloat{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-4px); } }
+  .tnode.lit .tface{ animation:litpulse 2.6s ease-in-out infinite, nfloat var(--nf,6s) ease-in-out infinite; }
+  @keyframes litpulse{ 0%,100%{ box-shadow:0 0 18px 0 rgba(255,230,173,.55); } 50%{ box-shadow:0 0 34px 5px rgba(255,230,173,.95); } }
+  .tnode.you .tface{ animation:youpulse 3s ease-in-out infinite, nfloat var(--nf,6s) ease-in-out infinite; }
+  @keyframes youpulse{ 0%,100%{ box-shadow:0 0 20px -2px rgba(143,214,160,.6); } 50%{ box-shadow:0 0 30px 2px rgba(143,214,160,.92); } }
+  .links line.flow{ stroke-dasharray:3 5; animation:threadflow 1.5s linear infinite; }
+  @keyframes threadflow{ to{ stroke-dashoffset:-16; } }
+  body::before{ content:""; position:fixed; inset:-12%; z-index:-1; pointer-events:none;
+    background:radial-gradient(38% 40% at 16% 16%, rgba(74,58,208,.14), transparent 70%),
+      radial-gradient(42% 46% at 84% 26%, rgba(138,79,216,.12), transparent 70%),
+      radial-gradient(52% 44% at 50% 94%, rgba(111,206,143,.09), transparent 70%);
+    animation:bodydrift 46s ease-in-out infinite; }
+  @keyframes bodydrift{ 0%,100%{ transform:translate(0,0) scale(1); } 50%{ transform:translate(-2%,-2%) scale(1.08); } }
+  @media (prefers-reduced-motion:reduce){ .aurora,.mote,.mote b,.stars,.tface,.tnode.lit .tface,.tnode.you .tface,.links line.flow,body::before{ animation:none!important; } }
+</style>
+</head>
+<body>
+  <div class="device" id="dev">
+    <div class="stars"></div><div class="atmo-veil"></div>
+    <div class="screen" id="screen" dir="ltr">
+      <div class="topbar">
+        <button class="ibtn back" id="backBtn" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <div class="ttl"><div class="k" id="tbEye">A lens on the family</div><div class="n" id="tbName">The Tree</div></div>
+        <button class="langpill" id="langBtn">EN <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px"><path d="M6 9l6 6 6-6"/></svg></button>
+      </div>
+      <div class="pad" id="pad"></div>
+    </div>
+    <div class="scrim" id="scrim"></div>
+    <section class="sheet" id="sheet"></section>
+    <div class="toast" id="toast"></div>
+  </div>
+
+<script>
+(function(){
+  'use strict';
+  const SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
+  const sb=window.supabase.createClient(SB_URL,SB_KEY);
+  const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+  const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+  const qs=new URLSearchParams(location.search);
+  const FOCUS_PARAM=qs.get('id')||qs.get('person')||null;
+  let VIEW=(qs.get('view')==='who')?'who':'tree';
+
+  /* ---------- i18n ---------- */
+  const T={
+    en:{ dir:'ltr', code:'EN', native:'English', label:'English',
+      treeEye:'A lens on the family', treeName:'The Tree',
+      whoEye:'Kin · scoped to', whoName:'Who {n} knew',
+      threadEye:'{n} → you · {k}', threadName:'The thread home',
+      lensSky:'Sky', lensGlobe:'Globe', lensTree:'Tree',
+      legYou:'You', legHole:'A hole to fill', legPending:'Waiting for the keeper',
+      unknownParents:'Unknown', oneName:'One name only', bYear:'b. {y}', more:'+{n} more',
+      lightThread:'Light the thread back to you',
+      footTree:'A family with holes is not broken — it is unfinished.',
+      footThreadHome:'From anywhere in the forest, the way home is never lost.',
+      threadLine:'The thread: {rel}{via}.', threadVia:', through {n}',
+      relOf:'{name} is your {rel}',
+      noYou:'We don’t know yet which person is you. Ask the keeper to link your account, and the thread home will light.',
+      noPath:'No family path found between them and you yet.',
+      langtitle:'Language', langsubTree:'The tree mirrors completely in Hebrew.', langsubWho:'Shown once, in the language you choose.',
+      actTitle:'{n}', actSub:'What would you like to do?',
+      actThread:'Light the thread to you', actThreadSub:'See how they connect back to you',
+      actCenter:'Centre the tree here', actCenterSub:'Re-grow the constellation around them',
+      actWho:'Who they knew', actWhoSub:'The circle of their life',
+      actOpen:'Open their page', actOpenSub:'Their full story',
+      married:'Married', raised:'Raised', raisedBy:'Who raised them', beside:'Beside them in photographs', people:'Her people', theirPeople:'Their people',
+      husband:'Husband', wife:'Wife', partner:'Partner', son:'Son', daughter:'Daughter', child:'Child', father:'Father', mother:'Mother', parent:'Parent',
+      toldFam:'told by the family', assembled:'assembled by the app', suggestedBy:'Suggested by {n} · waiting', suggested:'Suggested · waiting',
+      approve:'Approve', decline:'Decline', tellWho:'Tell us who they were',
+      photoNote:'They appear together in {n}. The family knows who they were to each other. We don’t yet.',
+      photoCount:'{n} · assembled by the app', nPhotos:'{n} photographs', onePhoto:'one photograph',
+      stoodIn:'{n} stood in {who}’s life', onlyName:'Only their name, so far', peopleWord:'{n} people', onePerson:'1 person',
+      sparse:'Nobody has told us who else stood in {who}’s life.', addKnew:'Add someone they knew',
+      footWho:'A photograph can hold a bond the tree has no line for.', footSparse:'Every full circle started as one name.',
+      sent:'Sent to the keeper — thank you', approved:'Approved', declined:'Declined',
+      grandmother:'grandmother', grandfather:'grandfather', grandparent:'grandparent',
+      granddaughter:'granddaughter', grandson:'grandson', grandchild:'grandchild',
+      sister:'sister', brother:'brother', sibling:'sibling', aunt:'aunt', uncle:'uncle', auntuncle:'aunt or uncle',
+      niece:'niece', nephew:'nephew', niecenephew:'niece or nephew', cousin:'cousin', relative:'relative', you:'you',
+      steps:'{n} steps', oneStep:'1 step' },
+    ru:{ dir:'ltr', code:'RU', native:'Русский', label:'Russian',
+      treeEye:'Взгляд на семью', treeName:'Дерево',
+      whoEye:'Родные · про', whoName:'Кого знал(а) {n}',
+      threadEye:'{n} → вы · {k}', threadName:'Нить домой',
+      lensSky:'Небо', lensGlobe:'Глобус', lensTree:'Дерево',
+      legYou:'Вы', legHole:'Пробел, который заполнят', legPending:'Ожидает хранителя',
+      unknownParents:'Неизвестно', oneName:'Только имя', bYear:'р. {y}', more:'+{n} ещё',
+      lightThread:'Зажечь нить к вам',
+      footTree:'Семья с пробелами не сломана — она незакончена.',
+      footThreadHome:'Из любой точки леса дорога домой не теряется.',
+      threadLine:'Нить: {rel}{via}.', threadVia:', через {n}',
+      relOf:'{name} — ваш(а) {rel}',
+      noYou:'Мы пока не знаем, кто из людей — это вы. Попросите хранителя связать ваш аккаунт, и нить домой зажжётся.',
+      noPath:'Пока не найден семейный путь между ними и вами.',
+      langtitle:'Язык', langsubTree:'Дерево полностью зеркалится на иврите.', langsubWho:'Показано один раз, на выбранном языке.',
+      actTitle:'{n}', actSub:'Что вы хотите сделать?',
+      actThread:'Зажечь нить к вам', actThreadSub:'Как они связаны с вами',
+      actCenter:'Центрировать дерево здесь', actCenterSub:'Вырастить созвездие вокруг них',
+      actWho:'Кого они знали', actWhoSub:'Круг их жизни',
+      actOpen:'Открыть страницу', actOpenSub:'Их полная история',
+      married:'В браке с', raised:'Вырастил(а)', raisedBy:'Кто вырастил', beside:'Рядом на фотографиях', people:'Её люди', theirPeople:'Их люди',
+      husband:'Муж', wife:'Жена', partner:'Партнёр', son:'Сын', daughter:'Дочь', child:'Ребёнок', father:'Отец', mother:'Мать', parent:'Родитель',
+      toldFam:'рассказано семьёй', assembled:'собрано приложением', suggestedBy:'Предложил(а) {n} · ожидает', suggested:'Предложено · ожидает',
+      approve:'Одобрить', decline:'Отклонить', tellWho:'Расскажите, кем они были',
+      photoNote:'Они вместе на {n}. Семья знает, кем они были друг другу. Мы — пока нет.',
+      photoCount:'{n} · собрано приложением', nPhotos:'{n} фото', onePhoto:'одно фото',
+      stoodIn:'{n} были в жизни {who}', onlyName:'Пока только имя', peopleWord:'{n} человек', onePerson:'1 человек',
+      sparse:'Никто ещё не рассказал, кто был в жизни {who}.', addKnew:'Добавить знакомого',
+      footWho:'Фотография хранит связь, для которой у дерева нет линии.', footSparse:'Каждый полный круг начинался с одного имени.',
+      sent:'Отправлено хранителю — спасибо', approved:'Одобрено', declined:'Отклонено',
+      grandmother:'бабушка', grandfather:'дедушка', grandparent:'дедушка/бабушка',
+      granddaughter:'внучка', grandson:'внук', grandchild:'внук/внучка',
+      sister:'сестра', brother:'брат', sibling:'брат/сестра', aunt:'тётя', uncle:'дядя', auntuncle:'тётя/дядя',
+      niece:'племянница', nephew:'племянник', niecenephew:'племянник/ца', cousin:'двоюродн.', relative:'родственник', you:'вы',
+      steps:'{n} шага', oneStep:'1 шаг' },
+    he:{ dir:'rtl', code:'HE', native:'עברית', label:'Hebrew',
+      treeEye:'עדשה על המשפחה', treeName:'העץ',
+      whoEye:'קרובים · על', whoName:'את מי {n} הכיר',
+      threadEye:'{n} ← אתה · {k}', threadName:'החוט הביתה',
+      lensSky:'שמיים', lensGlobe:'גלובוס', lensTree:'עץ',
+      legYou:'אתה', legHole:'חלל למלא', legPending:'ממתין לשומר',
+      unknownParents:'לא ידוע', oneName:'שם אחד בלבד', bYear:'נ׳ {y}', more:'עוד {n}+',
+      lightThread:'הדליקו את החוט חזרה אליך',
+      footTree:'משפחה עם חללים אינה שבורה — היא לא גמורה.',
+      footThreadHome:'מכל מקום ביער, הדרך הביתה לעולם לא אובדת.',
+      threadLine:'החוט: {rel}{via}.', threadVia:', דרך {n}',
+      relOf:'{name} {rel} שלך',
+      noYou:'עדיין לא ידוע מי מהאנשים הוא אתה. בקשו מהשומר לקשר את החשבון, והחוט הביתה יידלק.',
+      noPath:'עדיין לא נמצא נתיב משפחתי בינם ובינך.',
+      langtitle:'שפה', langsubTree:'העץ מתהפך לגמרי בעברית.', langsubWho:'מוצג פעם אחת, בשפה שבחרת.',
+      actTitle:'{n}', actSub:'מה תרצה לעשות?',
+      actThread:'הדליקו את החוט אליך', actThreadSub:'איך הם מתחברים אליך',
+      actCenter:'מרכזו את העץ כאן', actCenterSub:'גדלו את הקבוצה סביבם',
+      actWho:'את מי הם הכירו', actWhoSub:'מעגל חייהם',
+      actOpen:'פתחו את הדף שלהם', actOpenSub:'הסיפור המלא שלהם',
+      married:'נישא/ה ל', raised:'גידל/ה', raisedBy:'מי גידל/ה', beside:'לצידם בתצלומים', people:'האנשים שלה', theirPeople:'האנשים שלהם',
+      husband:'בעל', wife:'אישה', partner:'בן/בת זוג', son:'בן', daughter:'בת', child:'ילד/ה', father:'אב', mother:'אם', parent:'הורה',
+      toldFam:'סופר על ידי המשפחה', assembled:'הורכב על ידי האפליקציה', suggestedBy:'הוצע על ידי {n} · ממתין', suggested:'הוצע · ממתין',
+      approve:'לאשר', decline:'לדחות', tellWho:'ספרו לנו מי הם היו',
+      photoNote:'הם מופיעים יחד ב{n}. המשפחה יודעת מי הם היו זה לזה. אנחנו עדיין לא.',
+      photoCount:'{n} · הורכב על ידי האפליקציה', nPhotos:'{n} תצלומים', onePhoto:'תצלום אחד',
+      stoodIn:'{n} עמדו בחייה של {who}', onlyName:'רק שמם, לעת עתה', peopleWord:'{n} אנשים', onePerson:'אדם אחד',
+      sparse:'איש עדיין לא סיפר מי עוד עמד בחייו של {who}.', addKnew:'הוסיפו מישהו שהכירו',
+      footWho:'תצלום יכול להחזיק קשר שלעץ אין עבורו קו.', footSparse:'כל מעגל שלם התחיל בשם אחד.',
+      sent:'נשלח לשומר — תודה', approved:'אושר', declined:'נדחה',
+      grandmother:'סבתא', grandfather:'סבא', grandparent:'סבא/סבתא',
+      granddaughter:'נכדה', grandson:'נכד', grandchild:'נכד/ה',
+      sister:'אחות', brother:'אח', sibling:'אח/ות', aunt:'דודה', uncle:'דוד', auntuncle:'דוד/ה',
+      niece:'אחיינית', nephew:'אחיין', niecenephew:'אחיין/ית', cousin:'בן/בת דוד', relative:'קרוב משפחה', you:'אתה',
+      steps:'{n} צעדים', oneStep:'צעד אחד' }
+  };
+  function fmt(s,o){ o=o||{}; return String(s).replace(/\{(\w+)\}/g,(m,k)=>o[k]!=null?o[k]:''); }
+
+  /* ---------- state + data ---------- */
+  let state={ lang:'en', keeper:false };
+  let user=null, viewerPersonId=null;
+  let people={};          // id -> {id,display_name,sex,primary_asset,birth_year,metadata}
+  let nameLoc={};         // id -> {lang -> {given,family,called,display}}
+  let edges=[];           // {id, from(parent), to(child)}
+  let subjects=[];        // {artefact_id, person_id}
+  let pendingKin=[];      // {id, person_id, value, created_by, creatorName}
+  let relStatusCol=true;  // whether relationships has a status column
+  let focusId=null;       // current tree focus
+  let nodePos={};         // rendered id -> {x,y} in % of treewrap
+
+  function L(){ return T[state.lang]||T.en; }
+
+  /* ---------- face rendering ---------- */
+  const FCOL=['#c9a878','#8fa6b8','#b58a5c','#9fb0a0','#c08a70','#8a92b0','#a88f6e','#7f97ab'];
+  function hash(s){ let h=0; s=String(s||''); for(let i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))>>>0; } return h; }
+  function faceSVG(seed){ const s=FCOL[seed%FCOL.length];
+    return '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><rect width="100" height="100" fill="'+s+'"/><rect y="60" width="100" height="40" fill="rgba(0,0,0,.16)"/><circle cx="50" cy="42" r="15" fill="#e6c49b"/><path d="M50 92 Q50 66 31 63 Q34 51 50 51 Q66 51 69 63 Q50 66 50 92Z" fill="#5a4636"/></svg>'; }
+  function placeholderFor(id){ return faceSVG(hash(id)); }
+  async function signedUrl(path){ if(!path) return ''; try{ const r=await sb.storage.from('family').createSignedUrl(path,3600); return (r.data&&r.data.signedUrl)||''; }catch(e){ return ''; } }
+  async function faceInto(el, path, box){ if(!el||!path) return; const u=await signedUrl(path); if(!u) return;
+    const img=new Image(); img.crossOrigin='anonymous';
+    img.onload=()=>{ const c=document.createElement('canvas'); c.width=c.height=160; const g=c.getContext('2d');
+      if(box&&box.w>0&&box.h>0){ const pad=0.35, side=Math.max(box.w*(1+2*pad),box.h*(1+2*pad))*Math.max(img.naturalWidth,img.naturalHeight);
+        let sx=(box.x+box.w/2)*img.naturalWidth-side/2, sy=(box.y+box.h/2)*img.naturalHeight-side/2;
+        sx=Math.max(0,Math.min(img.naturalWidth-side,sx)); sy=Math.max(0,Math.min(img.naturalHeight-side,sy)); g.drawImage(img,sx,sy,side,side,0,0,160,160);
+      } else { const s=Math.min(img.naturalWidth,img.naturalHeight); g.drawImage(img,(img.naturalWidth-s)/2,(img.naturalHeight-s)/2,s,s,0,0,160,160); }
+      el.innerHTML=''; el.appendChild(c); }; img.src=u; }
+
+  /* ---------- names ---------- */
+  function nm(id){ const p=people[id]; if(!p) return '—';
+    const loc=nameLoc[id]&&nameLoc[id][state.lang];
+    if(loc){ const g=(loc.called||loc.given||'').trim(); const f=(loc.family||'').trim(); const full=(g+' '+f).trim(); if(full) return full; if((loc.display||'').trim()) return loc.display.trim(); }
+    return p.display_name||'—'; }
+  function firstName(id){ const full=nm(id); return full.split(/\s+/)[0]||full; }
+  function sexOf(id){ const p=people[id]; return ((p&&p.sex)||'').toString().toLowerCase().charAt(0); } // 'f' | 'm' | ''
+
+  /* ---------- graph helpers ---------- */
+  function parentsOf(x){ return edges.filter(e=>e.to===x).map(e=>e.from); }
+  function childrenOf(x){ return edges.filter(e=>e.from===x).map(e=>e.to); }
+  function coParentsOf(x){ const out=new Set(); childrenOf(x).forEach(c=>parentsOf(c).forEach(p=>{ if(p!==x) out.add(p); })); return [...out]; }
+  function siblingsOf(x){ const out=new Set(); parentsOf(x).forEach(p=>childrenOf(p).forEach(c=>{ if(c!==x) out.add(c); })); return [...out]; }
+  function descendantCount(x){ const seen=new Set(); const stk=[x]; while(stk.length){ const n=stk.pop(); childrenOf(n).forEach(c=>{ if(!seen.has(c)){ seen.add(c); stk.push(c); } }); } return seen.size; }
+  function rootTrunk(){ let best=null,bc=-1; Object.keys(people).forEach(id=>{ const c=descendantCount(id); if(c>bc){ bc=c; best=id; } }); return best; }
+
+  // undirected shortest path over kin edges; returns array of ids [from..to] or null
+  function kinPath(a,b){ if(!a||!b) return null; if(a===b) return [a];
+    const adj={}; edges.forEach(e=>{ (adj[e.from]=adj[e.from]||[]).push(e.to); (adj[e.to]=adj[e.to]||[]).push(e.from); });
+    const q=[a], prev={}; prev[a]=null; const seen=new Set([a]);
+    while(q.length){ const n=q.shift(); if(n===b){ const path=[]; let c=b; while(c!=null){ path.unshift(c); c=prev[c]; } return path; }
+      (adj[n]||[]).forEach(m=>{ if(!seen.has(m)){ seen.add(m); prev[m]=n; q.push(m); } }); }
+    return null; }
+  function dirBetween(u,v){ // from u to v: 'down' if u is parent of v, 'up' if v is parent of u
+    if(edges.some(e=>e.from===u&&e.to===v)) return 'down';
+    if(edges.some(e=>e.from===v&&e.to===u)) return 'up'; return '?'; }
+  // relationship term of `target` relative to `viewer`, from path viewer..target
+  function relTerm(path,targetId){ const l=L(); const sx=sexOf(targetId);
+    const dirs=[]; for(let i=0;i<path.length-1;i++) dirs.push(dirBetween(path[i],path[i+1]));
+    const key=dirs.join(',');
+    const pick=(f,m,n)=>sx==='f'?l[f]:sx==='m'?l[m]:l[n];
+    const map={
+      '':l.you, 'up':pick('mother','father','parent'), 'down':pick('daughter','son','child'),
+      'up,up':pick('grandmother','grandfather','grandparent'), 'down,down':pick('granddaughter','grandson','grandchild'),
+      'up,down':pick('sister','brother','sibling'), 'up,up,down':pick('aunt','uncle','auntuncle'),
+      'up,down,down':pick('niece','nephew','niecenephew'), 'up,up,down,down':l.cousin };
+    return map[key]||l.relative; }
+
+  /* ---------- load ---------- */
+  async function loadData(){
+    try{ const {data:pp}=await sb.from('people').select('id,display_name,sex,primary_asset,birth_date,metadata'); (pp||[]).forEach(p=>{
+      people[p.id]={ id:p.id, display_name:p.display_name, sex:p.sex, primary_asset:p.primary_asset,
+        birth_year:(p.birth_date?String(p.birth_date).slice(0,4):''), metadata:p.metadata||{} }; });
+    }catch(e){ people={}; }
+    // localized names via the person_names view (published, pivoted) — best effort
+    try{ const {data:nv}=await sb.from('person_names').select('*'); (nv||[]).forEach(r=>{ const id=r.person_id; const lg=r.lang||'und';
+      if(!id) return; (nameLoc[id]=nameLoc[id]||{})[lg]={ given:r.given, family:r.family, called:r.called, display:r.display||r.display_name }; });
+    }catch(e){ nameLoc={}; }
+    // relationships (confirmed kin graph) — respect a status column if present
+    try{ const {data:rp}=await sb.from('relationships').select('id,from_person,to_person,status');
+      edges=(rp||[]).filter(r=>r.status==null||r.status==='published').map(r=>({id:r.id,from:r.from_person,to:r.to_person}));
+    }catch(e){ relStatusCol=false;
+      try{ const {data:rp2}=await sb.from('relationships').select('id,from_person,to_person'); edges=(rp2||[]).map(r=>({id:r.id,from:r.from_person,to:r.to_person})); }catch(e2){ edges=[]; } }
+    // photo co-appearance
+    try{ const {data:sj}=await sb.from('artefact_subjects').select('artefact_id,person_id'); subjects=sj||[]; }catch(e){ subjects=[]; }
+    // pending kin suggestions (waiting for the keeper) — empty-structure until family adds them
+    try{ const {data:pk}=await sb.from('person_facts').select('id,person_id,value,created_by,status').eq('field','kin').neq('status','published');
+      pendingKin=pk||[]; const cids=[...new Set(pendingKin.map(k=>k.created_by).filter(Boolean))];
+      if(cids.length){ try{ const {data:cp}=await sb.from('people').select('id,display_name').in('id',cids); const bn={}; (cp||[]).forEach(x=>bn[x.id]=x.display_name); pendingKin.forEach(k=>k.creatorName=bn[k.created_by]||''); }catch(e){} }
+    }catch(e){ pendingKin=[]; }
+  }
+
+  /* ---------- photo co-appearance counts for a person ---------- */
+  function coPhotoBonds(x){
+    const myArts=new Set(subjects.filter(s=>s.person_id===x).map(s=>s.artefact_id));
+    if(!myArts.size) return [];
+    const counts={};
+    subjects.forEach(s=>{ if(s.person_id!==x && myArts.has(s.artefact_id)){ counts[s.person_id]=(counts[s.person_id]||0)+1; } });
+    return Object.keys(counts).map(id=>({id,count:counts[id]})).sort((a,b)=>b.count-a.count);
+  }
+
+  /* ================= TREE VIEW ================= */
+  const CAP={ grand:4, focus:3, children:6 };
+  function xspread(n){ if(n<=0) return []; if(n===1) return [50]; const lo=15,hi=85,a=[]; for(let i=0;i<n;i++) a.push(lo+(hi-lo)*i/(n-1)); return a; }
+
+  function buildTreeNodes(F){
+    const rtl=L().dir==='rtl'; const mx=v=>rtl?100-v:v;
+    const nodes=[]; nodePos={};
+    const push=(o)=>{ nodePos[o.id]={x:o.x,y:o.y}; nodes.push(o); };
+    const realF=!!people[F];
+    const P=parentsOf(F).slice(0,2);
+    const Sp=coParentsOf(F);
+    let S=siblingsOf(F); let sTrunc=Math.max(0,S.length-CAP.focus); S=S.slice(0,CAP.focus);
+    let Ch=childrenOf(F); let cTrunc=Math.max(0,Ch.length-CAP.children); Ch=Ch.slice(0,CAP.children);
+
+    // grandparent row: known grandparents of shown parents, else a hole above a root parent
+    let grand=[];
+    P.forEach(pid=>{ const gp=parentsOf(pid); if(gp.length){ gp.forEach(g=>grand.push({type:'person',id:g,anchor:pid})); }
+      else { grand.push({type:'hole', id:'hole-g-'+pid, anchor:pid, label:L().unknownParents }); } });
+    let gTrunc=Math.max(0,grand.length-CAP.grand); grand=grand.slice(0,CAP.grand);
+
+    // parent row: always two slots for a real focus — holes are the point
+    const parentSlots=[]; P.forEach(pid=>parentSlots.push({type:'person',id:pid}));
+    if(realF){ let hi=0; while(parentSlots.length<2){ parentSlots.push({type:'hole', id:'hole-p'+(hi++), label:L().unknownParents}); } }
+
+    // focus row: siblings, focus, spouses
+    const focusRow=[]; S.forEach(id=>focusRow.push({type:'person',id})); focusRow.push({type:'focus',id:F}); Sp.forEach(id=>focusRow.push({type:'person',id}));
+
+    const rows=[ {y:8,arr:grand}, {y:27,arr:parentSlots}, {y:50,arr:focusRow}, {y:74,arr:Ch.map(id=>({type:'person',id}))} ];
+    rows.forEach(row=>{ const xs=xspread(row.arr.length); row.arr.forEach((it,i)=>{ it.x=mx(xs[i]); it.y=row.y; }); });
+
+    // emit nodes
+    grand.forEach(it=>push(mkNode(it,F)));
+    parentSlots.forEach(it=>push(mkNode(it,F)));
+    focusRow.forEach(it=>push(mkNode(it,F)));
+    rows[3].arr.forEach(it=>push(mkNode(it,F)));
+
+    // pending suggested kin near the focus (violet) — sits to the side of the focus row
+    pendingKin.filter(k=>k.person_id===F).slice(0,2).forEach((k,i)=>{
+      const it={ type:'pending', id:'pend-'+k.id, x:mx(6), y:38+i*20, label:pendKinLabel(k), waitchip:pendKinChip(k) };
+      push(mkNode(it,F));
+    });
+
+    return { nodes, F, sTrunc, cTrunc, gTrunc };
+  }
+  function pendKinLabel(k){ try{ const v=JSON.parse(k.value); return v.name||v.label||L().suggested; }catch(e){ return (k.value||'').slice(0,18)||L().suggested; } }
+  function pendKinChip(k){ try{ const v=JSON.parse(k.value); return (v.rel?esc(v.rel)+'? · ':'')+ (k.creatorName?'':''); }catch(e){} return L().suggested; }
+
+  function mkNode(it,F){
+    if(it.type==='hole'){ return { id:it.id, cls:'hole', x:it.x, y:it.y, html:
+      '<div class="tface"><span class="q">?</span></div><div class="tname">'+esc(it.label||L().unknownParents)+'</div>' }; }
+    if(it.type==='pending'){ return { id:it.id, cls:'pending', x:it.x, y:it.y, html:
+      '<div class="tface"></div><div class="tname">'+esc(it.label)+'</div><span class="waitchip">'+esc(it.waitchip)+'</span>', pid:null }; }
+    const id=it.id; const isYou=(viewerPersonId&&id===viewerPersonId);
+    const isFocus=(it.type==='focus'); let cls=isYou?'you':''; if(!isYou&&sexOf(id)==='') cls+=''; if(!isYou && !isFocus && people[id] && !people[id].primary_asset) cls+=' cool';
+    const yr=people[id]&&people[id].birth_year; const sub= isYou? esc(L().legYou) : (yr?esc(fmt(L().bYear,{y:yr})):'');
+    return { id:'p-'+id, cls:cls.trim(), x:it.x, y:it.y, pid:id, faceEl:true,
+      html:'<div class="tface" data-face="'+esc(id)+'"></div><div class="tname">'+esc(nm(id))+'</div>'+(sub?'<div class="tsub">'+sub+'</div>':'') }; }
+
+  function renderTree(){
+    focusId = FOCUS_PARAM || viewerPersonId || rootTrunk();
+    const built=buildTreeNodes(focusId);
+    const l=L();
+    $('#tbEye').textContent=l.treeEye; $('#tbName').textContent=l.treeName;
+
+    // links between rendered kin
+    let lines='';
+    edges.forEach(e=>{ const a=nodePos['p-'+e.from], b=nodePos['p-'+e.to]; if(a&&b){ lines+=line(a,b,'rgba(143,214,160,.32)',0.45); } });
+    // hole → child (a hole in the parent row connects down to the focus; grand hole connects to its anchor parent)
+    built.nodes.forEach(n=>{ if(n.cls==='hole'){ const pos=nodePos[n.id];
+      // parent-row hole links to focus; grand hole links to anchor
+      if(n.id.indexOf('hole-p')===0){ const f=nodePos['p-'+focusId]; if(f&&pos) lines+=line(pos,f,'rgba(157,176,204,.35)',0.4,true); }
+      if(n.id.indexOf('hole-g-')===0){ const anchor=n.id.slice('hole-g-'.length); const ap=nodePos['p-'+anchor]; if(ap&&pos) lines+=line(pos,ap,'rgba(157,176,204,.35)',0.4,true); }
+    }});
+    // pending link (violet) from suggestion to focus
+    built.nodes.forEach(n=>{ if(n.cls==='pending'){ const pos=nodePos[n.id]; const f=nodePos['p-'+focusId]; if(pos&&f) lines+=line(pos,f,'rgba(201,162,255,.55)',0.5,true); }});
+
+    let nodesHtml=''; built.nodes.forEach(n=>{ if(n.html===undefined) return;
+      nodesHtml+='<div class="tnode '+n.cls+'" data-node="'+esc(n.id)+'"'+(n.pid?' data-pid="'+esc(n.pid)+'"':'')+' style="left:'+n.x+'%;top:'+n.y+'%">'+n.html+'</div>'; });
+
+    let trunc=''; const tp=[]; if(built.gTrunc) tp.push(fmt(l.more,{n:built.gTrunc})); if(built.sTrunc||built.cTrunc) tp.push(fmt(l.more,{n:(built.sTrunc+built.cTrunc)}));
+
+    const canThread = !!viewerPersonId;
+    $('#pad').innerHTML =
+      lensBar('tree') +
+      '<div class="treewrap"><svg class="links" viewBox="0 0 100 100" preserveAspectRatio="none">'+lines+
+        '<defs><linearGradient id="thread" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe6ad"/><stop offset="1" stop-color="#8fd6a0"/></linearGradient></defs></svg>'+
+        nodesHtml+'</div>'+
+      '<div class="legend">'+
+        '<span class="li"><span class="sw g"></span>'+esc(l.legYou)+'</span>'+
+        '<span class="li"><span class="sw h"></span>'+esc(l.legHole)+'</span>'+
+        '<span class="li"><span class="sw p"></span>'+esc(l.legPending)+'</span>'+
+      '</div>'+
+      '<button class="homebtn" id="homeBtn"'+(canThread?'':' disabled')+'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg> '+esc(l.lightThread)+'</button>'+
+      (canThread?'':'<div class="note-empty">'+esc(l.noYou)+'</div>')+
+      '<div class="foot"><div class="l" id="footL">'+esc(l.footTree)+'</div></div>';
+
+    // faces
+    built.nodes.forEach(n=>{ if(n.pid){ const el=$('.tnode[data-node="'+cssq(n.id)+'"] .tface'); if(el){ const p=people[n.pid];
+      el.innerHTML=placeholderFor(n.pid); if(p&&p.primary_asset){ faceInto(el,p.primary_asset,(p.metadata&&p.metadata.face_box)||null); } } }});
+
+    // interactions
+    $$('.tnode[data-pid]').forEach(el=>{ el.onclick=()=>openNodeSheet(el.getAttribute('data-pid')); });
+    const hb=$('#homeBtn'); if(hb&&canThread) hb.onclick=()=>lightThread(focusId, viewerPersonId);
+    wireChrome();
+  }
+
+  function line(a,b,color,w,dash){ return '<line x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+'" stroke="'+color+'" stroke-width="'+w+'"'+(dash?' stroke-dasharray="1.5 1.4"':'')+'/>'; }
+  function cssq(s){ return String(s).replace(/"/g,'\\"'); }
+
+  function lensBar(cur){ const l=L();
+    return '<div class="lens">'+
+      '<button data-lens="sky"'+(cur==='sky'?' class="on"':'')+'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M6 6l1.5 1.5M16.5 16.5L18 18"/><circle cx="12" cy="12" r="3"/></svg> '+esc(l.lensSky)+'</button>'+
+      '<button data-lens="globe"'+(cur==='globe'?' class="on"':'')+'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg> '+esc(l.lensGlobe)+'</button>'+
+      '<button data-lens="tree"'+(cur==='tree'?' class="on"':'')+'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-7M12 14L7 9M12 11l5-4M9 5a2.5 2.5 0 105 0 2.5 2.5 0 10-5 0M4.5 10a2 2 0 104 0 2 2 0 10-4 0M15.5 8a2 2 0 104 0 2 2 0 10-4 0"/></svg> '+esc(l.lensTree)+'</button>'+
+    '</div>'; }
+
+  /* ---------- thread home ---------- */
+  function lightThread(fromId, viewer){ const l=L();
+    if(!viewer){ toast(l.noYou); return; }
+    const path=kinPath(viewer, fromId);
+    // dim all, then light path members that are rendered
+    $$('.tnode').forEach(n=>{ n.classList.add('dimmed'); n.classList.remove('lit'); });
+    // remove old thread lines
+    $$('.links line.thread').forEach(x=>x.remove());
+    const svg=$('.links'); let litAny=false;
+    if(path){ path.forEach(id=>{ const el=$('.tnode[data-node="p-'+cssq(id)+'"]'); if(el){ el.classList.remove('dimmed'); el.classList.add('lit'); litAny=true; } });
+      // draw gold thread between consecutive rendered path members
+      for(let i=0;i<path.length-1;i++){ const a=nodePos['p-'+path[i]], b=nodePos['p-'+path[i+1]]; if(a&&b&&svg){ const ln=document.createElementNS('http://www.w3.org/2000/svg','line');
+        ln.setAttribute('x1',a.x); ln.setAttribute('y1',a.y); ln.setAttribute('x2',b.x); ln.setAttribute('y2',b.y);
+        ln.setAttribute('stroke','url(#thread)'); ln.setAttribute('stroke-width','1'); ln.setAttribute('stroke-linecap','round');
+        ln.setAttribute('class','thread flow'); svg.appendChild(ln); } }
+    }
+    // the viewer node always stays visible
+    const you=$('.tnode[data-node="p-'+cssq(viewer)+'"]'); if(you){ you.classList.remove('dimmed'); you.classList.add('lit'); }
+    // legend + header
+    const foot=$('#footL'); if(foot) foot.textContent=l.footThreadHome;
+    const leg=$('.legend'); if(leg){
+      if(path && fromId!==viewer){ const rel=relTerm(path, fromId); let via='';
+        if(path.length===3){ via=fmt(l.threadVia,{n:firstName(path[1])}); }
+        leg.innerHTML='<span class="li"><span class="sw t"></span>'+esc(fmt(l.threadLine,{rel:fmt(l.relOf,{name:firstName(fromId),rel:rel}),via:via}))+'</span>';
+      } else if(fromId===viewer){ leg.innerHTML='<span class="li"><span class="sw t"></span>'+esc(l.legYou)+'</span>';
+      } else { leg.innerHTML='<span class="li"><span class="sw h"></span>'+esc(l.noPath)+'</span>'; }
+    }
+    $('#tbEye').textContent=fmt(l.threadEye,{n:firstName(fromId),k:(path?(path.length-1===1?l.oneStep:fmt(l.steps,{n:path.length-1})):'—')});
+    $('#tbName').textContent=l.threadName;
+    if(!litAny && path){ toast(l.noPath); }
+  }
+
+  /* ---------- node action sheet ---------- */
+  function openNodeSheet(pid){ const l=L(); if(!people[pid]) return;
+    const rtl=l.dir==='rtl';
+    const sheet=$('#sheet'); sheet.setAttribute('dir',l.dir);
+    const arrow='<span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>';
+    sheet.innerHTML='<div class="grip"></div><h3>'+esc(nm(pid))+'</h3><div class="ssub">'+esc(l.actSub)+'</div>'+
+      (viewerPersonId&&pid!==viewerPersonId?actOpt('thread','M12 21s-7-5.2-7-11a7 7 0 0114 0c0 5.8-7 11-7 11z', l.actThread, l.actThreadSub):'')+
+      actOpt('center','M12 3v18M3 12h18', l.actCenter, l.actCenterSub)+
+      actOpt('who','M17 21v-2a4 4 0 00-3-3.87M9 21v-2a4 4 0 013-3.87M12 7a3 3 0 100 6 3 3 0 000-6', l.actWho, l.actWhoSub)+
+      actOpt('open','M4 5h16v14H4zM4 9h16', l.actOpen, l.actOpenSub);
+    function actOpt(key,d,t,s){ return '<button class="act-opt" data-act="'+key+'"><span class="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="'+d+'"/></svg></span><span><span class="at">'+esc(t)+'</span><span class="as">'+esc(s)+'</span></span>'+arrow+'</button>'; }
+    sheet.querySelectorAll('.act-opt').forEach(b=>{ b.onclick=()=>{ const a=b.getAttribute('data-act'); closeSheet();
+      if(a==='thread'){ lightThread(pid, viewerPersonId); }
+      else if(a==='center'){ location.href='tree-real.html?id='+encodeURIComponent(pid); }
+      else if(a==='who'){ location.href='tree-real.html?view=who&id='+encodeURIComponent(pid); }
+      else if(a==='open'){ location.href='person-real.html?id='+encodeURIComponent(pid); }
+    }; });
+    showSheet();
+  }
+
+  /* ================= WHO-THEY-KNEW VIEW ================= */
+  function renderWho(){
+    const X = FOCUS_PARAM || viewerPersonId || rootTrunk();
+    const l=L(); const p=people[X];
+    $('#tbEye').textContent=l.whoEye+' '+(p?firstName(X):''); $('#tbName').textContent=fmt(l.whoName,{n:p?firstName(X):''});
+    if(!p){ $('#pad').innerHTML='<div class="note-empty">'+esc(l.noPath)+'</div>'; wireChrome(); return; }
+
+    const spouses=coParentsOf(X), kids=childrenOf(X), pars=parentsOf(X);
+    const kinIds=new Set([X,...spouses,...kids,...pars]);
+    const bonds=coPhotoBonds(X).filter(b=>!kinIds.has(b.id));
+    const circleCount=spouses.length+kids.length+pars.length+bonds.length;
+    const pk=pendingKin.filter(k=>k.person_id===X);
+
+    let html='';
+    // hero
+    html+='<div class="whohero"><div class="wf" data-face="'+esc(X)+'"></div><div class="wt"><div class="wn">'+esc(nm(X))+'</div><div class="ws">'+
+      (circleCount>0? '<b>'+esc(circleCount===1?l.onePerson:fmt(l.peopleWord,{n:circleCount}))+'</b> '+esc(fmt(l.stoodIn,{n:'',who:firstName(X)})).replace(/\s+/g,' ').trim()
+        : esc(l.onlyName))+'</div></div></div>';
+
+    // married
+    if(spouses.length){ html+=grp(l.married, spouses.map(id=>kcard(id, roleLabel(id,'spouse',X), 'gold', l.toldFam)).join('')); }
+    // raised (children)
+    if(kids.length){ html+=grp(l.raised, kids.map(id=>kcard(id, roleLabel(id,'child',X), 'gold', l.toldFam)).join('')); }
+    // who raised them (parents)
+    if(pars.length){ html+=grp(l.raisedBy, pars.map(id=>kcard(id, roleLabel(id,'parent',X), 'gold', l.toldFam)).join('')); }
+    // pending kin (violet, keeper-gated)
+    if(pk.length){ html+=grp(l.raisedBy, pk.map(k=>pendCard(k)).join('')); }
+    // photo co-appearance (cool)
+    if(bonds.length){ html+='<div class="grp"><div class="gh">'+esc(l.beside)+' <span class="line"></span></div>'+
+      bonds.slice(0,6).map(b=>photoCard(b)).join('')+'</div>'; }
+    // sparse invitation
+    if(circleCount===0 && pk.length===0){ html+='<div class="sparse"><div class="sw2">'+esc(fmt(l.sparse,{who:firstName(X)}))+'</div>'+
+      '<span class="cta" data-cta="add">'+esc(l.addKnew)+' <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span></div>'; }
+
+    html+='<div class="foot"><div class="l">'+esc(bonds.length?l.footWho:l.footSparse)+'</div></div>';
+    $('#pad').innerHTML=html;
+
+    // faces
+    const hero=$('.whohero .wf[data-face]'); if(hero){ hero.innerHTML=placeholderFor(X); if(p.primary_asset) faceInto(hero,p.primary_asset,(p.metadata&&p.metadata.face_box)||null); }
+    $$('.kcard[data-pid]').forEach(card=>{ const id=card.getAttribute('data-pid'); const fe=card.querySelector('.kf'); if(fe){ fe.innerHTML=placeholderFor(id); const pp=people[id]; if(pp&&pp.primary_asset) faceInto(fe,pp.primary_asset,(pp.metadata&&pp.metadata.face_box)||null); }
+      card.onclick=(e)=>{ if(e.target.closest('.kbtn')) return; location.href='person-real.html?id='+encodeURIComponent(id); }; });
+    // keeper actions
+    $$('[data-approve]').forEach(b=>b.onclick=async()=>{ await approvePendingKin(b.getAttribute('data-approve'), true); });
+    $$('[data-decline]').forEach(b=>b.onclick=async()=>{ await approvePendingKin(b.getAttribute('data-decline'), false); });
+    $$('[data-cta]').forEach(b=>b.onclick=()=>{ location.href='person-real.html?id='+encodeURIComponent(X); });
+    wireChrome();
+  }
+  function grp(title, inner){ return '<div class="grp"><div class="gh">'+esc(title)+' <span class="line"></span></div>'+inner+'</div>'; }
+  function roleLabel(id, kind, X){ const l=L(); const sx=sexOf(id);
+    if(kind==='spouse') return sx==='f'?l.wife:sx==='m'?l.husband:l.partner;
+    if(kind==='child') return sx==='f'?l.daughter:sx==='m'?l.son:l.child;
+    if(kind==='parent') return sx==='f'?l.mother:sx==='m'?l.father:l.parent;
+    return l.relative; }
+  function kcard(id, role, prov, provText){ const l=L();
+    return '<div class="kcard" data-pid="'+esc(id)+'"><div class="kf"></div><div class="kb"><div class="kh">'+esc(nm(id))+'</div>'+
+      '<div class="krel"><span class="prov '+prov+'"><span class="d"></span>'+esc(role)+' · '+esc(provText)+'</span></div></div>'+
+      '<span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></div>'; }
+  function photoCard(b){ const l=L(); const cnt=b.count===1?l.onePhoto:fmt(l.nPhotos,{n:b.count});
+    return '<div class="kcard photo" data-pid="'+esc(b.id)+'"><div class="kf"></div><div class="kb"><div class="kh">'+esc(nm(b.id))+'</div>'+
+      '<div class="note">'+esc(fmt(l.photoNote,{n:cnt}))+'</div>'+
+      '<div class="cnt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" style="width:13px;height:13px"><rect x="3" y="6" width="18" height="13" rx="2"/><circle cx="12" cy="12" r="3"/></svg> '+esc(fmt(l.photoCount,{n:cnt}))+'</div>'+
+      '<div class="keeperbar"><span class="kbtn ok" style="background:rgba(201,162,255,.14);border-color:rgba(201,162,255,.4);color:var(--edit-hi)" data-cta="tell">'+esc(l.tellWho)+'</span></div>'+
+      '</div></div>'; }
+  function pendCard(k){ const l=L(); const label=pendKinLabel(k); const by=k.creatorName?fmt(l.suggestedBy,{n:firstName_byId(k.created_by)||k.creatorName}):l.suggested;
+    const kb=state.keeper? '<div class="keeperbar"><span class="kbtn ok" data-approve="'+esc(k.id)+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> '+esc(l.approve)+'</span><span class="kbtn no" data-decline="'+esc(k.id)+'">'+esc(l.decline)+'</span></div>':'';
+    return '<div class="kcard pending"><div class="kf" style="display:grid;place-items:center;background:rgba(201,162,255,.1)"><svg viewBox="0 0 24 24" fill="none" stroke="#ddc6ff" stroke-width="1.6" style="width:20px;height:20px"><path d="M12 3a4 4 0 100 8 4 4 0 000-8zM5 21c0-3.9 3.1-6 7-6s7 2.1 7 6"/></svg></div>'+
+      '<div class="kb"><div class="kh" style="color:var(--edit-hi)">'+esc(label)+'</div><div class="krel"><span class="prov edit"><span class="d"></span>'+esc(by)+'</span></div>'+kb+'</div></div>'; }
+  function firstName_byId(id){ const p=people[id]; return p?firstName(id):''; }
+
+  async function approvePendingKin(id, ok){ const l=L(); if(!user){ toast(l.noYou); return; }
+    try{ await sb.from('person_facts').update(ok?{status:'published',reviewed_by:user.id}:{status:'rejected',reviewed_by:user.id}).eq('id',id); }catch(e){}
+    toast(ok?l.approved:l.declined); await loadDataSoft(); render(); }
+  async function loadDataSoft(){ try{ const {data:pk}=await sb.from('person_facts').select('id,person_id,value,created_by,status').eq('field','kin').neq('status','published'); pendingKin=pk||[]; }catch(e){} }
+
+  /* ---------- chrome (lens, lang, back) ---------- */
+  function wireChrome(){
+    $$('[data-lens]').forEach(b=>{ b.onclick=()=>{ const t=b.getAttribute('data-lens');
+      if(t==='sky') location.href='home-real.html'; else if(t==='globe') location.href='index.html'; else if(t==='tree'){ if(VIEW!=='tree'||FOCUS_PARAM){ location.href='tree-real.html'; } } }; });
+  }
+  function wireOnce(){
+    $('#backBtn').onclick=()=>{ if(VIEW==='who'){ history.length>1?history.back():(location.href='tree-real.html'); } else { history.length>1?history.back():(location.href='index.html'); } };
+    $('#langBtn').onclick=openLangSheet;
+    $('#scrim').onclick=closeSheet;
+  }
+  function openLangSheet(){ const l=L(); const sheet=$('#sheet'); sheet.setAttribute('dir',l.dir);
+    sheet.innerHTML='<div class="grip"></div><h3'+(l.dir==='rtl'?' class="serif"':'')+'>'+esc(l.langtitle)+'</h3><div class="ssub">'+esc(VIEW==='who'?l.langsubWho:l.langsubTree)+'</div>'+
+      ['en','ru','he'].map(code=>{ const t=T[code]; const on=state.lang===code;
+        return '<button class="lang-opt'+(on?' on':'')+'" data-lang="'+code+'"><div><div class="native"'+(code==='he'?' style="font-family:\'Frank Ruhl Libre\',serif"':'')+'>'+esc(t.native)+'</div><div class="en">'+esc(t.label)+'</div></div><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span></button>'; }).join('');
+    sheet.querySelectorAll('[data-lang]').forEach(b=>{ b.onclick=async()=>{ state.lang=b.getAttribute('data-lang'); closeSheet();
+      try{ localStorage.setItem('lf_lang',state.lang); }catch(e){}
+      if(user){ try{ await sb.from('profiles').update({preferred_lang:state.lang}).eq('id',user.id); }catch(e){} }
+      applyDir(); render(); }; });
+    showSheet();
+  }
+  function applyDir(){ const l=L(); document.documentElement.setAttribute('dir',l.dir); document.documentElement.setAttribute('lang',state.lang);
+    $('#screen').setAttribute('dir',l.dir); $('#langBtn').firstChild.textContent=l.code+' '; }
+
+  function showSheet(){ $('#scrim').classList.add('show'); $('#sheet').classList.add('show'); }
+  function closeSheet(){ $('#scrim').classList.remove('show'); $('#sheet').classList.remove('show'); }
+  window.__lfClose=function(){ if($('#sheet').classList.contains('show')){ closeSheet(); return true; } return false; };
+
+  let toastT=null; function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2600); }
+
+  function render(){ applyDir(); if(VIEW==='who') renderWho(); else renderTree(); }
+
+  /* ---------- atmosphere injection (verbatim from the design) ---------- */
+  function injectSky(){ const dev=$('#dev');
+    const PAL=['#8fd6a0','#ffe6ad','#c9a2ff','#a9d2ee','#f3cd84']; const rnd=(a,b)=>a+Math.random()*(b-a);
+    const sky=document.createElement('div'); sky.className='sky';
+    sky.innerHTML='<span class="aurora a1"></span><span class="aurora a2"></span><span class="aurora a3"></span><span class="aurora a4"></span><span class="aurora a5"></span>';
+    const mf=document.createElement('div'); mf.className='motes';
+    for(let i=0;i<15;i++){ const m=document.createElement('span'); m.className='mote'; const c=PAL[Math.floor(Math.random()*PAL.length)];
+      m.style.left=rnd(4,96).toFixed(1)+'%'; m.style.top=rnd(12,100).toFixed(1)+'%';
+      m.style.setProperty('--s',rnd(3,6).toFixed(1)+'px'); m.style.setProperty('--c',c);
+      m.style.setProperty('--dx',rnd(-34,34).toFixed(0)+'px'); m.style.setProperty('--d',rnd(12,22).toFixed(1)+'s');
+      m.style.setProperty('--tw',rnd(2.6,4.6).toFixed(1)+'s'); m.style.animationDelay=(-rnd(0,20)).toFixed(1)+'s';
+      m.innerHTML='<b></b>'; mf.appendChild(m); }
+    sky.appendChild(mf); dev.insertBefore(sky, dev.firstChild);
+  }
+
+  /* ---------- boot ---------- */
+  async function boot(){
+    injectSky(); wireOnce();
+    const stored=localStorage.getItem('lf_lang'); if(stored&&T[stored]) state.lang=stored; else { const dl=(navigator.language||'en').slice(0,2); if(T[dl]) state.lang=dl; }
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session){ location.href='index.html'; return; }
+    user=session.user;
+    try{ const {data:pr}=await sb.from('profiles').select('is_keeper,preferred_lang,person_id').eq('id',user.id).maybeSingle();
+      if(pr){ state.keeper=!!pr.is_keeper; if(pr.person_id) viewerPersonId=pr.person_id; if(pr.preferred_lang&&!stored&&T[pr.preferred_lang]) state.lang=pr.preferred_lang; }
+    }catch(e){ // person_id column may not exist yet (documented open schema gap) — fall back gracefully
+      try{ const {data:pr2}=await sb.from('profiles').select('is_keeper,preferred_lang').eq('id',user.id).maybeSingle(); if(pr2){ state.keeper=!!pr2.is_keeper; if(pr2.preferred_lang&&!stored&&T[pr2.preferred_lang]) state.lang=pr2.preferred_lang; } }catch(e2){} }
+    await loadData();
+    render();
+  }
+  boot();
+})();
+</script>
+<script src="lf-nav.js" data-parent="index.html" data-here="tree"></script>
+</body>
+</html>
