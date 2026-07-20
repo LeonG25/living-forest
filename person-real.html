@@ -432,7 +432,7 @@
       display:'Display name', given:'Given name', family:'Family name', maiden:'Maiden name',
       called:'Called', calledHint:'everyday form', patronymic:'Patronymic', honorific:'Honorific',
       addpart:'add a name part', addpartHint:'Adds in this language and sends it to the keeper.', otherlangs:'other languages',
-      nicks:'Nicknames & pet names', addnick:'add a nickname', pendingChip:'waiting', approve:'Approve', decline:'Decline',
+      nicks:'Nicknames & pet names', nickname:'Nickname / pet name', pendingChip:'waiting', approve:'Approve', decline:'Decline',
       faceLine:'The photos she appears in. The camera on her portrait chooses the crop that represents her everywhere.', changeface:'Change the face',
       noFace:'No photographs are tagged to this person yet.',
       about:'About', occupation:'Occupation', addoccupation:'add her work', langspoken:'Languages spoken',
@@ -471,7 +471,7 @@
       display:'Отображаемое имя', given:'Имя', family:'Фамилия', maiden:'Девичья фамилия',
       called:'Зовут', calledHint:'обиходная форма', patronymic:'Отчество', honorific:'Титул',
       addpart:'добавить часть имени', addpartHint:'Добавит на этом языке и отправит хранителю.', otherlangs:'другие языки',
-      nicks:'Прозвища и ласковые имена', addnick:'добавить прозвище', pendingChip:'ожидает', approve:'Одобрить', decline:'Отклонить',
+      nicks:'Прозвища и ласковые имена', nickname:'Прозвище / ласковое имя', pendingChip:'ожидает', approve:'Одобрить', decline:'Отклонить',
       faceLine:'Фото, где она есть. Камера на портрете выбирает кадр, который представляет её везде.', changeface:'Сменить лицо',
       noFace:'К этому человеку пока не привязано ни одной фотографии.',
       about:'О человеке', occupation:'Занятие', addoccupation:'добавить занятие', langspoken:'Языки',
@@ -510,7 +510,7 @@
       display:'שם לתצוגה', given:'שם פרטי', family:'שם משפחה', maiden:'שם נעורים',
       called:'קוראים לה', calledHint:'צורה יומיומית', patronymic:'שם האב', honorific:'תואר',
       addpart:'הוספת חלק לשם', addpartHint:'יתווסף בשפה זו ויישלח לשומר.', otherlangs:'שפות נוספות',
-      nicks:'כינויים ושמות חיבה', addnick:'הוספת כינוי', pendingChip:'ממתין', approve:'לאשר', decline:'לדחות',
+      nicks:'כינויים ושמות חיבה', nickname:'כינוי / שם חיבה', pendingChip:'ממתין', approve:'לאשר', decline:'לדחות',
       faceLine:'התמונות שהיא מופיעה בהן. המצלמה שעל הדיוקן בוחרת את החיתוך שמייצג אותה בכל מקום.', changeface:'החלפת התמונה',
       noFace:'עדיין לא תויגו תמונות לאדם הזה.',
       about:'אודות', occupation:'עיסוק', addoccupation:'הוספת עיסוק', langspoken:'שפות',
@@ -823,12 +823,14 @@
     if(has('maiden')) out+=namePartBlock('maiden',has('maiden'));
     ['patronymic','honorific'].forEach(k=>{ if(has(k)) out+=namePartBlock(k,has(k)); });
     NF.forEach(k=>{ if(!has(k)){ const ref=namePendRef(k,lang); if(ref){ out+=`<div class="namepart np-suggested"><div class="np-lab">${esc(L[k]||k)}</div><div class="np-val serif">${esc(ref.value)}</div>${state.keeper?keeperInline(ref.id,ref.kind):`<div class="pending"><span class="sp"></span>${L.bothpending}</div>`}</div>`; } } });
-    out+=`<div class="namepart"><div class="np-lab">${L.nicks}</div><div class="chips">
+    /* nicknames are a name part like any other — displayed here, added via "+ add a name part" */
+    if((NICKS[lang]||[]).length||(PENDNICKS[lang]||[]).length){
+      out+=`<div class="namepart"><div class="np-lab">${L.nicks}</div><div class="chips">
         ${(NICKS[lang]||[]).map(n=>`<span class="chip">${esc(n.value)}<span class="x" data-del="${n.id}">${sv(I.x,2)}</span></span>`).join('')}
-        ${(PENDNICKS[lang]||[]).map(n=>`<span class="chip pending">${esc(n.value)}<span class="mono" style="font-size:9px;opacity:.8">· ${L.pendingChip}</span></span>`).join('')}
-        <button class="chip add" data-addchip="nickname">${sv(I.plus,2)} ${L.addnick}</button></div>${chipAddBox('nickname',L.addnick)}
-        ${(PENDNICKS[lang]||[]).length?(state.keeper?(PENDNICKS[lang]||[]).map(n=>`<div class="pendrow"><span style="font-size:12px;color:var(--edit-hi)">${esc(n.value)}</span>${keeperInline(n.id,'fact')}</div>`).join(''):`<div class="pending" style="margin-top:6px"><span class="sp"></span>${L.bothpending}</div>`):''}</div>`;
-    const unset=NF.filter(k=>!has(k)&&!namePendRef(k,lang));
+        ${(PENDNICKS[lang]||[]).map(n=>`<span class="chip pending">${esc(n.value)}<span class="mono" style="font-size:9px;opacity:.8">· ${L.pendingChip}</span></span>`).join('')}</div>
+        ${(PENDNICKS[lang]||[]).length?(state.keeper?(PENDNICKS[lang]||[]).map(n=>`<div class="pendrow"><span style="font-size:12px;color:var(--edit-hi)">${esc(n.value)}</span>${keeperInline(n.id,'fact')}</div>`).join(''):`<div class="pending" style="margin-top:6px"><span class="sp"></span>${L.bothpending}</div>`):''}</div>`; }
+    /* nickname is always addable (a person may have several) */
+    const unset=NF.filter(k=>!has(k)&&!namePendRef(k,lang)).concat('nickname');
     const addBtn=unset.length?`<button class="np-ctl add" data-act="nmadd">${sv(I.plus,2)} ${L.addpart}</button>`:'';
     out+=`<div class="np-foot"><button class="np-ctl" data-act="nmlang">${sv(I.globe2,1.5)} ${L.otherlangs}</button>${addBtn}</div>`;
     const editable=['display','given','called','family','maiden','patronymic','honorific'];
@@ -836,6 +838,7 @@
         ${LANGS.map(l=>`<div class="mlvar ${l==='he'?'rtl':''}"><span class="tag">${l}</span><input class="inp" data-field="${k}" data-lang="${l}" value="${esc((NAME[k]&&NAME[k][l])||'')}" placeholder="${L.addfield}"></div>`).join('')}
       </div>`).join('')}<div class="btnrow" style="margin-top:4px"><button class="btn ghost" data-act="revert">${L.cancel}</button><button class="btn violet" data-act="nmsend">${L.send}</button></div></div>`;
     out+=`<div class="np-addmenu" hidden>${unset.map(k=>`<button class="add-opt" data-addpart="${k}"><span class="ic">${sv(I.plus,1.8)}</span><span><span class="nm">${esc(L[k]||k)}</span><span class="ds">${L.addpartHint}</span></span></button>`).join('')}</div>`;
+    out+=chipAddBox('nickname',L.nickname);
     return out;
   }
 
@@ -1085,7 +1088,12 @@
     return true; }
 
   function openAddPart(part){ selectFacet('name'); const card=$('.facet[data-facet="name"]'); if(!card) return;
-    const langs=card.querySelector('.np-langs'); const menu=card.querySelector('.np-addmenu'); if(langs) langs.hidden=false; if(menu) menu.hidden=true;
+    const langs=card.querySelector('.np-langs'); const menu=card.querySelector('.np-addmenu'); if(menu) menu.hidden=true;
+    /* nickname is a repeatable per-language row, not a single field — use the chip box */
+    if(part==='nickname'){ if(langs) langs.hidden=true;
+      const box=card.querySelector('.chipadd[data-for="nickname"]');
+      if(box){ box.style.display='block'; const i=box.querySelector('input'); if(i){ i.value=''; i.focus(); } } return; }
+    if(langs) langs.hidden=false;
     const inp=card.querySelector(`.np-langs [data-field="${part}"][data-lang="${state.lang}"]`); if(inp) inp.focus(); }
 
   /* ---------- submit ---------- */
