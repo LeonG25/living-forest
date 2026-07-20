@@ -357,7 +357,7 @@ function smooth(a,b,x){ const t=Math.min(1,Math.max(0,(x-a)/(b-a))); return t*t*
 globe.add(new THREE.Mesh(new THREE.SphereGeometry(R*0.997,64,64), new THREE.MeshBasicMaterial({color:0x0a1526})));
 scene.add(new THREE.Mesh(new THREE.SphereGeometry(R*1.16,64,64), new THREE.ShaderMaterial({
   transparent:true, side:THREE.BackSide, blending:THREE.AdditiveBlending, depthWrite:false,
-  uniforms:{c:{value:new THREE.Color(0x2f77b0)}},
+  uniforms:{c:{value:new THREE.Color(0x3a86c0)}},
   vertexShader:'varying vec3 vN; void main(){ vN=normalize(normalMatrix*normal); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);} ',
   fragmentShader:'varying vec3 vN; uniform vec3 c; void main(){ float i=pow(0.62-dot(vN,vec3(0.0,0.0,1.0)),3.0); gl_FragColor=vec4(c,1.0)*clamp(i,0.0,1.0)*0.9; }'
 })));
@@ -365,11 +365,35 @@ const gmat=new THREE.LineBasicMaterial({color:0x2a5470, transparent:true, opacit
 for(let lat=-60;lat<=60;lat+=30){ const p=[]; for(let l=-180;l<=180;l+=4) p.push(ll2v(lat,l,R*1.001)); globe.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p), gmat)); }
 for(let lng=-180;lng<180;lng+=30){ const p=[]; for(let a=-88;a<=88;a+=4) p.push(ll2v(a,lng,R*1.001)); globe.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p), gmat)); }
 fetch('https://unpkg.com/world-atlas@2/countries-110m.json').then(r=>r.json()).then(topo=>{
-  const geo=topojson.feature(topo, topo.objects.countries); const seg=[];
+  const geo=topojson.feature(topo, topo.objects.countries); const seg=[], land=[];
+  const RL=R*1.0008;   // filled land sits just above the ocean sphere, just under the outlines
   const addRing=ring=>{ for(let i=0;i<ring.length-1;i++){ const a=ll2v(ring[i][1],ring[i][0],R*1.002), b=ll2v(ring[i+1][1],ring[i+1][0],R*1.002); seg.push(a.x,a.y,a.z,b.x,b.y,b.z);} };
-  geo.features.forEach(f=>{ const g=f.geometry; if(!g)return; if(g.type==='Polygon') g.coordinates.forEach(addRing); else if(g.type==='MultiPolygon') g.coordinates.forEach(poly=>poly.forEach(addRing)); });
+  // a flat triangle across a wide country would sag below the sphere, so subdivide in
+  // lon/lat until every edge is small, then project each vertex out to the globe.
+  const mid=(p,q)=>({x:(p.x+q.x)/2, y:(p.y+q.y)/2});
+  const eLen=(p,q)=>Math.max(Math.abs(p.x-q.x), Math.abs(p.y-q.y));
+  function emit(a,b,c,d){
+    if(d<4 && Math.max(eLen(a,b),eLen(b,c),eLen(c,a))>4){
+      const ab=mid(a,b), bc=mid(b,c), ca=mid(c,a);
+      emit(a,ab,ca,d+1); emit(ab,b,bc,d+1); emit(ca,bc,c,d+1); emit(ab,bc,ca,d+1); return;
+    }
+    [a,b,c].forEach(p=>{ const v=ll2v(p.y,p.x,RL); land.push(v.x,v.y,v.z); });
+  }
+  const fillRing=ring=>{
+    const pts=ring.slice(0,-1).map(cc=>new THREE.Vector2(cc[0],cc[1]));
+    if(pts.length<3) return;
+    let mn=Infinity,mx=-Infinity; pts.forEach(p=>{ mn=Math.min(mn,p.x); mx=Math.max(mx,p.x); });
+    if(mx-mn>180) pts.forEach(p=>{ if(p.x<0) p.x+=360; });   // unwrap across the antimeridian
+    let faces; try{ faces=THREE.ShapeUtils.triangulateShape(pts,[]); }catch(e){ return; }
+    faces.forEach(f=>emit(pts[f[0]],pts[f[1]],pts[f[2]],0));
+  };
+  geo.features.forEach(f=>{ const g=f.geometry; if(!g)return;
+    if(g.type==='Polygon'){ g.coordinates.forEach(addRing); fillRing(g.coordinates[0]); }
+    else if(g.type==='MultiPolygon') g.coordinates.forEach(poly=>{ poly.forEach(addRing); fillRing(poly[0]); }); });
+  const lg=new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(land,3));
+  globe.add(new THREE.Mesh(lg, new THREE.MeshBasicMaterial({color:0x2a3f52, side:THREE.DoubleSide})));
   const bg=new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(seg,3));
-  globe.add(new THREE.LineSegments(bg, new THREE.LineBasicMaterial({color:0x4d86a0, transparent:true, opacity:0.55})));
+  globe.add(new THREE.LineSegments(bg, new THREE.LineBasicMaterial({color:0x5e9bb4, transparent:true, opacity:0.6})));
 }).catch(e=>console.warn('coastlines unavailable', e));
 
 /* textures */
@@ -480,10 +504,10 @@ function buildScene(){
     const va=ll2v(A.lat,A.lng,R), vb=ll2v(B.lat,B.lng,R);
     const curve=arcCurve(va,vb,R); const pts=curve.getPoints(48);
     const long=va.angleTo(vb)>0.9;
-    const col = t.kind==='spouse'?0xffcf7e : (t.kind==='sibling'?0x9fd8c0 : 0x67c7d8);
+    const col = t.kind==='spouse'?0xffcf7e : (t.kind==='sibling'?0xa8e6d4 : 0x7fdcec);
     const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({color:col,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false}));
-    line.userData={fy:t.fy, base: long?0.5:0.32}; tiesGroup.add(line);
-    if(long){ const fs=spr(glow,6,0x9fe6f0,0.9); tiesGroup.add(fs); flow.push({s:fs,curve,fy:t.fy,t:Math.random(),on:false}); }
+    line.userData={fy:t.fy, base: long?0.62:0.42}; tiesGroup.add(line);
+    if(long){ const fs=spr(glow,6.5,0xb6f0f8,0.95); tiesGroup.add(fs); flow.push({s:fs,curve,fy:t.fy,t:Math.random(),on:false}); }
   });
   buildTicks(); setYear(Y_MAX, true);
 }
