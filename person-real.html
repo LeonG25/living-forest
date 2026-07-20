@@ -349,6 +349,40 @@
   .np-addmenu{ margin-top:13px; display:flex; flex-direction:column; gap:8px; }
   .np-addmenu[hidden]{ display:none; }
 
+  /* ===== facet switcher (the beads navigate) ===== */
+  .facet[hidden]{ display:none; }
+  .facet.enter{ animation:facetIn .32s cubic-bezier(.16,.8,.28,1) both; }
+  @keyframes facetIn{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
+  .cat.sel .bead{ transform:scale(1.16); box-shadow:0 0 0 2px rgba(243,205,132,.6); }
+  .cat.cool.sel .bead{ box-shadow:0 0 0 2px rgba(127,180,216,.6); }
+  .cat.sel .lab{ color:var(--cream); }
+
+  /* per-row edit / delete controls */
+  .rowctl{ display:flex; gap:7px; flex-wrap:wrap; margin-top:9px; }
+  .rowctl .np-ctl{ padding:6px 9px; font-size:9px; }
+  .np-ctl.warn{ border-color:rgba(201,162,255,.4); color:var(--edit-hi); }
+  .remreq{ display:inline-flex; align-items:center; gap:7px; margin-top:8px; padding:6px 10px; border-radius:9px;
+    background:rgba(201,162,255,.1); border:1px solid rgba(201,162,255,.34); font-size:11px; color:var(--edit-hi); }
+
+  /* connections */
+  .relrow{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:12px 13px; border-radius:12px;
+    background:rgba(243,205,132,.07); border:1px solid rgba(243,205,132,.24); margin-bottom:9px; }
+  .relrow.pend{ background:rgba(201,162,255,.07); border-color:rgba(201,162,255,.34); }
+  .relrow .rk{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); }
+  .relrow.pend .rk{ color:var(--edit); }
+  .relrow .rn{ font-family:'Newsreader',serif; font-size:17px; color:var(--cream); margin-top:3px; }
+  .relrow .rc{ font-size:11.5px; color:var(--muted); margin-top:3px; line-height:1.4; }
+  .picker{ max-height:184px; overflow-y:auto; margin-bottom:12px; border:1px solid var(--hair); border-radius:12px; }
+  .picker button{ display:block; width:100%; text-align:start; padding:11px 13px; background:transparent; border:none;
+    border-bottom:1px solid var(--hair); color:var(--cream); font-family:'Newsreader',serif; font-size:15px; cursor:pointer; }
+  .picker button:hover{ background:rgba(255,255,255,.05); }
+  .picker button.on{ background:rgba(201,162,255,.14); color:var(--edit-soft); }
+  .segwrap{ display:flex; flex-wrap:wrap; gap:6px; }
+  .segwrap button{ padding:8px 11px; border-radius:99px; cursor:pointer; font-size:12px;
+    background:rgba(8,16,28,.6); border:1px solid var(--hair); color:var(--muted); font-family:'Hanken Grotesk',sans-serif; }
+  .segwrap button.on{ background:rgba(201,162,255,.16); border-color:rgba(201,162,255,.5); color:var(--edit-hi); }
+  @media (prefers-reduced-motion: reduce){ .facet.enter{ animation:none; } .cat .bead{ transition:none; } }
+
   /* full-viewport page (drop the mock device frame) */
   html,body{ background:#04070e; margin:0; }
   body{ gap:0; padding:0; }
@@ -371,6 +405,7 @@
       <section class="sheet" data-sheet="face" role="dialog" aria-modal="true" aria-label="Change the face"></section>
       <section class="sheet" data-sheet="add" role="dialog" aria-modal="true" aria-label="Add a detail"></section>
       <section class="sheet" data-sheet="game" role="dialog" aria-modal="true" aria-label="Play"></section>
+      <section class="sheet" data-sheet="kin" role="dialog" aria-modal="true" aria-label="A connection"></section>
       <div class="toast"><span class="fl"></span><span class="toastmsg"></span></div>
     </div>
   </div>
@@ -398,7 +433,7 @@
       called:'Called', calledHint:'everyday form', patronymic:'Patronymic', honorific:'Honorific',
       addpart:'add a name part', addpartHint:'Adds in this language and sends it to the keeper.', otherlangs:'other languages',
       nicks:'Nicknames & pet names', addnick:'add a nickname', pendingChip:'waiting', approve:'Approve', decline:'Decline',
-      faceLine:'The photos she appears in — choose the crop that represents her everywhere.', changeface:'Change the face',
+      faceLine:'The photos she appears in. The camera on her portrait chooses the crop that represents her everywhere.', changeface:'Change the face',
       noFace:'No photographs are tagged to this person yet.',
       about:'About', occupation:'Occupation', addoccupation:'add her work', langspoken:'Languages spoken',
       born:'Born', died:'Died', precision:'Precision', prec:['exact','month','year','approx','unknown'], living:'Still living',
@@ -416,6 +451,17 @@
       playCta:'Play', gameLocked:'Add more and this opens', gameScoped:'Scoped to this person',
       gameNames:{ whoiswho:'Who Is Who?', crowd:'Find Them in the Crowd', order:'Put Their Life in Order', wherewas:'Where Was This?', thread:'The Tangled Thread', whosememory:'Whose Memory Is This?', voice:'The Missing Voice', whatnext:'What Happened Next?' },
       gameSubs:{ whoiswho:'Match the face to the right name.', crowd:'Find them among the gathering.', order:'Set the moments of a life in sequence.', wherewas:'Place the photographs on the map.', thread:'Trace how they connect to the family.', whosememory:'Guess who told each memory.', voice:'Not enough stories yet.', whatnext:'Guess which memory came next.' },
+      country:'Country', addcountry:'add a country',
+      edit:'Edit', remove:'Remove', askremove:'Ask to remove', removeAsked:'Removal waiting for the keeper',
+      relkind:'Kind of connection', certainty:'How sure are we?', relnote:'Note (optional)',
+      relkinds:{ parent:'Parent', spouse:'Spouse', sibling:'Sibling', friend:'Friend', mentor:'Mentor', neighbour:'Neighbour', other:'Other' },
+      certs:{ documented:'Documented', remembered:'Remembered', uncertain:'Uncertain' },
+      pickperson:'Who is this?', searchppl:'Search the family', nopeople:'No one to choose from yet.',
+      dirq:'Which way round?', dirTheirParent:'…is their parent', dirTheirChild:'…is their child',
+      proposenew:'Someone not in the forest yet', proposehint:'Sends a proposal to the keeper.', proposename:'Their name',
+      addconn:'Add a connection', editconn:'Edit the connection', removeconn:'Remove this connection',
+      meAsk:'Who are you in the family?', meHint:'Pick your own place in the forest, then say how you connect.',
+      pickfirst:'Choose someone first.', saved:'Saved', proposedPerson:'proposed',
       foot:'A life, told a little more fully.' },
     ru:{ dir:'ltr', native:'Русский', label:'Russian',
       eyebrow:'Человек', keeper:'Ничто не дойдёт до семьи, пока хранитель не одобрит.',
@@ -426,7 +472,7 @@
       called:'Зовут', calledHint:'обиходная форма', patronymic:'Отчество', honorific:'Титул',
       addpart:'добавить часть имени', addpartHint:'Добавит на этом языке и отправит хранителю.', otherlangs:'другие языки',
       nicks:'Прозвища и ласковые имена', addnick:'добавить прозвище', pendingChip:'ожидает', approve:'Одобрить', decline:'Отклонить',
-      faceLine:'Фото, где она есть — выберите кадр, который представляет её везде.', changeface:'Сменить лицо',
+      faceLine:'Фото, где она есть. Камера на портрете выбирает кадр, который представляет её везде.', changeface:'Сменить лицо',
       noFace:'К этому человеку пока не привязано ни одной фотографии.',
       about:'О человеке', occupation:'Занятие', addoccupation:'добавить занятие', langspoken:'Языки',
       born:'Родилась', died:'Умерла', precision:'Точность', prec:['точно','месяц','год','около','неизв.'], living:'Ещё жива',
@@ -444,6 +490,17 @@
       playCta:'Играть', gameLocked:'Добавьте больше — и откроется', gameScoped:'Только про этого человека',
       gameNames:{ whoiswho:'Кто есть кто?', crowd:'Найди в толпе', order:'Расставь жизнь по порядку', wherewas:'Где это было?', thread:'Запутанная нить', whosememory:'Чья это память?', voice:'Пропавший голос', whatnext:'Что было дальше?' },
       gameSubs:{ whoiswho:'Сопоставьте лицо и имя.', crowd:'Найдите среди собравшихся.', order:'Расставьте моменты жизни.', wherewas:'Разместите фото на карте.', thread:'Проследите связь с семьёй.', whosememory:'Угадайте, кто рассказал.', voice:'Историй пока мало.', whatnext:'Угадайте, какое воспоминание было следующим.' },
+      country:'Страна', addcountry:'добавить страну',
+      edit:'Изменить', remove:'Удалить', askremove:'Просить удалить', removeAsked:'Удаление ожидает хранителя',
+      relkind:'Вид связи', certainty:'Насколько уверены?', relnote:'Заметка (необязательно)',
+      relkinds:{ parent:'Родитель', spouse:'Супруг(а)', sibling:'Брат/сестра', friend:'Друг', mentor:'Наставник', neighbour:'Сосед', other:'Другое' },
+      certs:{ documented:'Документально', remembered:'По памяти', uncertain:'Неточно' },
+      pickperson:'Кто это?', searchppl:'Поиск по семье', nopeople:'Пока не из кого выбирать.',
+      dirq:'В какую сторону?', dirTheirParent:'…её родитель', dirTheirChild:'…её ребёнок',
+      proposenew:'Кого-то ещё нет в лесу', proposehint:'Отправит предложение хранителю.', proposename:'Имя',
+      addconn:'Добавить связь', editconn:'Изменить связь', removeconn:'Удалить эту связь',
+      meAsk:'Кто вы в семье?', meHint:'Выберите себя в лесу, затем укажите связь.',
+      pickfirst:'Сначала выберите человека.', saved:'Сохранено', proposedPerson:'предложен',
       foot:'Жизнь, рассказанная чуть полнее.' },
     he:{ dir:'rtl', native:'עברית', label:'Hebrew',
       eyebrow:'אדם', keeper:'שום דבר לא יגיע למשפחה עד שהשומר יאשר.',
@@ -454,7 +511,7 @@
       called:'קוראים לה', calledHint:'צורה יומיומית', patronymic:'שם האב', honorific:'תואר',
       addpart:'הוספת חלק לשם', addpartHint:'יתווסף בשפה זו ויישלח לשומר.', otherlangs:'שפות נוספות',
       nicks:'כינויים ושמות חיבה', addnick:'הוספת כינוי', pendingChip:'ממתין', approve:'לאשר', decline:'לדחות',
-      faceLine:'התמונות שהיא מופיעה בהן — בחרו את החיתוך שמייצג אותה בכל מקום.', changeface:'החלפת התמונה',
+      faceLine:'התמונות שהיא מופיעה בהן. המצלמה שעל הדיוקן בוחרת את החיתוך שמייצג אותה בכל מקום.', changeface:'החלפת התמונה',
       noFace:'עדיין לא תויגו תמונות לאדם הזה.',
       about:'אודות', occupation:'עיסוק', addoccupation:'הוספת עיסוק', langspoken:'שפות',
       born:'נולדה', died:'נפטרה', precision:'דיוק', prec:['מדויק','חודש','שנה','בערך','לא ידוע'], living:'עדיין בחיים',
@@ -472,6 +529,17 @@
       playCta:'שחקו', gameLocked:'הוסיפו עוד וזה ייפתח', gameScoped:'מותאם לאדם הזה',
       gameNames:{ whoiswho:'מי זה מי?', crowd:'מצאו אותה בקהל', order:'סדרו את חייה', wherewas:'איפה זה היה?', thread:'החוט הסבוך', whosememory:'של מי הזיכרון?', voice:'הקול החסר', whatnext:'מה קרה אחר כך?' },
       gameSubs:{ whoiswho:'התאימו את הפנים לשם הנכון.', crowd:'מצאו אותה בין הנאספים.', order:'סדרו את רגעי החיים.', wherewas:'מקמו את התמונות על המפה.', thread:'עקבו אחר הקשר למשפחה.', whosememory:'נחשו מי סיפר כל זיכרון.', voice:'עדיין אין מספיק סיפורים.', whatnext:'נחשו איזה זיכרון בא אחר כך.' },
+      country:'מדינה', addcountry:'הוספת מדינה',
+      edit:'עריכה', remove:'מחיקה', askremove:'בקשה למחוק', removeAsked:'המחיקה ממתינה לשומר',
+      relkind:'סוג הקשר', certainty:'עד כמה בטוח?', relnote:'הערה (לא חובה)',
+      relkinds:{ parent:'הורה', spouse:'בן/בת זוג', sibling:'אח/אחות', friend:'חבר', mentor:'מורה דרך', neighbour:'שכן', other:'אחר' },
+      certs:{ documented:'מתועד', remembered:'מהזיכרון', uncertain:'לא בטוח' },
+      pickperson:'מי זה?', searchppl:'חיפוש במשפחה', nopeople:'עדיין אין ממי לבחור.',
+      dirq:'לאיזה כיוון?', dirTheirParent:'…הוא ההורה שלה', dirTheirChild:'…הוא הילד שלה',
+      proposenew:'מישהו שעדיין לא ביער', proposehint:'שולח הצעה לשומר.', proposename:'השם',
+      addconn:'הוספת קשר', editconn:'עריכת הקשר', removeconn:'מחיקת הקשר הזה',
+      meAsk:'מי אתם במשפחה?', meHint:'בחרו את המקום שלכם ביער, ואז ציינו את הקשר.',
+      pickfirst:'בחרו קודם אדם.', saved:'נשמר', proposedPerson:'הוצע',
       foot:'חיים, מסופרים מעט יותר במלואם.' }
   };
 
@@ -495,7 +563,9 @@
     zoomout:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4M8 11h6"/>', zoomin:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4M11 8v6M8 11h6"/>',
     chart:'<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 15l4-4 4 4 5-5 5 5"/>',
     quote:'<path d="M7 7h4v6H7zM13 7h4v6h-4z"/>', medal:'<circle cx="12" cy="15" r="5"/><path d="M9 3l3 6 3-6"/>',
-    book:'<path d="M9 7h6M9 11h6M9 15h4"/><rect x="5" y="3" width="14" height="18" rx="2"/>'
+    book:'<path d="M9 7h6M9 11h6M9 15h4"/><rect x="5" y="3" width="14" height="18" rx="2"/>',
+    pen:'<path d="M4 20h4L19 9a2.1 2.1 0 00-3-3L5 17z"/><path d="M14 6l4 4"/>',
+    trash:'<path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/>'
   };
   const sv=(p,w)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w||1.6}" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
   function faceSVG(){ return `<svg viewBox="0 0 100 100"><defs><radialGradient id="fg" cx="42%" cy="34%" r="76%"><stop offset="0%" stop-color="#f0d3ad"/><stop offset="60%" stop-color="#dcae82"/><stop offset="100%" stop-color="#9c6f4c"/></radialGradient><linearGradient id="fb" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2a3a52"/><stop offset="100%" stop-color="#141f30"/></linearGradient></defs><rect width="100" height="100" fill="url(#fb)"/><path d="M50 98 Q50 70 24 66 Q28 40 50 40 Q72 40 76 66 Q50 70 50 98Z" fill="#c9c1b4"/><ellipse cx="50" cy="52" rx="25" ry="28" fill="url(#fg)"/><path d="M24 44 Q28 18 50 18 Q72 18 76 44 Q64 30 50 30 Q36 30 24 44Z" fill="#eae5dd"/><ellipse cx="41" cy="52" rx="2.7" ry="3.1" fill="#3a2b22"/><ellipse cx="59" cy="52" rx="2.7" ry="3.1" fill="#3a2b22"/><path d="M43 66 Q50 71 57 66" stroke="#a06b4c" stroke-width="1.9" fill="none" stroke-linecap="round"/></svg>`; }
@@ -503,10 +573,13 @@
     return `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="${s}"/><rect y="60" width="100" height="40" fill="rgba(0,0,0,.16)"/><circle cx="50" cy="42" r="15" fill="#e6c49b"/><path d="M50 92 Q50 66 31 63 Q34 51 50 51 Q66 51 69 63 Q50 66 50 92Z" fill="#5a4636"/></svg>`; }
 
   /* ---------- state ---------- */
-  const state={ lang:'en', keeper:false };
+  const state={ lang:'en', keeper:false, facet:'name' };
   let user=null, person=null, NV=[], facts=[], tagged=[], rels=[], memories=[], contribNames={};
-  let NAME={}, PEND={}, NICKS={en:[],ru:[],he:[]}, PENDNICKS={en:[],ru:[],he:[]};
-  let S={ life:{bio:{},occupation:{},birth:'',death:'',birth_prec:'',living:false,gender:'',langspoken:[]}, places:{pbirth:'',lived:[]}, kin:[], more:{custom:[],sources:[]} };
+  let NAME={}, NAMEROW={}, PEND={}, NICKS={en:[],ru:[],he:[]}, PENDNICKS={en:[],ru:[],he:[]};
+  let PEOPLE=[];
+  const REL_KINDS=['parent','spouse','sibling','friend','mentor','neighbour','other'];
+  const REL_CERTS=['documented','remembered','uncertain'];
+  let S={ life:{bio:{},occupation:{},birth:'',death:'',birth_prec:'',living:false,gender:'',langspoken:[]}, places:{pbirth:'',lived:[],country:{}}, kin:[], more:{custom:[],sources:[]} };
   const d=()=>T[state.lang];
 
   const FACETS=[
@@ -523,7 +596,7 @@
   const FACETFIELDS={
     name:['display','given','called','family','maiden','patronymic','honorific','nickname'],
     face:['face'], life:['bio','occupation','birth','death','birth_prec','death_prec','living','gender','langspoken'],
-    places:['pbirth','lived'], story:[], kin:['kin'], reel:[], more:['custom_label','custom_value','source']
+    places:['pbirth','lived','country'], story:[], kin:['kin'], reel:[], more:['custom_label','custom_value','source']
   };
 
   /* ---------- fact helpers ---------- */
@@ -532,6 +605,30 @@
   const pubList=(field,lg)=>facts.filter(x=>x.field===field&&x.status==='published'&&(lg==null||x.lang===lg)).sort((a,b)=>(a.ord||0)-(b.ord||0));
   const pendList=(field,lg)=>facts.filter(x=>x.field===field&&x.status!=='published'&&(lg==null||x.lang===lg)).sort((a,b)=>(a.ord||0)-(b.ord||0));
   function relLabel(k){ return k==='child'?d().relChild:d().relParent; }
+  /* 'parent' is the only directional kind: say which end this person is */
+  function kindText(r){ const L=d();
+    if(r.kind==='parent') return r.dir==='other_child'?L.relChild:L.relParent;
+    return L.relkinds[r.kind]||r.kind; }
+  function parseKin(v){ try{ const o=JSON.parse(v); return (o&&o.kind)?o:null; }catch(e){ return null; } }
+  const pubRow=(field,lg)=>{ const rows=facts.filter(x=>x.field===field&&x.status==='published'&&(lg==null||x.lang===lg))
+      .sort((a,b)=>String(b.published_at||b.created_at||'').localeCompare(String(a.published_at||a.created_at||''))); return rows[0]||null; };
+
+  /* ---------- per-row gate: who may remove what (Rule 3) ---------- */
+  function canDelete(row){ if(!row) return false; if(state.keeper) return true;
+    return row.status!=='published' && !!user && row.created_by===user.id; }
+  /* a contributor cannot delete a published row — they ask, and the keeper decides */
+  function removalReq(targetId){ return facts.find(x=>x.field==='remove_request'&&x.status!=='published'&&x.value===targetId)||null; }
+  function delCtl(row,label){ if(!row) return ''; const L=d(); const req=removalReq(row.id);
+    /* a pending removal is itself a per-field keeper decision (Rule 3) */
+    if(req) return state.keeper
+      ? `<span class="remreq">${esc(L.askremove)}</span>${keeperInline(req.id,'remreq')}`
+      : `<span class="remreq">${esc(L.removeAsked)}</span>`;
+    const can=canDelete(row);
+    return `<button class="np-ctl ${can?'':'warn'}" data-rowdel="${row.id}">${sv(can?I.trash:I.x,1.7)} ${esc(can?(label||L.remove):L.askremove)}</button>`; }
+  /* birth/death/gender live on people columns — only the keeper may clear them */
+  function clearCtl(col){ if(!state.keeper) return ''; const L=d();
+    const has=person&&person[col]!=null&&person[col]!=='';
+    return has?`<button class="np-ctl" data-clearperson="${col}">${sv(I.trash,1.7)} ${esc(L.remove)}</button>`:''; }
 
   /* ---------- storage / face crop ---------- */
   async function signedUrl(path){ if(!path) return ''; try{ const r=await sb.storage.from('family').createSignedUrl(path,3600); return (r.data&&r.data.signedUrl)||''; }catch(e){ return ''; } }
@@ -545,12 +642,30 @@
       c.style.cssText='width:100%;height:100%;display:block'; el.innerHTML=''; el.appendChild(c); }; img.src=u; }
 
   /* ---------- write helpers (all land as in_review suggestions) ---------- */
-  async function insFact(field,lg,value,ord,group_id){ if(!user) return; try{ await sb.from('person_facts').insert({person_id:PERSON_ID,group_id:group_id||uuid(),field,lang:lg||'und',value:value==null?'':String(value),ord:ord||0,status:'in_review',created_by:user.id}); }catch(e){} }
+  /* a contributor writes a suggestion; the keeper's own write publishes (Rule 3) */
+  async function insFact(field,lg,value,ord,group_id){ if(!user) return;
+    const pub=state.keeper&&field!=='remove_request';
+    const row={person_id:PERSON_ID,group_id:group_id||uuid(),field,lang:lg||'und',value:value==null?'':String(value),ord:ord||0,
+      status:pub?'published':'in_review',created_by:user.id};
+    if(pub){ row.reviewed_by=user.id; row.published_at=new Date().toISOString(); }
+    /* person_facts_one_published_name_part allows one published part per (person, lang, field) */
+    const NAMEPARTS=['given','family','patronymic','maiden','called','honorific'];
+    if(pub&&NAMEPARTS.includes(field)){ try{ await sb.from('person_facts').delete().eq('person_id',PERSON_ID).eq('lang',row.lang).eq('field',field).eq('status','published'); }catch(e){} }
+    try{ await sb.from('person_facts').insert(row); }catch(e){ return; }
+    if(pub) await syncPerson(field,row.value); }
+  /* the few facts that also live as people columns */
+  async function syncPerson(field,value){ const patch={};
+    if(field==='birth') patch.birth_date=value||null; else if(field==='death') patch.death_date=value||null;
+    else if(field==='birth_prec') patch.birth_certainty=value||null; else if(field==='living') patch.is_living=(value==='1');
+    else if(field==='gender') patch.sex=value||null;
+    else if(field==='face'){ try{ patch.primary_asset=JSON.parse(value).storage_path; }catch(e){ return; } }
+    if(Object.keys(patch).length){ try{ await sb.from('people').update(patch).eq('id',PERSON_ID); }catch(e){} } }
   async function delFact(id){ try{ await sb.from('person_facts').delete().eq('id',id); }catch(e){} }
-  async function upsertNV(lg,given,family){ if(!user) return; try{
-    await sb.from('name_variants').delete().eq('person_id',PERSON_ID).eq('lang',lg).eq('created_by',user.id).neq('status','published');
-    if((given&&given.trim())||(family&&family.trim())) await sb.from('name_variants').insert({person_id:PERSON_ID,lang:lg,given:given||'',family:family||null,status:'in_review',created_by:user.id});
-  }catch(e){} }
+  /* delete if the gate allows it; otherwise ask the keeper (per-row, Rule 3) */
+  async function removeRow(id){ const row=facts.find(x=>x.id===id); if(!row) return;
+    if(canDelete(row)) await delFact(id);
+    else if(!removalReq(id)){ await insFact('remove_request','und',id); toast(d().removeAsked); }
+    await reload(); }
 
   /* ---------- load ---------- */
   async function loadData(){
@@ -567,11 +682,17 @@
         if(cids.length){ try{ const {data:pp}=await sb.from('people').select('id,display_name').in('id',cids); (pp||[]).forEach(x=>contribNames[x.id]=x.display_name); }catch(e){} }
       } }catch(e){}
     rels=[];
-    try{ const {data:rp}=await sb.from('relationships').select('id,from_person,to_person').or('from_person.eq.'+PERSON_ID+',to_person.eq.'+PERSON_ID);
-      const others=[...new Set((rp||[]).map(r=>r.from_person===PERSON_ID?r.to_person:r.from_person).filter(Boolean))];
+    try{ const filt='from_person.eq.'+PERSON_ID+',to_person.eq.'+PERSON_ID;
+      let rp=[]; try{ const {data}=await sb.from('relationships').select('id,from_person,to_person,kind,certainty,note').or(filt); rp=data||[]; }
+      catch(e){ const {data}=await sb.from('relationships').select('id,from_person,to_person').or(filt); rp=data||[]; }
+      const others=[...new Set(rp.map(r=>r.from_person===PERSON_ID?r.to_person:r.from_person).filter(Boolean))];
       let names={}; if(others.length){ try{ const {data:pp}=await sb.from('people').select('id,display_name').in('id',others); (pp||[]).forEach(x=>names[x.id]=x.display_name); }catch(e){} }
-      rels=(rp||[]).map(r=>{ const isParent=r.from_person===PERSON_ID; const other=isParent?r.to_person:r.from_person; return {id:r.id, name:names[other]||'—', relKey:isParent?'child':'parent'}; });
+      /* from_person = PARENT, to_person = CHILD (CLAUDE.md §9) */
+      rels=rp.map(r=>{ const isFrom=r.from_person===PERSON_ID; const other=isFrom?r.to_person:r.from_person;
+        return { id:r.id, other, name:names[other]||'—', kind:r.kind||'parent', certainty:r.certainty||'remembered', note:r.note||'',
+                 dir:isFrom?'other_child':'other_parent', relKey:isFrom?'child':'parent' }; });
     }catch(e){ rels=[]; }
+    try{ const {data:all}=await sb.from('people').select('id,display_name').neq('id',PERSON_ID).order('display_name').limit(600); PEOPLE=all||[]; }catch(e){ PEOPLE=[]; }
     memories=tagged.map(t=>({ id:t.artefact_id, cap:[t.meta&&t.meta.when,t.meta&&t.meta.where].filter(Boolean).join(' · '), teller:t.contributor_id?(contribNames[t.contributor_id]||''):'', pending:false }));
   }
 
@@ -580,7 +701,8 @@
     return Object.keys(groups).map(gid=>({group_id:gid,...groups[gid]})); }
   function buildNames(){
     const NF=['display','given','called','family','maiden','patronymic','honorific'];
-    NAME={}; PEND={}; NF.forEach(f=>{ NAME[f]={}; PEND[f]={}; LANGS.forEach(l=>{ NAME[f][l]=pubNewest(f,l); const p=pendList(f,l)[0]; PEND[f][l]=p?p.value:''; }); });
+    NAME={}; PEND={}; NAMEROW={};
+    NF.forEach(f=>{ NAME[f]={}; PEND[f]={}; NAMEROW[f]={}; LANGS.forEach(l=>{ const r=pubRow(f,l); NAMEROW[f][l]=r; NAME[f][l]=r?r.value:''; const p=pendList(f,l)[0]; PEND[f][l]=p?p.value:''; }); });
     LANGS.forEach(l=>{ const vp=NV.find(v=>v.lang===l&&v.status==='published'); if(vp){ if(!NAME.given[l]&&vp.given) NAME.given[l]=vp.given; if(!NAME.family[l]&&vp.family) NAME.family[l]=vp.family; }
       const vpe=NV.find(v=>v.lang===l&&v.status!=='published'); if(vpe){ if(!PEND.given[l]&&vpe.given) PEND.given[l]=vpe.given; if(!PEND.family[l]&&vpe.family) PEND.family[l]=vpe.family; } });
     LANGS.forEach(l=>{ if(!NAME.display[l]){ const dn=[NAME.given[l],NAME.family[l]].filter(Boolean).join(' '); if(dn) NAME.display[l]=dn; } });
@@ -596,7 +718,7 @@
     S={
       life:{ bio:perLang('bio'), occupation:perLang('occupation'), birth:person.birth_date||'', death:person.death_date||'',
         birth_prec:person.birth_certainty||'', living:!!person.is_living, gender:person.sex||'', langspoken:pubList('langspoken','und') },
-      places:{ pbirth:pubNewest('pbirth','und')||pubNewest('pbirth','en')||'', lived:pubList('lived','und') },
+      places:{ pbirth:pubNewest('pbirth','und')||pubNewest('pbirth','en')||'', lived:pubList('lived','und'), country:perLang('country') },
       kin:pubList('kin','und'),
       more:{ custom:groupCustom(true), sources:pubList('source','und') }
     };
@@ -609,7 +731,7 @@
     if(fid==='name') k=(hasv(NAME.given[state.lang])||hasv(NAME.given.en)||hasv(NAME.display.en))?1:0.4;
     else if(fid==='face') k=tagged.length?Math.min(1,0.3+tagged.length*0.18):0.15;
     else if(fid==='life'){ const p=[S.life.bio[state.lang]||S.life.bio.en,S.life.occupation[state.lang]||S.life.occupation.en,S.life.birth,S.life.gender]; k=Math.max(0.12,p.filter(hasv).length/p.length); }
-    else if(fid==='places'){ const c=(hasv(S.places.pbirth)?1:0)+(S.places.lived.length?1:0); k=Math.max(0.12,c/2); }
+    else if(fid==='places'){ const c=(hasv(S.places.pbirth)?1:0)+(S.places.lived.length?1:0)+(hasv(S.places.country[state.lang]||S.places.country.en)?1:0); k=Math.max(0.12,c/3); }
     else if(fid==='story') k=memories.length?Math.min(1,0.3+memories.length*0.2):0.12;
     else if(fid==='kin'){ const c=rels.length+S.kin.length; k=c?Math.min(1,0.3+c*0.18):0.12; }
     else if(fid==='reel') k=overallFill();
@@ -658,8 +780,10 @@
         <span class="go">${locked?sv(I.lock,1.7):esc(L.playCta)}</span></div>`; }).join('');
     return `<div class="games">${rows}</div>`; }
   function bead(f){ const L=d(); const cool=f.kind==='cool'; const play=f.games.length?`<span class="play">${sv(I.play,0)}</span>`:''; const pin=catPending(f.id)?`<span class="pin"></span>`:'';
-    return `<button class="cat ${cool?'cool':''}" data-jump="${f.id}" style="--k:${facetK(f.id)}" aria-label="${esc(L.facet[f.id])}"><span class="bead">${sv(I[f.id])}${play}${pin}</span><span class="lab">${esc(L.facet[f.id])}</span></button>`; }
-  function facetCard(f){ return `<div class="facet" data-facet="${f.id}">${fhead(f)}<div class="fbody">${bodyFor(f)}</div></div>`; }
+    const sel=state.facet===f.id;
+    return `<button class="cat ${cool?'cool':''} ${sel?'sel':''}" data-jump="${f.id}" style="--k:${facetK(f.id)}" aria-label="${esc(L.facet[f.id])}" aria-pressed="${sel?'true':'false'}" aria-controls="facet-${f.id}"><span class="bead">${sv(I[f.id])}${play}${pin}</span><span class="lab">${esc(L.facet[f.id])}</span></button>`; }
+  function facetCard(f){ const on=state.facet===f.id;
+    return `<div class="facet${on?' enter':''}" id="facet-${f.id}" data-facet="${f.id}"${on?'':' hidden'}>${fhead(f)}<div class="fbody">${bodyFor(f)}</div></div>`; }
   function ringShell(){ const L=d(); const cx=154,cy=154,R=126;
     const beads=FACETS.map((f,i)=>{ const a=-Math.PI/2+i*(Math.PI*2/8); const x=cx+R*Math.cos(a), y=cy+R*Math.sin(a);
       return `<div style="position:absolute;left:${x}px;top:${y}px;transform:translate(-50%,-50%)">${bead(f)}</div>`; }).join('');
@@ -679,15 +803,21 @@
   /* ---------- name facet ---------- */
   function namePendRef(k,l){ const f=facts.find(x=>x.field===k&&x.lang===l&&x.status!=='published'); if(f) return {kind:'fact',id:f.id,value:f.value};
     if(k==='given'||k==='family'){ const v=NV.find(x=>x.lang===l&&x.status!=='published'&&x[k]); if(v) return {kind:'nv',id:v.id,value:v[k]}; } return null; }
-  function namePartBlock(k,v){ const L=d(); return `<div class="namepart"><div class="np-lab">${esc(L[k]||k)}</div><div class="np-val serif">${esc(v)}</div></div>`; }
+  /* every published name part gets edit + delete (or "ask to remove") */
+  function partCtls(k){ const L=d(); const lang=state.lang; const row=(NAMEROW[k]||{})[lang];
+    let del=delCtl(row);
+    if(!del&&(k==='given'||k==='family')){ const v=NV.find(x=>x.lang===lang&&x.status==='published'&&x[k]);
+      if(v&&state.keeper) del=`<button class="np-ctl" data-delnv="${v.id}:${k}">${sv(I.trash,1.7)} ${esc(L.remove)}</button>`; }
+    return `<div class="rowctl"><button class="np-ctl" data-editpart="${k}">${sv(I.pen,1.7)} ${esc(L.edit)}</button>${del}</div>`; }
+  function namePartBlock(k,v){ const L=d(); return `<div class="namepart"><div class="np-lab">${esc(L[k]||k)}</div><div class="np-val serif">${esc(v)}</div>${partCtls(k)}</div>`; }
   function nameBody(){ const L=d(); const lang=state.lang;
     const has=k=>NAME[k]&&NAME[k][lang]?NAME[k][lang]:'';
     const NF=['given','called','family','maiden','patronymic','honorific'];
     let out='';
-    if(has('display')) out+=`<div class="namepart"><div class="np-lab">${L.display}</div><div class="np-val serif">${esc(has('display'))}</div></div>`;
+    if(has('display')) out+=`<div class="namepart"><div class="np-lab">${L.display}</div><div class="np-val serif">${esc(has('display'))}</div>${partCtls('display')}</div>`;
     if(has('given')||has('called')){ out+=`<div class="nameblock">`;
-      if(has('given')) out+=`<div class="np-lab">${L.given}</div><div class="np-given serif">${esc(has('given'))}</div>`;
-      if(has('called')) out+=`<div class="np-called serif">${esc(has('called'))}<span class="np-tag">${L.called} · ${L.calledHint}</span></div>`;
+      if(has('given')) out+=`<div class="np-lab">${L.given}</div><div class="np-given serif">${esc(has('given'))}</div>${partCtls('given')}`;
+      if(has('called')) out+=`<div class="np-called serif">${esc(has('called'))}<span class="np-tag">${L.called} · ${L.calledHint}</span></div>${partCtls('called')}`;
       out+=`</div>`; }
     if(has('family')) out+=namePartBlock('family',has('family'));
     if(has('maiden')) out+=namePartBlock('maiden',has('maiden'));
@@ -701,7 +831,7 @@
     const unset=NF.filter(k=>!has(k)&&!namePendRef(k,lang));
     const addBtn=unset.length?`<button class="np-ctl add" data-act="nmadd">${sv(I.plus,2)} ${L.addpart}</button>`:'';
     out+=`<div class="np-foot"><button class="np-ctl" data-act="nmlang">${sv(I.globe2,1.5)} ${L.otherlangs}</button>${addBtn}</div>`;
-    const editable=['given','called','family','maiden','patronymic','honorific'];
+    const editable=['display','given','called','family','maiden','patronymic','honorific'];
     out+=`<div class="np-langs" hidden>${editable.map(k=>`<div class="mlgrp"><div class="np-lab">${esc(L[k]||k)}</div>
         ${LANGS.map(l=>`<div class="mlvar ${l==='he'?'rtl':''}"><span class="tag">${l}</span><input class="inp" data-field="${k}" data-lang="${l}" value="${esc((NAME[k]&&NAME[k][l])||'')}" placeholder="${L.addfield}"></div>`).join('')}
       </div>`).join('')}<div class="btnrow" style="margin-top:4px"><button class="btn ghost" data-act="revert">${L.cancel}</button><button class="btn violet" data-act="nmsend">${L.send}</button></div></div>`;
@@ -718,37 +848,55 @@
     if(id==='face'){ const shots=tagged.map((t,i)=>`<div class="tagshot"><div class="im" data-thumb="${i}">${galSVG(i)}</div><div class="cap2">${esc([t.meta&&t.meta.when,t.meta&&t.meta.where].filter(Boolean).join(' · '))}</div></div>`).join('');
       return `<div class="hint" style="margin-top:0;margin-bottom:12px">${L.faceLine}</div>
         ${tagged.length?`<div class="tagstrip">${shots}</div>`:`<div class="hint">${L.noFace}</div>`}
-        <button class="chip add" data-act="changeface" style="margin-top:2px">${sv(I.camera,1.7)} ${L.changeface}</button>
+        <div class="chips" style="margin-top:10px"><button class="chip add" data-act="addmemory">${sv(I.plus,2)} ${L.addmemory}</button></div>
         ${gamesHTML(f)}`; }
     if(id==='life'){
-      return mlEdit(L.about,'bio',S.life.bio)
-        + `<div class="field"><label>${L.occupation}</label><input class="inp ${hasv(S.life.occupation[lang])?'':'empty-inp'}" data-field="occupation" data-lang="${lang}" value="${esc(S.life.occupation[lang]||'')}" placeholder="${esc(L.addoccupation)}"></div>`
-        + `<div class="row2"><div class="field"><label>${L.born}</label><input class="inp" data-field="birth" value="${esc(S.life.birth)}" placeholder="YYYY-MM-DD"></div>
-           <div class="field"><label>${L.died}</label><input class="inp" data-field="death" value="${esc(S.life.death)}" placeholder="YYYY-MM-DD"></div></div>
+      const rowctl=h=>h?`<div class="rowctl">${h}</div>`:'';
+      return mlEdit(L.about,'bio',S.life.bio) + rowctl(delCtl(pubRow('bio',lang)))
+        + `<div class="field"><label>${L.occupation}</label><input class="inp ${hasv(S.life.occupation[lang])?'':'empty-inp'}" data-field="occupation" data-lang="${lang}" value="${esc(S.life.occupation[lang]||'')}" placeholder="${esc(L.addoccupation)}">${rowctl(delCtl(pubRow('occupation',lang)))}</div>`
+        + `<div class="row2"><div class="field"><label>${L.born}</label><input class="inp" data-field="birth" value="${esc(S.life.birth)}" placeholder="YYYY-MM-DD">${rowctl(clearCtl('birth_date'))}</div>
+           <div class="field"><label>${L.died}</label><input class="inp" data-field="death" value="${esc(S.life.death)}" placeholder="YYYY-MM-DD">${rowctl(clearCtl('death_date'))}</div></div>
         <div class="field"><div class="toggle"><span class="sw ${S.life.living?'on':''}" data-act="sw" data-field="living"></span><span style="font-size:14px">${L.living}</span></div></div>
         <div class="field"><label>${L.precision}</label><div class="seg" data-field="birth_prec">${L.prec.map((p,i)=>{ const v=['exact','month','year','circa','unknown'][i]; return `<button class="${S.life.birth_prec===v||(!S.life.birth_prec&&i===0)?'on':''}" data-act="seg" data-v="${v}">${esc(p)}</button>`; }).join('')}</div></div>
         <div class="field"><label>${L.gender} · <span style="text-transform:none;letter-spacing:0;color:#7f8fa8">${esc(L.genderHint)}</span></label>
-          <div class="seg gold" data-field="gender">${L.gopts.map((g,i)=>{ const v=['f','m','x',''][i]; return `<button class="${S.life.gender===v||(!S.life.gender&&i===3)?'on':''}" data-act="seg" data-v="${v}">${esc(g)}</button>`; }).join('')}</div></div>
-        <div class="field"><label>${L.langspoken}</label>${chipsField('langspoken','',false)}</div>
+          <div class="seg gold" data-field="gender">${L.gopts.map((g,i)=>{ const v=['f','m','x',''][i]; return `<button class="${S.life.gender===v||(!S.life.gender&&i===3)?'on':''}" data-act="seg" data-v="${v}">${esc(g)}</button>`; }).join('')}</div>${rowctl(clearCtl('sex'))}</div>
+        <div class="field"><label>${L.langspoken}</label>${chipsField('langspoken',L.langspoken,false)}</div>
         ${facetSend('life')}${gamesHTML(f)}`;
     }
-    if(id==='places'){ const placed=(hasv(S.places.pbirth)?1:0)+S.places.lived.length;
-      return `<div class="field"><label>${L.pbirth}</label><input class="inp" data-field="pbirth" value="${esc(S.places.pbirth)}"></div>
+    if(id==='places'){ const placed=(hasv(S.places.pbirth)?1:0)+S.places.lived.length+(hasv(S.places.country[lang]||S.places.country.en)?1:0);
+      const pctl=r=>r?`<div class="rowctl">${delCtl(r)}</div>`:'';
+      return `<div class="field"><label>${L.pbirth}</label><input class="inp" data-field="pbirth" value="${esc(S.places.pbirth)}" placeholder="${esc(L.pbirth)}">${pctl(pubRow('pbirth','und'))}</div>
+        ${mlEdit(L.country,'country',S.places.country)}${pctl(pubRow('country',lang))}
         <div class="field"><label>${L.lived}</label>${chipsField('lived',L.addplace,true)}</div>
         ${placed>0?`<div class="appfact"><span class="mark">${sv(I.chart,2)}</span><div class="body">${esc(placesAppLine(placed))}<span class="src">${L.assembled}</span></div></div>`:''}
         ${facetSend('places')}${gamesHTML(f)}`; }
     if(id==='story'){ let h='';
       if(memories.length) h+=memories.map(m=>`<div class="memory"><div class="words">${m.cap?('“'+esc(m.cap)+'”'):esc(L.noStory)}</div>${m.teller?`<div class="told"><span class="flame"></span><b>${esc(m.teller)}</b></div>`:''}</div>`).join('');
       else h+=`<div class="invite"><div class="words">${L.noStory}</div><div class="cta" data-act="addmemory">${L.askSomeone}</div></div>`;
+      h+=`<div class="chips" style="margin-top:10px"><button class="chip add" data-act="addmemory">${sv(I.plus,2)} ${L.addmemory}</button></div>`;
       return h+gamesHTML(f); }
     if(id==='kin'){
-      const relChips=rels.map(r=>`<span class="chip">${esc(r.name)} · ${esc(relLabel(r.relKey))}</span>`).join('');
-      const kinPub=pubList('kin','und').map(r=>`<span class="chip">${esc(r.value)}<span class="x" data-del="${r.id}">${sv(I.x,2)}</span></span>`).join('');
+      /* a real connection: kind, direction, certainty, note — each editable and removable */
+      const live=rels.map(r=>`<div class="relrow"><div>
+          <div class="rk">${esc(kindText(r))}</div><div class="rn">${esc(r.name)}</div>
+          <div class="rc">${esc(L.certs[r.certainty]||r.certainty)}${r.note?' · '+esc(r.note):''}</div>
+          <div class="rowctl"><button class="np-ctl" data-reledit="${r.id}">${sv(I.pen,1.7)} ${L.edit}</button>
+            <button class="np-ctl warn" data-reldel="${r.id}">${sv(I.trash,1.7)} ${esc(state.keeper?L.remove:L.askremove)}</button></div>
+        </div></div>`).join('');
+      /* free-text kin rows written before connections were typed */
+      const legacy=pubList('kin','und').filter(r=>!parseKin(r.value)).map(r=>`<div class="relrow"><div>
+          <div class="rk">${esc(L.relations)}</div><div class="rn">${esc(r.value)}</div>
+          <div class="rowctl">${delCtl(r)}</div></div></div>`).join('');
       const kinPend=pendList('kin','und');
-      let pend='';
-      if(kinPend.length){ pend=kinPend.map(r=>`<div class="pendrow"><span class="chip pending">${esc(r.value)} <span class="mono" style="font-size:9px;opacity:.8">· ${L.pendingChip}</span></span>${state.keeper?keeperInline(r.id,'fact'):''}</div>`).join('');
-        if(!state.keeper) pend+=`<div class="pending" style="margin-top:6px"><span class="sp"></span>${L.bothpending}</div>`; }
-      return `<div class="chips">${relChips}${kinPub}<button class="chip add" data-addchip="kin">${sv(I.plus,2)} ${L.addkin}</button></div>${chipAddBox('kin',L.addkin)}${pend}
+      const pendRows=kinPend.map(r=>{ const p=parseKin(r.value);
+        const head=p?`${esc(L.relkinds[p.kind]||p.kind)}${p.op==='remove'?' · '+esc(L.remove):''}`:esc(L.addkin);
+        const body=p?esc(p.other_name||''):esc(r.value);
+        const meta=p?esc([L.certs[p.certainty]||p.certainty,p.note].filter(Boolean).join(' · ')):'';
+        return `<div class="relrow pend"><div><div class="rk">${head} · ${L.pendingChip}</div><div class="rn">${body}</div>
+          ${meta?`<div class="rc">${meta}</div>`:''}
+          ${state.keeper?keeperInline(r.id,'fact'):`<div class="pending"><span class="sp"></span>${L.bothpending}</div>`}</div></div>`; }).join('');
+      return `${live||''}${legacy}${pendRows}
+        <div class="chips" style="margin-top:4px"><button class="chip add" data-act="addconn">${sv(I.plus,2)} ${L.addkin}</button></div>
         ${rels.length?`<div class="appfact"><span class="mark">${sv(I.chart,2)}</span><div class="body">${L.kinApp}<span class="src">${L.assembled}</span></div></div>`:''}
         <button class="chip add" data-act="howrelated" style="margin-top:12px;border-color:rgba(127,180,216,.4);color:var(--cool-hi)">${sv(I.kin,1.7)} ${L.howrelated}</button>`; }
     if(id==='reel'){ const fill=Math.round(overallFill()*100); const kindled=FACETS.filter(x=>x.id!=='reel').filter(x=>facetK(x.id)>=0.5).length;
@@ -758,7 +906,9 @@
         <div class="rt"><div class="rn">${esc(reelName)}</div><div class="rs">${L.reelSub}</div></div><span class="rgo" data-act="watch">${L.watch}</span></div>
         <div class="bar"><i style="width:${fill}%"></i></div><div class="barlab">${kindled} / 8 ${L.reelBar}</div></div>`; }
     /* more */
-    let h=S.more.custom.map(c=>`<div class="detailrow"><div><div class="dl">${esc(c.label[lang]||c.label.en||c.label.ru||c.label.he||'')}</div><div class="dv">${esc(c.value[lang]||c.value.en||c.value.ru||c.value.he||'')}</div></div><span class="x" data-delgroup="${c.group_id}">${sv(I.x,2)}</span></div>`).join('');
+    let h=S.more.custom.map(c=>`<div class="detailrow"><div><div class="dl">${esc(c.label[lang]||c.label.en||c.label.ru||c.label.he||'')}</div><div class="dv">${esc(c.value[lang]||c.value.en||c.value.ru||c.value.he||'')}</div>
+        <div class="rowctl"><button class="np-ctl" data-editgroup="${c.group_id}">${sv(I.pen,1.7)} ${L.edit}</button>
+          <button class="np-ctl warn" data-delgroup="${c.group_id}">${sv(I.trash,1.7)} ${esc(state.keeper?L.remove:L.askremove)}</button></div></div></div>`).join('');
     h+=pendingCustomRows();
     h+=`<div class="adddetail"><button class="plus" data-act="adddetail">${sv(I.plus,1.8)} ${L.adddetail}</button></div>`;
     h+=`<div class="field" style="margin-top:14px"><label>${L.source}</label>${chipsField('source',L.source,true)}</div>`;
@@ -777,11 +927,14 @@
   }
   async function fillFaces(){ const fh=$('#faceHost'); if(fh){ if(person.primary_asset){ faceInto(fh,person.primary_asset,(person.metadata&&person.metadata.face_box)||null); } else if(tagged[0]){ faceInto(fh,tagged[0].storage_path,tagged[0].box); } }
     $$('.tagshot .im[data-thumb]').forEach(async el=>{ const i=+el.getAttribute('data-thumb'); const t=tagged[i]; if(!t) return; const u=await signedUrl(t.storage_path); if(u) el.innerHTML=`<img src="${u}" alt="">`; }); }
-  function jump(fid){ const screen=$('.screen'); const card=$(`.facet[data-facet="${fid}"]`); if(!card||!screen) return;
-    const top=card.getBoundingClientRect().top-screen.getBoundingClientRect().top+screen.scrollTop-12;
-    screen.scrollTo({ top, behavior:reduceMotion?'auto':'smooth' });
-    card.style.transition='box-shadow .5s'; card.style.boxShadow='0 0 0 1px rgba(243,205,132,.5), 0 0 34px -8px rgba(243,205,132,.5)';
-    setTimeout(()=>card.style.boxShadow='',1100); }
+  /* the beads ARE the navigation: one facet on screen at a time */
+  function selectFacet(fid){ if(!FACETS.some(f=>f.id===fid)) return;
+    state.facet=fid;
+    $$('.cat[data-jump]').forEach(b=>{ const on=b.dataset.jump===fid; b.classList.toggle('sel',on); b.setAttribute('aria-pressed',on?'true':'false'); });
+    $$('.facet[data-facet]').forEach(c=>{ const on=c.dataset.facet===fid; c.hidden=!on; c.classList.remove('enter'); if(on&&!reduceMotion){ void c.offsetWidth; c.classList.add('enter'); } });
+    const screen=$('.screen'), card=$(`.facet[data-facet="${fid}"]`);
+    if(screen&&card){ const top=card.getBoundingClientRect().top-screen.getBoundingClientRect().top+screen.scrollTop-12;
+      screen.scrollTo({ top:Math.max(0,top), behavior:reduceMotion?'auto':'smooth' }); } }
 
   /* ---------- overlays ---------- */
   const showSheet=name=>{ $('.scrim').classList.add('show'); $(`.sheet[data-sheet="${name}"]`).classList.add('show'); };
@@ -815,10 +968,13 @@
     sh._faceSave=async()=>{ if(chosen){ const t=tagged[chosen.i]; if(t) await insFact('face','und',JSON.stringify({artefact_id:t.artefact_id,storage_path:t.storage_path,zoom:z,px:px,py:py})); } hideSheets(); await reload(); toast(L.sent); };
     showSheet('face'); }
 
-  function openAdd(){ const L=d(); const sh=$('.sheet[data-sheet="add"]');
-    sh.innerHTML=`<div class="grip"></div><h3>${L.adddetail}</h3><div class="sub">${L.adddetailsub}</div>
-      <div class="field"><label>${L.detailLabel} (${state.lang})</label><input class="inp" data-add-label placeholder="${L.detailLabel}" style="margin-bottom:10px">
-      <label>${L.detailValue} (${state.lang})</label><input class="inp" data-add-value placeholder="${L.detailValue}"></div>
+  function openAdd(groupId){ const L=d(); const sh=$('.sheet[data-sheet="add"]');
+    const cur=groupId?(groupCustom(true).concat(groupCustom(false))).find(c=>c.group_id===groupId):null;
+    const lab0=cur?(cur.label[state.lang]||cur.label.en||''):'', val0=cur?(cur.value[state.lang]||cur.value.en||''):'';
+    sh.dataset.group=groupId||'';
+    sh.innerHTML=`<div class="grip"></div><h3>${groupId?L.edit:L.adddetail}</h3><div class="sub">${L.adddetailsub}</div>
+      <div class="field"><label>${L.detailLabel} (${state.lang})</label><input class="inp" data-add-label placeholder="${L.detailLabel}" value="${esc(lab0)}" style="margin-bottom:10px">
+      <label>${L.detailValue} (${state.lang})</label><input class="inp" data-add-value placeholder="${L.detailValue}" value="${esc(val0)}"></div>
       <div class="hint" style="display:flex;gap:9px">${sv(I.info,1.7)}<span>${L.keeper}</span></div>
       <div class="btnrow"><button class="btn ghost" data-act="close">${L.cancel}</button><button class="btn violet" data-act="addsend">${L.send}</button></div>`;
     showSheet('add'); }
@@ -834,7 +990,101 @@
       <div class="btnrow"><button class="btn ghost" data-act="close">${L.cancel}</button><button class="btn primary" data-act="close">${L.playCta}</button></div>`;
     showSheet('game'); }
 
-  function openAddPart(part){ const card=$('.facet[data-facet="name"]'); if(!card) return;
+  /* ---------- connections: the real relationships row ----------
+     mode 'add'    — connect this person to someone already in the forest
+     mode 'edit'   — change kind / certainty / note on an existing row
+     mode 'me'     — "How are you related?": the viewer's own node → this person   */
+  function openKin(mode,relId){ const L=d(); const sh=$('.sheet[data-sheet="kin"]');
+    const existing=relId?rels.find(r=>r.id===relId):null;
+    const st={ mode, relId:relId||null,
+      other:existing?existing.other:(mode==='me'?(localStorage.getItem('lf_me')||''):''),
+      kind:existing?existing.kind:'parent', dir:existing?existing.dir:'other_parent',
+      certainty:existing?existing.certainty:'remembered', note:existing?existing.note:'', propose:'' };
+    const nameOf=id=>{ const p=PEOPLE.find(x=>x.id===id); return p?p.display_name:''; };
+    const title=mode==='edit'?L.editconn:(mode==='me'?L.howrelated:L.addconn);
+    const sub=mode==='me'?L.meHint:(mode==='edit'?'':L.kinApp);
+
+    function pickerHTML(){
+      if(mode==='edit') return `<div class="field"><label>${L.pickperson}</label><div class="np-val serif">${esc(existing?existing.name:'')}</div></div>`;
+      const q=(st.q||'').toLowerCase();
+      const list=PEOPLE.filter(p=>!q||String(p.display_name||'').toLowerCase().includes(q)).slice(0,200);
+      return `<div class="field"><label>${mode==='me'?L.meAsk:L.pickperson}</label>
+        <input class="inp" data-kinsearch placeholder="${esc(L.searchppl)}" value="${esc(st.q||'')}" style="margin-bottom:9px">
+        <div class="picker">${list.length?list.map(p=>`<button data-kinpick="${esc(p.id)}" class="${st.other===p.id?'on':''}">${esc(p.display_name||'—')}</button>`).join(''):`<div class="sub" style="padding:12px">${L.nopeople}</div>`}</div>
+        ${mode==='me'?'':`<label>${L.proposenew}</label>
+        <input class="inp" data-kinpropose placeholder="${esc(L.proposename)}" value="${esc(st.propose||'')}">
+        <div class="hint">${L.proposehint}</div>`}</div>`; }
+
+    function draw(){
+      const dirLine=st.kind==='parent'?`<div class="field"><label>${L.dirq}</label><div class="segwrap" data-kingroup="dir">
+          ${[['other_parent',L.dirTheirParent],['other_child',L.dirTheirChild]].map(([v,t])=>`<button data-kinset="dir:${v}" class="${st.dir===v?'on':''}">${esc(t)}</button>`).join('')}</div></div>`:'';
+      const canRemove=mode==='edit';
+      sh.innerHTML=`<div class="grip"></div><h3>${esc(title)}</h3>${sub?`<div class="sub">${esc(sub)}</div>`:''}
+        ${pickerHTML()}
+        <div class="field"><label>${L.relkind}</label><div class="segwrap" data-kingroup="kind">
+          ${REL_KINDS.map(k=>`<button data-kinset="kind:${k}" class="${st.kind===k?'on':''}">${esc(L.relkinds[k])}</button>`).join('')}</div></div>
+        ${dirLine}
+        <div class="field"><label>${L.certainty}</label><div class="segwrap" data-kingroup="certainty">
+          ${REL_CERTS.map(c=>`<button data-kinset="certainty:${c}" class="${st.certainty===c?'on':''}">${esc(L.certs[c])}</button>`).join('')}</div></div>
+        <div class="field"><label>${L.relnote}</label><input class="inp" data-kinnote value="${esc(st.note||'')}" placeholder="${esc(L.relnote)}"></div>
+        ${state.keeper?'':`<div class="hint" style="display:flex;gap:9px">${sv(I.info,1.7)}<span>${esc(L.keeper)}</span></div>`}
+        <div class="btnrow"><button class="btn ghost" data-act="close">${L.cancel}</button>
+          <button class="btn ${state.keeper?'primary':'violet'}" data-act="kinsave">${state.keeper?L.save:L.send}</button></div>
+        ${canRemove?`<div class="btnrow"><button class="btn ghost" data-act="kinremove" style="color:var(--edit-hi);border-color:rgba(201,162,255,.4)">${sv(I.trash,1.7)} ${esc(L.removeconn)}</button></div>`:''}`;
+      const s=sh.querySelector('[data-kinsearch]'); if(s) s.oninput=e=>{ st.q=e.target.value; draw(); const n=sh.querySelector('[data-kinsearch]'); if(n){ n.focus(); n.setSelectionRange(n.value.length,n.value.length); } };
+      const np=sh.querySelector('[data-kinnote]'); if(np) np.oninput=e=>{ st.note=e.target.value; };
+      const pp=sh.querySelector('[data-kinpropose]'); if(pp) pp.oninput=e=>{ st.propose=e.target.value; };
+      sh.querySelectorAll('[data-kinpick]').forEach(b=>b.onclick=()=>{ st.other=b.getAttribute('data-kinpick'); st.propose=''; draw(); });
+      sh.querySelectorAll('[data-kinset]').forEach(b=>b.onclick=()=>{ const [k,v]=b.getAttribute('data-kinset').split(':'); st[k]=v; draw(); });
+    }
+    sh._kinSave=async()=>{
+      if(mode!=='edit'&&!st.other&&!String(st.propose||'').trim()){ toast(L.pickfirst); return; }
+      if(mode==='me'&&st.other) { try{ localStorage.setItem('lf_me',st.other); }catch(e){} }
+      await saveRel({ relId:st.relId, other:st.other, other_name:st.other?nameOf(st.other):String(st.propose||'').trim(),
+        propose:st.other?'':String(st.propose||'').trim(), kind:st.kind, dir:st.dir, certainty:st.certainty, note:st.note, mode });
+      hideSheets(); await reload(); selectFacet('kin'); toast(state.keeper?L.saved:L.sent); };
+    sh._kinRemove=async()=>{ await removeRel(st.relId); hideSheets(); await reload(); selectFacet('kin'); toast(state.keeper?L.saved:L.sent); };
+    draw(); showSheet('kin'); }
+
+  function relEnds(other,kind,dir){
+    /* from_person = PARENT, to_person = CHILD; other kinds keep this person as from_person */
+    if(kind==='parent'&&dir==='other_parent') return {from:other,to:PERSON_ID};
+    return {from:PERSON_ID,to:other}; }
+
+  async function saveRel(p){ if(!user) return; const L=d();
+    /* a proposed person is never invented here — it waits for the keeper, even if the keeper wrote it */
+    if(!state.keeper||p.propose){
+      const payload=JSON.stringify({ op:p.relId?'edit':'add', rel_id:p.relId||null, other:p.other||null,
+        other_name:p.other_name||'', propose:p.propose||'', kind:p.kind, dir:p.dir, certainty:p.certainty, note:p.note||'', from:p.mode==='me'?'viewer':'facet' });
+      try{ await sb.from('person_facts').insert({person_id:PERSON_ID,group_id:uuid(),field:'kin',lang:'und',value:payload,ord:0,status:'in_review',created_by:user.id}); }catch(e){}
+      return; }
+    const ends=relEnds(p.other,p.kind,p.dir);
+    const row={ kind:p.kind, certainty:p.certainty, note:p.note||'' };
+    try{
+      if(p.relId) await sb.from('relationships').update({...row,from_person:ends.from,to_person:ends.to}).eq('id',p.relId);
+      else await sb.from('relationships').insert({from_person:ends.from,to_person:ends.to,...row});
+    }catch(e){ /* older schema without kind/certainty/note */
+      try{ if(p.relId) await sb.from('relationships').update({from_person:ends.from,to_person:ends.to}).eq('id',p.relId);
+        else await sb.from('relationships').insert({from_person:ends.from,to_person:ends.to}); }catch(e2){} } }
+
+  async function removeRel(relId){ if(!relId||!user) return; const r=rels.find(x=>x.id===relId);
+    if(state.keeper){ try{ await sb.from('relationships').delete().eq('id',relId); }catch(e){} return; }
+    const payload=JSON.stringify({ op:'remove', rel_id:relId, other:r?r.other:null, other_name:r?r.name:'',
+      kind:r?r.kind:'other', dir:r?r.dir:'other_child', certainty:r?r.certainty:'remembered', note:'' });
+    try{ await sb.from('person_facts').insert({person_id:PERSON_ID,group_id:uuid(),field:'kin',lang:'und',value:payload,ord:0,status:'in_review',created_by:user.id}); }catch(e){} }
+
+  /* keeper approving a kin suggestion materialises the real relationships row */
+  async function applyKinPayload(p){
+    if(p.op==='remove'&&p.rel_id){ try{ await sb.from('relationships').delete().eq('id',p.rel_id); }catch(e){} return true; }
+    if(!p.other) return false;               /* a proposed new person is Leon's to create, not ours */
+    const ends=relEnds(p.other,p.kind,p.dir); const row={ kind:p.kind, certainty:p.certainty, note:p.note||'' };
+    try{ if(p.op==='edit'&&p.rel_id) await sb.from('relationships').update({...row,from_person:ends.from,to_person:ends.to}).eq('id',p.rel_id);
+      else await sb.from('relationships').insert({from_person:ends.from,to_person:ends.to,...row}); }
+    catch(e){ try{ if(p.op==='edit'&&p.rel_id) await sb.from('relationships').update({from_person:ends.from,to_person:ends.to}).eq('id',p.rel_id);
+      else await sb.from('relationships').insert({from_person:ends.from,to_person:ends.to}); }catch(e2){ return false; } }
+    return true; }
+
+  function openAddPart(part){ selectFacet('name'); const card=$('.facet[data-facet="name"]'); if(!card) return;
     const langs=card.querySelector('.np-langs'); const menu=card.querySelector('.np-addmenu'); if(langs) langs.hidden=false; if(menu) menu.hidden=true;
     const inp=card.querySelector(`.np-langs [data-field="${part}"][data-lang="${state.lang}"]`); if(inp) inp.focus(); }
 
@@ -848,17 +1098,27 @@
       const seg=card.querySelector('.seg[data-field="birth_prec"] .on'); if(seg) await insFact('birth_prec','und',seg.getAttribute('data-v'));
       const liv=card.querySelector('.sw[data-field="living"]'); if(liv) await insFact('living','und',liv.classList.contains('on')?'1':'0');
       const gseg=card.querySelector('.seg[data-field="gender"] .on'); if(gseg) await insFact('gender','und',gseg.getAttribute('data-v')||'');
-    } else if(fid==='places'){ const pb=read('pbirth'); if(pb!=null&&pb!=='') await insFact('pbirth','und',pb); }
+    } else if(fid==='places'){ const pb=read('pbirth'); if(pb!=null&&pb!=='') await insFact('pbirth','und',pb);
+      for(const l of LANGS){ const c=read('country',l); if(c!=null&&c.trim()!=='') await insFact('country',l,c.trim()); } }
     await reload(); toast(d().sent); }
   async function submitName(){ if(!user) return; const card=$('.facet[data-facet="name"]'); if(!card) return;
     const read=(f,l)=>{ const el=card.querySelector(`.np-langs [data-field="${f}"][data-lang="${l}"]`); return el?el.value.trim():null; };
-    for(const l of LANGS){ const gv=read('given',l), fm=read('family',l); if(gv!=null||fm!=null) await upsertNV(l,gv||'',fm||''); }
-    for(const f of ['called','maiden','patronymic','honorific']){ for(const l of LANGS){ const v=read(f,l); if(v) await insFact(f,l,v); } }
+    /* name parts are person_facts ROWS — name_variants is retiring, do not write to it */
+    for(const f of ['display','given','family','called','maiden','patronymic','honorific']){
+      for(const l of LANGS){ const v=read(f,l); if(v&&v!==((NAME[f]||{})[l]||'')) await insFact(f,l,v); } }
     await reload(); toast(d().sent); }
 
   /* ---------- keeper: per-field approve / decline (Rule 3) ---------- */
   async function approveRef(ref){ if(!user) return; const [kind,id]=ref.split(':'); const now=new Date().toISOString();
-    if(kind==='fact'){ const f=facts.find(x=>x.id===id); if(f){ const patch={};
+    if(kind==='remreq'){ const req=facts.find(x=>x.id===id);
+      if(req){ try{ await sb.from('person_facts').delete().eq('id',req.value); }catch(e){}
+        try{ await sb.from('person_facts').delete().eq('id',id); }catch(e){} }
+      await reload(); toast(d().approve+' ✓'); return; }
+    if(kind==='fact'){ const f=facts.find(x=>x.id===id);
+      if(f&&f.field==='kin'){ const p=parseKin(f.value);
+        if(p){ await applyKinPayload(p); try{ await sb.from('person_facts').delete().eq('id',id); }catch(e){}
+          await reload(); toast(d().approve+' ✓'); return; } }
+      if(f){ const patch={};
         if(f.field==='birth')patch.birth_date=f.value||null; if(f.field==='death')patch.death_date=f.value||null;
         if(f.field==='birth_prec')patch.birth_certainty=f.value||null; if(f.field==='living')patch.is_living=(f.value==='1');
         if(f.field==='gender')patch.sex=f.value||null; if(f.field==='face'){ try{ patch.primary_asset=JSON.parse(f.value).storage_path; }catch(e){} }
@@ -869,7 +1129,7 @@
     else if(kind==='artefact'){ try{ await sb.from('artefacts').update({pub_status:'published',reviewed_by:user.id}).eq('id',id); }catch(e){} }
     await reload(); toast(d().approve+' ✓'); }
   async function declineRef(ref){ const [kind,id]=ref.split(':');
-    if(kind==='fact') try{ await sb.from('person_facts').delete().eq('id',id); }catch(e){}
+    if(kind==='fact'||kind==='remreq') try{ await sb.from('person_facts').delete().eq('id',id); }catch(e){}
     else if(kind==='nv') try{ await sb.from('name_variants').delete().eq('id',id); }catch(e){}
     else if(kind==='group'){ for(const ff of facts.filter(x=>x.group_id===id&&x.status!=='published')){ try{ await sb.from('person_facts').delete().eq('id',ff.id); }catch(e){} } }
     else if(kind==='artefact') try{ await sb.from('artefacts').update({pub_status:'rejected'}).eq('id',id); }catch(e){}
@@ -879,11 +1139,27 @@
   function wireOnce(){ const root=$('#dev');
     root.addEventListener('click', async e=>{
       const L=d();
-      const jt=e.target.closest('[data-jump]'); if(jt){ jump(jt.dataset.jump); return; }
+      const jt=e.target.closest('[data-jump]'); if(jt){ selectFacet(jt.dataset.jump); return; }
       const ap=e.target.closest('[data-approve]'); if(ap){ await approveRef(ap.getAttribute('data-approve')); return; }
       const dc=e.target.closest('[data-decline]'); if(dc){ await declineRef(dc.getAttribute('data-decline')); return; }
-      const del=e.target.closest('[data-del]'); if(del){ await delFact(del.getAttribute('data-del')); await reload(); return; }
-      const dg=e.target.closest('[data-delgroup]'); if(dg){ const gid=dg.getAttribute('data-delgroup'); for(const ff of facts.filter(x=>x.group_id===gid)) await delFact(ff.id); await reload(); return; }
+      const del=e.target.closest('[data-del]'); if(del){ await removeRow(del.getAttribute('data-del')); return; }
+      const rd=e.target.closest('[data-rowdel]'); if(rd){ await removeRow(rd.getAttribute('data-rowdel')); return; }
+      const dnv=e.target.closest('[data-delnv]'); if(dnv){ const [nid,part]=dnv.getAttribute('data-delnv').split(':');
+        if(state.keeper){ const v=NV.find(x=>x.id===nid); if(v){ const rest=part==='given'?{given:'',family:v.family}:{given:v.given,family:null};
+          try{ if(!rest.given&&!rest.family) await sb.from('name_variants').delete().eq('id',nid);
+            else await sb.from('name_variants').update(rest).eq('id',nid); }catch(er){} } await reload(); }
+        return; }
+      const dg=e.target.closest('[data-delgroup]'); if(dg){ const gid=dg.getAttribute('data-delgroup');
+        const rows=facts.filter(x=>x.group_id===gid);
+        if(state.keeper||rows.every(canDelete)){ for(const ff of rows) await delFact(ff.id); }
+        else { for(const ff of rows) if(!removalReq(ff.id)) await insFact('remove_request','und',ff.id); toast(L.removeAsked); }
+        await reload(); return; }
+      const eg=e.target.closest('[data-editgroup]'); if(eg){ openAdd(eg.getAttribute('data-editgroup')); return; }
+      const ep=e.target.closest('[data-editpart]'); if(ep){ openAddPart(ep.getAttribute('data-editpart')); return; }
+      const re=e.target.closest('[data-reledit]'); if(re){ openKin('edit',re.getAttribute('data-reledit')); return; }
+      const rdel=e.target.closest('[data-reldel]'); if(rdel){ await removeRel(rdel.getAttribute('data-reldel')); await reload(); selectFacet('kin'); toast(state.keeper?L.saved:L.sent); return; }
+      const cp=e.target.closest('[data-clearperson]'); if(cp&&state.keeper){ const col=cp.getAttribute('data-clearperson');
+        try{ await sb.from('people').update({[col]:null}).eq('id',PERSON_ID); }catch(er){} await reload(); return; }
       const apart=e.target.closest('[data-addpart]'); if(apart){ openAddPart(apart.getAttribute('data-addpart')); return; }
       const addc=e.target.closest('[data-addchip]'); if(addc){ const box=$(`.chipadd[data-for="${addc.getAttribute('data-addchip')}"]`); if(box){ box.style.display='block'; const i=box.querySelector('input'); if(i) i.focus(); } return; }
       const cc=e.target.closest('[data-cadd-cancel]'); if(cc){ const box=cc.closest('.chipadd'); if(box) box.style.display='none'; return; }
@@ -898,7 +1174,14 @@
       if(act==='close'){ hideSheets(); return; }
       if(act==='facesave'){ const sh=$('.sheet[data-sheet="face"]'); if(sh&&sh._faceSave) return sh._faceSave(); return; }
       if(act==='addsend'){ const sh=$('.sheet[data-sheet="add"]'); const lab=sh.querySelector('[data-add-label]').value.trim(), val=sh.querySelector('[data-add-value]').value.trim();
-        if(lab||val){ const gid=uuid(); await insFact('custom_label',state.lang,lab,0,gid); await insFact('custom_value',state.lang,val,0,gid); } hideSheets(); await reload(); toast(L.sent); return; }
+        const grp=sh.dataset.group||'';
+        if(lab||val){
+          if(grp&&state.keeper){ /* keeper edits publish in place, per row */
+            const now=new Date().toISOString();
+            for(const ff of facts.filter(x=>x.group_id===grp&&(x.field==='custom_label'||x.field==='custom_value')&&x.lang===state.lang)){
+              try{ await sb.from('person_facts').update({value:ff.field==='custom_label'?lab:val,reviewed_by:user.id,published_at:now}).eq('id',ff.id); }catch(er){} }
+          } else { const gid=grp||uuid(); await insFact('custom_label',state.lang,lab,0,gid); await insFact('custom_value',state.lang,val,0,gid); } }
+        hideSheets(); await reload(); toast(state.keeper&&grp?L.saved:L.sent); return; }
       if(act==='ml'){ const v=a.parentElement.parentElement.querySelector('.mlvars'); if(v) v.classList.toggle('open'); return; }
       if(act==='nmlang'){ const b=a.closest('.fbody').querySelector('.np-langs'); if(b) b.hidden=!b.hidden; a.classList.toggle('on'); return; }
       if(act==='nmadd'){ const b=a.closest('.fbody').querySelector('.np-addmenu'); if(b) b.hidden=!b.hidden; a.classList.toggle('on'); return; }
@@ -909,7 +1192,10 @@
       if(act==='revert'){ seed(); render(); return; }
       if(act==='watch'){ const q=(person&&person.id)?('?id='+encodeURIComponent(person.id)):''; location.href='reel-real.html'+q; return; }
       if(act==='addmemory'){ location.href='contribute-add-real.html'; return; }
-      if(act==='howrelated'){ toast(L.sent); return; }
+      if(act==='addconn'){ return openKin('add'); }
+      if(act==='howrelated'){ return openKin('me'); }
+      if(act==='kinsave'){ const sh=$('.sheet[data-sheet="kin"]'); if(sh&&sh._kinSave) return sh._kinSave(); return; }
+      if(act==='kinremove'){ const sh=$('.sheet[data-sheet="kin"]'); if(sh&&sh._kinRemove) return sh._kinRemove(); return; }
     });
     $('.scrim').addEventListener('click', hideSheets);
   }
