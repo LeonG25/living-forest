@@ -125,6 +125,30 @@
   .qval{ font-family:'Newsreader',serif; font-size:22px; line-height:1.18; color:var(--edit-hi); word-break:break-word; }
   .qval .quiet{ color:var(--muted); font-size:15px; font-style:italic; }
   .qval .sm{ font-size:14px; color:var(--muted); font-style:italic; }
+
+  /* ===== old → new : what the keeper is actually judging ===== */
+  /* provenance: the OLD value is already published family voice -> gold (dimmed, small).
+     the NEW value is still waiting on the keeper -> violet (the big .qval). never blended. */
+  .wasrow{ display:flex; align-items:baseline; gap:7px; flex-wrap:wrap; margin-bottom:5px; }
+  .wastag,.nowtag{ font-family:'Azeret Mono',monospace; font-size:8.5px; letter-spacing:.14em; text-transform:uppercase; flex:0 0 auto; }
+  .wastag{ color:var(--dim); } .nowtag{ color:var(--edit-hi); opacity:.8; }
+  .wasval{ font-family:'Newsreader',serif; font-size:16px; line-height:1.2; color:var(--gold); opacity:.9; word-break:break-word; }
+  .wasnone{ font-size:12.5px; color:var(--dim); font-style:italic; }
+  .arrow,.cmparrow{ color:var(--dim); flex:0 0 auto; }
+  .nowrow{ display:flex; align-items:baseline; gap:7px; }
+  .newmark{ display:inline-flex; align-items:center; gap:6px; margin-bottom:6px; font-family:'Azeret Mono',monospace; font-size:8.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--leaf); }
+  .newmark svg{ width:13px; height:13px; flex:0 0 auto; }
+  .imgcmp{ display:flex; align-items:center; gap:9px; margin:2px 0 4px; }
+  .cmparrow{ font-size:15px; }
+  .imgcell{ flex:1 1 0; min-width:0; }
+  .imgcell .box{ width:100%; aspect-ratio:1/1; border-radius:12px; overflow:hidden; display:grid; place-items:center;
+    background:rgba(14,18,38,.7); border:1px solid var(--hair); color:var(--dim); }
+  .imgcell .box img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .imgcell .box svg{ width:26px; height:26px; }
+  .imgcell.old .box{ border-color:rgba(243,205,132,.34); }
+  .imgcell.new .box{ border-color:rgba(201,162,255,.46); }
+  .imgcell .cap{ font-family:'Azeret Mono',monospace; font-size:8.5px; letter-spacing:.12em; text-transform:uppercase; margin-top:6px; text-align:center; line-height:1.3; }
+  .imgcell.old .cap{ color:var(--gold); } .imgcell.new .cap{ color:var(--edit-hi); }
   .qfor{ font-size:12.5px; color:var(--cream); margin-top:5px; line-height:1.4; } .qfor b{ color:#fbf5e8; font-weight:600; }
   .qwho{ display:flex; align-items:center; gap:7px; margin-top:8px; font-size:11.5px; color:var(--muted); flex-wrap:wrap; }
   .qwho .av{ width:20px; height:20px; border-radius:50%; overflow:hidden; flex:0 0 auto; border:1px solid var(--hair); display:grid; place-items:center; color:var(--muted); background:rgba(14,18,38,.7); } .qwho .av svg{ width:13px; height:13px; }
@@ -292,6 +316,9 @@
       foot:'A gift held in violet is not lost — it is waiting to be welcomed.', footEmpty:'An empty queue is the sound of a family that keeps reaching for each other.',
       langtitle:'Language', langsub:'Names, labels and details all follow the language you choose.',
       voiceRec:'A voice recording', photoRec:'A photograph', theImage:'the image itself',
+      wasTag:'was', nowTag:'now', noPrev:'adding — no previous value',
+      newPerson:'A new person — nothing to compare', newMemory:'A new memory — nothing to compare',
+      capCurrent:'current', capProposed:'proposed', noPortrait:'no portrait yet',
       living:['no longer living','still living'], prec:{exact:'exact date',month:'to the month',year:'to the year',approx:'approximate',unknown:'unknown'},
       fld:{ given:'given name', family:'family name', patronymic:'patronymic', maiden:'maiden name', called:'called', honorific:'honorific', nickname:'nickname', display:'display name',
             lived:'lived in', pbirth:'born in', birth:'born', death:'died', birth_prec:'date precision', living:'still living?', gender:'gender', occupation:'occupation', bio:'about', langspoken:'languages spoken', source:'source', face:'the portrait', custom:'a detail', kin:'relation', field:'detail' } },
@@ -316,6 +343,9 @@
       foot:'Дар, хранимый в фиолетовом, не потерян — он ждёт.', footEmpty:'Пустая очередь — звук семьи, которая тянется друг к другу.',
       langtitle:'Язык', langsub:'Имена, подписи и детали — на выбранном языке.',
       voiceRec:'Голосовая запись', photoRec:'Фотография', theImage:'само изображение',
+      wasTag:'было', nowTag:'станет', noPrev:'добавление — прежнего значения нет',
+      newPerson:'Новый человек — сравнивать не с чем', newMemory:'Новое воспоминание — сравнивать не с чем',
+      capCurrent:'сейчас', capProposed:'предложено', noPortrait:'портрета ещё нет',
       living:['уже не живёт','ещё живёт'], prec:{exact:'точная дата',month:'до месяца',year:'до года',approx:'приблизительно',unknown:'неизв.'},
       fld:{ given:'имя', family:'фамилия', patronymic:'отчество', maiden:'девичья', called:'зовут', honorific:'титул', nickname:'прозвище', display:'отображаемое',
             lived:'жил(а) в', pbirth:'место рождения', birth:'родился', death:'умер', birth_prec:'точность даты', living:'ещё жив?', gender:'пол', occupation:'занятие', bio:'о человеке', langspoken:'языки', source:'источник', face:'портрет', custom:'деталь', kin:'связь', field:'деталь' } },
@@ -340,6 +370,9 @@
       foot:'מתנה השמורה בסגול אינה אבודה — היא מחכה שיקבלו אותה.', footEmpty:'תור ריק הוא הצליל של משפחה שממשיכה להושיט יד.',
       langtitle:'שפה', langsub:'שמות, תוויות ופרטים עוקבים אחר השפה שתבחר.',
       voiceRec:'הקלטת קול', photoRec:'תצלום', theImage:'התמונה עצמה',
+      wasTag:'היה', nowTag:'עכשיו', noPrev:'הוספה — אין ערך קודם',
+      newPerson:'אדם חדש — אין עם מה להשוות', newMemory:'זיכרון חדש — אין עם מה להשוות',
+      capCurrent:'נוכחי', capProposed:'מוצע', noPortrait:'אין דיוקן עדיין',
       living:['כבר לא בחיים','עדיין בחיים'], prec:{exact:'תאריך מדויק',month:'עד חודש',year:'עד שנה',approx:'בערך',unknown:'לא ידוע'},
       fld:{ given:'שם פרטי', family:'שם משפחה', patronymic:'שם האב', maiden:'שם נעורים', called:'קוראים', honorific:'תואר', nickname:'כינוי', display:'שם לתצוגה',
             lived:'גר ב', pbirth:'מקום לידה', birth:'נולד', death:'נפטר', birth_prec:'דיוק תאריך', living:'עדיין בחיים?', gender:'מגדר', occupation:'עיסוק', bio:'אודות', langspoken:'שפות', source:'מקור', face:'דיוקן', custom:'פרט', kin:'קשר', field:'פרט' } }
@@ -367,15 +400,26 @@
 
   /* ---------- data ---------- */
   async function loadData(){
-    const out={ people:[], newcomers:[], facts:[], nvs:[], arts:[], peopleMap:{}, profMap:{} };
-    // all people -> name map + newcomers
-    try{ const {data}=await sb.from('people').select('*'); (data||[]).forEach(p=>{ out.peopleMap[p.id]=p.display_name||p.name||''; if(p.status&&p.status!=='published') out.newcomers.push(p); }); }catch(e){}
+    const out={ people:[], newcomers:[], facts:[], nvs:[], arts:[], peopleMap:{}, profMap:{}, personRow:{},
+                pub:[], pubNvs:[], pubIdx:{}, pubAny:{}, pubGroup:{} };
+    // all people -> name map + newcomers (+ the whole row: primary_asset is the OLD portrait)
+    try{ const {data}=await sb.from('people').select('*'); (data||[]).forEach(p=>{ out.peopleMap[p.id]=p.display_name||p.name||''; out.personRow[p.id]=p; if(p.status&&p.status!=='published') out.newcomers.push(p); }); }catch(e){}
     // pending person_facts
     try{ const {data}=await sb.from('person_facts').select('id,person_id,group_id,field,lang,value,ord,status,created_by,created_at').not('status','eq','published'); out.facts=data||[]; }catch(e){ out.facts=[]; }
     // pending name_variants (being retired, but read defensively)
     try{ const {data}=await sb.from('name_variants').select('*').not('status','eq','published'); out.nvs=data||[]; }catch(e){ out.nvs=[]; }
     // pending artefacts (photo/voice)
     try{ const {data}=await sb.from('artefacts').select('*').not('pub_status','eq','published'); out.arts=(data||[]).filter(a=>a.kind==='photo'||a.kind==='voice'); }catch(e){ out.arts=[]; }
+    // PUBLISHED rows -> the OLD value standing behind each pending one (newest published wins)
+    try{ const {data}=await sb.from('person_facts').select('id,person_id,group_id,field,lang,value,ord,status,published_at,created_at').eq('status','published'); out.pub=data||[]; }catch(e){ out.pub=[]; }
+    try{ const {data}=await sb.from('name_variants').select('*').eq('status','published'); out.pubNvs=data||[]; }catch(e){ out.pubNvs=[]; }
+    const ts=r=>Date.parse(r.published_at||r.created_at||'')||0;
+    const put=(m,k,r)=>{ if(!m[k]||ts(r)>=ts(m[k])) m[k]=r; };
+    out.pub.forEach(r=>{ put(out.pubIdx, r.person_id+'|'+r.field+'|'+(r.lang||''), r); put(out.pubAny, r.person_id+'|'+r.field, r);
+      if(r.group_id) (out.pubGroup[r.group_id]=out.pubGroup[r.group_id]||[]).push(r); });
+    out.pubNvs.forEach(v=>{ const f=v.field||v.kind||'name'; const row={ person_id:v.person_id, field:f, lang:v.lang,
+        value:v.value||v.name||v.variant||v.text||'', published_at:v.published_at, created_at:v.created_at };
+      put(out.pubIdx, row.person_id+'|'+f+'|'+(row.lang||''), row); put(out.pubAny, row.person_id+'|'+f, row); });
     // profiles for uploader/suggester names
     try{ const {data}=await sb.from('profiles').select('id,display_name'); (data||[]).forEach(p=>{ out.profMap[p.id]=p.display_name||''; }); }catch(e){}
     // tallies
@@ -451,9 +495,58 @@
     return esc(it.value||'—');
   }
 
+  /* ---------- OLD -> NEW : the keeper must see what changes, not just what arrived ---------- */
+  function pubRowFor(pid,field,lang){ if(!pending||!pid) return null;
+    return pending.pubIdx[pid+'|'+field+'|'+(lang||'')] || pending.pubAny[pid+'|'+field] || null; }
+
+  // a face row stores JSON ({storage_path:…}); people.primary_asset stores a bare path
+  function facePath(v){ if(!v) return ''; if(typeof v!=='string') return v.storage_path||'';
+    const s=v.trim(); if(s.charAt(0)==='{'){ try{ const o=JSON.parse(s); return o.storage_path||o.path||''; }catch(e){ return ''; } } return s; }
+
+  function isFaceItem(it){ return it.kind==='fact' && it.field==='face'; }
+  function isPhotoItem(it){ return it.kind==='artefact' && it.mediaKind!=='voice'; }
+  function arrowCh(){ return d().dir==='rtl'?'←':'→'; }
+
+  // {kind:'new'|'none'|'text'|'image'}
+  function oldInfo(it){
+    if(it.kind==='person')   return { kind:'new', why:'person' };
+    if(it.kind==='artefact') return { kind:'new', why:'memory' };
+    if(it.kind==='group'){ const rows=(pending.pubGroup&&pending.pubGroup[it.id])||[];
+      const val=(rows.find(r=>r.field==='custom_value')||{}).value||'';
+      const lab=(rows.find(r=>r.field==='custom_label')||{}).value||'';
+      const t=val||lab; return t?{ kind:'text', text:t }:{ kind:'none' }; }
+    if(isFaceItem(it)){ const row=pubRowFor(it.personId,'face',it.lang); let p=row?facePath(row.value):'';
+      if(!p){ const per=pending.personRow&&pending.personRow[it.personId]; p=(per&&per.primary_asset)||''; }
+      return { kind:'image', path:p }; }
+    const row=pubRowFor(it.personId,it.field,it.lang);
+    if(!row||!String(row.value==null?'':row.value).trim()) return { kind:'none' };
+    return { kind:'text', text:factValue(row) };
+  }
+
+  function imgCell(path,cls,cap){
+    const box = path ? `<span class="box im" data-thumb="${esc(path)}">${IC.photo}</span>` : `<span class="box">${IC.photo}</span>`;
+    return `<div class="imgcell ${cls}">${box}<div class="cap">${esc(cap)}</div></div>`;
+  }
+
+  // side-by-side portraits: what the family sees today vs what is being proposed
+  function imgCompare(oldPath,newPath,newOnly){ const L=d();
+    const newCell=imgCell(newPath,'new',L.capProposed);
+    if(newOnly) return `<div class="imgcmp">${newCell}</div><div class="newmark">${IC.leaf} ${esc(L.newMemory)}</div>`;
+    return `<div class="imgcmp">${imgCell(oldPath,'old',oldPath?L.capCurrent:L.noPortrait)}<span class="cmparrow">${arrowCh()}</span>${newCell}</div>`;
+  }
+
+  function deltaMarkup(it){ const L=d(); const o=oldInfo(it);
+    if(isFaceItem(it)) return imgCompare(o.path||'', facePath(it.raw&&it.raw.value), false);
+    if(isPhotoItem(it)) return imgCompare('', it.storage||'', true);
+    if(o.kind==='new')  return `<div class="newmark">${IC.leaf} ${esc(o.why==='person'?L.newPerson:L.newMemory)}</div>`;
+    if(o.kind==='none') return `<div class="wasrow"><span class="wastag">${esc(L.wasTag)}</span><span class="wasnone">${esc(L.noPrev)}</span></div>`;
+    return `<div class="wasrow"><span class="wastag">${esc(L.wasTag)}</span><span class="wasval">${esc(o.text)}</span><span class="arrow">${arrowCh()}</span></div>`;
+  }
+
   function thumbMarkup(it){
     if(it.kind==='person') return IC.newcomer;
-    if(it.kind==='artefact'){ if(it.mediaKind==='voice') return IC.voice; return `<span class="im" data-thumb="${esc(it.storage)}">${IC.photo}</span>`; }
+    // photo artefacts show the image full-width in the old→new block; keep the chip an icon
+    if(it.kind==='artefact'){ if(it.mediaKind==='voice') return IC.voice; return IC.photo; }
     if(it.kind==='nv') return IC.name;
     if(it.group==='names') return IC.name;
     if(it.field==='lived'||it.field==='pbirth') return IC.place;
@@ -469,7 +562,8 @@
       <div class="qbody">
         <div class="qthumb">${thumbMarkup(it)}</div>
         <div class="qmain">
-          <div class="qval">${valMarkup(it)}</div>
+          ${deltaMarkup(it)}
+          ${isFaceItem(it) ? '' : `<div class="nowrow"><span class="nowtag">${esc(L.nowTag)}</span><div class="qval">${valMarkup(it)}</div></div>`}
           ${forLine(it)}
           <div class="qwho">${whoLine(it)}${voiceExtra}</div>
         </div>
