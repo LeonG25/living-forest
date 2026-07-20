@@ -414,8 +414,8 @@
       changefaceSub:'Pick a photo she’s tagged in, then fine-tune the round crop. Saving sends it to the keeper.',
       zoom:'Zoom', send:'Send to the keeper', cancel:'Cancel', sent:'Sent to the keeper — thank you', save:'Save', signin:'Sign in',
       playCta:'Play', gameLocked:'Add more and this opens', gameScoped:'Scoped to this person',
-      gameNames:{ whoiswho:'Who Is Who?', crowd:'Find Them in the Crowd', order:'Put Their Life in Order', wherewas:'Where Was This?', thread:'The Tangled Thread', whosememory:'Whose Memory Is This?', voice:'The Missing Voice' },
-      gameSubs:{ whoiswho:'Match the face to the right name.', crowd:'Find them among the gathering.', order:'Set the moments of a life in sequence.', wherewas:'Place the photographs on the map.', thread:'Trace how they connect to the family.', whosememory:'Guess who told each memory.', voice:'Not enough stories yet.' },
+      gameNames:{ whoiswho:'Who Is Who?', crowd:'Find Them in the Crowd', order:'Put Their Life in Order', wherewas:'Where Was This?', thread:'The Tangled Thread', whosememory:'Whose Memory Is This?', voice:'The Missing Voice', whatnext:'What Happened Next?' },
+      gameSubs:{ whoiswho:'Match the face to the right name.', crowd:'Find them among the gathering.', order:'Set the moments of a life in sequence.', wherewas:'Place the photographs on the map.', thread:'Trace how they connect to the family.', whosememory:'Guess who told each memory.', voice:'Not enough stories yet.', whatnext:'Guess which memory came next.' },
       foot:'A life, told a little more fully.' },
     ru:{ dir:'ltr', native:'Русский', label:'Russian',
       eyebrow:'Человек', keeper:'Ничто не дойдёт до семьи, пока хранитель не одобрит.',
@@ -442,8 +442,8 @@
       changefaceSub:'Выберите фото, где она отмечена, и настройте круглую обрезку. Сохранение уйдёт хранителю.',
       zoom:'Масштаб', send:'Отправить хранителю', cancel:'Отмена', sent:'Отправлено хранителю — спасибо', save:'Сохранить', signin:'Войти',
       playCta:'Играть', gameLocked:'Добавьте больше — и откроется', gameScoped:'Только про этого человека',
-      gameNames:{ whoiswho:'Кто есть кто?', crowd:'Найди в толпе', order:'Расставь жизнь по порядку', wherewas:'Где это было?', thread:'Запутанная нить', whosememory:'Чья это память?', voice:'Пропавший голос' },
-      gameSubs:{ whoiswho:'Сопоставьте лицо и имя.', crowd:'Найдите среди собравшихся.', order:'Расставьте моменты жизни.', wherewas:'Разместите фото на карте.', thread:'Проследите связь с семьёй.', whosememory:'Угадайте, кто рассказал.', voice:'Историй пока мало.' },
+      gameNames:{ whoiswho:'Кто есть кто?', crowd:'Найди в толпе', order:'Расставь жизнь по порядку', wherewas:'Где это было?', thread:'Запутанная нить', whosememory:'Чья это память?', voice:'Пропавший голос', whatnext:'Что было дальше?' },
+      gameSubs:{ whoiswho:'Сопоставьте лицо и имя.', crowd:'Найдите среди собравшихся.', order:'Расставьте моменты жизни.', wherewas:'Разместите фото на карте.', thread:'Проследите связь с семьёй.', whosememory:'Угадайте, кто рассказал.', voice:'Историй пока мало.', whatnext:'Угадайте, какое воспоминание было следующим.' },
       foot:'Жизнь, рассказанная чуть полнее.' },
     he:{ dir:'rtl', native:'עברית', label:'Hebrew',
       eyebrow:'אדם', keeper:'שום דבר לא יגיע למשפחה עד שהשומר יאשר.',
@@ -470,8 +470,8 @@
       changefaceSub:'בחרו תמונה שבה היא מתויגת וכווננו את החיתוך העגול. השמירה תישלח לשומר.',
       zoom:'זום', send:'שליחה לשומר', cancel:'ביטול', sent:'נשלח לשומר — תודה', save:'שמירה', signin:'כניסה',
       playCta:'שחקו', gameLocked:'הוסיפו עוד וזה ייפתח', gameScoped:'מותאם לאדם הזה',
-      gameNames:{ whoiswho:'מי זה מי?', crowd:'מצאו אותה בקהל', order:'סדרו את חייה', wherewas:'איפה זה היה?', thread:'החוט הסבוך', whosememory:'של מי הזיכרון?', voice:'הקול החסר' },
-      gameSubs:{ whoiswho:'התאימו את הפנים לשם הנכון.', crowd:'מצאו אותה בין הנאספים.', order:'סדרו את רגעי החיים.', wherewas:'מקמו את התמונות על המפה.', thread:'עקבו אחר הקשר למשפחה.', whosememory:'נחשו מי סיפר כל זיכרון.', voice:'עדיין אין מספיק סיפורים.' },
+      gameNames:{ whoiswho:'מי זה מי?', crowd:'מצאו אותה בקהל', order:'סדרו את חייה', wherewas:'איפה זה היה?', thread:'החוט הסבוך', whosememory:'של מי הזיכרון?', voice:'הקול החסר', whatnext:'מה קרה אחר כך?' },
+      gameSubs:{ whoiswho:'התאימו את הפנים לשם הנכון.', crowd:'מצאו אותה בין הנאספים.', order:'סדרו את רגעי החיים.', wherewas:'מקמו את התמונות על המפה.', thread:'עקבו אחר הקשר למשפחה.', whosememory:'נחשו מי סיפר כל זיכרון.', voice:'עדיין אין מספיק סיפורים.', whatnext:'נחשו איזה זיכרון בא אחר כך.' },
       foot:'חיים, מסופרים מעט יותר במלואם.' }
   };
 
@@ -519,7 +519,7 @@
     {id:'reel',   kind:'cool', games:[]},
     {id:'more',   kind:'gold', games:[]}
   ];
-  const GAMES={ whoiswho:{icon:'face'}, crowd:{icon:'face'}, order:{icon:'life'}, wherewas:{icon:'places'}, thread:{icon:'kin'}, whosememory:{icon:'story'}, voice:{icon:'story'} };
+  const GAMES={ whoiswho:{icon:'face'}, crowd:{icon:'face'}, order:{icon:'life'}, wherewas:{icon:'places'}, thread:{icon:'kin'}, whosememory:{icon:'story'}, voice:{icon:'story'}, whatnext:{icon:'story'} };
   const FACETFIELDS={
     name:['display','given','called','family','maiden','patronymic','honorific','nickname'],
     face:['face'], life:['bio','occupation','birth','death','birth_prec','death_prec','living','gender','langspoken'],
@@ -824,7 +824,7 @@
     showSheet('add'); }
 
   // gids that have a real, built, engine-wired play page (scoped by ?id=)
-  const GAME_PAGES={ whoiswho:'game-who-is-who.html', whosememory:'game-who-is-who.html', voice:'game-missing-voice.html', thread:'game-tangled-thread.html', crowd:'crowd-real.html', order:'game-order-of-things.html', wherewas:'game-where-was-this.html' };
+  const GAME_PAGES={ whoiswho:'game-who-is-who.html', whosememory:'game-who-is-who.html', voice:'game-missing-voice.html', thread:'game-tangled-thread.html', crowd:'crowd-real.html', order:'game-order-of-things.html', wherewas:'game-where-was-this.html', whatnext:'game-what-happened-next.html' };
   function openGame(gid){ const L=d(); const g=GAMES[gid], sh=$('.sheet[data-sheet="game"]');
     const page=GAME_PAGES[gid];
     if(page){ const q=(person&&person.id)?('?id='+encodeURIComponent(person.id)):''; location.href=page+q; return; }
