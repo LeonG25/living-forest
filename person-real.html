@@ -824,7 +824,7 @@
     showSheet('add'); }
 
   // gids that have a real, built, engine-wired play page (scoped by ?id=)
-  const GAME_PAGES={ whoiswho:'game-who-is-who.html', whosememory:'game-who-is-who.html', voice:'game-missing-voice.html', thread:'game-tangled-thread.html', crowd:'crowd-real.html' };
+  const GAME_PAGES={ whoiswho:'game-who-is-who.html', whosememory:'game-who-is-who.html', voice:'game-missing-voice.html', thread:'game-tangled-thread.html', crowd:'crowd-real.html', order:'game-order-of-things.html', wherewas:'game-where-was-this.html' };
   function openGame(gid){ const L=d(); const g=GAMES[gid], sh=$('.sheet[data-sheet="game"]');
     const page=GAME_PAGES[gid];
     if(page){ const q=(person&&person.id)?('?id='+encodeURIComponent(person.id)):''; location.href=page+q; return; }
@@ -907,7 +907,9 @@
       if(act==='send'){ await submitFacet(a.dataset.facet); return; }
       if(act==='nmsend'){ await submitName(); return; }
       if(act==='revert'){ seed(); render(); return; }
-      if(act==='watch'||act==='howrelated'||act==='addmemory'){ toast(L.sent); return; }
+      if(act==='watch'){ const q=(person&&person.id)?('?id='+encodeURIComponent(person.id)):''; location.href='reel-real.html'+q; return; }
+      if(act==='addmemory'){ location.href='contribute-add-real.html'; return; }
+      if(act==='howrelated'){ toast(L.sent); return; }
     });
     $('.scrim').addEventListener('click', hideSheets);
   }
