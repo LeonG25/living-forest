@@ -51,22 +51,61 @@
     if(it[0]===HERE) a.className='cur';
     panel.appendChild(a);
   });
-  // keeper-only entry: a page that knows keeper status sets window.__lfKeeper=true (and may set __lfKeeperLabel).
-  function addKeeperItem(){
-    if(!window.__lfKeeper) return;
-    if(panel.querySelector('a[data-lf="curators"]')) return; // once
+  /* ---- keeper-only entries: Review + Keepers, on EVERY page, for keepers only ----
+     A page may set window.__lfKeeper=true as a fast path (paint them without waiting),
+     but lf-nav's own check below is the source of truth: it adds them if the account is
+     a keeper and removes them if it is not, so they never linger and never disappear. */
+  function addKeeperItems(){
+    if(panel.querySelector('a[data-lf="review"]')) return;   // de-dupe: never double-insert
     var rv=document.createElement('a'); rv.href='review-real.html'; rv.setAttribute('data-lf','review');
     rv.innerHTML='<span class="ic">\u2713</span><span>'+(window.__lfReviewLabel||'Review')+'</span>';
     if(HERE==='review') rv.className='cur';
     panel.appendChild(rv);
     var a=document.createElement('a'); a.href='curators-real.html'; a.setAttribute('data-lf','curators');
-    a.innerHTML='<span class="ic">\u2609</span><span>'+(window.__lfKeeperLabel||'Curators')+'</span>';
+    a.innerHTML='<span class="ic">\u2609</span><span>'+(window.__lfKeeperLabel||'Keepers')+'</span>';
     if(HERE==='curators') a.className='cur';
     panel.appendChild(a);
   }
-  addKeeperItem();
-  // in case the page sets the flag slightly after nav init:
-  document.addEventListener('lf-keeper-ready', addKeeperItem);
+  function removeKeeperItems(){
+    var n=panel.querySelectorAll('a[data-lf="review"],a[data-lf="curators"]');
+    for(var i=0;i<n.length;i++) n[i].parentNode.removeChild(n[i]);
+  }
+  function setKeeper(is){ if(is) addKeeperItems(); else removeKeeperItems(); }
+
+  if(window.__lfKeeper) addKeeperItems();                     // fast path, if the page already knows
+  document.addEventListener('lf-keeper-ready', function(){ if(window.__lfKeeper) addKeeperItems(); });
+
+  /* lf-nav's own check \u2014 same on every page, so the menu is identical everywhere.
+     Reads the stored Supabase session directly (no second auth client) and asks
+     profiles.is_keeper over REST. Resolves async; the items are inserted/removed when it lands. */
+  var SB_URL='https://oabcdrktuikifbormjip.supabase.co';
+  var SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
+  var SB_STORE='sb-oabcdrktuikifbormjip-auth-token';
+  function storedSession(){
+    try{
+      var raw=localStorage.getItem(SB_STORE); if(!raw) return null;
+      if(raw.slice(0,7)==='base64-') raw=atob(raw.slice(7));
+      var s=JSON.parse(raw);
+      if(Array.isArray(s)) s={access_token:s[0]};             // legacy array form
+      var tok=s.access_token; if(!tok) return null;
+      var uid=(s.user&&s.user.id)||null;
+      if(!uid){ try{ uid=JSON.parse(atob(tok.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))).sub; }catch(e){} }
+      return uid? {token:tok, uid:uid} : null;
+    }catch(e){ return null; }
+  }
+  function keeperCheck(tries){
+    var s=storedSession();
+    if(!s){ setKeeper(false); return; }                        // signed out \u2192 never show
+    fetch(SB_URL+'/rest/v1/profiles?select=is_keeper&limit=1&id=eq.'+encodeURIComponent(s.uid),
+          { headers:{ apikey:SB_KEY, Authorization:'Bearer '+s.token, Accept:'application/json' } })
+      .then(function(r){
+        if(r.status===401 && tries>0){ setTimeout(function(){ keeperCheck(tries-1); },1500); return null; } // token mid-refresh
+        return r.ok? r.json() : null;
+      })
+      .then(function(j){ if(j===null) return; setKeeper(!!(j&&j[0]&&j[0].is_keeper)); })
+      .catch(function(){});                                    // offline: leave the fast path as-is
+  }
+  keeperCheck(2);
   var btn=document.createElement('button'); btn.id='lfnavBtn'; btn.type='button';
   btn.setAttribute('aria-label','Move between lenses'); btn.textContent='\u2295';
   wrap.appendChild(panel); wrap.appendChild(btn);
