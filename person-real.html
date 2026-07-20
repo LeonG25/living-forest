@@ -59,7 +59,7 @@
 
   /* ===== HERO (variant A: face + ring anchor-map) ===== */
   .hero{ position:relative; margin:30px auto 6px; width:308px; height:308px; }
-  .ring-svg{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; z-index:1; }
+  .ring-svg{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; z-index:1; pointer-events:none; }
   .facewrap{ position:absolute; inset:84px; z-index:3; border-radius:50%; }
   .face{ width:100%; height:100%; border-radius:50%; overflow:hidden; position:relative;
     border:1px solid rgba(255,244,214,.9);
@@ -779,14 +779,14 @@
         <div class="gt"><div class="gn">${esc(L.gameNames[gid])}</div><div class="gs">${locked?esc(L.gameLocked):esc(L.gameSubs[gid])}</div></div>
         <span class="go">${locked?sv(I.lock,1.7):esc(L.playCta)}</span></div>`; }).join('');
     return `<div class="games">${rows}</div>`; }
-  function bead(f){ const L=d(); const cool=f.kind==='cool'; const play=f.games.length?`<span class="play">${sv(I.play,0)}</span>`:''; const pin=catPending(f.id)?`<span class="pin"></span>`:'';
+  function bead(f,x,y){ const L=d(); const cool=f.kind==='cool'; const play=f.games.length?`<span class="play">${sv(I.play,0)}</span>`:''; const pin=catPending(f.id)?`<span class="pin"></span>`:'';
     const sel=state.facet===f.id;
-    return `<button class="cat ${cool?'cool':''} ${sel?'sel':''}" data-jump="${f.id}" style="--k:${facetK(f.id)}" aria-label="${esc(L.facet[f.id])}" aria-pressed="${sel?'true':'false'}" aria-controls="facet-${f.id}"><span class="bead">${sv(I[f.id])}${play}${pin}</span><span class="lab">${esc(L.facet[f.id])}</span></button>`; }
+    return `<button class="cat ${cool?'cool':''} ${sel?'sel':''}" data-jump="${f.id}" style="--k:${facetK(f.id)};left:${x}px;top:${y}px" aria-label="${esc(L.facet[f.id])}" aria-pressed="${sel?'true':'false'}" aria-controls="facet-${f.id}"><span class="bead">${sv(I[f.id])}${play}${pin}</span><span class="lab">${esc(L.facet[f.id])}</span></button>`; }
   function facetCard(f){ const on=state.facet===f.id;
     return `<div class="facet${on?' enter':''}" id="facet-${f.id}" data-facet="${f.id}"${on?'':' hidden'}>${fhead(f)}<div class="fbody">${bodyFor(f)}</div></div>`; }
   function ringShell(){ const L=d(); const cx=154,cy=154,R=126;
     const beads=FACETS.map((f,i)=>{ const a=-Math.PI/2+i*(Math.PI*2/8); const x=cx+R*Math.cos(a), y=cy+R*Math.sin(a);
-      return `<div style="position:absolute;left:${x}px;top:${y}px;transform:translate(-50%,-50%)">${bead(f)}</div>`; }).join('');
+      return bead(f,x,y); }).join('');
     const cards=FACETS.map(f=>facetCard(f)).join('');
     const g0=NAME.given[state.lang]||(NAME.display[state.lang]||'').split(' ')[0]||NAME.display.en||'';
     const f0=NAME.family[state.lang]||(NAME.display[state.lang]||'').split(' ').slice(1).join(' ')||'';
