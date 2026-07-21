@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Tree background — preview</title>
 <style>
-  :root { --dissolve: 3.5s; }
+  :root { --dissolve: 1.8s; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; overflow: hidden; background: #0a0710; }
   body { font-family: system-ui, sans-serif; }
@@ -24,7 +24,7 @@
     /* slightly larger than viewport so scale/drift never reveals an edge */
     inset: -4%;
     will-change: transform;
-    animation: breathe 26s ease-in-out infinite;
+    animation: breathe 12s ease-in-out infinite;
   }
 
   .frame {
@@ -122,8 +122,8 @@
   // Timing (must mirror --dissolve in CSS): each frame is held HOLD ms,
   // then its successor fades in over DISSOLVE ms (both stacked, .show
   // toggles opacity). Loop = 4 * (HOLD + DISSOLVE), wrapping 4 -> 1.
-  var HOLD = 7000;      // frame fully visible (~7s)
-  var DISSOLVE = 3500;  // cross-dissolve (matches --dissolve: 3.5s)
+  var HOLD = 3000;      // frame fully visible (~7s)
+  var DISSOLVE = 1800;  // cross-dissolve (matches --dissolve: 1.8s)
   var ready = [true, false, false, false]; // frame-1 is inline-ready
   var current = 0;
   var started = false;
@@ -210,8 +210,8 @@
         x: rnd(0, W), y: rnd(0, H),
         r: rnd(0.8, 2.2),
         hue: rnd(38, 54),          // warm gold
-        vx: rnd(-0.12, 0.12),
-        vy: rnd(-0.10, 0.10),
+        vx: rnd(-0.26, 0.26),
+        vy: rnd(-0.22, 0.22),
         phase: rnd(0, Math.PI * 2),
         pulse: rnd(0.6, 1.6),
         base: rnd(0.25, 0.6),
@@ -225,8 +225,8 @@
       x: rnd(0, W), y: rnd(0, H + 40),
       r: rnd(0.6, 1.6),
       hue: rnd(190, 280),          // cool violet/blue drift
-      vx: rnd(-0.15, 0.15),
-      vy: rnd(-0.45, -0.18),       // drift upward
+      vx: rnd(-0.30, 0.30),
+      vy: rnd(-0.95, -0.40),       // drift upward
       phase: rnd(0, Math.PI * 2),
       sway: rnd(0.2, 0.7),
       base: rnd(0.18, 0.4)
@@ -248,13 +248,13 @@
       var a, r, hue, grd;
 
       if (p.kind === 'firefly') {
-        p.x += p.vx * dt * 0.06;
-        p.y += p.vy * dt * 0.06;
+        p.x += p.vx * dt * 0.12;
+        p.y += p.vy * dt * 0.12;
         // gentle wander
         p.vx += rnd(-0.004, 0.004);
         p.vy += rnd(-0.004, 0.004);
-        p.vx = Math.max(-0.18, Math.min(0.18, p.vx));
-        p.vy = Math.max(-0.16, Math.min(0.16, p.vy));
+        p.vx = Math.max(-0.40, Math.min(0.40, p.vx));
+        p.vy = Math.max(-0.36, Math.min(0.36, p.vy));
         wrap(p);
         var flick = 0.5 + 0.5 * Math.sin(ts * p.pulse + p.phase);
         a = p.base * (0.4 + 0.6 * flick);
@@ -271,8 +271,8 @@
         }
         hue = p.hue;
       } else {
-        p.y += p.vy * dt * 0.06;
-        p.x += (p.vx + Math.sin(ts * p.sway + p.phase) * 0.15) * dt * 0.06;
+        p.y += p.vy * dt * 0.12;
+        p.x += (p.vx + Math.sin(ts * p.sway + p.phase) * 0.15) * dt * 0.12;
         if (p.y < -20) { p.y = H + rnd(10, 40); p.x = rnd(0, W); }
         wrapX(p);
         a = p.base * (0.6 + 0.4 * Math.sin(ts * 0.8 + p.phase));
