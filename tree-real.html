@@ -107,7 +107,7 @@
   .dbtn.fit:hover{ border-color:rgba(127,180,216,.75); }
 
   /* legend */
-  .legend{ position:absolute; z-index:16; inset-inline-start:14px; bottom:calc(20px + env(safe-area-inset-bottom)); width:210px; padding:12px 13px; border-radius:16px;
+  .legend{ position:absolute; z-index:14; inset-inline-start:14px; bottom:calc(20px + env(safe-area-inset-bottom)); width:210px; padding:12px 13px; border-radius:16px;
     background:rgba(8,14,26,.86); backdrop-filter:blur(10px); border:1px solid var(--hair); box-shadow:0 20px 50px -26px #000;
     transition:transform .3s cubic-bezier(.16,.8,.28,1); }
   .legend.hid{ transform:translateY(calc(100% - 40px)); }
@@ -303,16 +303,17 @@
   .loading .l{ font-family:'Newsreader',serif; font-style:italic; font-size:15px; color:rgba(143,214,160,.6); }
 
   /* link styles */
+  /* connectors — every line must read clearly on the #05080e backdrop (no opacity <.6) */
   .ln{ fill:none; stroke-linecap:round; stroke-linejoin:round; }
-  .ln.c-documented{ stroke:var(--gold); stroke-width:2.2; opacity:.92; filter:drop-shadow(0 0 5px rgba(243,205,132,.35)); }
-  .ln.c-remembered{ stroke:var(--gold); stroke-width:2; opacity:.6; }
-  .ln.c-uncertain{ stroke:var(--gold); stroke-width:1.8; opacity:.5; stroke-dasharray:2 6; }
-  .ln.spouse{ stroke:var(--gold-hi); stroke-width:2.4; opacity:.85; filter:drop-shadow(0 0 6px rgba(255,230,173,.4)); }
-  .ln.sibling{ stroke:var(--gold); stroke-width:1.8; opacity:.5; stroke-dasharray:1 6; }
-  .knot{ fill:#0a1420; stroke:var(--gold-hi); stroke-width:1.6; }
-  .ln.pend{ stroke:var(--edit); stroke-width:2.2; opacity:.9; stroke-dasharray:5 5; filter:drop-shadow(0 0 6px rgba(201,162,255,.45)); }
-  .pendbadge{ fill:#1a0f2e; stroke:var(--edit); stroke-width:1.8; }
-  .ln.trace{ stroke:var(--cool-hi); stroke-width:3; opacity:.95; filter:drop-shadow(0 0 9px rgba(127,180,216,.7)); }
+  .ln.c-documented{ stroke:var(--gold); stroke-width:2.6; opacity:.95; filter:drop-shadow(0 0 6px rgba(243,205,132,.6)); }
+  .ln.c-remembered{ stroke:var(--gold); stroke-width:2.4; opacity:.82; filter:drop-shadow(0 0 5px rgba(243,205,132,.45)); }
+  .ln.c-uncertain{ stroke:var(--gold); stroke-width:2.2; opacity:.72; stroke-dasharray:3 5; filter:drop-shadow(0 0 5px rgba(243,205,132,.4)); }
+  .ln.spouse{ stroke:var(--gold-hi); stroke-width:2.8; opacity:.95; filter:drop-shadow(0 0 7px rgba(255,230,173,.55)); }
+  .ln.sibling{ stroke:var(--gold); stroke-width:2.2; opacity:.7; stroke-dasharray:2 6; filter:drop-shadow(0 0 4px rgba(243,205,132,.35)); }
+  .knot{ fill:#0a1420; stroke:var(--gold-hi); stroke-width:2; filter:drop-shadow(0 0 5px rgba(255,230,173,.5)); }
+  .ln.pend{ stroke:var(--edit); stroke-width:2.4; opacity:.95; stroke-dasharray:5 5; filter:drop-shadow(0 0 7px rgba(201,162,255,.6)); }
+  .pendbadge{ fill:#1a0f2e; stroke:var(--edit); stroke-width:2; filter:drop-shadow(0 0 4px rgba(201,162,255,.5)); }
+  .ln.trace{ stroke:var(--cool-hi); stroke-width:3.2; opacity:.98; filter:drop-shadow(0 0 10px rgba(127,180,216,.75)); }
   .ln.trace.flow{ stroke-dasharray:10 14; animation:flowdash 1.1s linear infinite; }
   @keyframes flowdash{ to{ stroke-dashoffset:-48; } }
   .ln.sap{ animation:sap 4.4s linear infinite; }
@@ -335,7 +336,7 @@
       <div class="world" id="world"><svg class="links" id="links"></svg></div>
     </div>
 
-    <div class="legend" id="legend">
+    <div class="legend hid" id="legend">
       <div class="lgh" data-act="legend"><b data-t="legendttl">How to read it</b>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></div>
       <div class="lgbody" id="lgbody"></div>
@@ -548,8 +549,10 @@ async function faceInto(el, path, box){ if(!el||!path) return; const u=await sig
       sx=Math.max(0,Math.min(img.naturalWidth-side,sx)); sy=Math.max(0,Math.min(img.naturalHeight-side,sy)); g.drawImage(img,sx,sy,side,side,0,0,160,160);
     } else { const s=Math.min(img.naturalWidth,img.naturalHeight); g.drawImage(img,(img.naturalWidth-s)/2,(img.naturalHeight-s)/2,s,s,0,0,160,160); }
     el.innerHTML=''; el.appendChild(c); }; img.src=u; }
+function hasFace(id){ const p=people[id]; return !!((p&&p.primary_asset)||faceFallback[id]); }
 function hydrateFace(el,id){ if(!el) return; el.innerHTML=placeholderFor(id); const p=people[id];
-  if(p&&p.primary_asset) faceInto(el,p.primary_asset,(p.metadata&&p.metadata.face_box)||null); }
+  if(p&&p.primary_asset){ faceInto(el,p.primary_asset,(p.metadata&&p.metadata.face_box)||null); return; }
+  const fb=faceFallback[id]; if(fb) faceInto(el,fb.path,fb.box); } // else: keep the SVG placeholder
 
 /* ---------- state + data ---------- */
 let user=null, viewerPersonId=null;
@@ -557,10 +560,11 @@ let people={};        // id -> {id,display_name,sex,primary_asset,birth_year,dea
 let nameLoc={};       // id -> {lang -> {given,family,called,display}}
 let edges=[];         // {id, from, to, kind, certainty, note, status}
 let pendingKin=[];    // {id, person_id, value(json), created_by, status}
+let faceFallback={};  // id -> {path, box:{x,y,w,h}} — a photo the person is tagged in (artefact_subjects), used when no primary_asset
 let pos={};           // id -> {x(centre px), tier}
 let placedSet=new Set();
 let unplaced=[];      // ids
-const state={ lang:'en', keeper:false, scale:1, tx:0, ty:0, sel:null, trace:false, legendHid:false };
+const state={ lang:'en', keeper:false, scale:1, tx:0, ty:0, sel:null, trace:false, legendHid:true };
 const ZMIN=0.28, ZMAX=2.8;
 const world=$('#world'), links=$('#links'), vp=$('#vp'), toastEl=$('#toast'), sheet=$('#sheet'), scrim=$('#scrim'), sbody=$('#sbody'), sfoot=$('#sfoot');
 function L(){ return STR[state.lang]||STR.en; }
@@ -662,7 +666,7 @@ function buildCards(){
   $$('.pcard').forEach(n=>n.remove());
   [...placedSet].forEach(id=>{ const p=people[id]; const el=document.createElement('button');
     const isYou=(viewerPersonId&&id===viewerPersonId);
-    const noPhoto=!p.primary_asset;
+    const noPhoto=!hasFace(id);
     el.className='pcard'+(noPhoto?' nophoto':'')+(isYou?' you':'')+(state.sel===id?' sel':'');
     el.style.left=(CX(id)-CW/2)+'px'; el.style.top=CTOP(id)+'px'; el.dataset.id=id;
     const pend=pendingKin.some(k=>{ const v=parseKin(k.value); return k.person_id===id || (v&&v.other===id); });
@@ -729,7 +733,7 @@ function drawSpouse(a,b){ const y=CMID(a), x1=CX(a), x2=CX(b), mx=(x1+x2)/2;
   links.appendChild(mkEl('circle',{cx:mx, cy:y, r:4.5, class:'knot'})); }
 function sizeLinks(){ const bb=worldBBox(); const w=bb.maxX+PADX, h=bb.maxY+PADY;
   links.setAttribute('width',w); links.setAttribute('height',h); world.style.width=w+'px'; world.style.height=h+'px'; }
-function sapShimmer(){ if(reduceMotion) return; links.querySelectorAll('.ln.c-documented.sap').forEach((l,i)=>{ l.style.strokeDasharray='2 120'; l.style.animationDelay=(i*0.5)+'s'; }); }
+function sapShimmer(){ if(reduceMotion) return; links.querySelectorAll('.ln.c-documented.sap').forEach((l,i)=>{ l.style.strokeDasharray='42 14'; l.style.animationDelay=(i*0.5)+'s'; }); }
 
 /* trace over parent + spouse adjacency */
 function tracePath(from,to){ if(!from||!to) return null; if(from===to) return [from];
@@ -758,9 +762,9 @@ function buildLegend(){ const s=L(); const swz=inner=>`<svg class="swz" viewBox=
     `<div class="lgrow">${swz('<path d="M5 8 H29" fill="none" stroke="#ffe6ad" stroke-width="2.4" stroke-linecap="round"/><circle cx="17" cy="8" r="4" fill="#0a1420" stroke="#ffe6ad" stroke-width="1.5"/>')}<span class="lt">${esc(s.spouse2)}<small>${esc(s.spsub)}</small></span></div>`+
     `<div class="lgrow">${swz('<path d="M4 6 H30 M9 6 V12 M25 6 V12" fill="none" stroke="#f3cd84" stroke-width="2.2" stroke-linecap="round"/>')}<span class="lt">${esc(s.sibling2)}<small>${esc(s.sibsub)}</small></span></div>`+
     `<div class="lgsep"></div>`+
-    `<div class="lgrow">${swz('<path d="M4 8 H30" fill="none" stroke="#f3cd84" stroke-width="2.4" stroke-linecap="round"/>')}<span class="lt">${esc(s.documented)}</span></div>`+
-    `<div class="lgrow">${swz('<path d="M4 8 H30" fill="none" stroke="#f3cd84" stroke-width="2" opacity=".55" stroke-linecap="round"/>')}<span class="lt">${esc(s.remembered)}</span></div>`+
-    `<div class="lgrow">${swz('<path d="M4 8 H30" fill="none" stroke="#f3cd84" stroke-width="1.8" opacity=".55" stroke-dasharray="2 5" stroke-linecap="round"/>')}<span class="lt">${esc(s.uncertain)}</span></div>`+
+    `<div class="lgrow">${swz('<path d="M4 8 H30" fill="none" stroke="#f3cd84" stroke-width="2.6" stroke-linecap="round"/>')}<span class="lt">${esc(s.documented)}</span></div>`+
+    `<div class="lgrow">${swz('<path d="M4 8 H30" fill="none" stroke="#f3cd84" stroke-width="2.4" opacity=".82" stroke-linecap="round"/>')}<span class="lt">${esc(s.remembered)}</span></div>`+
+    `<div class="lgrow">${swz('<path d="M4 8 H30" fill="none" stroke="#f3cd84" stroke-width="2.2" opacity=".72" stroke-dasharray="3 5" stroke-linecap="round"/>')}<span class="lt">${esc(s.uncertain)}</span></div>`+
     `<div class="lgrow">${swz('<path d="M4 8 H30" fill="none" stroke="#c9a2ff" stroke-width="2.2" stroke-dasharray="5 5" stroke-linecap="round"/>')}<span class="lt">${esc(s.pending)}</span></div>`+
     `<div class="lgrow">${swz('<path d="M4 8 H30" fill="none" stroke="#a9d2ee" stroke-width="2.6" stroke-linecap="round"/>')}<span class="lt">${esc(s.apppath)}</span></div>`;
 }
@@ -804,6 +808,22 @@ async function loadData(){
   edges=(rp||[]).filter(r=>r.status==null||r.status==='published').map(r=>({ id:r.id, from:r.from_person, to:r.to_person, kind:r.kind||'parent', certainty:r.certainty||'remembered', note:r.note||'', status:r.status||null }));
   // pending kin suggestions
   try{ const {data:pk}=await sb.from('person_facts').select('id,person_id,value,created_by,status').eq('field','kin').neq('status','published'); pendingKin=pk||[]; }catch(e){ pendingKin=[]; }
+  // face fallback: for anyone without a primary_asset, borrow a photo they're TAGGED in.
+  // artefact_subjects(person_id, artefact_id, detail{x,y,w,h}) → artefacts(id, storage_path, kind='photo', published). One batch, largest crop wins.
+  faceFallback={};
+  try{
+    const [subsR, artsR] = await Promise.all([
+      sb.from('artefact_subjects').select('artefact_id,person_id,detail'),
+      sb.from('artefacts').select('id,storage_path').eq('status','published').eq('kind','photo')
+    ]);
+    const artPath={}; (artsR.data||[]).forEach(a=>{ if(a.storage_path) artPath[a.id]=a.storage_path; });
+    const bestArea={};
+    (subsR.data||[]).forEach(s=>{ const d=s.detail; if(!d||typeof d.x!=='number'||typeof d.w!=='number') return;
+      const path=artPath[s.artefact_id]; if(!path) return;
+      const area=(d.w||0)*(d.h||0);
+      if(faceFallback[s.person_id]==null || area>bestArea[s.person_id]){
+        faceFallback[s.person_id]={ path, box:{x:d.x, y:d.y, w:d.w, h:d.h} }; bestArea[s.person_id]=area; } });
+  }catch(e){ faceFallback={}; }
 }
 
 /* ================= CONNECT FLOW (reusable — window.LFConnect) ================= */
@@ -838,7 +858,7 @@ function renderPick(){ const s=L(); let list=candList();
   const q=CF.query.trim().toLowerCase();
   if(q) list=list.filter(id=>['en','ru','he','und'].some(lg=>String(nmLang(id,lg)||'').toLowerCase().includes(q)) || String(people[id].display_name||'').toLowerCase().includes(q));
   list.sort((a,b)=>firstName(a).localeCompare(firstName(b)));
-  const rows=list.map(id=>{ const noP=!people[id].primary_asset; const conn=connectedTo(id);
+  const rows=list.map(id=>{ const noP=!hasFace(id); const conn=connectedTo(id);
     return `<button class="prow ${noP?'nophoto':''} ${CF.other===id?'on':''}" data-pick="${esc(id)}">`+
       `<span class="por" data-face="${esc(id)}"></span>`+
       `<span class="pt"><span class="nm serif">${esc(nm(id))}</span><span class="det">${esc(parentDisamb(id))}</span></span>`+
