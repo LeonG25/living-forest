@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tree background — preview</title>
+<style>
+  :root { --dissolve: 3.5s; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; background: #0a0710; }
+  body { font-family: system-ui, sans-serif; }
+
+  /* Full-screen living background */
+  #stage {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: #0a0710;
+  }
+
+  /* The image layer holds the breathing/sway transform; the frames crossfade inside it */
+  #sway {
+    position: absolute;
+    /* slightly larger than viewport so scale/drift never reveals an edge */
+    inset: -4%;
+    will-change: transform;
+    animation: breathe 26s ease-in-out infinite;
+  }
+
+  .frame {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transition: opacity var(--dissolve) ease-in-out;
+    will-change: opacity;
+  }
+  .frame.show { opacity: 1; }
+
+  /* Particle canvas floats above the art, additive glow */
+  #particles {
+    position: absolute;
+    inset: 0;
+    mix-blend-mode: screen;
+    pointer-events: none;
+  }
+
+  /* Soft vignette keeps future UI legible over the edges */
+  #vignette {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(120% 90% at 50% 42%, rgba(0,0,0,0) 42%, rgba(6,4,12,0.55) 100%),
+      linear-gradient(to bottom, rgba(6,4,12,0.28) 0%, rgba(0,0,0,0) 22%, rgba(0,0,0,0) 74%, rgba(6,4,12,0.5) 100%);
+  }
+
+  #label {
+    position: fixed;
+    left: env(safe-area-inset-left, 0);
+    bottom: env(safe-area-inset-bottom, 0);
+    margin: 14px 16px;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: rgba(240,232,255,0.5);
+    font-variant: small-caps;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.7);
+    z-index: 5;
+    user-select: none;
+  }
+
+  @keyframes breathe {
+    0%   { transform: scale(1.00) translate(0, 0); }
+    25%  { transform: scale(1.022) translate(-0.6%, 0.4%); }
+    50%  { transform: scale(1.04) translate(0.5%, -0.5%); }
+    75%  { transform: scale(1.022) translate(0.6%, 0.3%); }
+    100% { transform: scale(1.00) translate(0, 0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #sway { animation: none; transform: scale(1.02); }
+    .frame { transition: none; }
+  }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="sway">
+      <!-- frame-1 painted inline so it shows immediately; 2-4 lazy-loaded then attached -->
+      <div class="frame show" id="f0" style="background-image:url('assets/tree-bg/frame-1.png')"></div>
+      <div class="frame" id="f1"></div>
+      <div class="frame" id="f2"></div>
+      <div class="frame" id="f3"></div>
+    </div>
+    <canvas id="particles"></canvas>
+    <div id="vignette"></div>
+  </div>
+  <div id="label">Tree background — preview</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var SRCS = [
+    'assets/tree-bg/frame-1.png',
+    'assets/tree-bg/frame-2.png',
+    'assets/tree-bg/frame-3.png',
+    'assets/tree-bg/frame-4.png'
+  ];
+  var els = [
+    document.getElementById('f0'),
+    document.getElementById('f1'),
+    document.getElementById('f2'),
+    document.getElementById('f3')
+  ];
+
+  // ---- Crossfade loop -------------------------------------------------
+  // Timing (must mirror --dissolve in CSS): each frame is held HOLD ms,
+  // then its successor fades in over DISSOLVE ms (both stacked, .show
+  // toggles opacity). Loop = 4 * (HOLD + DISSOLVE), wrapping 4 -> 1.
+  var HOLD = 7000;      // frame fully visible (~7s)
+  var DISSOLVE = 3500;  // cross-dissolve (matches --dissolve: 3.5s)
+  var ready = [true, false, false, false]; // frame-1 is inline-ready
+  var current = 0;
+  var started = false;
+
+  function step() {
+    var next = (current + 1) % 4;
+    // Only advance when the next frame's image has decoded; otherwise
+    // hold on the current frame and re-check shortly (never block).
+    if (!ready[next]) {
+      setTimeout(step, 400);
+      return;
+    }
+    els[next].classList.add('show'); // fade next in over DISSOLVE
+    var prev = current;
+    current = next;
+    // After the dissolve completes, hide the previous frame beneath the
+    // now-opaque current one, then hold before the next transition.
+    setTimeout(function () {
+      els[prev].classList.remove('show');
+    }, DISSOLVE);
+    setTimeout(step, DISSOLVE + HOLD);
+  }
+
+  // Lazy-preload frames 2-4 (decode async). frame-1 already paints from
+  // the inline background-image, so the page appears instantly; the loop
+  // only kicks off once at least frame-2 is ready.
+  function preload(i) {
+    var img = new Image();
+    img.decoding = 'async';
+    img.onload = function () {
+      // attach as background only after it's fully loaded/decoded
+      els[i].style.backgroundImage = "url('" + SRCS[i] + "')";
+      ready[i] = true;
+      if (!reduce && !started && i === 1) {
+        started = true;
+        setTimeout(step, HOLD); // hold frame-1 first, then begin
+      }
+    };
+    img.src = SRCS[i];
+  }
+  if (!reduce) {
+    // stagger so we don't fire 6MB of requests at once
+    preload(1);
+    setTimeout(function () { preload(2); }, 1200);
+    setTimeout(function () { preload(3); }, 2400);
+  }
+  // reduced-motion: leave frame-1 showing, no preload, no crossfade.
+
+  // ---- Particle field -------------------------------------------------
+  var canvas = document.getElementById('particles');
+  var ctx = canvas.getContext('2d');
+  var W = 0, H = 0, DPR = 1;
+  var particles = [];
+
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2); // cap DPR at 2
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = Math.round(W * DPR);
+    canvas.height = Math.round(H * DPR);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    build();
+  }
+
+  function rnd(a, b) { return a + Math.random() * (b - a); }
+
+  function build() {
+    // count scales with area but is capped for cheap render
+    var area = W * H;
+    var fireflies = Math.min(34, Math.round(area / 42000));
+    var spores = Math.min(30, Math.round(area / 46000));
+    particles = [];
+    var i;
+    for (i = 0; i < fireflies; i++) particles.push(mk('firefly'));
+    for (i = 0; i < spores; i++) particles.push(mk('spore'));
+  }
+
+  function mk(kind) {
+    if (kind === 'firefly') {
+      return {
+        kind: 'firefly',
+        x: rnd(0, W), y: rnd(0, H),
+        r: rnd(0.8, 2.2),
+        hue: rnd(38, 54),          // warm gold
+        vx: rnd(-0.12, 0.12),
+        vy: rnd(-0.10, 0.10),
+        phase: rnd(0, Math.PI * 2),
+        pulse: rnd(0.6, 1.6),
+        base: rnd(0.25, 0.6),
+        spark: false,
+        sparkT: rnd(4, 12)
+      };
+    }
+    // rising spore
+    return {
+      kind: 'spore',
+      x: rnd(0, W), y: rnd(0, H + 40),
+      r: rnd(0.6, 1.6),
+      hue: rnd(190, 280),          // cool violet/blue drift
+      vx: rnd(-0.15, 0.15),
+      vy: rnd(-0.45, -0.18),       // drift upward
+      phase: rnd(0, Math.PI * 2),
+      sway: rnd(0.2, 0.7),
+      base: rnd(0.18, 0.4)
+    };
+  }
+
+  var last = 0;
+  function frame(t) {
+    if (!last) last = t;
+    var dt = Math.min(50, t - last); // ms, clamp on tab-return
+    last = t;
+    var ts = t / 1000;
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'lighter'; // additive glow
+
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
+      var a, r, hue, grd;
+
+      if (p.kind === 'firefly') {
+        p.x += p.vx * dt * 0.06;
+        p.y += p.vy * dt * 0.06;
+        // gentle wander
+        p.vx += rnd(-0.004, 0.004);
+        p.vy += rnd(-0.004, 0.004);
+        p.vx = Math.max(-0.18, Math.min(0.18, p.vx));
+        p.vy = Math.max(-0.16, Math.min(0.16, p.vy));
+        wrap(p);
+        var flick = 0.5 + 0.5 * Math.sin(ts * p.pulse + p.phase);
+        a = p.base * (0.4 + 0.6 * flick);
+        // occasional sparkle burst
+        p.sparkT -= dt / 1000;
+        if (p.sparkT <= 0) { p.spark = true; p.sparkT = rnd(6, 16); p.sparkAge = 0; }
+        r = p.r;
+        if (p.spark) {
+          p.sparkAge += dt / 1000;
+          var k = Math.max(0, 1 - p.sparkAge / 0.6);
+          a += 0.5 * k;
+          r = p.r * (1 + 1.6 * k);
+          if (p.sparkAge > 0.6) p.spark = false;
+        }
+        hue = p.hue;
+      } else {
+        p.y += p.vy * dt * 0.06;
+        p.x += (p.vx + Math.sin(ts * p.sway + p.phase) * 0.15) * dt * 0.06;
+        if (p.y < -20) { p.y = H + rnd(10, 40); p.x = rnd(0, W); }
+        wrapX(p);
+        a = p.base * (0.6 + 0.4 * Math.sin(ts * 0.8 + p.phase));
+        r = p.r;
+        hue = p.hue;
+      }
+
+      var glow = r * 4.5;
+      grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glow);
+      grd.addColorStop(0, 'hsla(' + hue + ',90%,72%,' + a + ')');
+      grd.addColorStop(0.35, 'hsla(' + hue + ',90%,62%,' + (a * 0.4) + ')');
+      grd.addColorStop(1, 'hsla(' + hue + ',90%,60%,0)');
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, glow, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (!reduce) rafId = requestAnimationFrame(frame);
+  }
+
+  function wrap(p) {
+    if (p.x < -20) p.x = W + 20; else if (p.x > W + 20) p.x = -20;
+    if (p.y < -20) p.y = H + 20; else if (p.y > H + 20) p.y = -20;
+  }
+  function wrapX(p) {
+    if (p.x < -20) p.x = W + 20; else if (p.x > W + 20) p.x = -20;
+  }
+
+  var rafId = null;
+  window.addEventListener('resize', resize);
+  resize();
+
+  if (reduce) {
+    // freeze one still frame of particles
+    frame(0);
+  } else {
+    rafId = requestAnimationFrame(frame);
+  }
+})();
+</script>
+</body>
+</html>
