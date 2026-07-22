@@ -669,7 +669,20 @@ function L(){ return STR[state.lang]||STR.en; }
 function rtl(){ return L().dir==='rtl'; }
 
 /* geometry */
-const CW=132, CH=150, COLW=166, TIERH=212, PADX=70, PADY=110, GAP=14;
+const CW=132, CH=150, TIERH=212, PADX=70, PADY=110;
+// Every card renders controls that sit OUTSIDE its 132px rect. Measured from the CSS:
+//   .conn    30px @ bottom:-11px right:-11px → 11px past the inline-end edge, 11px below
+//   .opic    27px @ top:-9px  left:-9px      →  9px past the inline-start edge, 9px above
+//   .pendpin 17px @ top:-6px  right:-6px      →  6px past the inline-end edge, 6px above
+//   .youtag        @ top:-9px (centred pill)  →  9px above
+// (RTL mirrors inline-start/end, so a side can carry either .conn's 11 or .opic's 9.)
+// Collision + spacing therefore use a BADGE-INCLUSIVE box so two neighbours' badges can
+// never touch. Per-side horizontal overhang = max(11,9,6)=11, rounded up to 12 for safety.
+const OVX=12, OVY_TOP=10, OVY_BOT=12;   // horizontal (per side) / top / bottom overhang, px
+const CWX=CW+2*OVX;                      // badge-inclusive card width = 156
+const GUT=14;                            // visible gap guaranteed between two badge-inclusive rects
+const COLW=CWX+GUT;                      // per-member column pitch = 170 (badge boxes GUT apart)
+const GAP=16;                            // extra breathing gap added between separate units
 function CX(id){ return pos[id]?pos[id].x:0; }
 function CTOP(id){ return pos[id]?(PADY+pos[id].tier*TIERH):0; }
 function CBOT(id){ return CTOP(id)+CH; }
@@ -704,24 +717,37 @@ function siblingsOf(x){ const out=new Set();
 function hasAnyRel(x){ return parentsOf(x).length>0 || childrenOf(x).length>0 || spousesOf(x).length>0 || siblingsOf(x).length>0; }
 function anyTie(a,b){ return edges.find(e=>(e.from===a&&e.to===b)||(e.from===b&&e.to===a))||null; }
 
-/* Generation numbers via fixed-point iteration over two constraints, alternated to
-   convergence: (1) spouses share a row [max], (2) each child sits one row below its
-   HIGHEST parent. Because gen only ever increases, the loop always settles; and because
-   the child constraint is re-applied AFTER every spouse pull-down, no child can remain on
-   or above a parent once a parentless spouse is moved to their partner's row (the
-   Dudi→Leeya inversion). Returns {id -> gen}. */
+/* Generation numbers via fixed-point iteration over THREE constraints, alternated to
+   convergence. This is Leon's rule made literal: a generation IS a level.
+     (1) SIBLINGS share a level [max] — a blood tie, always applied.
+     (2) SPOUSES share their partner's level [max] — applied ONLY when it does not fight a
+         spouse's own BLOOD generation (see below). This is what puts a married-in partner
+         (and every serial-marriage partner) beside their spouse on the same level.
+     (3) each CHILD sits one level below its HIGHEST parent — always applied, re-checked
+         after every spouse/sibling pull, so no child can end up on or above a parent (the
+         Dudi→Leeya inversion).
+   Related-spouses edge case (cousins/uncle-niece who marry): a person's BLOOD generation is
+   fixed when they have a parent OR a sibling in the tree (ancestry pins the level; a shared
+   child does not). If BOTH partners are blood-anchored, we do NOT pull them together — each
+   keeps their own blood level and the marriage is later drawn as a cross-level connector.
+   A partner who is NOT blood-anchored (a pure married-in) always follows their spouse.
+   gen only ever increases ⇒ the loop always settles (no infinite loop), capped for safety. */
 function genAssign(placed){
   const inSet=new Set(placed); const tier={}; placed.forEach(id=>tier[id]=0);
-  // same-row constraints: spouses/co-parents share a row, AND siblings share a row (so a
-  // sibling with no parents of their own still lands on their brother's/sister's generation).
-  const pairs=[]; { const seen=new Set();
-    placed.forEach(id=>spousesOf(id).forEach(s=>{ if(!inSet.has(s)) return; const k=id<s?id+'|'+s:s+'|'+id; if(seen.has(k)) return; seen.add(k); pairs.push([id,s]); }));
-    placed.forEach(id=>siblingsOf(id).forEach(s=>{ if(!inSet.has(s)) return; const k=id<s?id+'|'+s:s+'|'+id; if(seen.has(k)) return; seen.add(k); pairs.push([id,s]); })); }
+  // blood-anchored = the level is pinned by ancestry: a parent OR a sibling in the tree.
+  // (A shared CHILD is deliberately excluded — it does not fix a person's own level upward,
+  //  so a married-in co-parent still follows their spouse rather than floating to level 0.)
+  const anchored={}; placed.forEach(id=>{ anchored[id]=parentsOf(id).some(p=>inSet.has(p))||siblingsOf(id).some(s=>inSet.has(s)); });
+  const dedupe=list=>{ const seen=new Set(), out=[]; list.forEach(([a,b])=>{ if(!inSet.has(a)||!inSet.has(b)) return; const k=a<b?a+'|'+b:b+'|'+a; if(seen.has(k)) return; seen.add(k); out.push([a,b]); }); return out; };
+  const siblingPairs=dedupe([].concat(...placed.map(id=>siblingsOf(id).map(s=>[id,s]))));
+  const spousePairs =dedupe([].concat(...placed.map(id=>spousesOf(id).map(s=>[id,s]))));
   const pc=[]; edges.forEach(e=>{ if(isParentEdge(e)&&inSet.has(e.from)&&inSet.has(e.to)) pc.push([e.from,e.to]); });
+  const pull=(a,b)=>{ const m=Math.max(tier[a],tier[b]); let ch=false; if(tier[a]!==m){tier[a]=m;ch=true;} if(tier[b]!==m){tier[b]=m;ch=true;} return ch; };
   const cap=placed.length+8;                  // monotonic increase ⇒ converges well inside this
   for(let it=0; it<cap; it++){ let ch=false;
-    pairs.forEach(([a,b])=>{ const m=Math.max(tier[a],tier[b]); if(tier[a]!==m){tier[a]=m;ch=true;} if(tier[b]!==m){tier[b]=m;ch=true;} });
-    pc.forEach(([p,c])=>{ if(tier[c]<tier[p]+1){ tier[c]=tier[p]+1; ch=true; } });
+    siblingPairs.forEach(([a,b])=>{ if(pull(a,b)) ch=true; });                                  // (1) blood
+    spousePairs.forEach(([a,b])=>{ if(anchored[a]&&anchored[b]) return; if(pull(a,b)) ch=true; }); // (2) conditional
+    pc.forEach(([p,c])=>{ if(tier[c]<tier[p]+1){ tier[c]=tier[p]+1; ch=true; } });              // (3) child below parent
     if(!ch) break; }
   return tier;
 }
@@ -758,28 +784,29 @@ function selfTestOrdering(){
 }
 
 /* collision/compaction: after ordering + x-placement, GUARANTEE no two cards in a generation
-   overlap. Walk each row left→right in x-order; if a card would collide with its left
-   neighbour, push it right to keep a minimum gutter (couples stay together — their members sit
-   COLW apart, wider than a card, so they never trip this). Then re-centre the row so it stays
-   under its parents. PAV already spaces the units, so in practice this is a no-op — it is the
-   hard backstop behind selfTestOverlap(). */
-function compactRows(){ const GUT=16; const rows={};
+   overlap — using the BADGE-INCLUSIVE box (CWX), not the bare 132px rect, so the connect "+"
+   and moment badge that hang OUTSIDE the card can never touch a neighbour. Walk each row
+   left→right; if a card's badge box would collide with its left neighbour's, push it right to
+   keep the minimum centre pitch (CWX + GUT = COLW). Couple/cluster members already sit exactly
+   COLW apart, so they never trip this. Then re-centre the row so it stays under its parents. */
+function compactRows(){ const MINPITCH=CWX+GUT; const rows={};   // = COLW; badge boxes stay ≥ GUT apart
   Object.keys(pos).forEach(id=>{ const t=pos[id].tier; (rows[t]=rows[t]||[]).push(id); });
   Object.keys(rows).forEach(t=>{ const row=rows[t].sort((a,b)=>pos[a].x-pos[b].x);
     const mean0=row.reduce((a,id)=>a+pos[id].x,0)/row.length;
-    for(let i=1;i<row.length;i++){ const minx=pos[row[i-1]].x + CW + GUT;
+    for(let i=1;i<row.length;i++){ const minx=pos[row[i-1]].x + MINPITCH;
       if(pos[row[i]].x < minx) pos[row[i]].x = minx; }
     const mean1=row.reduce((a,id)=>a+pos[id].x,0)/row.length; const d=mean0-mean1;
     if(d) row.forEach(id=>{ pos[id].x += d; }); });
 }
-/* self-test: assert no two card rects intersect in any generation. Prints the count. */
+/* self-test: assert no two BADGE-INCLUSIVE card boxes intersect in any generation. This is the
+   real fix's guarantee — a plain-rect test passed while badges still overlapped. Prints 0. */
 function selfTestOverlap(){ const rows={}; let overlaps=0; const ex=[];
   Object.keys(pos).forEach(id=>{ const t=pos[id].tier; (rows[t]=rows[t]||[]).push(id); });
   Object.keys(rows).forEach(t=>{ const row=rows[t].sort((a,b)=>pos[a].x-pos[b].x);
-    for(let i=1;i<row.length;i++){ const a=row[i-1],b=row[i]; const aR=pos[a].x+CW/2, bL=pos[b].x-CW/2;
-      if(bL<aR-0.5){ overlaps++; if(ex.length<6) ex.push(nm(a)+' ∩ '+nm(b)+' (gen '+t+', by '+Math.round(aR-bL)+'px)'); } } });
-  console.log('[tree] overlap self-test — generations:',Object.keys(rows).length,'| overlapping card pairs:',overlaps);
-  if(overlaps) console.warn('[tree] CARD OVERLAPS:\n  '+ex.join('\n  ')); else console.log('[tree] ✓ no two cards overlap in any generation');
+    for(let i=1;i<row.length;i++){ const a=row[i-1],b=row[i]; const aR=pos[a].x+CWX/2, bL=pos[b].x-CWX/2;
+      if(bL<aR-0.5){ overlaps++; if(ex.length<6) ex.push(nm(a)+' ∩ '+nm(b)+' (gen '+t+', badge boxes by '+Math.round(aR-bL)+'px)'); } } });
+  console.log('[tree] overlap self-test (badge-inclusive, box='+CWX+'px) — generations:',Object.keys(rows).length,'| overlapping card pairs:',overlaps);
+  if(overlaps) console.warn('[tree] CARD/BADGE OVERLAPS:\n  '+ex.join('\n  ')); else console.log('[tree] ✓ no two cards’ badge-inclusive boxes overlap in any generation');
   return overlaps;
 }
 /* self-test: the drawer must hold EXACTLY the people with zero relationships — nobody who
@@ -790,6 +817,24 @@ function selfTestPlacement(){ const ids=Object.keys(people);
   console.log('[tree] placement self-test — people:',ids.length,'| placed (≥1 tie):',placedSet.size,'| zero-tie:',zero.length,'| drawer shows:',unplaced.length);
   console.log('[tree]   '+(ok?'✓ drawer holds exactly the '+zero.length+' people with no relationships':'✗ MISMATCH: drawer='+unplaced.length+' vs '+zero.length+' truly unlinked'));
   return {drawer:unplaced.length, zero:zero.length, ok};
+}
+
+/* Order a same-tier marriage cluster (a connected component of the same-level spouse graph)
+   into a single left→right line. A simple couple is [a,b]; a serial marriage (one hub married
+   to several partners, all on the same level) becomes hub-flanked/-followed by its partners so
+   every partner sits ON the hub's level, to the side — exactly Leon's rule. Deterministic: walk
+   from a min-degree endpoint, always stepping to the neighbour with the fewest remaining links
+   (id tie-break), so chains close cleanly and the same order forms on every load. */
+function orderCluster(comp, adj){ const sortId=(a,b)=> a<b?-1:(a>b?1:0);
+  if(comp.length===1) return comp.slice();
+  const deg=x=>adj[x].size;
+  const start=comp.slice().sort((a,b)=>(deg(a)-deg(b))||sortId(a,b))[0];
+  const out=[], used=new Set(); let cur=start;
+  while(out.length<comp.length){ out.push(cur); used.add(cur);
+    const free=[...adj[cur]].filter(n=>!used.has(n));
+    if(free.length){ cur=free.sort((a,b)=>{ const fa=[...adj[a]].filter(n=>!used.has(n)).length, fb=[...adj[b]].filter(n=>!used.has(n)).length; return (fa-fb)||sortId(a,b); })[0]; }
+    else { const rest=comp.filter(x=>!used.has(x)); if(!rest.length) break; cur=rest.sort(sortId)[0]; } }
+  return out;
 }
 
 /* ================= LAYOUT ================= */
@@ -814,22 +859,28 @@ function computeLayout(){
   // re-pack: drop empty generations, keep order (so gaps from the max() pushes don't show)
   { const used=[...new Set(placed.map(id=>tier[id]))].sort((a,b)=>a-b); const remap={}; used.forEach((g,i)=>remap[g]=i); placed.forEach(id=>tier[id]=remap[tier[id]]); }
 
-  // ---- couple-units (each person at most one partner, same tier). Deterministic:
-  // iterate ids in a stable sort so the same pairs form on every load.
+  // ---- MARRIAGE CLUSTERS as layout units (Leon's rule: every spouse on the partner's level,
+  // to the side — INCLUDING serial/multiple marriages, all on that same level). A unit is a
+  // connected component of the SAME-TIER spouse graph, laid out as one contiguous line. Spouses
+  // that landed on a DIFFERENT tier (the related-spouse edge case kept on their blood level) are
+  // deliberately NOT in the cluster — their marriage is drawn later as a cross-level connector.
+  // Deterministic: a stable id sort seeds every step, so the same clusters form on every load.
   const sortId=(a,b)=> a<b?-1:(a>b?1:0);
   const sortedPlaced=placed.slice().sort(sortId);
-  const partner={};
-  sortedPlaced.forEach(id=>{ if(partner[id]) return;
-    const cand=spousesOf(id).filter(s=>placedSet.has(s)&&!partner[s]&&tier[s]===tier[id]).sort(sortId);
-    if(cand.length){ partner[id]=cand[0]; partner[cand[0]]=id; } });
+  const spAdj={}; sortedPlaced.forEach(id=>spAdj[id]=new Set());
+  sortedPlaced.forEach(id=>spousesOf(id).forEach(s=>{ if(placedSet.has(s)&&s!==id&&tier[s]===tier[id]){ spAdj[id].add(s); spAdj[s].add(id); } }));
 
   const maxTier=Math.max(...placed.map(id=>tier[id]));
   const unitsByTier={}; for(let t=0;t<=maxTier;t++) unitsByTier[t]=[];
   const unitOf={}; const seen=new Set();
-  sortedPlaced.forEach(id=>{ if(seen.has(id)) return; const t=tier[id]; let mem;
-    if(partner[id]&&!seen.has(partner[id])){ const a=id,b=partner[id]; seen.add(a); seen.add(b);
-      mem=[a,b]; if(sexOf(b)==='m'&&sexOf(a)!=='m') mem=[b,a]; }      // couple: m to the left
-    else { seen.add(id); mem=[id]; }
+  sortedPlaced.forEach(start=>{ if(seen.has(start)) return;
+    // gather the same-tier spouse component (marriage cluster) containing `start`
+    const comp=[], stack=[start], inC=new Set([start]);
+    while(stack.length){ const x=stack.pop(); comp.push(x); [...spAdj[x]].sort(sortId).forEach(y=>{ if(!inC.has(y)){ inC.add(y); stack.push(y); } }); }
+    comp.forEach(x=>seen.add(x));
+    let mem=orderCluster(comp, spAdj);
+    if(mem.length===2 && sexOf(mem[1])==='m' && sexOf(mem[0])!=='m') mem=[mem[1],mem[0]];   // simple couple: m to the left
+    const t=tier[start];
     const u={ mem, tier:t, uid:mem.slice().sort(sortId).join('|'), minId:mem.slice().sort(sortId)[0] };
     mem.forEach(m=>unitOf[m]=u); unitsByTier[t].push(u); });
   const allUnits=[]; for(let t=0;t<=maxTier;t++) allUnits.push(...unitsByTier[t]);
@@ -897,7 +948,8 @@ function computeLayout(){
 /* ================= RENDER ================= */
 function worldBBox(){ let maxX=0,maxY=0,minX=1e9,minY=1e9; const placed=[...placedSet];
   if(!placed.length) return {minX:0,minY:0,maxX:600,maxY:600};
-  placed.forEach(id=>{ minX=Math.min(minX,CX(id)-CW/2); maxX=Math.max(maxX,CX(id)+CW/2); minY=Math.min(minY,CTOP(id)); maxY=Math.max(maxY,CBOT(id)); });
+  // include the badge overhang so edge cards (and their connect/moment badges) are never clipped
+  placed.forEach(id=>{ minX=Math.min(minX,CX(id)-CW/2-OVX); maxX=Math.max(maxX,CX(id)+CW/2+OVX); minY=Math.min(minY,CTOP(id)-OVY_TOP); maxY=Math.max(maxY,CBOT(id)+OVY_BOT); });
   return {minX,minY,maxX,maxY}; }
 
 function buildCards(){
@@ -984,9 +1036,12 @@ function buildLinks(){
   sizeLinks();
 }
 function drawSpouse(a,b){ const y=CMID(a), x1=CX(a), x2=CX(b), mx=(x1+x2)/2;
-  // adjacent partners: a short bar between their edges. Distant co-parents: route the join
-  // through the gap ABOVE the cards so the bar never crosses an unrelated card between them.
-  if(Math.abs(x1-x2) <= COLW*1.35){
+  const sameTier = pos[a]&&pos[b]&&pos[a].tier===pos[b].tier;
+  // Adjacent, same-level partners: a short bar between their edges. Otherwise — distant
+  // co-parents, OR the related-spouse edge case where the two partners keep DIFFERENT blood
+  // levels — route the marriage line through the gap ABOVE the cards, so it reads as a
+  // connector (never crossing an unrelated card) and can span levels without any overlap.
+  if(sameTier && Math.abs(x1-x2) <= COLW*1.35){
     links.appendChild(mkPath(`M ${Math.min(x1,x2)+CW/2-6} ${y} H ${Math.max(x1,x2)-CW/2+6}`,'ln spouse'));
     links.appendChild(mkEl('circle',{cx:mx, cy:y, r:4.5, class:'knot'}));
   } else {
@@ -1009,13 +1064,22 @@ function tracePath(from,to){ if(!from||!to) return null; if(from===to) return [f
 
 /* ---------- transform ---------- */
 function apply(){ world.style.transform=`translate(${state.tx}px,${state.ty}px) scale(${state.scale})`; const z=$('#zlvl'); if(z) z.textContent=Math.round(state.scale*100)+'%'; }
-function centerOn(id, sc){ if(!pos[id]) return; const s=sc||state.scale; const vw=vp.clientWidth, vh=vp.clientHeight;
-  state.scale=s; state.tx=vw/2 - CX(id)*s; state.ty=vh/2 - (CTOP(id)+CH/2)*s;
+// The SAFE rectangle: the viewport minus the fixed chrome, so the initial fit/centre never
+// parks a card permanently under the top bar, the bottom pills, or the zoom dock + ⊕ nav
+// button (both at the inline-END corner, ≈120×260px). The canvas can still be PANNED under
+// them afterwards — this only biases the resting framing. inset-inline-end mirrors under RTL.
+function safeRect(){ const vw=vp.clientWidth, vh=vp.clientHeight;
+  const TOP=76, BOT=100, START=14, END=120;                 // topbar / pills row / dock+nav column
+  const left = rtl()? END : START, right = rtl()? START : END;
+  const w=Math.max(60, vw-left-right), h=Math.max(60, vh-TOP-BOT);
+  return { cx:left+w/2, cy:TOP+h/2, w, h }; }
+function centerOn(id, sc){ if(!pos[id]) return; const s=sc||state.scale; const R=safeRect();
+  state.scale=s; state.tx=R.cx - CX(id)*s; state.ty=R.cy - (CTOP(id)+CH/2)*s;
   world.style.transition='transform .5s cubic-bezier(.16,.8,.28,1)'; apply(); setTimeout(()=>world.style.transition='',520); }
-function fitAll(){ const vw=vp.clientWidth, vh=vp.clientHeight; const bb=worldBBox(); const pad=40;
+function fitAll(){ const R=safeRect(); const bb=worldBBox(); const pad=30;
   const bw=(bb.maxX-bb.minX)+pad*2, bh=(bb.maxY-bb.minY)+pad*2;
-  const s=Math.min(ZMAX,Math.max(ZMIN,Math.min(vw/bw, vh/bh)));
-  state.scale=s; state.tx=vw/2 - ((bb.minX+bb.maxX)/2)*s; state.ty=vh/2 - ((bb.minY+bb.maxY)/2)*s;
+  const s=Math.min(ZMAX,Math.max(ZMIN,Math.min(R.w/bw, R.h/bh)));
+  state.scale=s; state.tx=R.cx - ((bb.minX+bb.maxX)/2)*s; state.ty=R.cy - ((bb.minY+bb.maxY)/2)*s;
   world.style.transition='transform .55s cubic-bezier(.16,.8,.28,1)'; apply(); setTimeout(()=>world.style.transition='',560); }
 
 /* ---------- legend ---------- */
