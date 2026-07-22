@@ -5,7 +5,7 @@
 <title>A Moment — The Living Forest</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
@@ -13,7 +13,7 @@
   :root{
     --cream:#f4ecdb; --muted:#9db0cc; --hair:#ffffff1c; --panel:#ffffff0d;
     --gold:#f3cd84; --gold-hi:#ffe6ad; --cool:#7fb4d8; --cool-hi:#a9d2ee;
-    --edit:#c9a2ff;                          /* suggestion / pending accent */
+    --edit:#c9a2ff;
   }
   body{
     font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--cream);
@@ -21,11 +21,11 @@
     background:radial-gradient(130% 100% at 50% 0%, #0d1a2f 0%, #081120 48%, #04070e 100%);
     -webkit-user-select:none; user-select:none;
   }
+  a{ color:var(--cool-hi); text-decoration:none; } a:hover{ color:var(--gold-hi); }
   .serif{ font-family:'Newsreader',Georgia,serif; }
   .mono{ font-family:'Azeret Mono',ui-monospace,monospace; }
-  [dir="rtl"] .serif, [dir="rtl"] .story-words{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
+  [dir="rtl"] .serif, [dir="rtl"] .story-words, [dir="rtl"] .autobar .m{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
 
-  /* ===== the moving colour: aurora + bokeh field ===== */
   #atmo{ position:fixed; inset:0; z-index:0; width:100%; height:100%; display:block; }
   .atmo-veil{ position:fixed; inset:0; z-index:1; pointer-events:none;
     background:radial-gradient(115% 80% at 50% 34%, transparent 30%, rgba(4,7,14,.55) 100%),
@@ -34,7 +34,6 @@
   .wrap{ position:relative; z-index:2; width:100%; max-width:440px; margin:0 auto;
     padding:0 22px calc(60px + env(safe-area-inset-bottom)); }
 
-  /* ===== top bar ===== */
   .topbar{ display:flex; align-items:center; gap:10px; padding:max(14px,env(safe-area-inset-top)) 0 8px; }
   .icon-btn{ width:42px; height:42px; border-radius:13px; border:1px solid var(--hair);
     background:rgba(8,17,30,.5); backdrop-filter:blur(10px); color:var(--cream);
@@ -42,44 +41,113 @@
   .icon-btn:hover{ border-color:rgba(255,255,255,.32); }
   .icon-btn:focus-visible{ outline:2px solid var(--cool-hi); outline-offset:2px; }
   .icon-btn svg{ width:19px; height:19px; }
+  .icon-btn.on{ border-color:rgba(201,162,255,.6); background:rgba(201,162,255,.14); color:#efe6ff; }
   .crumb{ flex:1; min-width:0; text-align:center; }
   .crumb .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.28em; text-transform:uppercase; color:var(--muted); }
 
-  /* ===== HERO: the held, surfacing photograph ===== */
+  /* ===== HERO ===== */
   .stage{ margin-top:12px; position:relative; }
-  .frame{ position:relative; border-radius:13px; padding:0;
-    background:none;
+  .frame{ position:relative; border-radius:13px; padding:0; background:none;
     border:1px solid rgba(255,244,214,.92);
     box-shadow:0 0 22px -2px rgba(255,232,180,.65), 0 0 60px -8px rgba(243,205,132,.5), 0 30px 90px -46px #000; }
-  /* candlelight pooling from behind the frame */
   .frame::before{ content:""; position:absolute; inset:-14% -8% -20% -8%; z-index:-1; border-radius:40px;
     background:radial-gradient(60% 55% at 50% 44%, rgba(243,205,132,.5), rgba(243,205,132,.12) 45%, transparent 72%);
     filter:blur(26px); opacity:.9; animation:breathe 7s ease-in-out infinite; }
   @keyframes breathe{ 0%,100%{opacity:.62; transform:scale(1);} 50%{opacity:1; transform:scale(1.05);} }
-  .photo{ position:relative; border-radius:12px; overflow:hidden; background:#0a1120;
-    /* natural shape: never crop a portrait — height led by the image, capped to viewport */
-    display:block; }
-  .photo image-slot{ display:block; width:100%; }
-  .yearstamp{ position:absolute; top:20px; z-index:4; inset-inline-end:20px;
+
+  .photostage{ position:relative; border-radius:12px; overflow:hidden; background:#0a1120; min-height:120px; }
+  .rotor{ position:relative; width:100%; transform-origin:50% 50%; }
+  .photoart{ position:relative; display:block; width:100%; }
+  .photoart img{ display:block; width:100%; height:auto;
+    opacity:0; filter:blur(14px) brightness(.6); transition:opacity 1.2s ease, filter 1.6s ease; }
+  .photoart img.up{ opacity:1; filter:blur(0) brightness(1); }
+  .photoart .ph-empty{ display:grid; place-items:center; width:100%; aspect-ratio:4/3; color:var(--muted);
+    font-family:'Newsreader',serif; font-style:italic; font-size:16px; text-align:center; padding:20px; }
+  .taglayer{ position:absolute; inset:0; touch-action:none; z-index:4; }
+  body.tagging .photostage{ cursor:crosshair; }
+  .stage-dim{ position:absolute; inset:0; background:rgba(4,7,14,.34); opacity:0; pointer-events:none; transition:opacity .3s; z-index:3; }
+  body.tagging .stage-dim{ opacity:1; }
+
+  .yearstamp{ position:absolute; top:14px; z-index:5; inset-inline-end:14px;
     display:inline-flex; align-items:center; gap:7px; padding:6px 11px; border-radius:9px;
     background:rgba(6,16,28,.62); backdrop-filter:blur(8px); border:1px solid rgba(127,180,216,.4); }
   .yearstamp .d{ width:5px; height:5px; border-radius:50%; background:var(--cool); box-shadow:0 0 8px 1px var(--cool); }
   .yearstamp .y{ font-family:'Azeret Mono',monospace; font-size:12px; letter-spacing:.12em; color:var(--cool-hi); }
 
-  /* the surfacing reveal — image resolves out of the dark, like remembering */
-  .surface{ opacity:0; filter:blur(16px) brightness(.5) saturate(.6); transform:scale(1.04);
-    transition:opacity 1.5s ease, filter 1.9s ease, transform 2.1s cubic-bezier(.16,.8,.28,1); }
-  .surface.up{ opacity:1; filter:blur(0) brightness(1) saturate(1); transform:scale(1); }
-  .reveal{ opacity:0; transform:translateY(14px); transition:opacity .9s ease, transform 1s cubic-bezier(.16,.8,.28,1); }
-  .reveal.up{ opacity:1; transform:none; }
+  /* ===== tag boxes on the photo ===== */
+  .tagbox{ position:absolute; border:2px solid var(--gold); border-radius:9px; z-index:4;
+    box-shadow:0 0 0 1px rgba(4,7,14,.6), 0 0 18px -3px rgba(243,205,132,.6); cursor:pointer; }
+  .tagbox.pending{ border-color:var(--edit); border-style:dashed; box-shadow:0 0 0 1px rgba(4,7,14,.6), 0 0 18px -3px rgba(201,162,255,.6); }
+  .tagbox.unnamed{ border-color:var(--gold); border-style:dashed; box-shadow:0 0 0 1px rgba(4,7,14,.6), 0 0 14px -3px rgba(243,205,132,.45); }
+  .tagbox.sel{ border-width:2.5px; box-shadow:0 0 0 1px rgba(4,7,14,.7), 0 0 26px -2px rgba(255,232,180,.8); }
+  .tagbox.draft{ border-color:var(--gold-hi); border-style:solid; background:rgba(243,205,132,.08); }
+  .tagbox .name{ position:absolute; inset-inline-start:-2px; bottom:0; transform-origin:left bottom;
+    display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
+    padding:4px 9px; border-radius:8px; background:rgba(6,16,28,.86); backdrop-filter:blur(6px);
+    font-family:'Newsreader',serif; font-size:13px; color:var(--gold-hi); line-height:1;
+    border:1px solid rgba(243,205,132,.4); }
+  .tagbox.pending .name{ color:#efe6ff; border-color:rgba(201,162,255,.45); }
+  .tagbox.unnamed .name{ color:var(--gold); font-style:italic; }
+  .tagbox .name .fdot{ width:6px; height:6px; border-radius:50%; background:var(--gold); box-shadow:0 0 7px 1px var(--gold); flex:0 0 auto; }
+  .tagbox.pending .name .fdot{ background:var(--edit); box-shadow:0 0 7px 1px var(--edit); }
+  .tagbox .handle{ position:absolute; width:14px; height:14px; border-radius:50%;
+    background:#fff7e6; border:2px solid var(--gold); display:none; z-index:6;
+    box-shadow:0 1px 5px rgba(0,0,0,.5); }
+  .tagbox .handle::after{ content:""; position:absolute; inset:-9px; }
+  .tagbox.sel .handle{ display:block; }
+  .tagbox .handle.nw{ inset-block-start:-7px; inset-inline-start:-7px; cursor:nwse-resize; }
+  .tagbox .handle.ne{ inset-block-start:-7px; inset-inline-end:-7px; cursor:nesw-resize; }
+  .tagbox .handle.sw{ inset-block-end:-7px; inset-inline-start:-7px; cursor:nesw-resize; }
+  .tagbox .handle.se{ inset-block-end:-7px; inset-inline-end:-7px; cursor:nwse-resize; }
+
+  .phototools{ position:absolute; left:0; right:0; bottom:0; z-index:6;
+    display:flex; align-items:center; gap:8px; padding:12px;
+    background:linear-gradient(to top, rgba(4,7,14,.82), transparent); }
+  .ptool{ display:inline-flex; align-items:center; gap:7px; height:38px; padding:0 13px; border-radius:11px;
+    background:rgba(8,17,30,.66); backdrop-filter:blur(10px); border:1px solid var(--hair);
+    color:var(--cream); font-family:'Hanken Grotesk',sans-serif; font-size:12.5px; font-weight:600; cursor:pointer; }
+  .ptool svg{ width:16px; height:16px; }
+  .ptool.tag{ border-color:rgba(243,205,132,.45); color:var(--gold-hi); background:rgba(243,205,132,.10); }
+  .ptool.tag.on{ border-color:var(--edit); color:#efe6ff; background:rgba(201,162,255,.16); }
+  .ptool.round{ width:38px; padding:0; justify-content:center; }
+  .ptool.spacer{ margin-inline-start:auto; background:none; border:none; }
+  .taghint{ position:absolute; left:12px; right:12px; top:12px; z-index:6; display:none;
+    align-items:center; gap:9px; padding:9px 12px; border-radius:11px;
+    background:rgba(28,18,46,.8); backdrop-filter:blur(10px); border:1px solid rgba(201,162,255,.4);
+    font-size:12.5px; color:#efe6ff; }
+  body.tagging .taghint{ display:flex; }
+  .taghint svg{ width:15px; height:15px; color:var(--edit); flex:0 0 auto; }
+
+  .selbar{ position:absolute; left:12px; right:12px; z-index:7; display:none;
+    align-items:center; gap:7px; padding:8px; border-radius:12px;
+    background:rgba(6,16,28,.9); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,.14);
+    box-shadow:0 14px 40px -20px #000; }
+  .selbar.show{ display:flex; }
+  .selbar .sname{ font-family:'Newsreader',serif; font-size:14px; color:var(--gold-hi); margin-inline-end:auto; padding-inline-start:5px; }
+  .selbar.pending .sname{ color:#efe6ff; }
+  .sbtn{ display:inline-flex; align-items:center; gap:6px; height:34px; padding:0 11px; border-radius:9px;
+    background:var(--panel); border:1px solid var(--hair); color:var(--cream); font-size:12px; font-weight:600; cursor:pointer; }
+  .sbtn svg{ width:14px; height:14px; }
+  .sbtn.danger{ color:#ff9d9d; border-color:rgba(255,120,120,.3); }
+
+  .photo-legend{ display:flex; flex-wrap:wrap; gap:14px; margin-top:12px; padding-inline:4px; }
+  .lg{ display:inline-flex; align-items:center; gap:7px; font-size:11px; color:var(--muted); }
+  .lg i{ width:14px; height:10px; border-radius:3px; border:1.5px solid var(--gold); flex:0 0 auto; }
+  .lg i.pend{ border-color:var(--edit); border-style:dashed; }
+  .lg i.unk{ border-style:dashed; }
 
   /* ===== section rhythm ===== */
-  .sec{ margin-top:34px; }
+  .sec{ margin-top:32px; }
   .sec-h{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
   .sec-h .lp{ width:7px; height:7px; border-radius:2px; transform:rotate(45deg); flex:0 0 auto; }
   .sec-h .t{ font-family:'Azeret Mono',monospace; font-size:10.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); }
+  .sec-h .add{ margin-inline-start:auto; display:none; align-items:center; gap:6px; cursor:pointer;
+    font-family:'Hanken Grotesk',sans-serif; font-size:11.5px; font-weight:600; color:var(--edit);
+    padding:5px 9px; border-radius:8px; border:1px solid rgba(201,162,255,.3); background:rgba(201,162,255,.08); }
+  .sec-h .add svg{ width:13px; height:13px; }
+  body.editing .sec-h .add{ display:inline-flex; }
 
-  /* ===== IN THIS MOMENT — faces (gold, human) ===== */
+  /* faces strip */
   .faces{ display:flex; gap:15px; overflow-x:auto; padding-bottom:6px; margin-inline:-22px; padding-inline:22px; scrollbar-width:none; }
   .faces::-webkit-scrollbar{ display:none; }
   .face{ flex:0 0 auto; width:74px; text-align:center; cursor:pointer; background:none; border:none; color:inherit; }
@@ -87,73 +155,85 @@
   .face .crop{ position:absolute; inset:4px; border-radius:50%; overflow:hidden;
     border:1.5px solid rgba(243,205,132,.6); box-shadow:0 0 16px -2px rgba(243,205,132,.5); }
   .face .crop svg{ width:100%; height:100%; display:block; }
-  .face .fn{ font-family:'Newsreader',serif; font-size:13.5px; margin-top:8px; color:var(--cream); line-height:1.12; }
+  /* Leon fix (a): name and status label must never touch — both are their own line */
+  .face .fn{ display:block; font-family:'Newsreader',serif; font-size:13.5px; margin-top:8px; color:var(--cream); line-height:1.12; }
+  .face .st{ display:block; font-family:'Azeret Mono',monospace; font-size:8px; letter-spacing:.12em; text-transform:uppercase; margin-top:5px; color:rgba(243,205,132,.7); }
   .face:focus-visible .crop{ outline:2px solid var(--gold-hi); outline-offset:2px; }
-  .face.unnamed .crop{ border-style:dashed; border-color:rgba(243,205,132,.5); box-shadow:none; }
-  .face.unnamed .fn{ color:var(--gold); font-style:italic; font-family:'Newsreader',serif; }
-  .face .editdot{ position:absolute; inset-block-start:-2px; inset-inline-end:-2px; width:20px; height:20px; border-radius:50%;
-    background:var(--edit); color:#1a0f2e; display:none; place-items:center; box-shadow:0 0 0 3px #081120; }
-  .face .editdot svg{ width:11px; height:11px; }
-  body.editing .face .editdot{ display:grid; }
-  body.editing .face .crop{ border-color:var(--edit); }
+  .face.pending .crop{ border-color:var(--edit); border-style:dashed; box-shadow:0 0 14px -2px rgba(201,162,255,.5); }
+  .face.pending .st{ color:var(--edit); }
+  .face.unplaced .crop{ border-style:dashed; border-color:rgba(157,176,204,.5); box-shadow:none; filter:grayscale(.5) opacity(.7); }
+  .face.unplaced .st{ color:var(--muted); }
 
-  /* ===== THE STORY — the heart (gold, human) ===== */
+  /* ===== the story ===== */
   .story{ position:relative; }
-  .quotemark{ font-family:'Newsreader',serif; font-size:70px; line-height:.6; color:rgba(243,205,132,.4);
-    display:block; height:34px; }
-  .story-words{ font-family:'Newsreader',serif; font-weight:300; font-style:italic; font-size:24px; line-height:1.42;
-    color:#f7edda; text-wrap:pretty; }
+  .quotemark{ font-family:'Newsreader',serif; font-size:70px; line-height:.6; color:rgba(243,205,132,.4); display:block; height:34px; }
+  .story-words{ font-family:'Newsreader',serif; font-weight:300; font-style:italic; font-size:24px; line-height:1.42; color:#f7edda; text-wrap:pretty; }
   .story-words .word{ display:inline; opacity:0; filter:blur(6px); transition:opacity .5s ease, filter .6s ease; }
   .story-words.lit .word{ opacity:1; filter:blur(0); }
   .told{ margin-top:18px; display:flex; align-items:center; gap:9px; }
-  .told .flame{ width:8px; height:8px; border-radius:50%; background:var(--gold);
-    box-shadow:0 0 10px 2px rgba(243,205,132,.8); flex:0 0 auto; animation:flick 3.4s ease-in-out infinite; }
+  .told .flame{ width:8px; height:8px; border-radius:50%; background:var(--gold); box-shadow:0 0 10px 2px rgba(243,205,132,.8); flex:0 0 auto; animation:flick 3.4s ease-in-out infinite; }
   @keyframes flick{ 0%,100%{opacity:.7; transform:scale(.9);} 45%{opacity:1; transform:scale(1.12);} 70%{opacity:.85;} }
   .told .txt{ font-size:13px; color:var(--gold); }
   .told .txt b{ font-weight:600; color:var(--gold-hi); }
+  .told .rmtell{ margin-inline-start:auto; display:none; align-items:center; gap:5px; font-size:11px; color:#ff9d9d;
+    padding:4px 8px; border-radius:8px; border:1px solid rgba(255,120,120,.3); background:rgba(255,120,120,.08); cursor:pointer; }
+  .told .rmtell svg{ width:12px; height:12px; }
+  body.editing .told .rmtell{ display:inline-flex; }
+  body.editing .story-editable{ cursor:pointer; border-radius:12px; box-shadow:0 0 0 1px rgba(201,162,255,.3); padding:12px; margin:-12px; }
 
-  /* machine-translation banner — visually distinct, never dressed as a human voice */
+  /* empty-state invitations */
+  .invite{ border-radius:15px; padding:20px 18px; text-align:center;
+    background:radial-gradient(120% 100% at 50% 0%, rgba(243,205,132,.08), transparent 70%);
+    border:1px dashed rgba(243,205,132,.4); cursor:pointer; }
+  .invite.cool{ background:radial-gradient(120% 100% at 50% 0%, rgba(127,180,216,.08), transparent 70%); border-color:rgba(127,180,216,.4); }
+  .invite .em{ font-family:'Newsreader',serif; font-style:italic; font-size:17px; color:var(--cream); }
+  .invite .cta{ margin-top:10px; display:inline-flex; align-items:center; gap:7px; font-size:13px; font-weight:600; color:var(--gold); }
+  .invite.cool .cta{ color:var(--cool-hi); }
+  .invite .cta svg{ width:15px; height:15px; }
+
+  /* machine-translation banner */
   .autobar{ margin-top:16px; border-radius:13px; padding:13px 15px;
     background:repeating-linear-gradient(135deg, rgba(127,180,216,.10) 0 10px, rgba(127,180,216,.05) 10px 20px);
     border:1px dashed rgba(127,180,216,.5); }
-  .autobar .h{ display:flex; align-items:center; gap:8px; font-family:'Azeret Mono',monospace; font-size:9.5px;
-    letter-spacing:.18em; text-transform:uppercase; color:var(--cool-hi); }
+  .autobar .h{ display:flex; align-items:center; gap:8px; font-family:'Azeret Mono',monospace; font-size:9.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--cool-hi); }
   .autobar .h svg{ width:13px; height:13px; }
-  .autobar .m{ margin-top:9px; font-family:'Hanken Grotesk',sans-serif; font-style:normal; font-weight:400;
-    font-size:16px; line-height:1.5; color:#cfe0f2; }
-  [dir="rtl"] .autobar .m{ font-family:'Hanken Grotesk',sans-serif; }
+  .autobar .m{ margin-top:9px; font-family:'Hanken Grotesk',sans-serif; font-style:normal; font-weight:400; font-size:16px; line-height:1.5; color:#cfe0f2; }
   .autobar .cta{ margin-top:11px; display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:var(--gold); font-weight:600; cursor:pointer; }
 
-  /* ===== THE FACTS (cool blue, app-assembled) ===== */
+  /* ===== facts ===== */
   .facts{ display:flex; flex-direction:column; gap:10px; }
   .fact{ display:flex; align-items:center; gap:13px; padding:14px 15px; border-radius:14px;
-    background:rgba(10,20,34,.5); border:1px solid var(--hair); text-align:start; width:100%;
-    color:inherit; cursor:default; }
+    background:rgba(10,20,34,.5); border:1px solid var(--hair); text-align:start; width:100%; color:inherit; cursor:default; position:relative; }
   .fact.link{ cursor:pointer; }
-  .fact .fi{ width:34px; height:34px; border-radius:9px; flex:0 0 auto; display:grid; place-items:center;
-    background:rgba(127,180,216,.12); border:1px solid rgba(127,180,216,.3); }
+  .fact .fi{ width:34px; height:34px; border-radius:9px; flex:0 0 auto; display:grid; place-items:center; background:rgba(127,180,216,.12); border:1px solid rgba(127,180,216,.3); }
   .fact .fi svg{ width:16px; height:16px; color:var(--cool); }
-  .fact .fk{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:rgba(127,180,216,.7); }
-  .fact .fv{ font-family:'Newsreader',serif; font-size:18px; color:#e7f0fa; margin-top:2px; }
-  .fact .chev{ margin-inline-start:auto; color:rgba(127,180,216,.6); }
+  .fact.human .fi{ background:rgba(243,205,132,.12); border-color:rgba(243,205,132,.3); }
+  .fact.human .fi svg{ color:var(--gold); }
+  .fact .ftext{ min-width:0; }
+  /* Leon fix (b): field label and its value must never touch — each on its own line */
+  .fact .fk{ display:block; font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:rgba(127,180,216,.7); }
+  .fact.human .fk{ color:rgba(243,205,132,.75); }
+  .fact .fv{ display:block; font-family:'Newsreader',serif; font-size:18px; color:#e7f0fa; margin-top:3px; }
+  .fact.human .fv{ color:#f7edda; }
+  .fact .chev{ margin-inline-start:auto; color:rgba(127,180,216,.6); flex:0 0 auto; }
   .fact .chev svg{ width:16px; height:16px; }
   [dir="rtl"] .fact .chev svg{ transform:scaleX(-1); }
-  .facts-src{ margin-top:10px; display:flex; align-items:center; gap:7px; font-family:'Azeret Mono',monospace;
-    font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:rgba(127,180,216,.45); }
+  .fact .rm{ margin-inline-start:auto; width:30px; height:30px; border-radius:8px; display:none; place-items:center;
+    background:rgba(255,120,120,.1); border:1px solid rgba(255,120,120,.3); color:#ff9d9d; cursor:pointer; flex:0 0 auto; }
+  .fact .rm svg{ width:14px; height:14px; }
+  body.editing .fact.removable .chev{ display:none; }
+  body.editing .fact.removable .rm{ display:grid; }
+  .facts-src{ margin-top:10px; display:flex; align-items:center; gap:7px; font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:rgba(127,180,216,.45); }
   .facts-src::before{ content:""; width:5px; height:5px; border-radius:50%; background:var(--cool); box-shadow:0 0 7px 1px var(--cool); }
-  body.editing .fact{ border-color:var(--edit); cursor:pointer; }
-  body.editing .fact .chev{ color:var(--edit); }
-  body.editing .fact.link .chev svg,
-  body.editing .fact:not(.link) .chev{ }
+  body.editing .fact.link{ border-color:var(--edit); }
+  body.editing .fact.link .chev{ color:var(--edit); }
 
-  /* pending "waiting for the keeper" chip */
   .pending{ margin-top:9px; display:none; align-items:center; gap:8px; font-size:12px; color:var(--edit);
     padding:7px 11px; border-radius:9px; background:rgba(201,162,255,.1); border:1px solid rgba(201,162,255,.32); }
   .pending.show{ display:inline-flex; }
   .pending .sp{ width:12px; height:12px; border-radius:50%; border:2px solid rgba(201,162,255,.35); border-top-color:var(--edit); animation:spin 1s linear infinite; }
   @keyframes spin{ to{ transform:rotate(360deg); } }
 
-  /* ===== "suggest an edit" ribbon in edit mode ===== */
   .editbanner{ position:sticky; top:8px; z-index:6; margin-top:8px; display:none; align-items:center; gap:11px;
     padding:12px 15px; border-radius:14px; background:rgba(28,18,46,.72); backdrop-filter:blur(12px);
     border:1px solid rgba(201,162,255,.4); box-shadow:0 16px 40px -20px #000; }
@@ -163,28 +243,25 @@
   .editbanner .et{ flex:1; min-width:0; }
   .editbanner .et .a{ font-family:'Newsreader',serif; font-size:15px; color:#efe6ff; }
   .editbanner .et .b{ font-size:11.5px; color:#b6a8cf; margin-top:1px; }
-  .editbanner .done{ font-family:'Hanken Grotesk',sans-serif; font-size:12px; font-weight:600; color:#1a0f2e;
-    background:linear-gradient(180deg,#ddc6ff,var(--edit)); border:none; border-radius:99px; padding:9px 15px; cursor:pointer; }
+  .editbanner .done{ font-family:'Hanken Grotesk',sans-serif; font-size:12px; font-weight:600; color:#1a0f2e; background:linear-gradient(180deg,#ddc6ff,var(--edit)); border:none; border-radius:99px; padding:9px 15px; cursor:pointer; }
 
   .foot{ margin-top:40px; text-align:center; }
   .foot .leaf{ font-family:'Newsreader',serif; font-style:italic; font-size:14px; color:rgba(127,180,216,.6); }
 
-  /* ===== overlays (language menu, editor sheet) ===== */
-  .scrim{ position:fixed; inset:0; z-index:30; background:rgba(4,7,14,.62); backdrop-filter:blur(4px);
-    opacity:0; pointer-events:none; transition:opacity .28s ease; }
+  /* ===== overlays ===== */
+  .scrim{ position:fixed; inset:0; z-index:30; background:rgba(4,7,14,.62); backdrop-filter:blur(4px); opacity:0; pointer-events:none; transition:opacity .28s ease; }
   .scrim.show{ opacity:1; pointer-events:auto; }
   .sheet{ position:fixed; z-index:31; inset-inline:0; bottom:0; margin:0 auto; width:100%; max-width:440px;
     background:linear-gradient(180deg, #0e1c31, #081120); border:1px solid var(--hair); border-bottom:none;
     border-radius:22px 22px 0 0; padding:10px 20px calc(24px + env(safe-area-inset-bottom));
     transform:translateY(102%); transition:transform .34s cubic-bezier(.16,.8,.28,1);
-    box-shadow:0 -24px 70px -30px #000; }
+    box-shadow:0 -24px 70px -30px #000; max-height:88dvh; overflow-y:auto; }
   .sheet.show{ transform:translateY(0); }
   .sheet .grip{ width:40px; height:4px; border-radius:99px; background:rgba(255,255,255,.2); margin:6px auto 16px; }
   .sheet h3{ font-family:'Newsreader',serif; font-weight:400; font-size:21px; color:#fbf5e8; margin-bottom:4px; }
   .sheet .sub{ font-size:12.5px; color:var(--muted); margin-bottom:16px; line-height:1.45; }
 
-  .lang-opt{ display:flex; align-items:center; gap:14px; width:100%; padding:14px 15px; border-radius:14px;
-    background:var(--panel); border:1px solid var(--hair); color:var(--cream); cursor:pointer; margin-bottom:9px; text-align:start; }
+  .lang-opt{ display:flex; align-items:center; gap:14px; width:100%; padding:14px 15px; border-radius:14px; background:var(--panel); border:1px solid var(--hair); color:var(--cream); cursor:pointer; margin-bottom:9px; text-align:start; }
   .lang-opt:hover{ border-color:rgba(255,255,255,.3); }
   .lang-opt.on{ border-color:rgba(243,205,132,.55); background:rgba(243,205,132,.08); }
   .lang-opt .native{ font-family:'Newsreader',serif; font-size:18px; }
@@ -193,50 +270,94 @@
   .lang-opt.on .tick{ opacity:1; }
   .lang-opt .tick svg{ width:18px; height:18px; }
 
-  /* editor sheet fields */
+  /* person picker */
+  .searchbox{ display:flex; align-items:center; gap:9px; padding:12px 14px; border-radius:13px; background:rgba(6,14,26,.7); border:1px solid var(--hair); margin-bottom:14px; }
+  .searchbox svg{ width:16px; height:16px; color:var(--muted); flex:0 0 auto; }
+  .searchbox input{ flex:1; background:none; border:none; color:var(--cream); font-family:'Hanken Grotesk',sans-serif; font-size:15px; }
+  .searchbox input:focus{ outline:none; }
+  .plist{ display:flex; flex-direction:column; gap:8px; }
+  .popt{ display:flex; align-items:center; gap:12px; width:100%; padding:10px 12px; border-radius:13px; background:var(--panel); border:1px solid var(--hair); color:var(--cream); cursor:pointer; text-align:start; }
+  .popt:hover{ border-color:rgba(243,205,132,.4); background:rgba(243,205,132,.06); }
+  .popt .pc{ width:40px; height:40px; border-radius:50%; overflow:hidden; flex:0 0 auto; border:1.5px solid rgba(243,205,132,.5); }
+  .popt .pc svg{ width:100%; height:100%; display:block; }
+  .popt .pn{ display:block; font-family:'Newsreader',serif; font-size:16px; }
+  .popt .pr{ display:block; font-size:11px; color:var(--muted); margin-top:1px; }
+  .popt.newp .pc{ border-style:dashed; border-color:rgba(201,162,255,.6); display:grid; place-items:center; background:rgba(201,162,255,.08); }
+  .popt.newp .pc svg{ width:20px; height:20px; color:var(--edit); }
+  .popt.newp .pn{ color:var(--edit); }
+
+  /* calendar */
+  .cal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .cal-head .my{ font-family:'Newsreader',serif; font-size:18px; color:#fbf5e8; }
+  .cal-nav{ width:36px; height:36px; border-radius:10px; background:var(--panel); border:1px solid var(--hair); color:var(--cream); display:grid; place-items:center; cursor:pointer; }
+  .cal-nav svg{ width:16px; height:16px; }
+  [dir="rtl"] .cal-nav svg{ transform:scaleX(-1); }
+  .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .cal-grid .wd{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.06em; color:var(--muted); text-align:center; padding:4px 0; }
+  .cal-day{ aspect-ratio:1; border-radius:9px; background:rgba(255,255,255,.03); border:1px solid transparent; color:var(--cream); font-size:14px; font-family:'Hanken Grotesk',sans-serif; cursor:pointer; display:grid; place-items:center; }
+  .cal-day:hover{ border-color:rgba(243,205,132,.4); }
+  .cal-day.empty{ background:none; cursor:default; }
+  .cal-day.on{ background:linear-gradient(180deg,rgba(243,205,132,.9),var(--gold)); color:#231a08; font-weight:700; }
+  .prec{ display:flex; gap:7px; margin:16px 0 4px; flex-wrap:wrap; }
+  .prec button{ flex:1; min-width:70px; padding:9px 6px; border-radius:10px; background:var(--panel); border:1px solid var(--hair); color:var(--muted); font-size:12px; font-weight:600; cursor:pointer; }
+  .prec button.on{ border-color:rgba(243,205,132,.55); background:rgba(243,205,132,.1); color:var(--gold-hi); }
+  .season-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:7px; margin-top:12px; }
+  .season-row button{ padding:12px 6px; border-radius:11px; background:var(--panel); border:1px solid var(--hair); color:var(--cream); font-family:'Newsreader',serif; font-size:15px; cursor:pointer; }
+  .season-row button.on{ border-color:rgba(243,205,132,.55); background:rgba(243,205,132,.1); color:var(--gold-hi); }
+  .cal-result{ margin-top:14px; padding:12px 14px; border-radius:12px; background:rgba(201,162,255,.08); border:1px solid rgba(201,162,255,.3); font-size:13px; color:#efe6ff; }
+  .cal-result b{ font-family:'Newsreader',serif; font-weight:500; }
+
+  /* editor fields */
   .ed-field label{ display:block; font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
-  .ed-field textarea, .ed-field input{ width:100%; background:rgba(6,14,26,.7); border:1px solid var(--hair);
-    border-radius:13px; padding:14px; color:var(--cream); font-family:'Newsreader',serif; font-size:17px; line-height:1.45;
-    resize:vertical; }
+  .ed-field textarea, .ed-field input{ width:100%; background:rgba(6,14,26,.7); border:1px solid var(--hair); border-radius:13px; padding:14px; color:var(--cream); font-family:'Newsreader',serif; font-size:17px; line-height:1.45; resize:vertical; }
   .ed-field textarea:focus, .ed-field input:focus{ outline:none; border-color:rgba(201,162,255,.6); }
-  .ed-langtag{ display:inline-flex; align-items:center; gap:7px; font-family:'Azeret Mono',monospace; font-size:9px;
-    letter-spacing:.16em; text-transform:uppercase; color:var(--edit); margin-bottom:14px;
-    padding:5px 9px; border-radius:8px; background:rgba(201,162,255,.1); border:1px solid rgba(201,162,255,.3); }
+  .ed-field + .ed-field{ margin-top:14px; }
+  .ed-langtag{ display:inline-flex; align-items:center; gap:7px; font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--edit); margin-bottom:14px; padding:5px 9px; border-radius:8px; background:rgba(201,162,255,.1); border:1px solid rgba(201,162,255,.3); }
   .ed-note{ margin-top:14px; font-size:12px; color:var(--muted); line-height:1.5; display:flex; gap:9px; }
   .ed-note svg{ width:15px; height:15px; color:var(--edit); flex:0 0 auto; margin-top:1px; }
+  .ta-list{ margin-top:12px; display:flex; flex-direction:column; gap:7px; }
+  .ta-opt{ display:flex; align-items:center; gap:10px; width:100%; padding:11px 13px; border-radius:12px; background:var(--panel); border:1px solid var(--hair); color:var(--cream); cursor:pointer; text-align:start; }
+  .ta-opt:hover{ border-color:rgba(127,180,216,.45); background:rgba(127,180,216,.06); }
+  .ta-opt svg{ width:15px; height:15px; color:var(--cool); flex:0 0 auto; }
+  .ta-opt .pn{ font-family:'Newsreader',serif; font-size:16px; }
+  .ta-opt .histpill{ margin-inline-start:auto; font-family:'Azeret Mono',monospace; font-size:8px; letter-spacing:.1em; text-transform:uppercase; color:var(--cool-hi); padding:3px 7px; border-radius:6px; border:1px solid rgba(127,180,216,.3); }
   .ed-actions{ margin-top:18px; display:flex; gap:10px; }
   .btn{ flex:1; padding:14px; border-radius:13px; font-family:'Hanken Grotesk',sans-serif; font-size:14px; font-weight:600; cursor:pointer; border:1px solid transparent; }
   .btn.ghost{ background:transparent; border-color:var(--hair); color:var(--cream); }
   .btn.primary{ background:linear-gradient(180deg,#ddc6ff,var(--edit)); color:#1a0f2e; }
+  .btn.danger{ background:transparent; border-color:rgba(255,120,120,.4); color:#ff9d9d; }
   .btn:focus-visible{ outline:2px solid var(--cool-hi); outline-offset:2px; }
+  .btn:disabled{ opacity:.55; cursor:default; }
 
-  /* toast */
   .toast{ position:fixed; z-index:40; left:50%; transform:translate(-50%,20px); bottom:calc(22px + env(safe-area-inset-bottom));
     display:flex; align-items:center; gap:10px; padding:13px 18px; border-radius:99px;
     background:rgba(28,18,46,.9); backdrop-filter:blur(12px); border:1px solid rgba(201,162,255,.45);
     color:#efe6ff; font-size:13.5px; opacity:0; pointer-events:none; transition:opacity .3s ease, transform .3s ease;
     box-shadow:0 18px 44px -18px #000; max-width:calc(100% - 36px); }
   .toast.show{ opacity:1; transform:translate(-50%,0); }
+  .toast.err{ border-color:rgba(255,120,120,.6); }
   .toast .flame{ width:8px; height:8px; border-radius:50%; background:var(--edit); box-shadow:0 0 10px 2px var(--edit); flex:0 0 auto; }
+  .toast.err .flame{ background:#ff9d9d; box-shadow:0 0 10px 2px #ff9d9d; }
 
   @media (prefers-reduced-motion: reduce){
     .frame::before,.told .flame{ animation:none !important; }
-    .surface{ transition:opacity .01s; filter:none !important; transform:none !important; }
     .story-words .word{ transition:none; }
+    .photoart img{ transition:opacity .01s; filter:none !important; }
   }
 </style>
 </head>
 <body>
-  
   <canvas id="atmo" aria-hidden="true"></canvas>
   <div class="atmo-veil"></div>
 
   <main class="wrap" id="wrap"><!--PAGE--></main>
 
-  <!-- overlays -->
   <div class="scrim" id="scrim"></div>
-  <section class="sheet" id="langSheet" role="dialog" aria-modal="true" aria-label="Language"><!--LANG--></section>
-  <section class="sheet" id="editSheet" role="dialog" aria-modal="true" aria-label="Suggest an edit"><!--EDIT--></section>
+  <section class="sheet" id="langSheet" role="dialog" aria-modal="true" aria-label="Language"></section>
+  <section class="sheet" id="editSheet" role="dialog" aria-modal="true" aria-label="Suggest an edit"></section>
+  <section class="sheet" id="nameSheet" role="dialog" aria-modal="true" aria-label="Who is this"></section>
+  <section class="sheet" id="calSheet" role="dialog" aria-modal="true" aria-label="When"></section>
+  <section class="sheet" id="placeSheet" role="dialog" aria-modal="true" aria-label="Where"></section>
   <div class="toast" id="toast"><span class="flame"></span><span id="toastMsg"></span></div>
 <script>
 (function(){
@@ -245,78 +366,145 @@
   const sb=window.supabase.createClient(SB_URL, SB_KEY);
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const $=s=>document.querySelector(s);
+  const $$=s=>[...document.querySelectorAll(s)];
   const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const qs=new URLSearchParams(location.search);
   const MOMENT_ID=qs.get('id')||qs.get('moment')||'10474b31-507a-4216-991e-086fd70de8b9';
   const LANGKEYS=['en','ru','he'];
 
-  /* ---------- UI chrome strings (lifted from the Claude Design copy) ---------- */
+  /* ---------- UI strings (design copy, all three languages) ---------- */
   const UI={
-    en:{dir:'ltr',label:'English',native:'English',crumb:'A moment',inMoment:'In this moment',addName:'Add a name',
+    en:{dir:'ltr',label:'English',native:'English',crumb:'A moment',inMoment:'In this moment',
       storyH:'The story',factsH:'Where & when',toldBy:'told by',whereK:'Where',whenK:'When',
-      factsSrc:'Assembled by The Living Forest',suggest:'Suggest an edit',edA:'You\u2019re suggesting an edit',
+      factsSrc:'Assembled by The Living Forest',suggest:'Suggest an edit',edA:'You’re suggesting an edit',
       edB:'Tap anything to change it. Nothing reaches the family until the keeper approves.',done:'Done',
       langTitle:'Language',langSub:'Names, labels, and the story all follow the language you choose.',
-      autoHdr:'Auto-translated \u00b7 not a person\u2019s words',autoCta:'Add the telling in {lang} \u2192',
+      autoHdr:'Auto-translated · not a person’s words',autoCta:'Add the telling in English →',
       sendKeeper:'Send to the keeper',cancel:'Cancel',waiting:'Waiting for the keeper',sent:'Sent to the keeper',
-      keeperNote:'Nothing reaches the family until the keeper approves it.',
-      edStory:'The story, in your words',edName:'The person\u2019s name',edWhere:'Where it happened',edWhen:'When it happened',
-      edPhotoT:'Replace the photograph',edPhotoN:'Replacing the photograph is coming soon.',leaf:'A moment, kept.',
-      signIn:'Enter the forest',signInSub:'This moment opens once you\u2019re signed in.',email:'you@example.com',pass:'Password',signInBtn:'Sign in',
-      noStory:'No one has told the story of this moment yet.',keeperStrip:'You\u2019re the keeper \u00b7 {n} waiting',
-      reviewT:'Suggestions waiting',reviewSub:'Nothing reaches the family until you approve it.',approve:'Approve',decline:'Decline',
-      published:'Published \u2014 thank you',declined:'Declined',was:'was',suggested:'suggested',story:'Story',close:'Close',notFound:'This moment could not be found.'},
-    ru:{dir:'ltr',label:'Russian',native:'\u0420\u0443\u0441\u0441\u043a\u0438\u0439',crumb:'\u041c\u043e\u043c\u0435\u043d\u0442',inMoment:'\u0412 \u044d\u0442\u043e\u0442 \u043c\u043e\u043c\u0435\u043d\u0442',addName:'\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u0438\u043c\u044f',
-      storyH:'\u0418\u0441\u0442\u043e\u0440\u0438\u044f',factsH:'\u0413\u0434\u0435 \u0438 \u043a\u043e\u0433\u0434\u0430',toldBy:'\u0440\u0430\u0441\u0441\u043a\u0430\u0437\u0430\u043b',whereK:'\u0413\u0434\u0435',whenK:'\u041a\u043e\u0433\u0434\u0430',
-      factsSrc:'\u0421\u043e\u0431\u0440\u0430\u043d\u043e \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0435\u043c The Living Forest',suggest:'\u041f\u0440\u0435\u0434\u043b\u043e\u0436\u0438\u0442\u044c \u043f\u0440\u0430\u0432\u043a\u0443',edA:'\u0412\u044b \u043f\u0440\u0435\u0434\u043b\u0430\u0433\u0430\u0435\u0442\u0435 \u043f\u0440\u0430\u0432\u043a\u0443',
-      edB:'\u041a\u043e\u0441\u043d\u0438\u0442\u0435\u0441\u044c \u0447\u0435\u0433\u043e \u0443\u0433\u043e\u0434\u043d\u043e, \u0447\u0442\u043e\u0431\u044b \u0438\u0437\u043c\u0435\u043d\u0438\u0442\u044c. \u041d\u0438\u0447\u0442\u043e \u043d\u0435 \u0434\u043e\u0439\u0434\u0451\u0442 \u0434\u043e \u0441\u0435\u043c\u044c\u0438, \u043f\u043e\u043a\u0430 \u0445\u0440\u0430\u043d\u0438\u0442\u0435\u043b\u044c \u043d\u0435 \u043e\u0434\u043e\u0431\u0440\u0438\u0442.',done:'\u0413\u043e\u0442\u043e\u0432\u043e',
-      langTitle:'\u042f\u0437\u044b\u043a',langSub:'\u0418\u043c\u0435\u043d\u0430, \u043f\u043e\u0434\u043f\u0438\u0441\u0438 \u0438 \u0438\u0441\u0442\u043e\u0440\u0438\u044f \u2014 \u0432\u0441\u0451 \u043d\u0430 \u0432\u044b\u0431\u0440\u0430\u043d\u043d\u043e\u043c \u044f\u0437\u044b\u043a\u0435.',
-      autoHdr:'\u0410\u0432\u0442\u043e\u043f\u0435\u0440\u0435\u0432\u043e\u0434 \u00b7 \u043d\u0435 \u0441\u043b\u043e\u0432\u0430 \u0447\u0435\u043b\u043e\u0432\u0435\u043a\u0430',autoCta:'\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u0440\u0430\u0441\u0441\u043a\u0430\u0437 \u043d\u0430 {lang} \u2192',
-      sendKeeper:'\u041e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c \u0445\u0440\u0430\u043d\u0438\u0442\u0435\u043b\u044e',cancel:'\u041e\u0442\u043c\u0435\u043d\u0430',waiting:'\u041e\u0436\u0438\u0434\u0430\u0435\u0442 \u0445\u0440\u0430\u043d\u0438\u0442\u0435\u043b\u044f',sent:'\u041e\u0442\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u043e \u0445\u0440\u0430\u043d\u0438\u0442\u0435\u043b\u044e',
-      keeperNote:'\u041d\u0438\u0447\u0442\u043e \u043d\u0435 \u0434\u043e\u0439\u0434\u0451\u0442 \u0434\u043e \u0441\u0435\u043c\u044c\u0438, \u043f\u043e\u043a\u0430 \u0445\u0440\u0430\u043d\u0438\u0442\u0435\u043b\u044c \u043d\u0435 \u043e\u0434\u043e\u0431\u0440\u0438\u0442.',
-      edStory:'\u0418\u0441\u0442\u043e\u0440\u0438\u044f, \u0432\u0430\u0448\u0438\u043c\u0438 \u0441\u043b\u043e\u0432\u0430\u043c\u0438',edName:'\u0418\u043c\u044f \u0447\u0435\u043b\u043e\u0432\u0435\u043a\u0430',edWhere:'\u0413\u0434\u0435 \u044d\u0442\u043e \u0431\u044b\u043b\u043e',edWhen:'\u041a\u043e\u0433\u0434\u0430 \u044d\u0442\u043e \u0431\u044b\u043b\u043e',
-      edPhotoT:'\u0417\u0430\u043c\u0435\u043d\u0438\u0442\u044c \u0444\u043e\u0442\u043e\u0433\u0440\u0430\u0444\u0438\u044e',edPhotoN:'\u0417\u0430\u043c\u0435\u043d\u0430 \u0444\u043e\u0442\u043e\u0433\u0440\u0430\u0444\u0438\u0438 \u0441\u043a\u043e\u0440\u043e \u043f\u043e\u044f\u0432\u0438\u0442\u0441\u044f.',leaf:'\u0421\u043e\u0445\u0440\u0430\u043d\u0451\u043d\u043d\u044b\u0439 \u043c\u043e\u043c\u0435\u043d\u0442.',
-      signIn:'\u0412\u043e\u0439\u0442\u0438 \u0432 \u043b\u0435\u0441',signInSub:'\u041c\u043e\u043c\u0435\u043d\u0442 \u043e\u0442\u043a\u0440\u043e\u0435\u0442\u0441\u044f \u043f\u043e\u0441\u043b\u0435 \u0432\u0445\u043e\u0434\u0430.',email:'you@example.com',pass:'\u041f\u0430\u0440\u043e\u043b\u044c',signInBtn:'\u0412\u043e\u0439\u0442\u0438',
-      noStory:'\u041e\u0431 \u044d\u0442\u043e\u043c \u0435\u0449\u0451 \u043d\u0435 \u0440\u0430\u0441\u0441\u043a\u0430\u0437\u0430\u043b\u0438.',keeperStrip:'\u0412\u044b \u0445\u0440\u0430\u043d\u0438\u0442\u0435\u043b\u044c \u00b7 {n} \u043d\u0430 \u0440\u0430\u0441\u0441\u043c\u043e\u0442\u0440\u0435\u043d\u0438\u0438',
-      reviewT:'\u041f\u0440\u0430\u0432\u043a\u0438 \u043d\u0430 \u0440\u0430\u0441\u0441\u043c\u043e\u0442\u0440\u0435\u043d\u0438\u0438',reviewSub:'\u041d\u0438\u0447\u0442\u043e \u043d\u0435 \u0434\u043e\u0439\u0434\u0451\u0442 \u0434\u043e \u0441\u0435\u043c\u044c\u0438, \u043f\u043e\u043a\u0430 \u0432\u044b \u043d\u0435 \u043e\u0434\u043e\u0431\u0440\u0438\u0442\u0435.',approve:'\u041e\u0434\u043e\u0431\u0440\u0438\u0442\u044c',decline:'\u041e\u0442\u043a\u043b\u043e\u043d\u0438\u0442\u044c',
-      published:'\u041e\u043f\u0443\u0431\u043b\u0438\u043a\u043e\u0432\u0430\u043d\u043e \u2014 \u0441\u043f\u0430\u0441\u0438\u0431\u043e',declined:'\u041e\u0442\u043a\u043b\u043e\u043d\u0435\u043d\u043e',was:'\u0431\u044b\u043b\u043e',suggested:'\u043f\u0440\u0435\u0434\u043b\u043e\u0436\u0435\u043d\u043e',story:'\u0418\u0441\u0442\u043e\u0440\u0438\u044f',close:'\u0417\u0430\u043a\u0440\u044b\u0442\u044c',notFound:'\u041c\u043e\u043c\u0435\u043d\u0442 \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d.'},
-    he:{dir:'rtl',label:'Hebrew',native:'\u05e2\u05d1\u05e8\u05d9\u05ea',crumb:'\u05e8\u05d2\u05e2',inMoment:'\u05d1\u05e8\u05d2\u05e2 \u05d4\u05d6\u05d4',addName:'\u05d4\u05d5\u05e1\u05e4\u05ea \u05e9\u05dd',
-      storyH:'\u05d4\u05e1\u05d9\u05e4\u05d5\u05e8',factsH:'\u05d0\u05d9\u05e4\u05d4 \u05d5\u05de\u05ea\u05d9',toldBy:'\u05de\u05e4\u05d9',whereK:'\u05d0\u05d9\u05e4\u05d4',whenK:'\u05de\u05ea\u05d9',
-      factsSrc:'\u05e0\u05d0\u05e1\u05e3 \u05e2\u05dc \u05d9\u05d3\u05d9 \u05d4\u05d9\u05e2\u05e8 \u05d4\u05d7\u05d9',suggest:'\u05d4\u05e6\u05e2\u05ea \u05e2\u05e8\u05d9\u05db\u05d4',edA:'\u05d0\u05ea\u05dd \u05de\u05e6\u05d9\u05e2\u05d9\u05dd \u05e2\u05e8\u05d9\u05db\u05d4',
-      edB:'\u05d2\u05e2\u05d5 \u05d1\u05db\u05dc \u05d3\u05d1\u05e8 \u05db\u05d3\u05d9 \u05dc\u05e9\u05e0\u05d5\u05ea \u05d0\u05d5\u05ea\u05d5. \u05e9\u05d5\u05dd \u05d3\u05d1\u05e8 \u05dc\u05d0 \u05d9\u05d2\u05d9\u05e2 \u05dc\u05de\u05e9\u05e4\u05d7\u05d4 \u05e2\u05d3 \u05e9\u05d4\u05e9\u05d5\u05de\u05e8 \u05d9\u05d0\u05e9\u05e8.',done:'\u05e1\u05d9\u05d5\u05dd',
-      langTitle:'\u05e9\u05e4\u05d4',langSub:'\u05d4\u05e9\u05de\u05d5\u05ea, \u05d4\u05ea\u05d5\u05d5\u05d9\u05d5\u05ea \u05d5\u05d4\u05e1\u05d9\u05e4\u05d5\u05e8 \u2014 \u05d4\u05db\u05d5\u05dc \u05dc\u05e4\u05d9 \u05d4\u05e9\u05e4\u05d4 \u05e9\u05ea\u05d1\u05d7\u05e8\u05d5.',
-      autoHdr:'\u05ea\u05e8\u05d2\u05d5\u05dd \u05d0\u05d5\u05d8\u05d5\u05de\u05d8\u05d9 \u00b7 \u05dc\u05d0 \u05de\u05d9\u05dc\u05d9\u05dd \u05e9\u05dc \u05d0\u05d3\u05dd',autoCta:'\u05d4\u05d5\u05e1\u05d9\u05e4\u05d5 \u05d0\u05ea \u05d4\u05e1\u05d9\u05e4\u05d5\u05e8 \u05d1\u05e2\u05d1\u05e8\u05d9\u05ea \u2190',
-      sendKeeper:'\u05e9\u05dc\u05d9\u05d7\u05d4 \u05dc\u05e9\u05d5\u05de\u05e8',cancel:'\u05d1\u05d9\u05d8\u05d5\u05dc',waiting:'\u05de\u05de\u05ea\u05d9\u05df \u05dc\u05e9\u05d5\u05de\u05e8',sent:'\u05e0\u05e9\u05dc\u05d7 \u05dc\u05e9\u05d5\u05de\u05e8',
-      keeperNote:'\u05e9\u05d5\u05dd \u05d3\u05d1\u05e8 \u05dc\u05d0 \u05d9\u05d2\u05d9\u05e2 \u05dc\u05de\u05e9\u05e4\u05d7\u05d4 \u05e2\u05d3 \u05e9\u05d4\u05e9\u05d5\u05de\u05e8 \u05d9\u05d0\u05e9\u05e8.',
-      edStory:'\u05d4\u05e1\u05d9\u05e4\u05d5\u05e8, \u05d1\u05de\u05d9\u05dc\u05d9\u05dd \u05e9\u05dc\u05db\u05dd',edName:'\u05e9\u05dd \u05d4\u05d0\u05d3\u05dd',edWhere:'\u05d0\u05d9\u05e4\u05d4 \u05d6\u05d4 \u05e7\u05e8\u05d4',edWhen:'\u05de\u05ea\u05d9 \u05d6\u05d4 \u05e7\u05e8\u05d4',
-      edPhotoT:'\u05d4\u05d7\u05dc\u05e4\u05ea \u05d4\u05ea\u05e6\u05dc\u05d5\u05dd',edPhotoN:'\u05d4\u05d7\u05dc\u05e4\u05ea \u05d4\u05ea\u05e6\u05dc\u05d5\u05dd \u05ea\u05d2\u05d9\u05e2 \u05d1\u05e7\u05e8\u05d5\u05d1.',leaf:'\u05e8\u05d2\u05e2, \u05e9\u05e0\u05e9\u05de\u05e8.',
-      signIn:'\u05db\u05e0\u05d9\u05e1\u05d4 \u05dc\u05d9\u05e2\u05e8',signInSub:'\u05d4\u05e8\u05d2\u05e2 \u05d9\u05d9\u05e4\u05ea\u05d7 \u05dc\u05d0\u05d7\u05e8 \u05d4\u05db\u05e0\u05d9\u05e1\u05d4.',email:'you@example.com',pass:'\u05e1\u05d9\u05e1\u05de\u05d4',signInBtn:'\u05db\u05e0\u05d9\u05e1\u05d4',
-      noStory:'\u05e2\u05d3\u05d9\u05d9\u05df \u05dc\u05d0 \u05e1\u05d5\u05e4\u05e8 \u05e2\u05dc \u05db\u05da.',keeperStrip:'\u05d0\u05ea/\u05d4 \u05d4\u05e9\u05d5\u05de\u05e8 \u00b7 {n} \u05de\u05de\u05ea\u05d9\u05e0\u05d9\u05dd',
-      reviewT:'\u05d4\u05e6\u05e2\u05d5\u05ea \u05de\u05de\u05ea\u05d9\u05e0\u05d5\u05ea',reviewSub:'\u05e9\u05d5\u05dd \u05d3\u05d1\u05e8 \u05dc\u05d0 \u05d9\u05d2\u05d9\u05e2 \u05dc\u05de\u05e9\u05e4\u05d7\u05d4 \u05e2\u05d3 \u05e9\u05ea\u05d0\u05e9\u05e8\u05d5.',approve:'\u05d0\u05d9\u05e9\u05d5\u05e8',decline:'\u05d3\u05d7\u05d9\u05d9\u05d4',
-      published:'\u05e4\u05d5\u05e8\u05e1\u05dd \u2014 \u05ea\u05d5\u05d3\u05d4',declined:'\u05e0\u05d3\u05d7\u05d4',was:'\u05d4\u05d9\u05d4',suggested:'\u05d4\u05d5\u05e6\u05e2',story:'\u05e1\u05d9\u05e4\u05d5\u05e8',close:'\u05e1\u05d2\u05d9\u05e8\u05d4',notFound:'\u05d4\u05e8\u05d2\u05e2 \u05dc\u05d0 \u05e0\u05de\u05e6\u05d0.'}
+      keeperNote:'Nothing reaches the family until the keeper approves it.',saved:'Saved',
+      edStory:'The story, in your words',edWhere:'Where it happened',edWhen:'When it happened',
+      leaf:'A moment, kept.',tagFace:'Tag a face',tagDone:'Done tagging',
+      tagHint:'Drag a box across a face to name who’s here.',
+      rotate:'Rotate',replacePhoto:'Replace',deletePhoto:'Delete',
+      photoReplaceN:'Choose a new photo to suggest in place of this one.',
+      confirmDelT:'Remove this photograph?',confirmDelN:'The moment stays — only the photo is proposed for removal. The keeper decides.',
+      whoTitle:'Who is in this box?',whoSub:'Choose a family member, or add someone new.',
+      searchFamily:'Search the family…',someoneNew:'Someone new',addName:'Add a name',
+      tagChange:'Change',tagRemove:'Remove',placed:'Tagged',pendingTag:'Pending',unknownFace:'Who is this?',
+      placeOnPhoto:'Place on the photo →',lgTagged:'Named',lgPending:'Waiting for the keeper',lgUnknown:'Not yet named',
+      addDetail:'Add',detailLabelL:'What is it',detailValueL:'The detail',
+      detailLabelP:'e.g. The occasion',detailValueP:'e.g. Rita’s 70th birthday',removeDetail:'Remove this detail?',
+      calTitle:'When did it happen?',calSub:'A day, a month, a season, or just the year — whatever you know.',
+      precDay:'Exact day',precMonth:'Month',precSeason:'Season',precYear:'Year only',
+      months:['January','February','March','April','May','June','July','August','September','October','November','December'],
+      weekdays:['Mo','Tu','We','Th','Fr','Sa','Su'],seasons:['Spring','Summer','Autumn','Winter'],
+      calResult:'This moment will be dated',
+      placeTitle:'Where did it happen?',placeSub:'Start typing — reuse a place the family knows, or add a new one.',
+      placeP:'Start typing a place…',histTag:'Historical',addPlace:'Add',
+      noStoryEm:'No one has told this moment yet.',noStoryCta:'Add the telling →',
+      emWhereEm:'The place isn’t known yet.',emWhenEm:'The time isn’t known yet.',addCta:'Add →',
+      removeTelling:'Remove this telling',
+      signIn:'Enter the forest',signInSub:'This moment opens once you’re signed in.',email:'you@example.com',pass:'Password',signInBtn:'Sign in',
+      keeperStrip:'You’re the keeper · {n} waiting',reviewT:'Suggestions waiting',
+      reviewSub:'Nothing reaches the family until you approve it.',approve:'Approve',decline:'Decline',
+      published:'Published — thank you',declined:'Declined',story:'Story',notFound:'This moment could not be found.'},
+    ru:{dir:'ltr',label:'Russian',native:'Русский',crumb:'Момент',inMoment:'В этот момент',
+      storyH:'История',factsH:'Где и когда',toldBy:'рассказал',whereK:'Где',whenK:'Когда',
+      factsSrc:'Собрано приложением The Living Forest',suggest:'Предложить правку',edA:'Вы предлагаете правку',
+      edB:'Коснитесь чего угодно, чтобы изменить. Ничто не дойдёт до семьи, пока хранитель не одобрит.',done:'Готово',
+      langTitle:'Язык',langSub:'Имена, подписи и история — всё на выбранном языке.',
+      autoHdr:'Автоперевод · не слова человека',autoCta:'Добавить рассказ по-русски →',
+      sendKeeper:'Отправить хранителю',cancel:'Отмена',waiting:'Ожидает хранителя',sent:'Отправлено хранителю',
+      keeperNote:'Ничто не дойдёт до семьи, пока хранитель не одобрит.',saved:'Сохранено',
+      edStory:'История, вашими словами',edWhere:'Где это было',edWhen:'Когда это было',
+      leaf:'Сохранённый момент.',tagFace:'Отметить лицо',tagDone:'Готово',
+      tagHint:'Проведите рамку по лицу, чтобы отметить, кто это.',
+      rotate:'Повернуть',replacePhoto:'Заменить',deletePhoto:'Удалить',
+      photoReplaceN:'Выберите новое фото, чтобы предложить его вместо этого.',
+      confirmDelT:'Убрать эту фотографию?',confirmDelN:'Момент останется — к удалению предлагается только фото. Решает хранитель.',
+      whoTitle:'Кто в этой рамке?',whoSub:'Выберите члена семьи или добавьте нового.',
+      searchFamily:'Поиск по семье…',someoneNew:'Новый человек',addName:'Добавить имя',
+      tagChange:'Изменить',tagRemove:'Убрать',placed:'Отмечен',pendingTag:'Ожидает',unknownFace:'Кто это?',
+      placeOnPhoto:'Разместить на фото →',lgTagged:'Назван',lgPending:'Ожидает хранителя',lgUnknown:'Пока без имени',
+      addDetail:'Добавить',detailLabelL:'Что это',detailValueL:'Подробность',
+      detailLabelP:'напр. Повод',detailValueP:'напр. 70-летие Риты',removeDetail:'Убрать эту подробность?',
+      calTitle:'Когда это было?',calSub:'День, месяц, сезон или только год — что знаете.',
+      precDay:'Точный день',precMonth:'Месяц',precSeason:'Сезон',precYear:'Только год',
+      months:['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'],
+      weekdays:['Пн','Вт','Ср','Чт','Пт','Сб','Вс'],seasons:['Весна','Лето','Осень','Зима'],
+      calResult:'Момент будет датирован',
+      placeTitle:'Где это было?',placeSub:'Начните вводить — выберите знакомое место или добавьте новое.',
+      placeP:'Начните вводить место…',histTag:'Историч.',addPlace:'Добавить',
+      noStoryEm:'Этот момент ещё никто не рассказал.',noStoryCta:'Добавить рассказ →',
+      emWhereEm:'Место пока неизвестно.',emWhenEm:'Время пока неизвестно.',addCta:'Добавить →',
+      removeTelling:'Убрать этот рассказ',
+      signIn:'Войти в лес',signInSub:'Момент откроется после входа.',email:'you@example.com',pass:'Пароль',signInBtn:'Войти',
+      keeperStrip:'Вы хранитель · {n} на рассмотрении',reviewT:'Правки на рассмотрении',
+      reviewSub:'Ничто не дойдёт до семьи, пока вы не одобрите.',approve:'Одобрить',decline:'Отклонить',
+      published:'Опубликовано — спасибо',declined:'Отклонено',story:'История',notFound:'Момент не найден.'},
+    he:{dir:'rtl',label:'Hebrew',native:'עברית',crumb:'רגע',inMoment:'ברגע הזה',
+      storyH:'הסיפור',factsH:'איפה ומתי',toldBy:'מפי',whereK:'איפה',whenK:'מתי',
+      factsSrc:'נאסף על ידי היער החי',suggest:'הצעת עריכה',edA:'אתם מציעים עריכה',
+      edB:'געו בכל דבר כדי לשנות אותו. שום דבר לא יגיע למשפחה עד שהשומר יאשר.',done:'סיום',
+      langTitle:'שפה',langSub:'השמות, התוויות והסיפור — הכול לפי השפה שתבחרו.',
+      autoHdr:'תרגום אוטומטי · לא מילים של אדם',autoCta:'הוסיפו את הסיפור בעברית ←',
+      sendKeeper:'שליחה לשומר',cancel:'ביטול',waiting:'ממתין לשומר',sent:'נשלח לשומר',
+      keeperNote:'שום דבר לא יגיע למשפחה עד שהשומר יאשר.',saved:'נשמר',
+      edStory:'הסיפור, במילים שלכם',edWhere:'איפה זה קרה',edWhen:'מתי זה קרה',
+      leaf:'רגע, שנשמר.',tagFace:'תיוג פנים',tagDone:'סיום',
+      tagHint:'גררו מלבן על פנים כדי לציין מי כאן.',
+      rotate:'סיבוב',replacePhoto:'החלפה',deletePhoto:'מחיקה',
+      photoReplaceN:'בחרו תצלום חדש כדי להציע אותו במקום זה.',
+      confirmDelT:'להסיר את התצלום הזה?',confirmDelN:'הרגע נשאר — רק התצלום מוצע להסרה. השומר מחליט.',
+      whoTitle:'מי במלבן הזה?',whoSub:'בחרו בן משפחה או הוסיפו מישהו חדש.',
+      searchFamily:'חיפוש במשפחה…',someoneNew:'מישהו חדש',addName:'הוספת שם',
+      tagChange:'שינוי',tagRemove:'הסרה',placed:'מתויג',pendingTag:'ממתין',unknownFace:'מי זה?',
+      placeOnPhoto:'מיקום על התצלום ←',lgTagged:'מזוהה',lgPending:'ממתין לשומר',lgUnknown:'עדיין ללא שם',
+      addDetail:'הוספה',detailLabelL:'מה זה',detailValueL:'הפרט',
+      detailLabelP:'למשל האירוע',detailValueP:'למשל יום הולדת ה-70 של ריטה',removeDetail:'להסיר את הפרט הזה?',
+      calTitle:'מתי זה קרה?',calSub:'יום, חודש, עונה או רק שנה — מה שאתם יודעים.',
+      precDay:'יום מדויק',precMonth:'חודש',precSeason:'עונה',precYear:'שנה בלבד',
+      months:['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'],
+      weekdays:['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'],seasons:['אביב','קיץ','סתיו','חורף'],
+      calResult:'הרגע יתוארך',
+      placeTitle:'איפה זה קרה?',placeSub:'התחילו להקליד — בחרו מקום מוכר או הוסיפו חדש.',
+      placeP:'התחילו להקליד מקום…',histTag:'היסטורי',addPlace:'הוספה',
+      noStoryEm:'עדיין איש לא סיפר את הרגע הזה.',noStoryCta:'הוספת הסיפור →',
+      emWhereEm:'המקום עדיין לא ידוע.',emWhenEm:'הזמן עדיין לא ידוע.',addCta:'הוספה →',
+      removeTelling:'הסרת הסיפור הזה',
+      signIn:'כניסה ליער',signInSub:'הרגע ייפתח לאחר הכניסה.',email:'you@example.com',pass:'סיסמה',signInBtn:'כניסה',
+      keeperStrip:'את/ה השומר · {n} ממתינים',reviewT:'הצעות ממתינות',
+      reviewSub:'שום דבר לא יגיע למשפחה עד שתאשרו.',approve:'אישור',decline:'דחייה',
+      published:'פורסם — תודה',declined:'נדחה',story:'סיפור',notFound:'הרגע לא נמצא.'}
   };
   const langNative=c=>UI[c].native;
 
   /* ---------- state ---------- */
   let lang='en', user=null, isKeeper=false;
-  let art=null, subjects=[], peopleById={}, vars={}, autoName={}, autoStory={}, translations=[], edits=[], tellerName='', allPeople=null;
-  let DATA={}, PEOPLE=[];
+  let art=null, subjects=[], peopleById={}, vars={}, autoName={}, autoStory={}, translations=[], edits=[], tellerName='', allPeople=null, places=null;
+  let DATA={}, PEOPLE=[], FACTS=[];
+  let TAGS=[], selId=null, gesture=null, nameTargetId=null;
+  let pend={}, firstReveal=true;
   const t=()=>DATA[lang];
-  const pname=p=> p[lang] || UI[lang].addName;
 
-  /* ---------- procedural face (design) + real crop (app) ---------- */
+  /* ---------- procedural face + real crop ---------- */
   const SKIN=['#e6c49b','#d9b083','#e0b98d','#eac6a0','#dcb58c'];
   const HAIRC=['#8a6a4a','#3a3a3a','#4a3a2a','#b8b0a4','#5a4030','#cfc7bb'];
   const BGC=['#3a2a1e','#2a3446','#243449','#2c2a1e'];
-  function h32(s){ let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))|0; return Math.abs(h); }
-  function faceSVG(seed){ const h=h32(seed||''), sk=SKIN[h%5], hr=HAIRC[(h>>3)%6], bg=BGC[(h>>5)%4], g=(h>>7)%3===0;
+  function h32(s){ let h=0; s=String(s||''); for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))|0; return Math.abs(h); }
+  function faceSVG(seed){ const h=h32(seed), sk=SKIN[h%5], hr=HAIRC[(h>>3)%6], bg=BGC[(h>>5)%4], g=(h>>7)%3===0;
     return `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="${bg}"/><ellipse cx="50" cy="47" rx="23" ry="26" fill="${sk}"/><path d="M50 96 Q50 70 27 66 Q31 42 50 42 Q69 42 73 66 Q50 70 50 96Z" fill="${hr}"/><path d="M27 44 Q31 23 50 23 Q69 23 73 44 Q61 33 50 33 Q39 33 27 44Z" fill="${g?'#cfc7bb':hr}"/></svg>`; }
   function unnamedSVG(){ return `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#141f30"/><ellipse cx="50" cy="47" rx="23" ry="26" fill="#26344a" opacity=".7"/><path d="M50 96 Q50 70 27 66 Q31 46 50 46 Q69 46 73 66 Q50 70 50 96Z" fill="#26344a" opacity=".7"/><circle cx="50" cy="50" r="15" fill="none" stroke="#f3cd84" stroke-width="2" stroke-dasharray="3 4" opacity=".8"/><path d="M50 44v12M44 50h12" stroke="#f3cd84" stroke-width="2" stroke-linecap="round"/></svg>`; }
   const ICON={ back:'<path d="M15 18l-6-6 6-6"/>',lang:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
     pencil:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>',pin:'<path d="M12 21s-6-5.7-6-10a6 6 0 1112 0c0 4.3-6 10-6 10z"/><circle cx="12" cy="11" r="2"/>',
     clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',chev:'<path d="M9 6l6 6-6 6"/>',auto:'<path d="M4 5h7M7 5v3c0 3-1.5 5-4 6"/><path d="M6 11c1.5 2.5 3.5 3.5 5 4"/><path d="M13 19l4-9 4 9M14.4 16h5.2"/>',
     spark:'<path d="M12 3l1.6 5.4L19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6z"/>',check:'<path d="M20 6L9 17l-5-5"/>',info:'<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/>',plus:'<path d="M12 5v14M5 12h14"/>',
-    keeper:'<path d="M12 3l7 3v6c0 4-3 6.5-7 9-4-2.5-7-5-7-9V6z"/>' };
+    keeper:'<path d="M12 3l7 3v6c0 4-3 6.5-7 9-4-2.5-7-5-7-9V6z"/>',
+    tag:'<path d="M3 8.5v-4a1.5 1.5 0 011.5-1.5h4L20 14.5a2 2 0 010 3l-2.5 2.5a2 2 0 01-3 0L3 8.5z"/><circle cx="7.5" cy="7.5" r="1.3"/><path d="M9 15l2 2 4-4"/>',
+    rotate:'<path d="M3 12a9 9 0 019-9 9 9 0 016.7 3M21 3v6h-6"/><path d="M21 12a9 9 0 01-9 9 9 9 0 01-6.7-3M3 21v-6h6"/>',
+    swap:'<path d="M4 7h13M14 4l3 3-3 3"/><path d="M20 17H7M10 20l-3-3 3-3"/>',
+    trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',
+    search:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>' };
   const sv=(p,w)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w||1.6}" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
 
   async function signedUrl(path){ try{const s=await sb.storage.from('family').createSignedUrl(path,3600); return (s.data&&s.data.signedUrl)||'';}catch(e){return '';} }
@@ -330,7 +518,34 @@
         c.style.cssText='width:100%;height:100%;display:block'; el.innerHTML=''; el.appendChild(c); }; img.src=u;
     }catch(e){} }
 
-  /* ---------- names / story per language ---------- */
+  /* ---------- storage / rotation (ported from the proven prototype) ---------- */
+  async function uploadFile(file){ const ext=(file.name.split('.').pop()||'bin').toLowerCase();
+    const path=`${user.id}/${crypto.randomUUID()}.${ext}`;
+    const up=await sb.storage.from('family').upload(path,file,{contentType:file.type||undefined});
+    if(up.error) throw up.error; return path; }
+  function rotate90(src){ return new Promise((resolve,reject)=>{
+    const url=URL.createObjectURL(src), img=new Image();
+    img.onload=()=>{ try{ const w=img.naturalWidth,h=img.naturalHeight;
+      const c=document.createElement('canvas'); c.width=h; c.height=w;
+      const ctx=c.getContext('2d'); ctx.translate(h,0); ctx.rotate(Math.PI/2); ctx.drawImage(img,0,0);
+      URL.revokeObjectURL(url); const type=(src.type&&src.type.startsWith('image/'))?src.type:'image/jpeg';
+      c.toBlob(b=>b?resolve(b):reject(new Error('Could not rotate')), type, 0.92);
+    }catch(e){URL.revokeObjectURL(url);reject(e);} };
+    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Could not load image'));}; img.src=url; }); }
+  // a normalised face box rotated to match a 90 deg CW image rotation
+  const box90=b=> (b&&typeof b==='object'&&b.w)?{x:1-b.y-b.h,y:b.x,w:b.h,h:b.w}:b;
+  // perform a real 90 deg CW rotate: rewrite the stored image + every subject box
+  async function doRotate(){
+    const {data:blob,error}=await sb.storage.from('family').download(art.storage_path); if(error) throw error;
+    const rb=await rotate90(blob); const ext=(art.storage_path.split('.').pop()||'jpg');
+    const np=await uploadFile(new File([rb],'photo.'+ext,{type:rb.type}));
+    for(const s of subjects){ if(s.detail&&s.detail.w){ const nb=box90(s.detail);
+      await sb.from('artefact_subjects').update({detail:nb}).eq('artefact_id',art.id).eq('person_id',s.person_id); s.detail=nb; } }
+    const {error:ue}=await sb.from('artefacts').update({storage_path:np}).eq('id',art.id); if(ue) throw ue;
+    const old=art.storage_path; art.storage_path=np; try{await sb.storage.from('family').remove([old]);}catch(e){}
+  }
+
+  /* ---------- names / story / details per language ---------- */
   function nameFor(pid, L){ const p=peopleById[pid]; if(!p) return null; const base=p.display_name||p.called_name||null;
     if(L==='en') return base;
     const v=(vars[pid]||[]).find(x=>x.lang===L); if(v){const s=[v.given,v.family].filter(Boolean).join(' ').trim(); if(s) return s;}
@@ -339,63 +554,106 @@
   const yearOf = ()=> (String((art&&art.metadata&&art.metadata.when)||'').match(/\d{4}/)||[''])[0];
   function whereText(){ return (art&&art.metadata&&art.metadata.where)||''; }
   function whenText(){ return (art&&art.metadata&&art.metadata.when)||''; }
+  function detailsList(){ return (art&&art.metadata&&Array.isArray(art.metadata.details))?art.metadata.details:[]; }
   function storyForLang(L){ const orig=(art&&art.original_language)||'en';
     if(art&&art.body && L===orig) return {kind:'human', text:art.body};
     const tr=translations.find(x=>x.lang===L); if(tr) return {kind:'human', text:tr.body};
     if(art&&art.body) return {kind:'machine', text:(autoStory[L]!=null?autoStory[L]:'')};
     return {kind:'empty'}; }
 
-  /* ---------- build the design's DATA/PEOPLE from real data ---------- */
+  /* ---------- build the view model from real data ---------- */
   function buildModel(){
-    PEOPLE = subjects.map(s=>{ const nm={}; LANGKEYS.forEach(L=>nm[L]=nameFor(s.person_id,L));
-      return {id:s.person_id, en:nm.en, ru:nm.ru, he:nm.he, seed:(peopleById[s.person_id]&&peopleById[s.person_id].display_name)||s.person_id,
-        path:art.storage_path, box:s.detail||null, real:!!(art.storage_path)}; });
-    const yr=yearOf(); const where=whereText(), when=whenText();
+    // faces come from real subjects, plus my own pending tag_add proposals
+    PEOPLE = subjects.map(s=>({ id:s.person_id, kind:'subject',
+      en:nameFor(s.person_id,'en'), ru:nameFor(s.person_id,'ru'), he:nameFor(s.person_id,'he'),
+      seed:(peopleById[s.person_id]&&peopleById[s.person_id].display_name)||s.person_id,
+      hasBox:!!(s.detail&&s.detail.w), tagId:(s.detail&&s.detail.w)?('s:'+s.person_id):null, path:art.storage_path }));
+    edits.filter(e=>e.field==='tag_add').forEach(e=>{ let name=''; try{name=(JSON.parse(e.new_value||'{}').name)||'';}catch(_){}
+      const disp = e.ref_id ? (nameFor(e.ref_id,lang)||name) : name;
+      PEOPLE.push({ id:e.ref_id||('e_'+e.id), kind:'pending', en:disp, ru:disp, he:disp, seed:disp||e.id, hasBox:true, tagId:'e:'+e.id }); });
+
+    FACTS = [ {type:'where'}, {type:'when'} ];
+    detailsList().forEach((d,i)=> FACTS.push({type:'detail', idx:i, label:d.label, value:d.value}));
+
     DATA={};
+    const where=whereText(), when=whenText(), yr=yearOf();
     LANGKEYS.forEach(L=>{ const s=storyForLang(L);
       const story = s.kind==='human' ? {kind:'human', teller:tellerName||'', text:s.text}
-                  : s.kind==='machine' ? {kind:'machine', text:s.text}
-                  : {kind:'empty'};
-      DATA[L]=Object.assign({}, UI[L], { story, teller:tellerName||'', where, when, year:yr,
-        region:[where, when].filter(Boolean).join(' \u00b7 ') });
+                  : s.kind==='machine' ? {kind:'machine', text:s.text} : {kind:'empty'};
+      DATA[L]=Object.assign({}, UI[L], { story, teller:tellerName||'', where, when, year:yr });
     });
+    buildTags();
+    // derive pending chips from loaded edits + pending translations
+    pend={};
+    edits.forEach(e=>{ if(e.kind==='story'){ pend.story=true; return; }
+      const map={where:'where',when:'when',tag_add:'people',tag_remove:'people',tag_move:'people',
+        detail_add:'detail',detail_remove:'detail',photo_rotate:'photo',photo_replace:'photo',photo_delete:'photo'};
+      const k=map[e.field]; if(k) pend[k]=true; });
+  }
+  function buildTags(){ TAGS=[];
+    subjects.forEach(s=>{ if(s.detail&&s.detail.w){ TAGS.push({ id:'s:'+s.person_id, kind:'subject', person:s.person_id,
+      name:nameFor(s.person_id,lang)||(peopleById[s.person_id]&&peopleById[s.person_id].display_name)||'',
+      x:s.detail.x, y:s.detail.y, w:s.detail.w, h:s.detail.h, status:'ok' }); } });
+    edits.filter(e=>e.field==='tag_add').forEach(e=>{ let box=null,name=''; try{const m=JSON.parse(e.new_value||'{}'); box=m.box; name=m.name;}catch(_){}
+      if(box&&box.w){ TAGS.push({ id:'e:'+e.id, kind:'edit', editId:e.id, person:e.ref_id,
+        name:name||(e.ref_id?nameFor(e.ref_id,lang):'')||'', x:box.x, y:box.y, w:box.w, h:box.h, status:'pending' }); } });
   }
 
-  /* ---------- render (design template, real data) ---------- */
+  /* ---------- render ---------- */
   function render(){
     const d=t();
     document.documentElement.lang=lang; document.documentElement.dir=d.dir;
     document.body.classList.toggle('rtl', d.dir==='rtl');
 
-    const facesHTML = PEOPLE.map(p=>{ const named=!!p[lang]; const nm=named?p[lang]:d.addName;
-      return `<button class="face ${named?'':'unnamed'}" data-person="${esc(p.id)}">
-        <span class="node"><span class="crop" data-face="${esc(p.id)}">${named?faceSVG(p.seed):unnamedSVG()}</span>
-        <span class="editdot">${sv(named?ICON.pencil:ICON.plus,2)}</span></span>
-        <span class="fn">${esc(firstName(nm))}</span></button>`; }).join('');
-
+    // story
     let storyBlock;
     if(d.story.kind==='human' && d.story.text){
       const words=String(d.story.text).split(' ').map(w=>`<span class="word">${esc(w)}</span>`).join(' ');
-      storyBlock=`<div class="story" data-edit="story"><span class="quotemark">&ldquo;</span>
+      storyBlock=`<div class="story story-editable" data-edit="story"><span class="quotemark">&ldquo;</span>
         <p class="story-words" id="storyWords">${words}</p>
-        ${d.teller?`<div class="told"><span class="flame"></span><span class="txt">${esc(d.toldBy)} <b>${esc(d.teller)}</b></span></div>`:''}
+        ${d.teller?`<div class="told"><span class="flame"></span><span class="txt">${esc(d.toldBy)} <b>${esc(d.teller)}</b></span>
+          <button class="rmtell" data-rmtell="1">${sv(ICON.trash,1.7)} ${esc(d.removeTelling)}</button></div>`:''}
         <div class="pending" data-pending="story"><span class="sp"></span>${esc(d.waiting)}</div></div>`;
     } else if(d.story.kind==='machine'){
       storyBlock=`<div class="story" data-edit="story"><div class="autobar">
         <div class="h">${sv(ICON.auto,1.7)} ${esc(d.autoHdr)}</div>
-        <div class="m">${esc(d.story.text||'\u2026')}</div>
-        <div class="cta" data-edit-open="story">${sv(ICON.spark,1.7)} ${esc(d.autoCta.replace('{lang}',langNative(lang)))}</div></div>
+        <div class="m">${esc(d.story.text||'…')}</div>
+        <div class="cta" data-open="story">${sv(ICON.spark,1.7)} ${esc(d.autoCta)}</div></div>
         <div class="pending" data-pending="story"><span class="sp"></span>${esc(d.waiting)}</div></div>`;
     } else {
-      storyBlock=`<div class="story" data-edit="story"><p class="story-words" style="font-size:19px;color:var(--muted)">${esc(d.noStory)}</p>
-        <div class="cta" data-edit-open="story" style="margin-top:12px;display:inline-flex;align-items:center;gap:6px;color:var(--gold);font-weight:600;cursor:pointer">${sv(ICON.spark,1.7)} ${esc(d.autoCta.replace('{lang}',langNative(lang)))}</div>
-        <div class="pending" data-pending="story"><span class="sp"></span>${esc(d.waiting)}</div></div>`;
+      storyBlock=`<div class="invite" data-open="story"><div class="em">${esc(d.noStoryEm)}</div>
+        <div class="cta">${sv(ICON.spark,1.7)} ${esc(d.noStoryCta)}</div></div>
+        <div class="pending" data-pending="story" style="margin-top:12px"><span class="sp"></span>${esc(d.waiting)}</div>`;
     }
+
+    // faces
+    let facesHTML;
+    if(PEOPLE.length){
+      facesHTML = PEOPLE.map(p=>{ const named=!!p[lang];
+        let cls='face', st=named?d.placed:d.placeOnPhoto;
+        if(p.kind==='pending'){ cls+=' pending'; st=d.pendingTag; }
+        else if(!p.hasBox){ cls+=' unplaced'; st=d.placeOnPhoto; }
+        return `<button class="${cls}" data-face="${esc(p.id)}" data-kind="${p.kind}"${p.tagId?` data-tagid="${esc(p.tagId)}"`:''}>
+          <span class="node"><span class="crop" data-facecrop="${esc(p.id)}">${named?faceSVG(p.seed):unnamedSVG()}</span></span>
+          <span class="fn">${esc(named?firstName(p[lang]):d.addName)}</span><span class="st">${esc(st)}</span></button>`; }).join('');
+    } else {
+      facesHTML = `<button class="invite" data-open="tagface" style="width:100%">
+        <div class="em">${esc(d.noFacesEm||d.tagHint)}</div><div class="cta">${sv(ICON.tag,1.7)} ${esc(d.tagFace)}</div></button>`;
+    }
+
+    // facts
+    const factsHTML = FACTS.map(f=>{
+      if(f.type==='where') return factRow('where', ICON.pin, d.whereK, d.where||'—', true, false, false);
+      if(f.type==='when')  return factRow('when',  ICON.clock, d.whenK, d.when||'—', true, false, false);
+      return factRow('detail:'+f.idx, ICON.spark, f.label||'', f.value||'—', true, true, true);
+    }).join('');
 
     const keeperStrip = (isKeeper && edits.length) ? `<button class="fact link" id="keeperStrip" style="border-color:rgba(201,162,255,.4);background:rgba(201,162,255,.08);margin-top:10px">
       <span class="fi" style="background:rgba(201,162,255,.16);border-color:rgba(201,162,255,.35)">${sv(ICON.keeper,1.6)}</span>
-      <span><span class="fk" style="color:var(--edit)">${esc(d.reviewT)}</span><span class="fv" style="font-size:15px">${esc(d.keeperStrip.replace('{n}',edits.length))}</span></span>
+      <span class="ftext"><span class="fk" style="color:var(--edit)">${esc(d.reviewT)}</span><span class="fv" style="font-size:15px">${esc(d.keeperStrip.replace('{n}',edits.length))}</span></span>
       <span class="chev" style="color:var(--edit)">${sv(ICON.chev)}</span></button>` : '';
+
+    const hasPhoto = !!(art&&art.storage_path);
 
     $('#wrap').innerHTML = `
       <div class="topbar">
@@ -409,149 +667,509 @@
         <span class="et"><span class="a">${esc(d.edA)}</span><span class="b">${esc(d.edB)}</span></span>
         <button class="done" id="doneBtn">${esc(d.done)}</button></div>
 
-      <div class="stage reveal" data-edit="photo">
-        <div class="frame"><div class="photo surface" id="photoWrap">
-          <img id="momentPhoto" alt="" style="display:block;width:100%;height:auto"/>
-        </div>${d.year?`<div class="yearstamp"><span class="d"></span><span class="y">${esc(d.year)}</span></div>`:''}</div>
+      <div class="stage" data-edit="photo">
+        <div class="frame"><div class="photostage" id="photostage">
+          <div class="rotor" id="rotor">
+            <div class="photoart" id="photoart">${ hasPhoto
+              ? `<img id="momentPhoto" alt="">`
+              : `<div class="ph-empty">${esc(d.emWhereEm? '' : '')}${sv(ICON.tag,1.4)}</div>` }</div>
+            <div class="taglayer" id="taglayer"></div>
+          </div>
+          <div class="stage-dim"></div>
+          ${d.year?`<div class="yearstamp"><span class="d"></span><span class="y">${esc(d.year)}</span></div>`:''}
+          <div class="taghint">${sv(ICON.tag,1.7)} <span>${esc(d.tagHint)}</span></div>
+          <div class="selbar" id="selbar"></div>
+          ${ hasPhoto ? `<div class="phototools" id="phototools">
+            <button class="ptool tag" id="tagBtn">${sv(ICON.tag,1.6)} <span id="tagBtnLabel">${esc(d.tagFace)}</span></button>
+            <span class="ptool spacer"></span>
+            <button class="ptool round" id="rotBtn" aria-label="${esc(d.rotate)}" title="${esc(d.rotate)}">${sv(ICON.rotate,1.6)}</button>
+            <button class="ptool round" id="replBtn" aria-label="${esc(d.replacePhoto)}" title="${esc(d.replacePhoto)}">${sv(ICON.swap,1.6)}</button>
+            <button class="ptool round" id="delBtn" aria-label="${esc(d.deletePhoto)}" title="${esc(d.deletePhoto)}">${sv(ICON.trash,1.6)}</button>
+          </div>` : `<div class="phototools" id="phototools">
+            <button class="ptool tag" id="replBtn">${sv(ICON.swap,1.6)} <span>${esc(d.replacePhoto)}</span></button></div>` }
+        </div></div>
+        <div class="photo-legend">
+          <span class="lg"><i></i>${esc(d.lgTagged)}</span>
+          <span class="lg"><i class="pend"></i>${esc(d.lgPending)}</span>
+          <span class="lg"><i class="unk"></i>${esc(d.lgUnknown)}</span></div>
         <div class="pending" data-pending="photo" style="margin-inline:4px"><span class="sp"></span>${esc(d.waiting)}</div>
       </div>
 
-      <div class="sec reveal"><div class="sec-h"><span class="lp" style="background:var(--gold);box-shadow:0 0 8px 1px var(--gold)"></span><span class="t">${esc(d.inMoment)}</span></div>
-        <div class="faces">${facesHTML||''}</div></div>
+      <div class="sec"><div class="sec-h"><span class="lp" style="background:var(--gold);box-shadow:0 0 8px 1px var(--gold)"></span><span class="t">${esc(d.inMoment)}</span>
+        <span class="add" id="addFaceBtn">${sv(ICON.tag,1.8)} ${esc(d.tagFace)}</span></div>
+        <div class="faces">${facesHTML}</div>
+        <div class="pending" data-pending="people"><span class="sp"></span>${esc(d.waiting)}</div></div>
 
-      <div class="sec reveal"><div class="sec-h"><span class="lp" style="background:var(--gold);box-shadow:0 0 8px 1px var(--gold)"></span><span class="t">${esc(d.storyH)}</span></div>
+      <div class="sec"><div class="sec-h"><span class="lp" style="background:var(--gold);box-shadow:0 0 8px 1px var(--gold)"></span><span class="t">${esc(d.storyH)}</span></div>
         ${storyBlock}</div>
 
-      <div class="sec reveal"><div class="sec-h"><span class="lp" style="background:var(--cool);box-shadow:0 0 8px 1px var(--cool)"></span><span class="t">${esc(d.factsH)}</span></div>
-        <div class="facts">
-          <button class="fact link" data-edit="where" data-go="place"><span class="fi">${sv(ICON.pin)}</span>
-            <span><span class="fk">${esc(d.whereK)}</span><span class="fv">${esc(d.where||'\u2014')}</span></span><span class="chev">${sv(ICON.chev)}</span></button>
-          <button class="fact" data-edit="when"><span class="fi">${sv(ICON.clock,1.5)}</span>
-            <span><span class="fk">${esc(d.whenK)}</span><span class="fv">${esc(d.when||'\u2014')}</span></span><span class="chev" style="visibility:hidden">${sv(ICON.chev)}</span></button>
-        </div>
+      <div class="sec"><div class="sec-h"><span class="lp" style="background:var(--cool);box-shadow:0 0 8px 1px var(--cool)"></span><span class="t">${esc(d.factsH)}</span>
+        <span class="add" id="addDetailBtn">${sv(ICON.plus,2)} ${esc(d.addDetail)}</span></div>
+        <div class="facts">${factsHTML}</div>
         <div class="pending" data-pending="where"><span class="sp"></span>${esc(d.waiting)}</div>
         <div class="pending" data-pending="when"><span class="sp"></span>${esc(d.waiting)}</div>
+        <div class="pending" data-pending="detail"><span class="sp"></span>${esc(d.waiting)}</div>
         <div class="facts-src">${esc(d.factsSrc)}</div></div>
 
-      <div class="foot reveal"><span class="leaf">${esc(d.leaf)}</span></div>`;
+      <div class="foot"><span class="leaf">${esc(d.leaf)}</span></div>`;
 
     $('#langSheet').innerHTML = `<div class="grip"></div><h3>${esc(d.langTitle)}</h3><div class="sub">${esc(d.langSub)}</div>
       ${LANGKEYS.map(k=>`<button class="lang-opt ${k===lang?'on':''}" data-lang="${k}">
         <span><span class="native">${esc(UI[k].native)}</span><span class="en" style="display:block">${esc(UI[k].label)}</span></span>
         <span class="tick">${sv(ICON.check,2)}</span></button>`).join('')}`;
 
-    // real photo
-    if(art.storage_path){ signedUrl(art.storage_path).then(u=>{ const im=$('#momentPhoto'); if(im&&u) im.src=u; }); }
-    // real face crops
-    document.querySelectorAll('#wrap .face .crop[data-face]').forEach(el=>{ const p=PEOPLE.find(x=>x.id===el.getAttribute('data-face')); if(p&&p.real&&p[lang]) faceInto(el,p.path,p.box); });
+    if(hasPhoto){ const im=$('#momentPhoto');
+      if(im){ signedUrl(art.storage_path).then(u=>{ if(u){ im.onload=()=>im.classList.add('up'); im.src=u; if(im.complete&&im.naturalWidth) im.classList.add('up'); } }); } }
+    // real face crops in the strip
+    $$('#wrap .face .crop[data-facecrop]').forEach(el=>{ const id=el.getAttribute('data-facecrop');
+      const p=PEOPLE.find(x=>String(x.id)===id); const s=subjects.find(x=>x.person_id===id);
+      if(p && p.kind==='subject' && p[lang] && art.storage_path) faceInto(el, art.storage_path, s&&s.detail); });
 
-    wire(); runReveal(); restorePending();
+    renderBoxes(); wire(); runReveal(); restorePending();
   }
 
-  function runReveal(){ const photo=$('#photoWrap'), words=$('#storyWords'); const revs=[...document.querySelectorAll('.reveal')];
-    if(reduce){ photo&&photo.classList.add('up'); revs.forEach(r=>r.classList.add('up')); words&&words.classList.add('lit'); return; }
-    requestAnimationFrame(()=>{ setTimeout(()=>photo&&photo.classList.add('up'),120); });
-    revs.forEach((r,i)=> setTimeout(()=>r.classList.add('up'), 260+i*150));
-    if(words) setTimeout(()=>words.classList.add('lit'),900); }
-
-  /* ---------- overlays ---------- */
-  const scrim=$('#scrim'), langSheet=$('#langSheet'), editSheet=$('#editSheet');
-  function show(sheet){ scrim.classList.add('show'); sheet.classList.add('show'); }
-  function hide(){ scrim.classList.remove('show'); langSheet.classList.remove('show'); editSheet.classList.remove('show'); }
-  scrim.addEventListener('click', hide);
-  window.__lfClose=()=>{
-    if(document.querySelector('.sheet.show')){ hide(); return true; }
-    if(document.body.classList.contains('editing')){ document.body.classList.remove('editing'); return true; }
-    return false; };
-  function toast(msg){ $('#toastMsg').textContent=msg; const el=$('#toast'); el.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('show'),2600); }
-
-  /* ---------- pending memory (which fields are awaiting the keeper) ---------- */
-  let pend={};
-  function restorePending(){ Object.keys(pend).forEach(k=>{ const c=document.querySelector(`[data-pending="${k}"]`); if(c&&pend[k]) c.classList.add('show'); }); }
-
-  /* ---------- edit / keeper submit ---------- */
-  function openEditor(target){ const d=t(); let label,value='',multiline=false,note=d.keeperNote,photo=false,tag=null,person=null;
-    if(target==='story'){ label=d.edStory; const s=storyForLang(lang); value=s.kind==='human'?s.text:''; multiline=true; tag=`${d.langTitle}: ${langNative(lang)}`; }
-    else if(target==='where'){ label=d.edWhere; value=d.where; }
-    else if(target==='when'){ label=d.edWhen; value=d.when; }
-    else if(target==='photo'){ label=d.edPhotoT; note=d.edPhotoN; photo=true; }
-    else if(target.indexOf('person:')===0){ person=target.split(':')[1]; label=d.edName; value=(PEOPLE.find(x=>x.id===person)||{})[lang]||''; tag=`${d.langTitle}: ${langNative(lang)}`; }
-    const inputHTML = photo ? '' : (multiline
-      ? `<div class="ed-field"><label>${esc(label)}</label>${tag?`<div class="ed-langtag">${sv(ICON.info,1.7)} ${esc(tag)}</div>`:''}<textarea rows="5" id="edInput">${esc(value)}</textarea></div>`
-      : `<div class="ed-field"><label>${esc(label)}</label>${tag?`<div class="ed-langtag">${sv(ICON.info,1.7)} ${esc(tag)}</div>`:''}<input id="edInput" value="${esc(value)}"></div>`);
-    editSheet.innerHTML=`<div class="grip"></div><h3>${esc(photo?d.edPhotoT:label)}</h3>${inputHTML}
-      <div class="ed-note">${sv(ICON.info,1.7)} <span>${esc(note)}</span></div>
-      <div class="ed-actions"><button class="btn ghost" id="edCancel">${esc(d.cancel)}</button>
-      ${photo?'':`<button class="btn primary" id="edSend">${esc(d.sendKeeper)}</button>`}</div>`;
-    show(editSheet);
-    const inp=editSheet.querySelector('#edInput'); if(inp) setTimeout(()=>inp.focus(),340);
-    editSheet.querySelector('#edCancel').onclick=hide;
-    const sendBtn=editSheet.querySelector('#edSend');
-    if(sendBtn) sendBtn.onclick=async()=>{ const val=(editSheet.querySelector('#edInput')||{}).value; hide(); await submitEdit(target,person,val); };
+  function factRow(key, icon, k, v, link, human, removable){
+    const cls='fact '+(link?'link ':'')+(human?'human ':'')+(removable?'removable':'');
+    const chev = removable
+      ? `<span class="chev">${sv(ICON.chev)}</span><span class="rm" role="button" tabindex="0" aria-label="remove" data-remove="${key}">${sv(ICON.x,2)}</span>`
+      : `<span class="chev">${sv(ICON.chev)}</span>`;
+    return `<button class="${cls}" data-edit="${key}">
+      <span class="fi">${sv(icon, key==='when'?1.5:1.6)}</span>
+      <span class="ftext"><span class="fk">${esc(k)}</span><span class="fv">${esc(v)}</span></span>${chev}</button>`;
   }
 
-  async function submitEdit(target, person, val){ const d=t(); if(!user){ toast(d.signIn); return; }
-    val=(val==null?'':String(val)).trim(); let key=target, ok=true;
-    try{
-      if(target==='story'){ if(val){ await sb.from('artefact_translations').insert({artefact_id:art.id,lang,body:val,status:'in_review',created_by:user.id}); } key='story'; }
-      else if(target==='where'){ await sb.from('artefact_edits').insert({artefact_id:art.id,field:'where',new_value:val,old_value:d.where,status:'in_review',created_by:user.id}); key='where'; }
-      else if(target==='when'){ await sb.from('artefact_edits').insert({artefact_id:art.id,field:'when',new_value:val,old_value:d.when,status:'in_review',created_by:user.id}); key='when'; }
-      else if(person){ const parts=val.split(/\s+/); const given=parts.shift()||''; const family=parts.join(' ')||null;
-        if(given) await sb.from('name_variants').insert({person_id:person,lang,given,family,status:'in_review',created_by:user.id}); key='people'; }
-    }catch(e){ ok=false; }
-    if(ok){ pend[key]=true; const c=document.querySelector(`[data-pending="${key}"]`); if(c) c.classList.add('show'); toast(d.sent); }
+  function runReveal(){ const words=$('#storyWords');
+    if(reduce){ words&&words.classList.add('lit'); return; }
+    if(words) setTimeout(()=>words.classList.add('lit'), firstReveal?500:60); firstReveal=false; }
+
+  /* ---------- tag boxes ---------- */
+  function clientToLocal(cx,cy){ const r=$('#rotor').getBoundingClientRect();
+    return { x:Math.min(1,Math.max(0,(cx-r.left)/r.width)), y:Math.min(1,Math.max(0,(cy-r.top)/r.height)) }; }
+  function clientDeltaLocal(dx,dy){ const r=$('#rotor').getBoundingClientRect(); return { x:dx/r.width, y:dy/r.height }; }
+
+  function renderBoxes(){ const layer=$('#taglayer'); if(!layer) return;
+    layer.innerHTML = TAGS.map(tg=>{ const nm = tg.status==='unnamed' ? t().unknownFace : (tg.name||t().unknownFace);
+      const cls='tagbox '+(tg.status==='pending'?'pending ':'')+(tg.status==='unnamed'?'unnamed ':'')+(tg.id===selId?'sel':'');
+      const handles = tg.id===selId ? `<span class="handle nw" data-h="nw"></span><span class="handle ne" data-h="ne"></span><span class="handle sw" data-h="sw"></span><span class="handle se" data-h="se"></span>` : '';
+      return `<div class="${cls}" data-tag="${esc(tg.id)}" style="left:${tg.x*100}%;top:${tg.y*100}%;width:${tg.w*100}%;height:${tg.h*100}%">
+        <span class="name"><span class="fdot"></span>${esc(nm)}</span>${handles}</div>`; }).join('');
+    renderSelbar();
+  }
+  function renderSelbar(){ const bar=$('#selbar'); if(!bar) return;
+    const tg=TAGS.find(x=>x.id===selId);
+    if(!tg || !document.body.classList.contains('tagging')){ bar.classList.remove('show'); return; }
+    const d=t(); const nm=tg.status==='unnamed'?d.unknownFace:(tg.name||d.unknownFace);
+    bar.className='selbar show'+(tg.status==='pending'?' pending':''); bar.style.bottom='58px';
+    bar.innerHTML = `<span class="sname">${esc(nm)}</span>
+      <button class="sbtn" data-act="change">${sv(ICON.pencil,1.7)} ${esc(tg.status==='unnamed'?d.addName:d.tagChange)}</button>
+      <button class="sbtn danger" data-act="remove">${sv(ICON.trash,1.7)} ${esc(d.tagRemove)}</button>`;
+    bar.querySelector('[data-act="change"]').onclick=()=>openNameSheet(tg.id);
+    bar.querySelector('[data-act="remove"]').onclick=()=>removeTag(tg.id);
+  }
+  function boxEl(id){ return document.querySelector(`.tagbox[data-tag="${CSS.escape(id)}"]`); }
+  function positionBox(tg){ const el=boxEl(tg.id); if(!el) return; el.style.left=tg.x*100+'%'; el.style.top=tg.y*100+'%'; el.style.width=tg.w*100+'%'; el.style.height=tg.h*100+'%'; }
+  function drawLive(tg){ let el=boxEl(tg.id); if(!el){ renderBoxes(); el=boxEl(tg.id);} if(el){ el.classList.add('draft'); positionBox(tg);} }
+
+  function bindTagLayer(){ const layer=$('#taglayer'); if(!layer) return;
+    layer.addEventListener('pointerdown', e=>{
+      const box=e.target.closest('.tagbox'); const handle=e.target.closest('.handle');
+      if(!box && document.body.classList.contains('tagging')){
+        e.preventDefault(); try{layer.setPointerCapture(e.pointerId);}catch(_){}
+        const s=clientToLocal(e.clientX,e.clientY); const id='draft';
+        gesture={mode:'draw', id, sx:s.x, sy:s.y};
+        TAGS.push({id, kind:'draft', person:null, name:'', x:s.x, y:s.y, w:0, h:0, status:'unnamed'});
+        renderBoxes(); return;
+      }
+      if(box){ e.preventDefault(); const id=box.dataset.tag; selId=id; renderBoxes();
+        try{layer.setPointerCapture(e.pointerId);}catch(_){}
+        const tg=TAGS.find(x=>x.id===id); if(!tg) return;
+        if(handle) gesture={mode:'resize', id, corner:handle.dataset.h, px:e.clientX, py:e.clientY, o:{...tg}};
+        else gesture={mode:'move', id, px:e.clientX, py:e.clientY, o:{...tg}}; }
+    });
+    layer.addEventListener('pointermove', e=>{ if(!gesture) return; e.preventDefault();
+      const tg=TAGS.find(x=>x.id===gesture.id); if(!tg) return;
+      if(gesture.mode==='draw'){ const c=clientToLocal(e.clientX,e.clientY);
+        tg.x=Math.min(gesture.sx,c.x); tg.y=Math.min(gesture.sy,c.y); tg.w=Math.abs(c.x-gesture.sx); tg.h=Math.abs(c.y-gesture.sy); drawLive(tg);
+      } else if(gesture.mode==='move'){ const dl=clientDeltaLocal(e.clientX-gesture.px, e.clientY-gesture.py); const o=gesture.o;
+        tg.x=Math.min(1-o.w,Math.max(0,o.x+dl.x)); tg.y=Math.min(1-o.h,Math.max(0,o.y+dl.y)); positionBox(tg);
+      } else if(gesture.mode==='resize'){ const dl=clientDeltaLocal(e.clientX-gesture.px, e.clientY-gesture.py); const o=gesture.o, c=gesture.corner;
+        let x=o.x,y=o.y,w=o.w,h=o.h;
+        if(c.includes('w')){ x=o.x+dl.x; w=o.w-dl.x; } if(c.includes('e')){ w=o.w+dl.x; }
+        if(c.includes('n')){ y=o.y+dl.y; h=o.h-dl.y; } if(c.includes('s')){ h=o.h+dl.y; }
+        if(w<0.05) w=0.05; if(h<0.05) h=0.05; tg.x=Math.max(0,x); tg.y=Math.max(0,y); tg.w=w; tg.h=h; positionBox(tg); }
+    });
+    const endGesture=async e=>{ if(!gesture) return; const g=gesture; gesture=null; try{layer.releasePointerCapture(e.pointerId);}catch(_){}
+      const tg=TAGS.find(x=>x.id===g.id);
+      if(g.mode==='draw'){ if(!tg) return;
+        if(tg.w<0.05||tg.h<0.05){ TAGS=TAGS.filter(x=>x.id!==g.id); renderBoxes(); return; }
+        const nid='t'+Date.now(); tg.id=nid; tg.kind='draft'; selId=nid; renderBoxes(); openNameSheet(nid, true);
+      } else if(g.mode==='move'||g.mode==='resize'){ if(!tg) return;
+        // commit the new box position (only for real, named tags)
+        await commitBox(tg);
+      }
+    };
+    layer.addEventListener('pointerup', endGesture);
+    layer.addEventListener('pointercancel', endGesture);
   }
 
-  /* ---------- keeper review sheet ---------- */
-  async function loadQueue(){ if(!isKeeper){ edits=[]; return; }
-    const a=await sb.from('artefact_translations').select('id,lang,body,created_at').eq('artefact_id',MOMENT_ID).eq('status','in_review');
-    const b=await sb.from('artefact_edits').select('id,field,lang,new_value,ref_id,old_value,created_at').eq('artefact_id',MOMENT_ID).eq('status','in_review');
-    edits=[...(a.data||[]).map(x=>({...x,kind:'story'})), ...(b.data||[]).map(x=>({...x,kind:'edit'}))]; }
-  function labelFor(item){ const d=t(); if(item.kind==='story') return d.story+' \u00b7 '+langNative(item.lang);
-    return ({where:d.whereK,when:d.whenK,tag_add:d.inMoment,tag_remove:d.inMoment,photo:d.edPhotoT}[item.field])||item.field; }
+  async function commitBox(tg){ const box={x:tg.x,y:tg.y,w:tg.w,h:tg.h};
+    if(tg.kind==='subject'){ if(isKeeper){ const ok=await sbWrite(()=>sb.from('artefact_subjects').update({detail:box}).eq('artefact_id',art.id).eq('person_id',tg.person)); if(ok){ toast(t().saved); await reload(); } }
+      else { await proposeEdit('tag_move',{ref_id:tg.person, new_value:JSON.stringify({box}), old_value:tg.name, pendKey:'people'}); await reload(); } }
+    else if(tg.kind==='edit'){ /* my own pending proposal: update its stored box */
+      let m={}; try{m=JSON.parse((edits.find(x=>x.id===tg.editId)||{}).new_value||'{}');}catch(_){}
+      m.box=box; const ok=await sbWrite(()=>sb.from('artefact_edits').update({new_value:JSON.stringify(m)}).eq('id',tg.editId)); if(ok){ await reload(); } }
+  }
+
+  /* ---------- name picker ---------- */
+  async function loadAllPeople(){ if(allPeople) return; try{ const {data}=await sb.from('people').select('id,display_name,called_name,sex').order('display_name'); allPeople=data||[]; }catch(e){ allPeople=[]; } }
+  async function openNameSheet(tagId, isNew){ nameTargetId=tagId; await loadAllPeople(); renderNameList(''); show($('#nameSheet')); }
+  function renderNameList(q){ const d=t(); const sheet=$('#nameSheet'); const ql=q.trim().toLowerCase();
+    const list=(allPeople||[]).filter(p=>{ if(!ql) return true; return String(p.display_name||'').toLowerCase().includes(ql) || String(p.called_name||'').toLowerCase().includes(ql); }).slice(0,40);
+    sheet.innerHTML = `<div class="grip"></div><h3>${esc(d.whoTitle)}</h3><div class="sub">${esc(d.whoSub)}</div>
+      <div class="searchbox">${sv(ICON.search,1.7)}<input id="pSearch" placeholder="${esc(d.searchFamily)}" value="${esc(q)}"></div>
+      <div class="plist">
+        ${list.map(p=>`<button class="popt" data-pick="${esc(p.id)}">
+          <span class="pc">${faceSVG(p.display_name)}</span>
+          <span><span class="pn">${esc(nameFor(p.id,lang)||p.display_name)}</span>${p.called_name?`<span class="pr">${esc(p.called_name)}</span>`:''}</span></button>`).join('')}
+        <button class="popt newp" data-pick="__new">
+          <span class="pc">${sv(ICON.plus,2)}</span>
+          <span><span class="pn">${q?esc(q):esc(d.someoneNew)}</span><span class="pr">${esc(d.someoneNew)}</span></span></button>
+      </div>`;
+    const inp=sheet.querySelector('#pSearch'); inp.oninput=()=>renderNameList(inp.value);
+    sheet.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>pickPerson(b.dataset.pick, sheet.querySelector('#pSearch').value.trim()));
+  }
+  async function ensurePerson(name){ name=String(name||'').trim();
+    const f=(allPeople||[]).find(p=>String(p.display_name||'').toLowerCase()===name.toLowerCase());
+    if(f) return f.id;
+    const {data,error}=await sb.from('people').insert({display_name:name,created_by:user.id,status:'published'}).select('id,display_name,called_name,sex').single();
+    if(error) throw error; (allPeople=allPeople||[]).push(data); peopleById[data.id]=data; return data.id; }
+
+  async function pickPerson(pid, q){ const tg=TAGS.find(x=>x.id===nameTargetId); if(!tg){ hide(); return; }
+    const box={x:tg.x,y:tg.y,w:tg.w,h:tg.h};
+    let personId = (pid==='__new') ? null : pid;
+    let name = (pid==='__new') ? (q||t().someoneNew) : (nameFor(pid,lang) || (allPeople.find(p=>p.id===pid)||{}).display_name || '');
+    hide();
+    if(isKeeper){
+      const ok=await sbWrite(async()=>{
+        if(!personId) personId=await ensurePerson(name);
+        // retagging an existing subject to a different person: drop the old row
+        if(tg.kind==='subject' && tg.person && tg.person!==personId){ await sb.from('artefact_subjects').delete().eq('artefact_id',art.id).eq('person_id',tg.person); }
+        return sb.from('artefact_subjects').upsert({artefact_id:art.id, person_id:personId, detail:box});
+      });
+      if(ok){ toast(t().saved); await reload(); }
+    } else {
+      // contributor proposal → artefact_edits (never a published insert)
+      const ok = (tg.kind==='edit')
+        ? await sbWrite(()=>sb.from('artefact_edits').update({ref_id:personId, new_value:JSON.stringify({box,name}), old_value:name}).eq('id',tg.editId))
+        : await proposeEdit('tag_add',{ref_id:personId, new_value:JSON.stringify({box,name}), old_value:name, pendKey:'people'});
+      if(ok){ await reload(); }
+    }
+  }
+
+  async function removeTag(id){ const tg=TAGS.find(x=>x.id===id); if(!tg){ return; }
+    if(tg.kind==='draft'){ TAGS=TAGS.filter(x=>x.id!==id); selId=null; renderBoxes(); return; }
+    if(tg.kind==='edit'){ // withdraw my own pending proposal
+      const ok=await sbWrite(()=>sb.from('artefact_edits').delete().eq('id',tg.editId)); if(ok){ selId=null; await reload(); } return; }
+    // published subject
+    if(isKeeper){ const ok=await sbWrite(()=>sb.from('artefact_subjects').delete().eq('artefact_id',art.id).eq('person_id',tg.person)); if(ok){ toast(t().saved); selId=null; await reload(); } }
+    else { const ok=await proposeEdit('tag_remove',{ref_id:tg.person, old_value:tg.name, pendKey:'people'}); if(ok){ selId=null; await reload(); } }
+  }
+
+  /* ---------- calendar (when) ---------- */
+  let calY=1992, calM=6, calD=null, calPrec='year', calSeason=1;
+  function openCal(){ const y=parseInt(yearOf()); if(!isNaN(y)) calY=y; show($('#calSheet')); renderCal(); }
+  function calText(){ const d=t();
+    if(calPrec==='day' && calD) return `${calD} ${d.months[calM]} ${calY}`;
+    if(calPrec==='month') return `${d.months[calM]} ${calY}`;
+    if(calPrec==='season') return `${d.seasons[calSeason]} ${calY}`;
+    return `${calY}`; }
+  function renderCal(){ const d=t(); const sheet=$('#calSheet');
+    const first=new Date(calY,calM,1); let wd=(first.getDay()+6)%7; const days=new Date(calY,calM+1,0).getDate();
+    let cells=''; for(let i=0;i<wd;i++) cells+='<span class="cal-day empty"></span>';
+    for(let dd=1;dd<=days;dd++) cells+=`<button class="cal-day ${calPrec==='day'&&calD===dd?'on':''}" data-day="${dd}">${dd}</button>`;
+    const wdRow=d.weekdays.map(w=>`<span class="wd">${esc(w)}</span>`).join('');
+    const gridBlock=(calPrec==='day'||calPrec==='month')
+      ? `<div class="cal-head"><button class="cal-nav" data-mv="-1">${sv(ICON.chev,2)}</button><span class="my">${esc(d.months[calM])} ${calY}</span><button class="cal-nav" data-mv="1" style="transform:scaleX(-1)">${sv(ICON.chev,2)}</button></div>
+         ${calPrec==='day'?`<div class="cal-grid">${wdRow}${cells}</div>`:''}` : '';
+    const seasonBlock=calPrec==='season'
+      ? `<div class="cal-head"><button class="cal-nav" data-yr="-1">${sv(ICON.chev,2)}</button><span class="my">${calY}</span><button class="cal-nav" data-yr="1" style="transform:scaleX(-1)">${sv(ICON.chev,2)}</button></div>
+         <div class="season-row">${d.seasons.map((s,i)=>`<button class="${calSeason===i?'on':''}" data-season="${i}">${esc(s)}</button>`).join('')}</div>` : '';
+    const yearBlock=calPrec==='year'
+      ? `<div class="cal-head"><button class="cal-nav" data-yr="-1">${sv(ICON.chev,2)}</button><span class="my" style="font-size:26px">${calY}</span><button class="cal-nav" data-yr="1" style="transform:scaleX(-1)">${sv(ICON.chev,2)}</button></div>` : '';
+    sheet.innerHTML=`<div class="grip"></div><h3>${esc(d.calTitle)}</h3><div class="sub">${esc(d.calSub)}</div>
+      <div class="prec">
+        <button class="${calPrec==='day'?'on':''}" data-prec="day">${esc(d.precDay)}</button>
+        <button class="${calPrec==='month'?'on':''}" data-prec="month">${esc(d.precMonth)}</button>
+        <button class="${calPrec==='season'?'on':''}" data-prec="season">${esc(d.precSeason)}</button>
+        <button class="${calPrec==='year'?'on':''}" data-prec="year">${esc(d.precYear)}</button></div>
+      ${gridBlock}${seasonBlock}${yearBlock}
+      <div class="cal-result">${esc(d.calResult)}: <b>${esc(calText())}</b></div>
+      <div class="ed-note">${sv(ICON.info,1.7)} <span>${esc(d.keeperNote)}</span></div>
+      <div class="ed-actions"><button class="btn ghost" id="calCancel">${esc(d.cancel)}</button><button class="btn primary" id="calSend">${esc(isKeeper?d.done:d.sendKeeper)}</button></div>`;
+    sheet.querySelectorAll('[data-prec]').forEach(b=>b.onclick=()=>{calPrec=b.dataset.prec;renderCal();});
+    sheet.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{calD=+b.dataset.day;renderCal();});
+    sheet.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{calM+=+b.dataset.mv;if(calM<0){calM=11;calY--;}if(calM>11){calM=0;calY++;}renderCal();});
+    sheet.querySelectorAll('[data-yr]').forEach(b=>b.onclick=()=>{calY+=+b.dataset.yr;renderCal();});
+    sheet.querySelectorAll('[data-season]').forEach(b=>b.onclick=()=>{calSeason=+b.dataset.season;renderCal();});
+    sheet.querySelector('#calCancel').onclick=hide;
+    sheet.querySelector('#calSend').onclick=async()=>{ const val=calText(); hide(); await saveMeta('when', val, whenText(), 'when'); };
+  }
+
+  /* ---------- place (where) ---------- */
+  async function loadPlaces(){ if(places) return;
+    try{ const {data}=await sb.from('places').select('name').order('name'); places=(data||[]).map(p=>p.name).filter(Boolean); }catch(e){ places=[]; }
+    // fold in places already named on moments
+    try{ const {data:aa}=await sb.from('artefacts').select('metadata').eq('kind','photo'); (aa||[]).forEach(a=>{ const w=a.metadata&&a.metadata.where; if(w&&!places.includes(w)) places.push(w); }); }catch(e){}
+  }
+  async function openPlace(){ await loadPlaces(); show($('#placeSheet')); renderPlace(''); }
+  function renderPlace(q){ const d=t(); const sheet=$('#placeSheet'); const ql=q.trim().toLowerCase();
+    const list=(places||[]).filter(p=>!ql || String(p).toLowerCase().includes(ql)).slice(0,30);
+    const hist=n=>/,\s*(ussr|ссср|ברה״מ)/i.test(n);
+    sheet.innerHTML=`<div class="grip"></div><h3>${esc(d.placeTitle)}</h3><div class="sub">${esc(d.placeSub)}</div>
+      <div class="searchbox">${sv(ICON.pin,1.7)}<input id="plSearch" placeholder="${esc(d.placeP)}" value="${esc(q)}"></div>
+      <div class="ta-list">
+        ${list.map(p=>`<button class="ta-opt" data-place="${esc(p)}">${sv(ICON.pin,1.7)}<span class="pn">${esc(p)}</span>${hist(p)?`<span class="histpill">${esc(d.histTag)}</span>`:''}</button>`).join('')}
+        ${q && !list.some(p=>String(p).toLowerCase()===ql)?`<button class="ta-opt" data-place="${esc(q)}" style="border-color:rgba(201,162,255,.4)">${sv(ICON.plus,1.8)}<span class="pn" style="color:var(--edit)">${esc(d.addPlace)}: “${esc(q)}”</span></button>`:''}
+      </div>
+      <div class="ed-note">${sv(ICON.info,1.7)} <span>${esc(d.keeperNote)}</span></div>`;
+    const inp=sheet.querySelector('#plSearch'); inp.oninput=()=>renderPlace(inp.value); setTimeout(()=>inp.focus(),340);
+    sheet.querySelectorAll('[data-place]').forEach(b=>b.onclick=async()=>{ const val=b.dataset.place; hide(); await saveMeta('where', val, whereText(), 'where'); });
+  }
+
+  /* ---------- editor sheet (story / photo / details) ---------- */
+  function openEditor(target){ const d=t();
+    if(target==='photo-delete'){
+      $('#editSheet').innerHTML=`<div class="grip"></div><h3>${esc(d.confirmDelT)}</h3>
+        <div class="ed-note">${sv(ICON.info,1.7)} <span>${esc(d.confirmDelN)}</span></div>
+        <div class="ed-actions"><button class="btn ghost" id="edCancel">${esc(d.cancel)}</button><button class="btn danger" id="edSend">${esc(d.deletePhoto)}</button></div>`;
+      show($('#editSheet')); $('#editSheet #edCancel').onclick=hide;
+      $('#editSheet #edSend').onclick=async()=>{ hide(); await deletePhoto(); }; return;
+    }
+    if(target==='photo'){ // replace — file picker
+      $('#editSheet').innerHTML=`<div class="grip"></div><h3>${esc(d.replacePhoto)}</h3>
+        <div class="ed-field"><label>${esc(d.replacePhoto)}</label><input id="edFile" type="file" accept="image/*" style="font-family:inherit;font-size:14px"></div>
+        <div class="ed-note">${sv(ICON.info,1.7)} <span>${esc(isKeeper?d.replacePhoto:d.photoReplaceN)}</span></div>
+        <div class="ed-actions"><button class="btn ghost" id="edCancel">${esc(d.cancel)}</button><button class="btn primary" id="edSend">${esc(isKeeper?d.done:d.sendKeeper)}</button></div>`;
+      show($('#editSheet')); $('#editSheet #edCancel').onclick=hide;
+      $('#editSheet #edSend').onclick=async()=>{ const f=$('#editSheet #edFile').files&&$('#editSheet #edFile').files[0]; if(!f){ hide(); return; } hide(); await replacePhoto(f); }; return;
+    }
+    let title='', html='', onsend=null;
+    if(target==='story'){ title=d.edStory; const s=storyForLang(lang); const val=s.kind==='human'?s.text:'';
+      html=`<div class="ed-langtag">${sv(ICON.info,1.7)} ${esc(d.langTitle)}: ${esc(langNative(lang))}</div>
+        <div class="ed-field"><label>${esc(d.edStory)}</label><textarea rows="5" id="edInput">${esc(val)}</textarea></div>`;
+      onsend=async()=>{ const val=($('#editSheet #edInput')||{}).value; await submitStory(val); };
+    } else if(target==='detail-new'){ title=d.addDetail;
+      html=`<div class="ed-field"><label>${esc(d.detailLabelL)}</label><input id="edLabel" placeholder="${esc(d.detailLabelP)}"></div>
+        <div class="ed-field"><label>${esc(d.detailValueL)}</label><input id="edInput" placeholder="${esc(d.detailValueP)}"></div>`;
+      onsend=async()=>{ const L=($('#editSheet #edLabel')||{}).value||d.detailLabelP; const V=($('#editSheet #edInput')||{}).value||'—'; await saveDetail(null,{label:L,value:V}); };
+    } else if(target.indexOf('detail:')===0){ const i=+target.split(':')[1]; const f=detailsList()[i]||{}; title=f.label||d.detailLabelL;
+      html=`<div class="ed-field"><label>${esc(d.detailLabelL)}</label><input id="edLabel" value="${esc(f.label||'')}"></div>
+        <div class="ed-field"><label>${esc(d.detailValueL)}</label><input id="edInput" value="${esc(f.value||'')}"></div>`;
+      onsend=async()=>{ const L=($('#editSheet #edLabel')||{}).value; const V=($('#editSheet #edInput')||{}).value; await saveDetail(i,{label:L,value:V}); };
+    }
+    $('#editSheet').innerHTML=`<div class="grip"></div><h3>${esc(title)}</h3>${html}
+      <div class="ed-note">${sv(ICON.info,1.7)} <span>${esc(d.keeperNote)}</span></div>
+      <div class="ed-actions"><button class="btn ghost" id="edCancel">${esc(d.cancel)}</button><button class="btn primary" id="edSend">${esc(isKeeper?d.done:d.sendKeeper)}</button></div>`;
+    show($('#editSheet'));
+    const inp=$('#editSheet #edInput'); if(inp) setTimeout(()=>inp.focus(),340);
+    $('#editSheet #edCancel').onclick=hide;
+    $('#editSheet #edSend').onclick=async()=>{ hide(); if(onsend) await onsend(); };
+  }
+
+  /* ---------- gate helpers ---------- */
+  async function sbWrite(fn){ try{ const r=await fn(); if(r&&r.error) throw r.error; return true; }catch(e){ toast((e&&e.message)||'Could not save.', true); return false; } }
+  // contributor proposal → artefact_edits (in_review), never a published insert
+  async function proposeEdit(field, opts){ if(!user){ toast(t().signIn,true); return false; }
+    const row={artefact_id:art.id, field, status:'in_review', created_by:user.id};
+    if(opts.new_value!=null) row.new_value=opts.new_value;
+    if(opts.old_value!=null) row.old_value=opts.old_value;
+    if(opts.ref_id) row.ref_id=opts.ref_id;
+    if(opts.lang) row.lang=opts.lang;
+    const ok=await sbWrite(()=>sb.from('artefact_edits').insert(row));
+    if(ok){ const k=opts.pendKey||field; pend[k]=true; const c=document.querySelector(`[data-pending="${k}"]`); if(c) c.classList.add('show'); toast(t().sent); }
+    return ok; }
+
+  async function saveMeta(field, val, oldVal, pendKey){ val=String(val==null?'':val).trim();
+    if(isKeeper){ const md=Object.assign({}, art.metadata||{}); if(val) md[field]=val; else delete md[field];
+      const ok=await sbWrite(()=>sb.from('artefacts').update({metadata:md}).eq('id',art.id)); if(ok){ art.metadata=md; toast(t().saved); buildModel(); render(); } }
+    else { await proposeEdit(field,{new_value:val, old_value:oldVal||'', pendKey:pendKey||field}); }
+  }
+  async function saveDetail(idx, obj){
+    if(isKeeper){ const md=Object.assign({}, art.metadata||{}); const arr=Array.isArray(md.details)?md.details.slice():[];
+      if(idx==null) arr.push(obj); else arr[idx]=obj; md.details=arr;
+      const ok=await sbWrite(()=>sb.from('artefacts').update({metadata:md}).eq('id',art.id)); if(ok){ art.metadata=md; toast(t().saved); buildModel(); render(); } }
+    else { await proposeEdit(idx==null?'detail_add':'detail_edit',{new_value:JSON.stringify(Object.assign({idx},obj)), old_value:(detailsList()[idx]||{}).value||'', pendKey:'detail'}); }
+  }
+  async function removeDetail(idx){ const d=t(); if(!confirm(d.removeDetail)) return;
+    if(isKeeper){ const md=Object.assign({}, art.metadata||{}); const arr=(md.details||[]).slice(); arr.splice(idx,1); md.details=arr;
+      const ok=await sbWrite(()=>sb.from('artefacts').update({metadata:md}).eq('id',art.id)); if(ok){ art.metadata=md; toast(t().saved); buildModel(); render(); } }
+    else { await proposeEdit('detail_remove',{new_value:JSON.stringify({idx}), old_value:(detailsList()[idx]||{}).value||'', pendKey:'detail'}); }
+  }
+  async function submitStory(val){ const d=t(); if(!user){ toast(d.signIn,true); return; } val=String(val==null?'':val).trim(); if(!val){ return; }
+    if(isKeeper){ // publish directly as the story in this language
+      const orig=(art&&art.original_language)||'en';
+      let ok;
+      if(lang===orig){ ok=await sbWrite(()=>sb.from('artefacts').update({body:val}).eq('id',art.id)); if(ok) art.body=val; }
+      else { ok=await sbWrite(()=>sb.from('artefact_translations').upsert({artefact_id:art.id,lang,body:val,status:'published',reviewed_by:user.id,published_at:new Date().toISOString()},{onConflict:'artefact_id,lang'}));
+        if(ok){ translations=translations.filter(x=>x.lang!==lang); translations.push({lang,body:val,status:'published'}); } }
+      if(ok){ toast(d.saved); buildModel(); render(); }
+    } else { const ok=await sbWrite(()=>sb.from('artefact_translations').insert({artefact_id:art.id,lang,body:val,status:'in_review',created_by:user.id}));
+      if(ok){ pend.story=true; const c=document.querySelector('[data-pending="story"]'); if(c) c.classList.add('show'); toast(d.sent); } }
+  }
+  async function removeTelling(){ const d=t();
+    if(isKeeper){ const orig=(art&&art.original_language)||'en'; let ok;
+      if(lang===orig){ ok=await sbWrite(()=>sb.from('artefacts').update({body:null}).eq('id',art.id)); if(ok) art.body=null; }
+      else { ok=await sbWrite(()=>sb.from('artefact_translations').delete().eq('artefact_id',art.id).eq('lang',lang)); if(ok) translations=translations.filter(x=>x.lang!==lang); }
+      if(ok){ toast(d.saved); buildModel(); render(); } }
+    else { await proposeEdit('story_remove',{lang, old_value:d.story.text||'', pendKey:'story'}); }
+  }
+
+  /* ---------- photo replace / delete / rotate ---------- */
+  async function rotatePhoto(){ const d=t();
+    if(isKeeper){ const ok=await sbWrite(async()=>{ await doRotate(); return {}; }); if(ok){ toast(d.saved); await reload(); } }
+    else { await proposeEdit('photo_rotate',{new_value:'90', pendKey:'photo'}); }
+  }
+  async function replacePhoto(file){ const d=t(); if(!file){ return; }
+    if(isKeeper){ const ok=await sbWrite(async()=>{ const np=await uploadFile(file); const r=await sb.from('artefacts').update({storage_path:np}).eq('id',art.id); if(r.error) throw r.error; const old=art.storage_path; art.storage_path=np; try{await sb.storage.from('family').remove([old]);}catch(e){} return {}; }); if(ok){ toast(d.saved); await reload(); } }
+    else { // upload candidate, propose swap
+      const ok=await sbWrite(async()=>{ const np=await uploadFile(file); const r=await sb.from('artefact_edits').insert({artefact_id:art.id,field:'photo_replace',new_value:np,status:'in_review',created_by:user.id}); if(r.error) throw r.error; return {}; });
+      if(ok){ pend.photo=true; const c=document.querySelector('[data-pending="photo"]'); if(c) c.classList.add('show'); toast(d.sent); await reload(); } }
+  }
+  async function deletePhoto(){ const d=t();
+    if(isKeeper){ const ok=await sbWrite(()=>sb.from('artefacts').update({storage_path:null}).eq('id',art.id)); if(ok){ const old=art.storage_path; art.storage_path=null; try{await sb.storage.from('family').remove([old]);}catch(e){} toast(d.saved); await reload(); } }
+    else { await proposeEdit('photo_delete',{old_value:art.storage_path||'', pendKey:'photo'}); }
+  }
+
+  /* ---------- keeper review queue ---------- */
+  async function loadQueue(){ edits=[];
+    // artefact_edits visible to me (RLS: keeper sees all in_review, contributor sees own)
+    try{ const {data:b}=await sb.from('artefact_edits').select('id,field,lang,new_value,ref_id,old_value,created_at,created_by').eq('artefact_id',MOMENT_ID).eq('status','in_review');
+      (b||[]).forEach(x=>edits.push(Object.assign({kind:'edit'},x))); }catch(e){}
+    if(isKeeper){ try{ const {data:a}=await sb.from('artefact_translations').select('id,lang,body,created_at').eq('artefact_id',MOMENT_ID).eq('status','in_review');
+      (a||[]).forEach(x=>edits.push(Object.assign({kind:'story'},x))); }catch(e){} }
+  }
+  function labelFor(item){ const d=t(); if(item.kind==='story') return d.story+' · '+langNative(item.lang);
+    const map={where:d.whereK,when:d.whenK,tag_add:d.inMoment,tag_remove:d.inMoment,tag_move:d.inMoment,
+      detail_add:d.addDetail,detail_edit:d.addDetail,detail_remove:d.addDetail,story_remove:d.story,
+      photo_rotate:d.rotate,photo_replace:d.replacePhoto,photo_delete:d.deletePhoto};
+    return map[item.field]||item.field; }
+  function reviewValue(item){ // human-readable "new value" for the card
+    if(item.kind==='story') return item.body||'';
+    if(item.field==='tag_add'){ try{return (JSON.parse(item.new_value||'{}').name)||item.old_value||'';}catch(_){return item.old_value||'';} }
+    if(item.field==='tag_remove') return t().tagRemove+' · '+(item.old_value||'');
+    if(item.field==='tag_move') return t().tagChange;
+    if(item.field==='detail_add'||item.field==='detail_edit'){ try{const m=JSON.parse(item.new_value||'{}');return (m.label?m.label+': ':'')+(m.value||'');}catch(_){return item.new_value||'';} }
+    if(item.field==='detail_remove') return t().removeDetail;
+    if(item.field==='photo_rotate') return t().rotate+' 90°';
+    if(item.field==='photo_replace') return t().replacePhoto;
+    if(item.field==='photo_delete') return t().deletePhoto;
+    if(item.field==='story_remove') return t().removeTelling;
+    return item.new_value||item.old_value||'—'; }
   function openReview(){ const d=t();
-    const rows = edits.length ? edits.map((item,i)=>{ const isStory=item.kind==='story';
-      const oldv=isStory?'':(item.old_value||''); const newv=isStory?item.body:(item.new_value||item.old_value||'');
+    const rows = edits.length ? edits.map((item,i)=>{ const oldv=item.kind==='story'?'':(item.old_value||'');
+      const newv=reviewValue(item);
       return `<div class="ed-field" style="margin-bottom:16px;border:1px solid var(--hair);border-radius:14px;padding:14px" data-i="${i}">
         <div class="ed-langtag">${sv(ICON.info,1.7)} ${esc(labelFor(item))}</div>
         ${oldv?`<div style="font-family:'Newsreader',serif;font-style:italic;color:var(--muted);text-decoration:line-through;margin-bottom:7px">${esc(oldv)}</div>`:''}
-        <div style="font-family:'Newsreader',serif;font-style:italic;color:var(--gold);margin-bottom:13px">${esc(newv||'\u2014')}</div>
+        <div style="font-family:'Newsreader',serif;font-style:italic;color:var(--gold);margin-bottom:13px">${esc(newv||'—')}</div>
         <div class="ed-actions"><button class="btn ghost" data-no="${i}">${esc(d.decline)}</button><button class="btn primary" data-ok="${i}">${esc(d.approve)}</button></div>
       </div>`; }).join('') : `<div class="sub">${esc(d.reviewSub)}</div>`;
-    editSheet.innerHTML=`<div class="grip"></div><h3>${esc(d.reviewT)}</h3><div class="sub">${esc(d.reviewSub)}</div>${rows}`;
-    show(editSheet);
-    editSheet.querySelectorAll('[data-ok]').forEach(b=>b.onclick=async()=>{ await approve(edits[+b.getAttribute('data-ok')]); afterReview(); });
-    editSheet.querySelectorAll('[data-no]').forEach(b=>b.onclick=async()=>{ await decline(edits[+b.getAttribute('data-no')]); afterReview(); });
+    $('#editSheet').innerHTML=`<div class="grip"></div><h3>${esc(d.reviewT)}</h3><div class="sub">${esc(d.reviewSub)}</div>${rows}`;
+    show($('#editSheet'));
+    $('#editSheet').querySelectorAll('[data-ok]').forEach(b=>b.onclick=async()=>{ b.disabled=true; await approve(edits[+b.getAttribute('data-ok')]); await afterReview(); });
+    $('#editSheet').querySelectorAll('[data-no]').forEach(b=>b.onclick=async()=>{ b.disabled=true; await decline(edits[+b.getAttribute('data-no')]); await afterReview(); });
   }
-  async function afterReview(){ await loadQueue(); pend={}; if(edits.length) openReview(); else { hide(); } buildModel(); render(); toast(t().published); }
+  async function afterReview(){ await loadQueue(); if(edits.length && isKeeper) openReview(); else hide();
+    await reload(); toast(t().published); }
   async function approve(item){ try{
       if(item.kind==='story'){ await sb.from('artefact_translations').update({status:'published',reviewed_by:user.id,published_at:new Date().toISOString()}).eq('id',item.id);
-        translations=translations.filter(x=>x.lang!==item.lang); translations.push({lang:item.lang,body:item.body,status:'published'}); }
-      else { const f=item.field;
-        if(f==='where'||f==='when'){ const md=Object.assign({},art.metadata||{}); md[f]=item.new_value; await sb.from('artefacts').update({metadata:md}).eq('id',art.id); art.metadata=md; }
-        await sb.from('artefact_edits').update({status:'published',reviewed_by:user.id,reviewed_at:new Date().toISOString()}).eq('id',item.id); }
-    }catch(e){} }
-  async function decline(item){ try{ if(item.kind==='story') await sb.from('artefact_translations').delete().eq('id',item.id); else await sb.from('artefact_edits').delete().eq('id',item.id);}catch(e){} }
+        translations=translations.filter(x=>x.lang!==item.lang); translations.push({lang:item.lang,body:item.body,status:'published'}); return; }
+      const f=item.field;
+      if(f==='where'||f==='when'){ const md=Object.assign({},art.metadata||{}); md[f]=item.new_value; await sb.from('artefacts').update({metadata:md}).eq('id',art.id); art.metadata=md; }
+      else if(f==='detail_add'){ const m=JSON.parse(item.new_value||'{}'); const md=Object.assign({},art.metadata||{}); const arr=Array.isArray(md.details)?md.details.slice():[]; arr.push({label:m.label,value:m.value}); md.details=arr; await sb.from('artefacts').update({metadata:md}).eq('id',art.id); art.metadata=md; }
+      else if(f==='detail_edit'){ const m=JSON.parse(item.new_value||'{}'); const md=Object.assign({},art.metadata||{}); const arr=Array.isArray(md.details)?md.details.slice():[]; if(m.idx!=null&&arr[m.idx]) arr[m.idx]={label:m.label,value:m.value}; md.details=arr; await sb.from('artefacts').update({metadata:md}).eq('id',art.id); art.metadata=md; }
+      else if(f==='detail_remove'){ const m=JSON.parse(item.new_value||'{}'); const md=Object.assign({},art.metadata||{}); const arr=(md.details||[]).slice(); if(m.idx!=null) arr.splice(m.idx,1); md.details=arr; await sb.from('artefacts').update({metadata:md}).eq('id',art.id); art.metadata=md; }
+      else if(f==='tag_add'){ const m=JSON.parse(item.new_value||'{}'); let pid=item.ref_id; if(!pid){ await loadAllPeople(); pid=await ensurePerson(m.name); } await sb.from('artefact_subjects').upsert({artefact_id:art.id,person_id:pid,detail:m.box||null}); }
+      else if(f==='tag_remove'){ await sb.from('artefact_subjects').delete().eq('artefact_id',art.id).eq('person_id',item.ref_id); }
+      else if(f==='tag_move'){ const m=JSON.parse(item.new_value||'{}'); await sb.from('artefact_subjects').update({detail:m.box||null}).eq('artefact_id',art.id).eq('person_id',item.ref_id); }
+      else if(f==='photo_rotate'){ await doRotate(); }
+      else if(f==='photo_replace'){ const old=art.storage_path; await sb.from('artefacts').update({storage_path:item.new_value}).eq('id',art.id); art.storage_path=item.new_value; if(old&&old!==item.new_value){try{await sb.storage.from('family').remove([old]);}catch(e){}} }
+      else if(f==='photo_delete'){ const old=art.storage_path; await sb.from('artefacts').update({storage_path:null}).eq('id',art.id); art.storage_path=null; if(old){try{await sb.storage.from('family').remove([old]);}catch(e){}} }
+      else if(f==='story_remove'){ const orig=(art&&art.original_language)||'en'; if(item.lang===orig){ await sb.from('artefacts').update({body:null}).eq('id',art.id); art.body=null; } else { await sb.from('artefact_translations').delete().eq('artefact_id',art.id).eq('lang',item.lang); translations=translations.filter(x=>x.lang!==item.lang); } }
+      await sb.from('artefact_edits').update({status:'published',reviewed_by:user.id,reviewed_at:new Date().toISOString()}).eq('id',item.id);
+    }catch(e){ toast((e&&e.message)||'Could not apply.', true); } }
+  async function decline(item){ try{ if(item.kind==='story') await sb.from('artefact_translations').delete().eq('id',item.id);
+    else { if(item.field==='photo_replace'&&item.new_value){ try{await sb.storage.from('family').remove([item.new_value]);}catch(e){} } await sb.from('artefact_edits').delete().eq('id',item.id); } }catch(e){} }
 
-  /* ---------- wire interactions (design) ---------- */
+  /* ---------- wire ---------- */
+  function setTagging(on){ document.body.classList.toggle('tagging', on);
+    const b=$('#tagBtn'); if(b){ b.classList.toggle('on',on); const l=$('#tagBtnLabel'); if(l) l.textContent= on?t().tagDone:t().tagFace; }
+    if(!on){ selId=null; } renderBoxes(); }
   function wire(){ const d=t();
     $('#backBtn').onclick=()=>{ if(history.length>1) history.back(); else location.href='index.html'; };
-    $('#langBtn').onclick=()=>show(langSheet);
-    $('#editBtn').onclick=()=>document.body.classList.toggle('editing');
-    const done=$('#doneBtn'); if(done) done.onclick=()=>document.body.classList.remove('editing');
+    $('#langBtn').onclick=()=>show($('#langSheet'));
+    $('#editBtn').onclick=()=>{ const on=!document.body.classList.contains('editing'); document.body.classList.toggle('editing',on); $('#editBtn').classList.toggle('on',on); };
+    const done=$('#doneBtn'); if(done) done.onclick=()=>{ document.body.classList.remove('editing'); $('#editBtn').classList.remove('on'); };
     const ks=$('#keeperStrip'); if(ks) ks.onclick=openReview;
-    langSheet.querySelectorAll('[data-lang]').forEach(b=> b.onclick=async()=>{ lang=b.dataset.lang; hide(); try{localStorage.setItem('lf_lang',lang);}catch(e){} if(user){try{await sb.from('profiles').update({preferred_lang:lang}).eq('id',user.id);}catch(e){}} buildModel(); render(); ensureLangAssets(); });
-    document.querySelectorAll('[data-edit-open="story"]').forEach(el=> el.onclick=e=>{ e.stopPropagation(); openEditor('story'); });
-    document.querySelectorAll('[data-edit]').forEach(el=>{ el.addEventListener('click', e=>{
-      if(el.getAttribute('data-go')==='place' && !document.body.classList.contains('editing')){ const w=d.where; if(w){ location.href='place-real.html?place='+encodeURIComponent(w); return; } }
-      if(!document.body.classList.contains('editing')) return; if(e.target.closest('[data-edit-open]')) return;
-      e.preventDefault(); openEditor(el.getAttribute('data-edit')); }); });
-    document.querySelectorAll('.face').forEach(f=>{ f.addEventListener('click', e=>{
-      if(document.body.classList.contains('editing')){ e.preventDefault(); openEditor('person:'+f.dataset.person); }
-      else { location.href='person-real.html?id='+encodeURIComponent(f.dataset.person); } }); });
+    $('#langSheet').querySelectorAll('[data-lang]').forEach(b=> b.onclick=async()=>{ lang=b.dataset.lang; hide(); try{localStorage.setItem('lf_lang',lang);}catch(e){} if(user){try{await sb.from('profiles').update({preferred_lang:lang}).eq('id',user.id);}catch(e){}} buildModel(); render(); ensureLangAssets(); });
+
+    const tagBtn=$('#tagBtn'); if(tagBtn) tagBtn.onclick=()=>setTagging(!document.body.classList.contains('tagging'));
+    const addFace=$('#addFaceBtn'); if(addFace) addFace.onclick=()=>{ setTagging(true); const ps=$('#photostage'); if(ps) ps.scrollIntoView({behavior:'smooth',block:'center'}); };
+    const rotBtn=$('#rotBtn'); if(rotBtn) rotBtn.onclick=rotatePhoto;
+    const replBtn=$('#replBtn'); if(replBtn) replBtn.onclick=()=>openEditor('photo');
+    const delBtn=$('#delBtn'); if(delBtn) delBtn.onclick=()=>openEditor('photo-delete');
+    const addDetail=$('#addDetailBtn'); if(addDetail) addDetail.onclick=()=>openEditor('detail-new');
+
+    bindTagLayer();
+
+    $$('.face').forEach(f=>f.addEventListener('click', e=>{
+      const id=f.dataset.face, kind=f.dataset.kind, tagId=f.dataset.tagid;
+      if(document.body.classList.contains('tagging') || document.body.classList.contains('editing')){
+        e.preventDefault();
+        const tag=tagId?TAGS.find(x=>x.id===tagId):null;
+        setTagging(true);
+        if(tag){ selId=tag.id; renderBoxes(); } else { toast(t().tagHint); }
+        const ps=$('#photostage'); if(ps) ps.scrollIntoView({behavior:'smooth',block:'center'});
+      } else if(kind==='subject'){ location.href='person-real.html?id='+encodeURIComponent(id); }
+    }));
+    const tf=$('[data-open="tagface"]'); if(tf) tf.onclick=()=>{ setTagging(true); const ps=$('#photostage'); if(ps) ps.scrollIntoView({behavior:'smooth',block:'center'}); };
+
+    $$('[data-open="story"]').forEach(el=>el.onclick=e=>{ e.stopPropagation(); openEditor('story'); });
+    const rmt=$('[data-rmtell]'); if(rmt) rmt.onclick=e=>{ e.stopPropagation(); removeTelling(); };
+
+    $$('[data-edit]').forEach(el=>{ el.addEventListener('click', e=>{
+      const key=el.getAttribute('data-edit');
+      if(e.target.closest('[data-open]')) return;
+      if(e.target.closest('.rm')) return;
+      if(e.target.closest('#photostage')) return;
+      if(key==='story') return; // story handled by data-open / editable click below
+      if(key==='where'){ if(document.body.classList.contains('editing')){ e.preventDefault(); openPlace(); } else if(whereText()){ location.href='place-real.html?place='+encodeURIComponent(whereText()); } return; }
+      if(key==='when'){ if(document.body.classList.contains('editing')){ e.preventDefault(); openCal(); } return; }
+      if(!document.body.classList.contains('editing')) return;
+      e.preventDefault(); openEditor(key);
+    }); });
+    // story block: in editing mode, tapping the words opens the editor
+    const se=$('.story-editable'); if(se) se.addEventListener('click', e=>{ if(e.target.closest('[data-rmtell]')) return; if(document.body.classList.contains('editing')){ e.preventDefault(); openEditor('story'); } });
+    $$('[data-remove]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const key=b.dataset.remove;
+      if(key.indexOf('detail:')===0){ removeDetail(+key.split(':')[1]); } });
   }
 
-  /* ---------- language assets: transliterate names, machine-translate story ---------- */
+  /* ---------- pending chips ---------- */
+  function restorePending(){ Object.keys(pend).forEach(k=>{ if(pend[k]){ const c=document.querySelector(`[data-pending="${k}"]`); if(c) c.classList.add('show'); } }); }
+
+  /* ---------- overlays ---------- */
+  const scrim=$('#scrim');
+  const SHEETS=['#langSheet','#editSheet','#nameSheet','#calSheet','#placeSheet'];
+  function show(sheet){ scrim.classList.add('show'); sheet.classList.add('show'); }
+  function hide(){ scrim.classList.remove('show'); SHEETS.forEach(s=>$(s).classList.remove('show')); }
+  scrim.addEventListener('click', hide);
+  window.__lfClose=()=>{ if(document.querySelector('.sheet.show')){ hide(); return true; }
+    if(document.body.classList.contains('tagging')){ setTagging(false); return true; }
+    if(document.body.classList.contains('editing')){ document.body.classList.remove('editing'); const eb=$('#editBtn'); if(eb) eb.classList.remove('on'); return true; }
+    return false; };
+  function toast(msg, err){ $('#toastMsg').textContent=msg; const el=$('#toast'); el.classList.toggle('err',!!err); el.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('show'),2800); }
+
+  /* ---------- language assets ---------- */
   async function callTranslate(items){ try{const {data,error}=await sb.functions.invoke('translate',{body:{target_lang:lang,items}}); if(error||!data) return null; return data.results||null;}catch(e){return null;} }
   async function ensureLangAssets(){ if(lang==='en') return;
     const need=subjects.map(s=>s.person_id).filter(pid=>{const p=peopleById[pid]; const hasV=(vars[pid]||[]).some(x=>x.lang===lang); const hasA=autoName[lang]&&autoName[lang][pid]; return p&&p.display_name&&!hasV&&!hasA;});
@@ -560,7 +1178,7 @@
     const s=storyForLang(lang);
     if(s.kind==='machine' && art.body && autoStory[lang]==null){ autoStory[lang]=''; const res=await callTranslate([{kind:'artefact_body',ref:art.id,text:art.body}]); autoStory[lang]=(res&&res[0]&&res[0].text)||''; buildModel(); render(); } }
 
-  /* ---------- atmosphere (verbatim from the Claude Design) ---------- */
+  /* ---------- atmosphere (verbatim) ---------- */
   (function atmosphere(){
     const cv=$('#atmo'), ctx=cv.getContext('2d'); let W,H,DPR=Math.min(2,window.devicePixelRatio||1);
     function resize(){ W=cv.clientWidth; H=cv.clientHeight; cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
@@ -624,18 +1242,27 @@
     art=a;
     const subs=await sb.from('artefact_subjects').select('person_id,detail').eq('artefact_id',MOMENT_ID);
     subjects=(subs.data||[]).filter(s=>s.person_id);
+    peopleById={}; vars={};
     const ids=subjects.map(s=>s.person_id);
     if(ids.length){ const {data:pp}=await sb.from('people').select('id,display_name,called_name,primary_asset,sex').in('id',ids); (pp||[]).forEach(p=>peopleById[p.id]=p);
       const {data:nv}=await sb.from('name_variants').select('person_id,lang,given,family,status').in('person_id',ids).eq('status','published'); (nv||[]).forEach(v=>{(vars[v.person_id]=vars[v.person_id]||[]).push(v);}); }
+    tellerName='';
     if(art.contributor_id){ const {data:cp}=await sb.from('people').select('display_name').eq('id',art.contributor_id).maybeSingle(); tellerName=(cp&&cp.display_name)||''; }
     const {data:tr}=await sb.from('artefact_translations').select('lang,body,status').eq('artefact_id',MOMENT_ID).eq('status','published'); translations=tr||[];
     await loadQueue();
     buildModel(); render(); ensureLangAssets();
   }
+  // light refresh after a write: re-pull subjects/edits/translations, keep scroll
+  async function reload(){ const y=window.scrollY;
+    const subs=await sb.from('artefact_subjects').select('person_id,detail').eq('artefact_id',MOMENT_ID);
+    subjects=(subs.data||[]).filter(s=>s.person_id);
+    const ids=subjects.map(s=>s.person_id);
+    if(ids.length){ const {data:pp}=await sb.from('people').select('id,display_name,called_name,primary_asset,sex').in('id',ids); (pp||[]).forEach(p=>peopleById[p.id]=p); }
+    const {data:tr}=await sb.from('artefact_translations').select('lang,body,status').eq('artefact_id',MOMENT_ID).eq('status','published'); translations=tr||[];
+    await loadQueue(); buildModel(); render(); window.scrollTo(0,y); }
 
   boot();
 })();
-
 </script>
 <script src="lf-nav.js" data-here="" data-parent="index.html"></script>
 </body></html>
