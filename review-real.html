@@ -300,20 +300,22 @@
     father:{en:'father',ru:'отец',he:'אבא'}, mother:{en:'mother',ru:'мать',he:'אמא'},
     son:{en:'son',ru:'сын',he:'בן'}, daughter:{en:'daughter',ru:'дочь',he:'בת'},
     husband:{en:'husband',ru:'муж',he:'בעל'}, wife:{en:'wife',ru:'жена',he:'אישה'},
-    brother:{en:'brother',ru:'брат',he:'אח'}, sister:{en:'sister',ru:'сестра',he:'אחות'}
+    brother:{en:'brother',ru:'брат',he:'אח'}, sister:{en:'sister',ru:'сестра',he:'אחות'},
+    parent:{en:'parent',ru:'родитель',he:'הורה'}, child:{en:'child',ru:'ребёнок',he:'בן/בת'},
+    spouse:{en:'spouse',ru:'супруг(а)',he:'בן/בת זוג'}, sibling:{en:'sibling',ru:'брат или сестра',he:'אח/אחות'}
   };
   function rnoun(key){ return (RNOUN[key]||{})[state.lang]||key; }
   function relSexOf(id){ const p=pending&&pending.personRow&&pending.personRow[id]; return ((p&&p.sex)||'').toString().toLowerCase().charAt(0); } // 'f'|'m'|''
   // role of `from` toward `to` (from='parent' side for kind='parent')
-  function roleFwd(kind,sex){ const f=sex==='f';
-    if(kind==='parent') return f?'mother':'father';
-    if(kind==='spouse') return f?'wife':'husband';
-    return f?'sister':'brother'; }              // sibling
+  function roleFwd(kind,sex){ const f=sex==='f', m=sex==='m';
+    if(kind==='parent') return f?'mother':m?'father':'parent';
+    if(kind==='spouse') return f?'wife':m?'husband':'spouse';
+    return 'sibling'; }                          // sibling: always neutral — never guess
   // reciprocal role of `to` toward `from`
-  function roleBack(kind,sex){ const f=sex==='f';
-    if(kind==='parent') return f?'daughter':'son';
-    if(kind==='spouse') return f?'wife':'husband';
-    return f?'sister':'brother'; }              // sibling
+  function roleBack(kind,sex){ const f=sex==='f', m=sex==='m';
+    if(kind==='parent') return f?'daughter':m?'son':'child';
+    if(kind==='spouse') return f?'wife':m?'husband':'spouse';
+    return 'sibling'; }                          // sibling: always neutral — never guess
   // "X is Y's Z", per language (dash form for RU/HE to avoid gendered copula/genitive)
   function connPhrase(xName, roleNoun, yName){ const l=state.lang;
     if(l==='he') return `${xName} — ${roleNoun} של ${yName}`;
