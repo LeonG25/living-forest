@@ -81,15 +81,32 @@
   .tagbox.unnamed{ border-color:var(--gold); border-style:dashed; box-shadow:0 0 0 1px rgba(4,7,14,.6), 0 0 14px -3px rgba(243,205,132,.45); }
   .tagbox.sel{ border-width:2.5px; box-shadow:0 0 0 1px rgba(4,7,14,.7), 0 0 26px -2px rgba(255,232,180,.8); }
   .tagbox.draft{ border-color:var(--gold-hi); border-style:solid; background:rgba(243,205,132,.08); }
-  .tagbox .name{ position:absolute; inset-inline-start:-2px; bottom:0; transform-origin:left bottom;
-    display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
-    padding:4px 9px; border-radius:8px; background:rgba(6,16,28,.86); backdrop-filter:blur(6px);
-    font-family:'Newsreader',serif; font-size:13px; color:var(--gold-hi); line-height:1;
-    border:1px solid rgba(243,205,132,.4); }
-  .tagbox.pending .name{ color:#efe6ff; border-color:rgba(201,162,255,.45); }
-  .tagbox.unnamed .name{ color:var(--gold); font-style:italic; }
-  .tagbox .name .fdot{ width:6px; height:6px; border-radius:50%; background:var(--gold); box-shadow:0 0 7px 1px var(--gold); flex:0 0 auto; }
-  .tagbox.pending .name .fdot{ background:var(--edit); box-shadow:0 0 7px 1px var(--edit); }
+  /* numbered marker pinned to the box corner — small, never covers the face inside the box */
+  .tagbox{ transform-origin:center; }
+  .tagbox .tagno{ position:absolute; inset-block-start:-10px; inset-inline-start:-10px; z-index:6;
+    min-width:22px; height:22px; padding:0 5px; border-radius:11px; cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-family:'Azeret Mono',monospace; font-size:12px; font-weight:500; line-height:1;
+    background:rgba(6,16,28,.92); color:var(--gold-hi); border:1.5px solid var(--gold);
+    box-shadow:0 0 10px -2px rgba(243,205,132,.7), 0 1px 5px rgba(0,0,0,.55); }
+  .tagbox .tagno:focus-visible{ outline:2px solid var(--gold-hi); outline-offset:2px; }
+  .tagbox.pending .tagno{ color:#efe6ff; border-color:var(--edit); box-shadow:0 0 10px -2px rgba(201,162,255,.7), 0 1px 5px rgba(0,0,0,.55); }
+  .tagbox.unnamed .tagno{ color:var(--gold); border-style:dashed; }
+  /* the name — shown OUTSIDE the box only while selected/flashed, so one active box never obscures a face */
+  .tagbox .tagname{ position:absolute; left:50%; transform:translateX(-50%); bottom:calc(100% + 8px);
+    display:none; align-items:center; gap:6px; white-space:nowrap; max-width:62vw;
+    padding:4px 10px; border-radius:8px; background:rgba(6,16,28,.92); backdrop-filter:blur(6px);
+    font-family:'Newsreader',serif; font-size:13px; color:var(--gold-hi); line-height:1.15;
+    border:1px solid rgba(243,205,132,.45); box-shadow:0 8px 22px -10px #000; z-index:7; pointer-events:none; }
+  .tagbox.below .tagname{ bottom:auto; top:calc(100% + 8px); }
+  .tagbox.sel .tagname, .tagbox.flash .tagname{ display:inline-flex; }
+  .tagbox.draft .tagname{ display:none; }
+  .tagbox.pending .tagname{ color:#efe6ff; border-color:rgba(201,162,255,.45); }
+  .tagbox.unnamed .tagname{ color:var(--gold); font-style:italic; }
+  .tagbox .tagname .fdot{ width:6px; height:6px; border-radius:50%; background:var(--gold); box-shadow:0 0 7px 1px var(--gold); flex:0 0 auto; }
+  .tagbox.pending .tagname .fdot{ background:var(--edit); box-shadow:0 0 7px 1px var(--edit); }
+  .tagbox.flash{ animation:tagpulse .85s ease-in-out 2; }
+  @keyframes tagpulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.05); } }
   .tagbox .handle{ position:absolute; width:14px; height:14px; border-radius:50%;
     background:#fff7e6; border:2px solid var(--gold); display:none; z-index:6;
     box-shadow:0 1px 5px rgba(0,0,0,.5); }
@@ -135,6 +152,8 @@
   .lg i{ width:14px; height:10px; border-radius:3px; border:1.5px solid var(--gold); flex:0 0 auto; }
   .lg i.pend{ border-color:var(--edit); border-style:dashed; }
   .lg i.unk{ border-style:dashed; }
+  .lg i.num{ width:15px; height:15px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
+    font-family:'Azeret Mono',monospace; font-size:8px; font-weight:500; color:var(--gold-hi); background:rgba(6,16,28,.9); }
 
   /* ===== section rhythm ===== */
   .sec{ margin-top:32px; }
@@ -163,6 +182,16 @@
   .face.pending .st{ color:var(--edit); }
   .face.unplaced .crop{ border-style:dashed; border-color:rgba(157,176,204,.5); box-shadow:none; filter:grayscale(.5) opacity(.7); }
   .face.unplaced .st{ color:var(--muted); }
+  /* the number that ties a listed name to its marker on the photo */
+  .face .fnum{ display:inline-flex; align-items:center; justify-content:center; vertical-align:baseline;
+    min-width:17px; height:17px; padding:0 4px; margin-inline-end:5px; border-radius:9px; cursor:pointer;
+    font-family:'Azeret Mono',monospace; font-size:9.5px; font-weight:500; line-height:1;
+    background:rgba(243,205,132,.16); border:1px solid rgba(243,205,132,.5); color:var(--gold-hi); }
+  .face .fnum:focus-visible{ outline:2px solid var(--gold-hi); outline-offset:2px; }
+  .face.pending .fnum{ background:rgba(201,162,255,.16); border-color:rgba(201,162,255,.5); color:#efe6ff; }
+  .face.hi .crop{ border-color:var(--gold-hi) !important; box-shadow:0 0 0 3px rgba(243,205,132,.28), 0 0 22px -2px rgba(243,205,132,.8) !important; }
+  .face.hi{ animation:facepulse .85s ease-in-out 2; }
+  @keyframes facepulse{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-3px); } }
 
   /* ===== the story ===== */
   .story{ position:relative; }
@@ -340,7 +369,7 @@
   .toast.err .flame{ background:#ff9d9d; box-shadow:0 0 10px 2px #ff9d9d; }
 
   @media (prefers-reduced-motion: reduce){
-    .frame::before,.told .flame{ animation:none !important; }
+    .frame::before,.told .flame,.tagbox.flash,.face.hi{ animation:none !important; }
     .story-words .word{ transition:none; }
     .photoart img{ transition:opacity .01s; filter:none !important; }
   }
@@ -391,7 +420,7 @@
       whoTitle:'Who is in this box?',whoSub:'Choose a family member, or add someone new.',
       searchFamily:'Search the family…',someoneNew:'Someone new',addName:'Add a name',
       tagChange:'Change',tagRemove:'Remove',placed:'Tagged',pendingTag:'Pending',unknownFace:'Who is this?',
-      placeOnPhoto:'Place on the photo →',lgTagged:'Named',lgPending:'Waiting for the keeper',lgUnknown:'Not yet named',
+      placeOnPhoto:'Place on the photo →',lgTagged:'Named',lgPending:'Waiting for the keeper',lgUnknown:'Not yet named',numLegend:'Numbers match the list',
       addDetail:'Add',detailLabelL:'What is it',detailValueL:'The detail',
       detailLabelP:'e.g. The occasion',detailValueP:'e.g. Rita’s 70th birthday',removeDetail:'Remove this detail?',
       calTitle:'When did it happen?',calSub:'A day, a month, a season, or just the year — whatever you know.',
@@ -425,7 +454,7 @@
       whoTitle:'Кто в этой рамке?',whoSub:'Выберите члена семьи или добавьте нового.',
       searchFamily:'Поиск по семье…',someoneNew:'Новый человек',addName:'Добавить имя',
       tagChange:'Изменить',tagRemove:'Убрать',placed:'Отмечен',pendingTag:'Ожидает',unknownFace:'Кто это?',
-      placeOnPhoto:'Разместить на фото →',lgTagged:'Назван',lgPending:'Ожидает хранителя',lgUnknown:'Пока без имени',
+      placeOnPhoto:'Разместить на фото →',lgTagged:'Назван',lgPending:'Ожидает хранителя',lgUnknown:'Пока без имени',numLegend:'Номера — как в списке',
       addDetail:'Добавить',detailLabelL:'Что это',detailValueL:'Подробность',
       detailLabelP:'напр. Повод',detailValueP:'напр. 70-летие Риты',removeDetail:'Убрать эту подробность?',
       calTitle:'Когда это было?',calSub:'День, месяц, сезон или только год — что знаете.',
@@ -459,7 +488,7 @@
       whoTitle:'מי במלבן הזה?',whoSub:'בחרו בן משפחה או הוסיפו מישהו חדש.',
       searchFamily:'חיפוש במשפחה…',someoneNew:'מישהו חדש',addName:'הוספת שם',
       tagChange:'שינוי',tagRemove:'הסרה',placed:'מתויג',pendingTag:'ממתין',unknownFace:'מי זה?',
-      placeOnPhoto:'מיקום על התצלום ←',lgTagged:'מזוהה',lgPending:'ממתין לשומר',lgUnknown:'עדיין ללא שם',
+      placeOnPhoto:'מיקום על התצלום ←',lgTagged:'מזוהה',lgPending:'ממתין לשומר',lgUnknown:'עדיין ללא שם',numLegend:'המספרים תואמים לרשימה',
       addDetail:'הוספה',detailLabelL:'מה זה',detailValueL:'הפרט',
       detailLabelP:'למשל האירוע',detailValueP:'למשל יום הולדת ה-70 של ריטה',removeDetail:'להסיר את הפרט הזה?',
       calTitle:'מתי זה קרה?',calSub:'יום, חודש, עונה או רק שנה — מה שאתם יודעים.',
@@ -483,7 +512,7 @@
   let lang='en', user=null, isKeeper=false;
   let art=null, subjects=[], peopleById={}, vars={}, autoName={}, autoStory={}, translations=[], edits=[], tellerName='', allPeople=null, places=null;
   let DATA={}, PEOPLE=[], FACTS=[];
-  let TAGS=[], selId=null, gesture=null, nameTargetId=null;
+  let TAGS=[], selId=null, gesture=null, nameTargetId=null, tagNum={};
   let pend={}, firstReveal=true;
   const t=()=>DATA[lang];
 
@@ -599,11 +628,24 @@
         name:name||(e.ref_id?nameFor(e.ref_id,lang):'')||'', x:box.x, y:box.y, w:box.w, h:box.h, status:'pending' }); } });
   }
 
+  // Number the boxes in reading order: top-to-bottom, then left-to-right
+  // (right-to-left when the page is RTL). Recomputed on every render so the
+  // photo markers and the list numbers never go stale as tags are added/removed/moved.
+  function computeTagNumbers(){ tagNum={};
+    const rtl=document.body.classList.contains('rtl');
+    const boxed=TAGS.filter(tg=>tg.kind!=='draft' && tg.w>0 && tg.h>0)
+      .map(tg=>({id:tg.id, cx:tg.x+tg.w/2, cy:tg.y+tg.h/2}));
+    const ROW=0.07; // vertical tolerance: centres within this band count as the same row
+    boxed.sort((a,b)=>{ if(Math.abs(a.cy-b.cy)>ROW) return a.cy-b.cy; return rtl?(b.cx-a.cx):(a.cx-b.cx); });
+    boxed.forEach((o,i)=>{ tagNum[o.id]=i+1; });
+  }
+
   /* ---------- render ---------- */
   function render(){
     const d=t();
     document.documentElement.lang=lang; document.documentElement.dir=d.dir;
     document.body.classList.toggle('rtl', d.dir==='rtl');
+    computeTagNumbers();
 
     // story
     let storyBlock;
@@ -629,13 +671,18 @@
     // faces
     let facesHTML;
     if(PEOPLE.length){
-      facesHTML = PEOPLE.map(p=>{ const named=!!p[lang];
+      // read the list in the same order as the photo markers: numbered first (by marker), then the unplaced
+      const orderedPeople = PEOPLE.slice().sort((a,b)=>{
+        const na=(a.tagId&&tagNum[a.tagId])||999, nb=(b.tagId&&tagNum[b.tagId])||999; return na-nb; });
+      facesHTML = orderedPeople.map(p=>{ const named=!!p[lang];
         let cls='face', st=named?d.placed:d.placeOnPhoto;
         if(p.kind==='pending'){ cls+=' pending'; st=d.pendingTag; }
         else if(!p.hasBox){ cls+=' unplaced'; st=d.placeOnPhoto; }
+        const num=(p.tagId&&tagNum[p.tagId])||null;
+        const numChip = num ? `<span class="fnum" role="button" tabindex="0" data-tagid="${esc(p.tagId)}" aria-label="${esc(num+' '+(named?firstName(p[lang]):d.addName))}">${num}</span>` : '';
         return `<button class="${cls}" data-face="${esc(p.id)}" data-kind="${p.kind}"${p.tagId?` data-tagid="${esc(p.tagId)}"`:''}>
           <span class="node"><span class="crop" data-facecrop="${esc(p.id)}">${named?faceSVG(p.seed):unnamedSVG()}</span></span>
-          <span class="fn">${esc(named?firstName(p[lang]):d.addName)}</span><span class="st">${esc(st)}</span></button>`; }).join('');
+          <span class="fn">${numChip}${esc(named?firstName(p[lang]):d.addName)}</span><span class="st">${esc(st)}</span></button>`; }).join('');
     } else {
       facesHTML = `<button class="invite" data-open="tagface" style="width:100%">
         <div class="em">${esc(d.noFacesEm||d.tagHint)}</div><div class="cta">${sv(ICON.tag,1.7)} ${esc(d.tagFace)}</div></button>`;
@@ -691,7 +738,8 @@
         <div class="photo-legend">
           <span class="lg"><i></i>${esc(d.lgTagged)}</span>
           <span class="lg"><i class="pend"></i>${esc(d.lgPending)}</span>
-          <span class="lg"><i class="unk"></i>${esc(d.lgUnknown)}</span></div>
+          <span class="lg"><i class="unk"></i>${esc(d.lgUnknown)}</span>
+          <span class="lg"><i class="num">1</i>${esc(d.numLegend)}</span></div>
         <div class="pending" data-pending="photo" style="margin-inline:4px"><span class="sp"></span>${esc(d.waiting)}</div>
       </div>
 
@@ -748,13 +796,26 @@
   function clientDeltaLocal(dx,dy){ const r=$('#rotor').getBoundingClientRect(); return { x:dx/r.width, y:dy/r.height }; }
 
   function renderBoxes(){ const layer=$('#taglayer'); if(!layer) return;
+    computeTagNumbers();
     layer.innerHTML = TAGS.map(tg=>{ const nm = tg.status==='unnamed' ? t().unknownFace : (tg.name||t().unknownFace);
-      const cls='tagbox '+(tg.status==='pending'?'pending ':'')+(tg.status==='unnamed'?'unnamed ':'')+(tg.id===selId?'sel':'');
+      const num = tagNum[tg.id];
+      const below = tg.y<0.14; // no room above the box → drop the name label below it
+      const cls='tagbox '+(tg.status==='pending'?'pending ':'')+(tg.status==='unnamed'?'unnamed ':'')+(below?'below ':'')+(tg.id===selId?'sel':'');
       const handles = tg.id===selId ? `<span class="handle nw" data-h="nw"></span><span class="handle ne" data-h="ne"></span><span class="handle sw" data-h="sw"></span><span class="handle se" data-h="se"></span>` : '';
+      const marker = (tg.kind!=='draft' && num) ? `<span class="tagno" role="button" tabindex="0" aria-label="${esc(num+' '+nm)}">${num}</span>` : '';
       return `<div class="${cls}" data-tag="${esc(tg.id)}" style="left:${tg.x*100}%;top:${tg.y*100}%;width:${tg.w*100}%;height:${tg.h*100}%">
-        <span class="name"><span class="fdot"></span>${esc(nm)}</span>${handles}</div>`; }).join('');
+        ${marker}<span class="tagname"><span class="fdot"></span>${esc(nm)}</span>${handles}</div>`; }).join('');
     renderSelbar();
   }
+  // brief visual link between a photo marker and its list entry (auto-dismissing)
+  function flashBoxLabel(id){ const el=boxEl(id); if(!el) return; el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+    clearTimeout(el._ft); el._ft=setTimeout(()=>{ const e2=boxEl(id); if(e2) e2.classList.remove('flash'); },1700); }
+  function highlightFaceByTag(id){ const f=document.querySelector('.face[data-tagid="'+CSS.escape(id)+'"]'); if(!f) return;
+    f.classList.remove('hi'); void f.offsetWidth; f.classList.add('hi');
+    try{ f.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'}); }catch(e){}
+    clearTimeout(f._ht); f._ht=setTimeout(()=>f.classList.remove('hi'),1700); }
+  function onTagNoTap(id){ flashBoxLabel(id); highlightFaceByTag(id); }   // photo marker → highlight the list
+  function pulseBox(id){ const ps=$('#photostage'); if(ps){ try{ps.scrollIntoView({behavior:'smooth',block:'center'});}catch(e){} } flashBoxLabel(id); } // list → pulse the box
   function renderSelbar(){ const bar=$('#selbar'); if(!bar) return;
     const tg=TAGS.find(x=>x.id===selId);
     if(!tg || !document.body.classList.contains('tagging')){ bar.classList.remove('show'); return; }
@@ -771,7 +832,13 @@
   function drawLive(tg){ let el=boxEl(tg.id); if(!el){ renderBoxes(); el=boxEl(tg.id);} if(el){ el.classList.add('draft'); positionBox(tg);} }
 
   function bindTagLayer(){ const layer=$('#taglayer'); if(!layer) return;
+    // tapping the number marker links to the list — it must never start a draw/move gesture
+    layer.addEventListener('click', e=>{ const no=e.target.closest('.tagno'); if(!no) return;
+      const box=no.closest('.tagbox'); if(box) onTagNoTap(box.dataset.tag); });
+    layer.addEventListener('keydown', e=>{ const no=e.target.closest('.tagno'); if(!no) return;
+      if(e.key==='Enter'||e.key===' '){ e.preventDefault(); const box=no.closest('.tagbox'); if(box) onTagNoTap(box.dataset.tag); } });
     layer.addEventListener('pointerdown', e=>{
+      if(e.target.closest('.tagno')) return; // let the click handler above take it (highlight, no gesture)
       const box=e.target.closest('.tagbox'); const handle=e.target.closest('.handle');
       if(!box && document.body.classList.contains('tagging')){
         e.preventDefault(); try{layer.setPointerCapture(e.pointerId);}catch(_){}
@@ -1132,6 +1199,10 @@
         const ps=$('#photostage'); if(ps) ps.scrollIntoView({behavior:'smooth',block:'center'});
       } else if(kind==='subject'){ location.href='person-real.html?id='+encodeURIComponent(id); }
     }));
+    // list number → pulse the matching box on the photo (keyboard accessible; never navigates)
+    $$('.fnum').forEach(el=>{ const act=e=>{ e.preventDefault(); e.stopPropagation(); const tid=el.getAttribute('data-tagid'); if(tid) pulseBox(tid); };
+      el.addEventListener('click', act);
+      el.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' ') act(e); }); });
     const tf=$('[data-open="tagface"]'); if(tf) tf.onclick=()=>{ setTagging(true); const ps=$('#photostage'); if(ps) ps.scrollIntoView({behavior:'smooth',block:'center'}); };
 
     $$('[data-open="story"]').forEach(el=>el.onclick=e=>{ e.stopPropagation(); openEditor('story'); });
