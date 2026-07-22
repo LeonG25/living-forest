@@ -112,51 +112,63 @@
   .dbtn.fit{ color:var(--cool-hi); border-color:rgba(127,180,216,.4); }
   .dbtn.fit:hover{ border-color:rgba(127,180,216,.75); }
 
-  /* legend */
-  .legend{ position:absolute; z-index:14; inset-inline-start:14px; bottom:calc(20px + env(safe-area-inset-bottom)); width:210px; padding:12px 13px; border-radius:16px;
-    background:rgba(8,14,26,.86); backdrop-filter:blur(10px); border:1px solid var(--hair); box-shadow:0 20px 50px -26px #000;
-    transition:transform .3s cubic-bezier(.16,.8,.28,1); }
-  .legend.hid{ transform:translateY(calc(100% - 40px)); }
-  .legend .lgh{ display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
-  .legend .lgh b{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); font-weight:400; }
-  .legend .lgh svg{ width:15px; height:15px; color:var(--muted); transition:transform .3s; }
-  .legend.hid .lgh svg{ transform:rotate(180deg); }
-  .legend .lgbody{ margin-top:11px; display:flex; flex-direction:column; gap:8px; }
+  /* ---- bottom pills: two small, humble controls resting at the reading-start corner.
+     They never overlap each other or the zoom dock (which sits inset-inline-end). Tapping one
+     opens its sheet ABOVE the pills; opening one closes the other. ---- */
+  .pills{ position:absolute; z-index:15; inset-inline-start:14px; bottom:calc(18px + env(safe-area-inset-bottom));
+    display:flex; gap:9px; align-items:flex-end; flex-wrap:wrap; max-width:calc(100% - 78px); }
+  .pill{ display:inline-flex; align-items:center; gap:7px; padding:9px 13px; border-radius:99px; cursor:pointer; white-space:nowrap;
+    font-family:'Hanken Grotesk',sans-serif; font-size:12px; color:var(--cream);
+    background:rgba(10,20,34,.82); backdrop-filter:blur(8px); border:1px solid var(--hair); box-shadow:0 10px 26px -18px #000; transition:border-color .2s, background .2s; }
+  .pill:hover{ border-color:rgba(255,255,255,.32); }
+  .pill .ic{ width:16px; height:16px; display:grid; place-items:center; flex:0 0 auto; }
+  .pill .ic svg{ width:15px; height:15px; }
+  .pill.legendpill.on{ border-color:rgba(127,180,216,.6); background:rgba(127,180,216,.14); color:var(--cool-hi); }
+  .pill.unpill{ color:var(--edit-hi); border-color:rgba(201,162,255,.34); }
+  .pill.unpill .ic svg{ color:var(--edit-hi); }
+  .pill.unpill.on{ border-color:rgba(201,162,255,.7); background:rgba(201,162,255,.16); }
+  .pill.unpill .cnt{ font-family:'Azeret Mono',monospace; font-size:11px; color:#1a0f2e; background:linear-gradient(180deg,var(--edit-hi),var(--edit));
+    border-radius:99px; padding:1px 8px; flex:0 0 auto; }
+  .pill.hidden{ display:none; }
+
+  /* pop-up sheets that rise ABOVE the pills — dismissible, never covering the dock or ⊕ */
+  .pop{ position:absolute; z-index:16; inset-inline-start:14px; bottom:calc(64px + env(safe-area-inset-bottom));
+    border-radius:16px; background:rgba(8,14,26,.94); backdrop-filter:blur(12px); border:1px solid var(--hair); box-shadow:0 26px 64px -28px #000;
+    opacity:0; transform:translateY(10px) scale(.98); transform-origin:bottom left; pointer-events:none;
+    transition:opacity .24s ease, transform .24s cubic-bezier(.16,.8,.28,1); }
+  [dir="rtl"] .pop{ transform-origin:bottom right; }
+  .pop.show{ opacity:1; transform:translateY(0) scale(1); pointer-events:auto; }
+  .pophd{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .pophd b{ font-family:'Newsreader',serif; font-size:15px; color:#fbf5e8; font-weight:400; }
+  .pophd small{ display:block; font-size:10px; color:var(--muted); margin-top:1px; }
+  .pophd .x{ width:26px; height:26px; border-radius:8px; flex:0 0 auto; display:grid; place-items:center; cursor:pointer;
+    border:1px solid var(--hair); background:rgba(255,255,255,.04); color:var(--muted); }
+  .pophd .x svg{ width:14px; height:14px; }
+
+  /* legend pop */
+  #legendPop{ width:224px; padding:13px 14px; }
+  #legendPop .lgbody{ margin-top:11px; display:flex; flex-direction:column; gap:8px; }
   .lgrow{ display:flex; align-items:center; gap:10px; font-size:11px; color:var(--cream); }
   .lgrow .swz{ width:34px; height:16px; flex:0 0 auto; }
   .lgrow .lt{ line-height:1.2; } .lgrow .lt small{ display:block; color:var(--muted); font-size:9.5px; }
   .lgsep{ height:1px; background:var(--hair); margin:2px 0; }
 
-  /* unlinked drawer */
-  /* floats above the collapsed legend (~60px) and clears the zoom dock on the far side.
-     Logical inset keeps it on the reading-start side and dock-clear in RTL too. */
-  .unlinked{ position:absolute; z-index:15; inset-inline-start:12px; inset-inline-end:auto; bottom:calc(66px + env(safe-area-inset-bottom));
-    width:calc(100% - 88px); max-width:460px;
-    background:linear-gradient(180deg,#0f1e33,#081120); border:1px solid var(--hair); border-radius:18px;
-    box-shadow:0 22px 60px -30px #000; transition:transform .34s cubic-bezier(.16,.8,.28,1);
-    transform:translateY(calc(100% - 70px)); }
-  .unlinked.open{ transform:translateY(0); }
-  .unlinked.empty{ display:none; }
-  .unlinked .uh{ position:relative; display:flex; align-items:center; gap:9px; padding:14px 16px 11px; cursor:pointer; }
-  .unlinked .uh .grip{ position:absolute; top:7px; left:50%; transform:translateX(-50%); width:38px; height:4px; border-radius:99px; background:rgba(255,255,255,.2); }
-  .unlinked .uh .ic{ width:26px; height:26px; border-radius:8px; display:grid; place-items:center; flex:0 0 auto;
-    background:rgba(201,162,255,.12); border:1px solid rgba(201,162,255,.3); }
-  .unlinked .uh .ic svg{ width:14px; height:14px; color:var(--edit-hi); }
-  .unlinked .uh .ut{ flex:1; min-width:0; } .unlinked .uh .ut b{ font-family:'Newsreader',serif; font-size:15px; color:#fbf5e8; font-weight:400; }
-  .unlinked .uh .ut small{ display:block; font-size:10.5px; color:var(--muted); margin-top:1px; }
-  .unlinked .uh .cnt{ font-family:'Azeret Mono',monospace; font-size:11px; color:var(--edit-hi); background:rgba(201,162,255,.12);
-    border:1px solid rgba(201,162,255,.3); border-radius:99px; padding:3px 9px; flex:0 0 auto; }
-  .unlinked .ubody{ padding:2px 14px calc(18px + env(safe-area-inset-bottom)); display:flex; gap:11px; overflow-x:auto; scrollbar-width:none; }
-  .unlinked .ubody::-webkit-scrollbar{ display:none; }
-  .ucard{ flex:0 0 auto; width:110px; display:flex; flex-direction:column; align-items:center; gap:6px; padding:11px 8px; border-radius:15px; cursor:pointer;
-    background:rgba(201,162,255,.05); border:1px dashed rgba(201,162,255,.34); text-align:center; }
+  /* unlinked pop — a clean, scrollable row of complete avatars (nothing clipped) */
+  #unlinkedPop{ inset-inline-end:70px; max-width:472px; padding:13px 6px 13px 14px; }
+  [dir="rtl"] #unlinkedPop{ padding:13px 14px 13px 6px; }
+  #unlinkedPop .pophd{ padding-inline-end:8px; }
+  .ubody{ margin-top:11px; padding-bottom:2px; display:flex; gap:10px; overflow-x:auto; scrollbar-width:none; }
+  .ubody::-webkit-scrollbar{ display:none; }
+  .ubody .empty{ font-size:12px; color:var(--muted); font-style:italic; padding:6px 4px; }
+  .ucard{ flex:0 0 auto; width:96px; display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px 8px; border-radius:14px; cursor:pointer;
+    background:rgba(201,162,255,.05); border:1px solid rgba(201,162,255,.28); text-align:center; transition:border-color .18s; }
   .ucard:hover{ border-color:rgba(201,162,255,.6); }
-  .ucard .por{ width:54px; height:54px; border-radius:50%; overflow:hidden; border:1px dashed rgba(157,176,204,.5); background:rgba(12,22,38,.7); display:grid; place-items:center; }
-  .ucard .por svg, .ucard .por canvas, .ucard .por img{ width:100%; height:100%; object-fit:cover; }
+  .ucard .por{ width:54px; height:54px; border-radius:50%; overflow:hidden; flex:0 0 auto; border:1px solid rgba(157,176,204,.5); background:rgba(12,22,38,.7); display:grid; place-items:center; }
+  .ucard .por svg, .ucard .por canvas, .ucard .por img{ width:100%; height:100%; object-fit:cover; display:block; }
   .ucard .un{ font-family:'Newsreader',serif; font-size:14px; color:#efe6ff; line-height:1.1; }
   .ucard .place{ font-size:9.5px; color:var(--muted); }
-  .ucard .plink{ font-family:'Azeret Mono',monospace; font-size:8.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--edit-hi);
-    display:inline-flex; align-items:center; gap:4px; margin-top:2px; }
+  .ucard .plink{ font-family:'Azeret Mono',monospace; font-size:8px; letter-spacing:.08em; text-transform:uppercase; color:var(--edit-hi);
+    display:inline-flex; align-items:center; gap:3px; margin-top:1px; }
   .ucard .plink svg{ width:10px; height:10px; }
 
   /* scrim + connect sheet */
@@ -317,18 +329,20 @@
   .ln{ fill:none; stroke-linecap:round; stroke-linejoin:round; }
   .ln.c-documented{ stroke:var(--gold); stroke-width:2.6; opacity:.95; filter:drop-shadow(0 0 6px rgba(243,205,132,.6)); }
   .ln.c-remembered{ stroke:var(--gold); stroke-width:2.4; opacity:.82; filter:drop-shadow(0 0 5px rgba(243,205,132,.45)); }
-  .ln.c-uncertain{ stroke:var(--gold); stroke-width:2.2; opacity:.72; stroke-dasharray:3 5; filter:drop-shadow(0 0 5px rgba(243,205,132,.4)); }
+  /* uncertain reads by LOWER opacity, never a dash — dashes are reserved for waiting-for-keeper only */
+  .ln.c-uncertain{ stroke:var(--gold); stroke-width:2.2; opacity:.68; filter:drop-shadow(0 0 5px rgba(243,205,132,.4)); }
   .ln.spouse{ stroke:var(--gold-hi); stroke-width:2.8; opacity:.95; filter:drop-shadow(0 0 7px rgba(255,230,173,.55)); }
-  .ln.sibling{ stroke:var(--gold); stroke-width:2.2; opacity:.7; stroke-dasharray:2 6; filter:drop-shadow(0 0 4px rgba(243,205,132,.35)); }
+  /* siblings are a REAL, documented tie — solid gold, never dashed (the old dash read as a false/uncertain link) */
+  .ln.sibling{ stroke:var(--gold); stroke-width:2.2; opacity:.82; filter:drop-shadow(0 0 4px rgba(243,205,132,.35)); }
   .knot{ fill:#0a1420; stroke:var(--gold-hi); stroke-width:2; filter:drop-shadow(0 0 5px rgba(255,230,173,.5)); }
   .ln.pend{ stroke:var(--edit); stroke-width:2.4; opacity:.95; stroke-dasharray:5 5; filter:drop-shadow(0 0 7px rgba(201,162,255,.6)); }
   .pendbadge{ fill:#1a0f2e; stroke:var(--edit); stroke-width:2; filter:drop-shadow(0 0 4px rgba(201,162,255,.5)); }
+  /* the trace path is the app-worked-out route to you — SOLID cool (matches the legend swatch).
+     It is never dashed: dashes on this tree mean one thing only — waiting for the keeper (.ln.pend). */
   .ln.trace{ stroke:var(--cool-hi); stroke-width:3.2; opacity:.98; filter:drop-shadow(0 0 10px rgba(127,180,216,.75)); }
-  .ln.trace.flow{ stroke-dasharray:10 14; animation:flowdash 1.1s linear infinite; }
-  @keyframes flowdash{ to{ stroke-dashoffset:-48; } }
-  .ln.sap{ animation:sap 4.4s linear infinite; }
-  @keyframes sap{ to{ stroke-dashoffset:-122; } }
-  @media (prefers-reduced-motion: reduce){ .ln.trace.flow, .ln.sap{ animation:none !important; } }
+  .ln.trace.pulse{ animation:tracePulse 1.6s ease-in-out infinite; }
+  @keyframes tracePulse{ 0%,100%{ opacity:.8; } 50%{ opacity:1; } }
+  @media (prefers-reduced-motion: reduce){ .ln.trace.pulse{ animation:none !important; } }
 </style>
 </head>
 <body>
@@ -346,10 +360,18 @@
       <div class="world" id="world"><svg class="links" id="links"></svg></div>
     </div>
 
-    <div class="legend hid" id="legend">
-      <div class="lgh" data-act="legend"><b data-t="legendttl">How to read it</b>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></div>
+    <div class="pills" id="pills">
+      <button class="pill legendpill" data-act="legend" id="pillLegend"><span class="ic"></span><span data-t="legendttl">How to read it</span></button>
+      <button class="pill unpill hidden" data-act="unlinked" id="pillUnlinked"><span class="ic"></span><span data-t="unpill">Not yet placed</span><span class="cnt" id="unCnt">0</span></button>
+    </div>
+
+    <div class="pop" id="legendPop" role="dialog" aria-label="How to read the tree">
+      <div class="pophd"><b data-t="legendttl">How to read it</b><span class="x" data-act="legend" aria-label="Close"></span></div>
       <div class="lgbody" id="lgbody"></div>
+    </div>
+    <div class="pop" id="unlinkedPop" role="dialog" aria-label="Not yet placed in the tree">
+      <div class="pophd"><span><b data-t="unttl">Not yet placed in the tree</b><small data-t="unsub">People we know of, waiting to be connected</small></span><span class="x" data-act="unlinked" aria-label="Close"></span></div>
+      <div class="ubody" id="ubody"></div>
     </div>
 
     <div class="dock">
@@ -361,16 +383,6 @@
         <button class="dbtn" data-act="zout" aria-label="Zoom out"></button>
       </div>
       <button class="dbtn fit" data-act="fit" aria-label="Fit the whole family"></button>
-    </div>
-
-    <div class="unlinked empty" id="unlinked">
-      <div class="uh" data-act="unlinked">
-        <span class="grip"></span>
-        <span class="ic"></span>
-        <span class="ut"><b data-t="unttl">Not yet placed in the tree</b><small data-t="unsub">People we know of, waiting to be connected</small></span>
-        <span class="cnt" id="unCnt">0</span>
-      </div>
-      <div class="ubody" id="ubody"></div>
     </div>
 
     <div class="loading" id="loading"><div class="l" data-t="loading">Growing the tree…</div></div>
@@ -423,13 +435,15 @@ const I={
   neighbour:'<path d="M4 11l5-5 5 5M6 10v8h6v-8"/><path d="M14 13l3-3 3 3M16 12v6h4v-6" opacity=".7"/>',
   other:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 115 .5c0 1.5-2 2-2 3.5M12 17h.01"/>',
   wait:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', keeper:'<path d="M12 3l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V6z"/><path d="M9 12l2 2 4-4"/>',
-  trash:'<path d="M5 7h14M9 7V5h6v2M7 7l1 12h8l1-12"/>'
+  trash:'<path d="M5 7h14M9 7V5h6v2M7 7l1 12h8l1-12"/>',
+  eye:'<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
+  close:'<path d="M6 6l12 12M18 6L6 18"/>'
 };
 
 /* ---------- i18n ---------- */
 const STR={
   en:{dir:'ltr',lbl:'EN', eyebrow:'The family', title:'The family tree', loading:'Growing the tree…',
-    legendttl:'How to read it', unttl:'Not yet placed in the tree', unsub:'People we know of, waiting to be connected', link:'Place in the tree',
+    legendttl:'How to read it', unttl:'Not yet placed in the tree', unsub:'People we know of, waiting to be connected', unpill:'Not yet placed', link:'Place in the tree',
     parentchild:'Parent & child', pcsub:'the line drops a generation', spouse2:'Married', spsub:'a joined pair',
     sibling2:'Brothers & sisters', sibsub:'share the same bar', documented:'Documented', remembered:'Remembered', uncertain:'Uncertain',
     pending:'Waiting for the keeper', apppath:'A path the app worked out',
@@ -454,9 +468,10 @@ const STR={
     rcH:'Suggestion sent', rcH2:'Saved', rcSaid:'You said: {o} is {c}’s {fwd}.', rcWait:'Waiting for the keeper', rcRemoved:'Tie removed',
     rcProv:'Until the keeper approves it, this waits in violet and only you can see it. Nothing reaches the wider family unapproved.',
     rcProvKeeper:'You are the keeper — this is now part of the tree.',
-    done:'Done', backTree:'Back to the tree', editHead:'Edit this tie', removedToast:'Removed — waiting for the keeper'},
+    done:'Done', backTree:'Back to the tree', editHead:'Edit this tie', removedToast:'Removed — waiting for the keeper',
+    savedPending:'Saved as a suggestion — approve it from the review queue.', sendFail:'Couldn’t reach the keeper’s queue — check your connection and try again.'},
   ru:{dir:'ltr',lbl:'RU', eyebrow:'Семья', title:'Семейное древо', loading:'Древо растёт…',
-    legendttl:'Как читать', unttl:'Ещё не в древе', unsub:'Люди, которых мы знаем, ждут связи', link:'Разместить в древе',
+    legendttl:'Как читать', unttl:'Ещё не в древе', unsub:'Люди, которых мы знаем, ждут связи', unpill:'Не в древе', link:'Разместить в древе',
     parentchild:'Родитель и ребёнок', pcsub:'линия спускается на поколение', spouse2:'В браке', spsub:'соединённая пара',
     sibling2:'Братья и сёстры', sibsub:'на общей перекладине', documented:'Задокументировано', remembered:'По памяти', uncertain:'Неточно',
     pending:'Ждёт хранителя', apppath:'Путь, вычисленный приложением',
@@ -480,9 +495,10 @@ const STR={
     rcH:'Предложение отправлено', rcH2:'Сохранено', rcSaid:'Вы сказали: {o} — {fwd} {c}.', rcWait:'Ждёт хранителя', rcRemoved:'Связь удалена',
     rcProv:'Пока хранитель не одобрит, связь ждёт в фиолетовом и видна только вам.',
     rcProvKeeper:'Вы хранитель — теперь это часть древа.',
-    done:'Готово', backTree:'Назад к древу', editHead:'Изменить связь', removedToast:'Удалено — ждёт хранителя'},
+    done:'Готово', backTree:'Назад к древу', editHead:'Изменить связь', removedToast:'Удалено — ждёт хранителя',
+    savedPending:'Сохранено как предложение — одобрите его в очереди проверки.', sendFail:'Не удалось отправить — проверьте соединение и повторите.'},
   he:{dir:'rtl',lbl:'HE', eyebrow:'המשפחה', title:'עץ המשפחה', loading:'העץ גדל…',
-    legendttl:'איך לקרוא', unttl:'עדיין לא בעץ', unsub:'אנשים שאנחנו מכירים, ממתינים לחיבור', link:'למקם בעץ',
+    legendttl:'איך לקרוא', unttl:'עדיין לא בעץ', unsub:'אנשים שאנחנו מכירים, ממתינים לחיבור', unpill:'לא בעץ', link:'למקם בעץ',
     parentchild:'הורה וילד', pcsub:'הקו יורד דור', spouse2:'נשואים', spsub:'זוג מחובר',
     sibling2:'אחים ואחיות', sibsub:'חולקים אותו מוט', documented:'מתועד', remembered:'מהזיכרון', uncertain:'לא בטוח',
     pending:'ממתין לשומר', apppath:'נתיב שהאפליקציה חישבה',
@@ -506,7 +522,8 @@ const STR={
     rcH:'ההצעה נשלחה', rcH2:'נשמר', rcSaid:'אמרת: {o} הוא {fwd} של {c}.', rcWait:'ממתין לשומר', rcRemoved:'הקשר הוסר',
     rcProv:'עד שהשומר מאשר, זה ממתין בסגול ורק אתה רואה זאת.',
     rcProvKeeper:'אתה השומר — זה עכשיו חלק מהעץ.',
-    done:'סיום', backTree:'חזרה לעץ', editHead:'עריכת הקשר', removedToast:'הוסר — ממתין לשומר'}
+    done:'סיום', backTree:'חזרה לעץ', editHead:'עריכת הקשר', removedToast:'הוסר — ממתין לשומר',
+    savedPending:'נשמר כהצעה — אשרו אותה בתור הבדיקה.', sendFail:'לא ניתן היה לשלוח — בדקו את החיבור ונסו שוב.'}
 };
 /* relationship nouns, gendered per language */
 const NOUN={
@@ -638,7 +655,8 @@ let user=null, viewerPersonId=null;
 let people={};        // id -> {id,display_name,sex,primary_asset,birth_year,death_year,metadata}
 let nameLoc={};       // id -> {lang -> {given,family,called,display}}
 let edges=[];         // {id, from, to, kind, certainty, note, status}
-let pendingKin=[];    // {id, person_id, value(json), created_by, status}
+let pendingKin=[];    // {id, person_id, value(json), created_by, status} — legacy person_facts channel
+let pendingRels=[];   // {id, from, to, kind, certainty, status, created_by} — in_review relationships (the live pending channel)
 let faceFallback={};  // id -> {path, box:{x,y,w,h}, art} — a photo the person is tagged in (artefact_subjects), used when no primary_asset
 let artByPath={};     // storage_path -> artefact_id, to resolve a person's primary_asset back to its moment
 let pos={};           // id -> {x(centre px), tier}
@@ -677,6 +695,13 @@ function spousesOf(x){ const out=new Set();
   edges.forEach(e=>{ if(e.kind==='spouse'){ if(e.from===x&&people[e.to]) out.add(e.to); if(e.to===x&&people[e.from]) out.add(e.from); } });
   childrenOf(x).forEach(c=>parentsOf(c).forEach(p=>{ if(p!==x) out.add(p); }));
   return [...out]; }
+/* explicit sibling edges only (implied siblings — people sharing a parent — are already
+   adjacent through the parent bus and don't need a separate tie). */
+function siblingsOf(x){ const out=new Set();
+  edges.forEach(e=>{ if(e.kind==='sibling'){ if(e.from===x&&people[e.to]) out.add(e.to); if(e.to===x&&people[e.from]) out.add(e.from); } });
+  return [...out]; }
+/* every relationship a person has, of any kind — the test for "belongs in the tree". */
+function hasAnyRel(x){ return parentsOf(x).length>0 || childrenOf(x).length>0 || spousesOf(x).length>0 || siblingsOf(x).length>0; }
 function anyTie(a,b){ return edges.find(e=>(e.from===a&&e.to===b)||(e.from===b&&e.to===a))||null; }
 
 /* Generation numbers via fixed-point iteration over two constraints, alternated to
@@ -687,8 +712,11 @@ function anyTie(a,b){ return edges.find(e=>(e.from===a&&e.to===b)||(e.from===b&&
    Dudi→Leeya inversion). Returns {id -> gen}. */
 function genAssign(placed){
   const inSet=new Set(placed); const tier={}; placed.forEach(id=>tier[id]=0);
-  const pairs=[]; { const seen=new Set();   // spouse edges OR co-parents, over the placed set
-    placed.forEach(id=>spousesOf(id).forEach(s=>{ if(!inSet.has(s)) return; const k=id<s?id+'|'+s:s+'|'+id; if(seen.has(k)) return; seen.add(k); pairs.push([id,s]); })); }
+  // same-row constraints: spouses/co-parents share a row, AND siblings share a row (so a
+  // sibling with no parents of their own still lands on their brother's/sister's generation).
+  const pairs=[]; { const seen=new Set();
+    placed.forEach(id=>spousesOf(id).forEach(s=>{ if(!inSet.has(s)) return; const k=id<s?id+'|'+s:s+'|'+id; if(seen.has(k)) return; seen.add(k); pairs.push([id,s]); }));
+    placed.forEach(id=>siblingsOf(id).forEach(s=>{ if(!inSet.has(s)) return; const k=id<s?id+'|'+s:s+'|'+id; if(seen.has(k)) return; seen.add(k); pairs.push([id,s]); })); }
   const pc=[]; edges.forEach(e=>{ if(isParentEdge(e)&&inSet.has(e.from)&&inSet.has(e.to)) pc.push([e.from,e.to]); });
   const cap=placed.length+8;                  // monotonic increase ⇒ converges well inside this
   for(let it=0; it<cap; it++){ let ch=false;
@@ -729,15 +757,50 @@ function selfTestOrdering(){
   return {total:Math.round(total), long, edges:n};
 }
 
+/* collision/compaction: after ordering + x-placement, GUARANTEE no two cards in a generation
+   overlap. Walk each row left→right in x-order; if a card would collide with its left
+   neighbour, push it right to keep a minimum gutter (couples stay together — their members sit
+   COLW apart, wider than a card, so they never trip this). Then re-centre the row so it stays
+   under its parents. PAV already spaces the units, so in practice this is a no-op — it is the
+   hard backstop behind selfTestOverlap(). */
+function compactRows(){ const GUT=16; const rows={};
+  Object.keys(pos).forEach(id=>{ const t=pos[id].tier; (rows[t]=rows[t]||[]).push(id); });
+  Object.keys(rows).forEach(t=>{ const row=rows[t].sort((a,b)=>pos[a].x-pos[b].x);
+    const mean0=row.reduce((a,id)=>a+pos[id].x,0)/row.length;
+    for(let i=1;i<row.length;i++){ const minx=pos[row[i-1]].x + CW + GUT;
+      if(pos[row[i]].x < minx) pos[row[i]].x = minx; }
+    const mean1=row.reduce((a,id)=>a+pos[id].x,0)/row.length; const d=mean0-mean1;
+    if(d) row.forEach(id=>{ pos[id].x += d; }); });
+}
+/* self-test: assert no two card rects intersect in any generation. Prints the count. */
+function selfTestOverlap(){ const rows={}; let overlaps=0; const ex=[];
+  Object.keys(pos).forEach(id=>{ const t=pos[id].tier; (rows[t]=rows[t]||[]).push(id); });
+  Object.keys(rows).forEach(t=>{ const row=rows[t].sort((a,b)=>pos[a].x-pos[b].x);
+    for(let i=1;i<row.length;i++){ const a=row[i-1],b=row[i]; const aR=pos[a].x+CW/2, bL=pos[b].x-CW/2;
+      if(bL<aR-0.5){ overlaps++; if(ex.length<6) ex.push(nm(a)+' ∩ '+nm(b)+' (gen '+t+', by '+Math.round(aR-bL)+'px)'); } } });
+  console.log('[tree] overlap self-test — generations:',Object.keys(rows).length,'| overlapping card pairs:',overlaps);
+  if(overlaps) console.warn('[tree] CARD OVERLAPS:\n  '+ex.join('\n  ')); else console.log('[tree] ✓ no two cards overlap in any generation');
+  return overlaps;
+}
+/* self-test: the drawer must hold EXACTLY the people with zero relationships — nobody who
+   has a spouse/sibling/parent/child tie should be dumped there. */
+function selfTestPlacement(){ const ids=Object.keys(people);
+  const zero=ids.filter(id=>!hasAnyRel(id));
+  const ok = unplaced.length===zero.length && unplaced.every(id=>!hasAnyRel(id));
+  console.log('[tree] placement self-test — people:',ids.length,'| placed (≥1 tie):',placedSet.size,'| zero-tie:',zero.length,'| drawer shows:',unplaced.length);
+  console.log('[tree]   '+(ok?'✓ drawer holds exactly the '+zero.length+' people with no relationships':'✗ MISMATCH: drawer='+unplaced.length+' vs '+zero.length+' truly unlinked'));
+  return {drawer:unplaced.length, zero:zero.length, ok};
+}
+
 /* ================= LAYOUT ================= */
 function computeLayout(){
   pos={}; placedSet=new Set(); unplaced=[];
   const ids=Object.keys(people);
-  // placed = in any parent-child edge; then pull in spouses of placed
-  ids.forEach(id=>{ if(parentsOf(id).length||childrenOf(id).length) placedSet.add(id); });
-  let changed=true; let guard=0;
-  while(changed && guard++<6){ changed=false;
-    [...placedSet].forEach(id=>spousesOf(id).forEach(s=>{ if(!placedSet.has(s)){ placedSet.add(s); changed=true; } })); }
+  // A person belongs in the tree if they have ANY relationship — parent, child, spouse OR
+  // sibling. (Previously only parent-child-connected people, plus their spouses, were placed,
+  // so spouse-only and sibling-only relatives were wrongly dumped in the "not yet placed"
+  // drawer even though they ARE connected. Only people with ZERO ties belong in the drawer.)
+  ids.forEach(id=>{ if(hasAnyRel(id)) placedSet.add(id); });
   unplaced=ids.filter(id=>!placedSet.has(id));
   const placed=[...placedSet];
   if(!placed.length){ return; }
@@ -770,11 +833,17 @@ function computeLayout(){
     const u={ mem, tier:t, uid:mem.slice().sort(sortId).join('|'), minId:mem.slice().sort(sortId)[0] };
     mem.forEach(m=>unitOf[m]=u); unitsByTier[t].push(u); });
   const allUnits=[]; for(let t=0;t<=maxTier;t++) allUnits.push(...unitsByTier[t]);
-  // parent-/child-unit adjacency (a couple counts as ONE unit for both)
-  allUnits.forEach(u=>{ const ps=new Set(), cs=new Set();
-    u.mem.forEach(m=>{ parentsOf(m).forEach(p=>{ if(unitOf[p]&&unitOf[p]!==u) ps.add(unitOf[p]); });
-      childrenOf(m).forEach(c=>{ if(unitOf[c]&&unitOf[c]!==u) cs.add(unitOf[c]); }); });
-    u.parentUnits=[...ps]; u.childUnits=[...cs]; });
+  // parent-/child-/sibling-unit adjacency (a couple counts as ONE unit for all).
+  // A member with no parents of their own borrows their sibling's parents as a LAYOUT-ONLY
+  // pull (never drawn) so a parentless sibling gravitates beneath the same couple; explicit
+  // sibling units keep parentless siblings contiguous with each other.
+  allUnits.forEach(u=>{ const ps=new Set(), cs=new Set(), ss=new Set();
+    u.mem.forEach(m=>{ let mp=parentsOf(m);
+      if(!mp.length){ const bp=[]; siblingsOf(m).forEach(sib=>parentsOf(sib).forEach(p=>bp.push(p))); mp=bp; }
+      mp.forEach(p=>{ if(unitOf[p]&&unitOf[p]!==u) ps.add(unitOf[p]); });
+      childrenOf(m).forEach(c=>{ if(unitOf[c]&&unitOf[c]!==u) cs.add(unitOf[c]); });
+      siblingsOf(m).forEach(sib=>{ if(unitOf[sib]&&unitOf[sib]!==u) ss.add(unitOf[sib]); }); });
+    u.parentUnits=[...ps]; u.childUnits=[...cs]; u.siblingUnits=[...ss]; });
 
   // ---- ORDER THE ROWS (Sugiyama-style). Seed with a DFS from the roots so each family's
   // descendants start contiguous & siblings sit together; then sweep barycentres down/up to
@@ -783,7 +852,8 @@ function computeLayout(){
   const order={}; for(let t=0;t<=maxTier;t++) order[t]=[];
   const vis=new Set();
   const dfs=u=>{ if(vis.has(u.uid)) return; vis.add(u.uid); order[u.tier].push(u);
-    u.childUnits.slice().sort((a,b)=>sortId(a.minId,b.minId)).forEach(dfs); };
+    u.childUnits.slice().sort((a,b)=>sortId(a.minId,b.minId)).forEach(dfs);
+    u.siblingUnits.slice().sort((a,b)=>sortId(a.minId,b.minId)).forEach(dfs); };
   allUnits.filter(u=>!u.parentUnits.length).sort((a,b)=>(a.tier-b.tier)||sortId(a.minId,b.minId)).forEach(dfs);
   allUnits.slice().sort((a,b)=>(a.tier-b.tier)||sortId(a.minId,b.minId)).forEach(u=>{ if(!vis.has(u.uid)){ vis.add(u.uid); order[u.tier].push(u); } });
   for(let t=0;t<=maxTier;t++) order[t].forEach((u,i)=>u.idx=i);
@@ -816,6 +886,7 @@ function computeLayout(){
     for(let t=maxTier;t>=0;t--){ order[t].forEach(u=>{ if(u.childUnits.length){ u._tx=u.childUnits.reduce((a,c)=>a+c.cx,0)/u.childUnits.length; u._w=u.childUnits.length; } else { u._tx=u.cx; u._w=1; } }); placeRow(order[t]); }
   }
   for(let t=0;t<=maxTier;t++){ order[t].forEach(u=>{ const left=u.cx-uw(u)/2; u.mem.forEach((id,i)=>{ pos[id]={ x:left+(i+0.5)*COLW, tier:t }; }); }); }
+  compactRows();   // hard guarantee: no two cards overlap within a generation
   // normalise so min x = PADX + CW/2
   const xs=placed.map(id=>pos[id].x); const minx=Math.min(...xs);
   const shift=(PADX+CW/2)-minx; placed.forEach(id=>{ pos[id].x += shift; });
@@ -837,7 +908,7 @@ function buildCards(){
     const fa=faceArt(id);
     el.className='pcard'+(noPhoto?' nophoto':'')+(isYou?' you':'')+(state.sel===id?' sel':'');
     el.style.left=(CX(id)-CW/2)+'px'; el.style.top=CTOP(id)+'px'; el.dataset.id=id;
-    const pend=pendingKin.some(k=>{ const v=parseKin(k.value); return k.person_id===id || (v&&v.other===id); });
+    const pend=pendingRels.some(r=>r.from===id||r.to===id) || pendingKin.some(k=>{ const v=parseKin(k.value); return k.person_id===id || (v&&v.other===id); });
     el.innerHTML =
       (isYou?`<span class="youtag">${esc(state.lang==='he'?'זה אתה':state.lang==='ru'?'это вы':'this is you')}</span>`:'')+
       (pend?`<span class="pendpin">${svg(I.clock,2)}</span>`:'')+
@@ -880,7 +951,7 @@ function buildLinks(){
     const kidTops=kidIds.map(CTOP); const busY=Math.min(...kidTops)-26-(famOff%3)*7; famOff++;
     const certs=kidIds.map(k=>f.kids[k].certainty||'remembered');
     const rep = certs.includes('documented')?'documented':(certs.includes('remembered')?'remembered':'uncertain');
-    links.appendChild(mkPath(`M ${px} ${py} V ${busY}`,'ln c-'+rep+(rep==='documented'&&!reduceMotion?' sap':'')));
+    links.appendChild(mkPath(`M ${px} ${py} V ${busY}`,'ln c-'+rep));
     // horizontal sibling bar spans ONLY this parent-set's real children
     const xs=kidIds.map(CX); const minx=Math.min(...xs), maxx=Math.max(...xs);
     if(kidIds.length>1) links.appendChild(mkPath(`M ${minx} ${busY} H ${maxx}`,'ln c-'+rep));
@@ -895,17 +966,21 @@ function buildLinks(){
     const shared=parentsOf(e.from).some(p=>parentsOf(e.to).includes(p)); if(shared) return;
     const ax=CX(e.from), bx=CX(e.to); const busY=Math.min(CTOP(e.from),CTOP(e.to))-16-(sibOff%3)*7; sibOff++;
     links.appendChild(mkPath(`M ${ax} ${CTOP(e.from)} V ${busY} H ${bx} V ${CTOP(e.to)}`,'ln sibling')); });
-  // pending kin suggestions → violet dashed connector, routed in the gap ABOVE the cards
-  // (never through an unrelated card), staggered so several don't merge into one line.
+  // pending (in_review) connections → violet dashed connector, routed in the gap ABOVE the
+  // cards (never through an unrelated card), staggered so several don't merge into one line.
+  // A request that mirrors an existing published tie (an edit/removal awaiting the keeper) is
+  // not re-drawn — that tie already shows solid; the card's pendpin signals it's under review.
   let pendOff=0;
-  pendingKin.forEach(k=>{ const v=parseKin(k.value); if(!v||v.op==='remove') return; const a=k.person_id, b=v.other;
-    if(pos[a]&&pos[b]){ const ax=CX(a), bx=CX(b); const busY=Math.min(CTOP(a),CTOP(b))-20-(pendOff%3)*7; pendOff++;
-      links.appendChild(mkPath(`M ${ax} ${CTOP(a)} V ${busY} H ${bx} V ${CTOP(b)}`,'ln pend'));
-      links.appendChild(mkEl('circle',{cx:(ax+bx)/2, cy:busY, r:8, class:'pendbadge'})); } });
+  const drawPend=(a,b)=>{ if(!pos[a]||!pos[b]) return; if(anyTie(a,b)) return;
+    const ax=CX(a), bx=CX(b); const busY=Math.min(CTOP(a),CTOP(b))-20-(pendOff%3)*7; pendOff++;
+    links.appendChild(mkPath(`M ${ax} ${CTOP(a)} V ${busY} H ${bx} V ${CTOP(b)}`,'ln pend'));
+    links.appendChild(mkEl('circle',{cx:(ax+bx)/2, cy:busY, r:8, class:'pendbadge'})); };
+  pendingRels.forEach(r=>drawPend(r.from,r.to));
+  pendingKin.forEach(k=>{ const v=parseKin(k.value); if(!v||v.op==='remove') return; drawPend(k.person_id,v.other); });
   // trace path (cool)
   if(state.trace && state.sel && viewerPersonId && state.sel!==viewerPersonId){ const chain=tracePath(viewerPersonId,state.sel);
     if(chain){ for(let i=0;i<chain.length-1;i++){ const a=chain[i],b=chain[i+1]; if(pos[a]&&pos[b])
-      links.appendChild(mkPath(`M ${CX(a)} ${CMID(a)} C ${CX(a)} ${(CMID(a)+CMID(b))/2}, ${CX(b)} ${(CMID(a)+CMID(b))/2}, ${CX(b)} ${CMID(b)}`,'ln trace'+(reduceMotion?'':' flow'))); } } }
+      links.appendChild(mkPath(`M ${CX(a)} ${CMID(a)} C ${CX(a)} ${(CMID(a)+CMID(b))/2}, ${CX(b)} ${(CMID(a)+CMID(b))/2}, ${CX(b)} ${CMID(b)}`,'ln trace'+(reduceMotion?'':' pulse'))); } } }
   sizeLinks();
 }
 function drawSpouse(a,b){ const y=CMID(a), x1=CX(a), x2=CX(b), mx=(x1+x2)/2;
@@ -922,7 +997,6 @@ function drawSpouse(a,b){ const y=CMID(a), x1=CX(a), x2=CX(b), mx=(x1+x2)/2;
 
 function sizeLinks(){ const bb=worldBBox(); const w=bb.maxX+PADX, h=bb.maxY+PADY;
   links.setAttribute('width',w); links.setAttribute('height',h); world.style.width=w+'px'; world.style.height=h+'px'; }
-function sapShimmer(){ if(reduceMotion) return; links.querySelectorAll('.ln.c-documented.sap').forEach((l,i)=>{ l.style.strokeDasharray='42 14'; l.style.animationDelay=(i*0.5)+'s'; }); }
 
 /* trace over parent + spouse adjacency */
 function tracePath(from,to){ if(!from||!to) return null; if(from===to) return [from];
@@ -953,19 +1027,29 @@ function buildLegend(){ const s=L(); const swz=inner=>`<svg class="swz" viewBox=
     `<div class="lgsep"></div>`+
     `<div class="lgrow">${swz('<path d="M4 8 H30" fill="none" stroke="#f3cd84" stroke-width="2.6" stroke-linecap="round"/>')}<span class="lt">${esc(s.documented)}</span></div>`+
     `<div class="lgrow">${swz('<path d="M4 8 H30" fill="none" stroke="#f3cd84" stroke-width="2.4" opacity=".82" stroke-linecap="round"/>')}<span class="lt">${esc(s.remembered)}</span></div>`+
-    `<div class="lgrow">${swz('<path d="M4 8 H30" fill="none" stroke="#f3cd84" stroke-width="2.2" opacity=".72" stroke-dasharray="3 5" stroke-linecap="round"/>')}<span class="lt">${esc(s.uncertain)}</span></div>`+
+    `<div class="lgrow">${swz('<path d="M4 8 H30" fill="none" stroke="#f3cd84" stroke-width="2.2" opacity=".62" stroke-linecap="round"/>')}<span class="lt">${esc(s.uncertain)}</span></div>`+
     `<div class="lgrow">${swz('<path d="M4 8 H30" fill="none" stroke="#c9a2ff" stroke-width="2.2" stroke-dasharray="5 5" stroke-linecap="round"/>')}<span class="lt">${esc(s.pending)}</span></div>`+
     `<div class="lgrow">${swz('<path d="M4 8 H30" fill="none" stroke="#a9d2ee" stroke-width="2.6" stroke-linecap="round"/>')}<span class="lt">${esc(s.apppath)}</span></div>`;
 }
 
-/* ---------- unlinked drawer ---------- */
-function buildUnlinked(){ const s=L(); const box=$('#unlinked');
-  if(!unplaced.length){ box.classList.add('empty'); return; } box.classList.remove('empty');
-  $('#unCnt').textContent=unplaced.length; $('.unlinked .uh .ic').innerHTML=svg(I.spark,1.6);
+/* ---------- unlinked pill + pop ---------- */
+function buildUnlinked(){ const s=L(); const pill=$('#pillUnlinked'), pop=$('#unlinkedPop');
+  $('#unCnt').textContent=unplaced.length;
+  if(!unplaced.length){ pill.classList.add('hidden'); pill.classList.remove('on'); pop.classList.remove('show'); $('#ubody').innerHTML=''; return; }
+  pill.classList.remove('hidden');
   $('#ubody').innerHTML=unplaced.map(id=>{ const yr=people[id].birth_year?fmt(s.born,{y:people[id].birth_year}):'';
     return `<div class="ucard" data-conn="${esc(id)}"><span class="por" data-face="${esc(id)}"></span><span class="un serif">${esc(firstName(id))}</span><span class="place">${esc(yr)}</span><span class="plink">${svg(I.plus,2.2)} ${esc(s.link)}</span></div>`; }).join('');
   $$('#ubody .por[data-face]').forEach(el=>hydrateFace(el, el.getAttribute('data-face')));
 }
+/* open one pop, close the other; toggling is handled by the caller. */
+function showPop(which){ const lp=$('#legendPop'), up=$('#unlinkedPop'), pl=$('#pillLegend'), pu=$('#pillUnlinked');
+  const openL=which==='legend', openU=which==='unlinked';
+  lp.classList.toggle('show',openL); pl.classList.toggle('on',openL);
+  up.classList.toggle('show',openU); pu.classList.toggle('on',openU); }
+function closePops(){ showPop(null); }
+function togglePop(which){ const el=which==='legend'?$('#legendPop'):$('#unlinkedPop');
+  if(el.classList.contains('show')) closePops(); else showPop(which); }
+function anyPopOpen(){ return $('#legendPop').classList.contains('show')||$('#unlinkedPop').classList.contains('show'); }
 
 /* ---------- chrome ---------- */
 function applyText(){ const s=L(); document.documentElement.dir=s.dir; document.documentElement.lang=state.lang;
@@ -974,7 +1058,9 @@ function applyText(){ const s=L(); document.documentElement.dir=s.dir; document.
 function setIcons(){ const put=(sel,ic,w)=>{ const el=$(sel); if(el) el.innerHTML=svg(ic,w); };
   put('[data-act="home"]', I.back,1.7); put('#traceBtn',I.trace); put('[data-act="me"]',I.me,1.7);
   put('[data-act="zin"]',I.plus,2); put('[data-act="zout"]',I.minus,2); put('[data-act="fit"]',I.fit,1.8);
-  put('#cbackBtn',I.back,1.8); }
+  put('#cbackBtn',I.back,1.8);
+  put('#pillLegend .ic',I.eye,1.8); put('#pillUnlinked .ic',I.spark,1.7);
+  put('#legendPop .x',I.close,1.9); put('#unlinkedPop .x',I.close,1.9); }
 
 let tT; function toast(m){ $('#toastmsg').textContent=m; toastEl.classList.add('show'); clearTimeout(tT); tT=setTimeout(()=>toastEl.classList.remove('show'),2600); }
 
@@ -990,11 +1076,14 @@ async function loadData(){
   }catch(e){ nameLoc={}; }
   // relationships — probe columns gracefully
   let rp=null;
-  try{ const r=await sb.from('relationships').select('id,from_person,to_person,kind,certainty,note,status'); if(r.error) throw r.error; rp=r.data; }catch(e){
-    try{ const r=await sb.from('relationships').select('id,from_person,to_person,kind,certainty,note'); if(r.error) throw r.error; rp=r.data; }catch(e2){
-      try{ const r=await sb.from('relationships').select('id,from_person,to_person,status'); if(r.error) throw r.error; rp=r.data; }catch(e3){
-        try{ const r=await sb.from('relationships').select('id,from_person,to_person'); rp=r.data; }catch(e4){ rp=[]; } } } }
+  try{ const r=await sb.from('relationships').select('id,from_person,to_person,kind,certainty,note,status,created_by'); if(r.error) throw r.error; rp=r.data; }catch(e){
+    try{ const r=await sb.from('relationships').select('id,from_person,to_person,kind,certainty,note,status'); if(r.error) throw r.error; rp=r.data; }catch(e2){
+      try{ const r=await sb.from('relationships').select('id,from_person,to_person,kind,certainty,note'); if(r.error) throw r.error; rp=r.data; }catch(e3){
+        try{ const r=await sb.from('relationships').select('id,from_person,to_person,status'); if(r.error) throw r.error; rp=r.data; }catch(e4){
+          try{ const r=await sb.from('relationships').select('id,from_person,to_person'); rp=r.data; }catch(e5){ rp=[]; } } } } }
+  // published ties build the tree; in_review ties render as violet "waiting for the keeper".
   edges=(rp||[]).filter(r=>r.status==null||r.status==='published').map(r=>({ id:r.id, from:r.from_person, to:r.to_person, kind:r.kind||'parent', certainty:r.certainty||'remembered', note:r.note||'', status:r.status||null }));
+  pendingRels=(rp||[]).filter(r=>r.status&&r.status!=='published'&&r.status!=='rejected'&&r.status!=='declined').map(r=>({ id:r.id, from:r.from_person, to:r.to_person, kind:r.kind||'parent', certainty:r.certainty||'remembered', status:r.status, created_by:r.created_by||null }));
   // pending kin suggestions
   try{ const {data:pk}=await sb.from('person_facts').select('id,person_id,value,created_by,status').eq('field','kin').neq('status','published'); pendingKin=pk||[]; }catch(e){ pendingKin=[]; }
   // face fallback: for anyone without a primary_asset, borrow a photo they're TAGGED in.
@@ -1116,27 +1205,48 @@ function renderReceipt(){ const s=L(); $('#steps').innerHTML=''; $('#cbackBtn').
 function endsFor(a,b,rel){ if(rel==='parent') return {from:b,to:a,kind:'parent',dir:'other_parent'};
   if(rel==='child') return {from:a,to:b,kind:'parent',dir:'other_child'};
   return {from:a,to:b,kind:rel,dir:'other_child'}; }
-async function commitConnect(){ const a=CF.cur, b=CF.other, rel=CF.rel; if(!a||!b||!rel||!user) return;
-  const ends=endsFor(a,b,rel); const row={ kind:ends.kind, certainty:CF.cert, note:CF.note||'' };
+// supabase-js returns {error} on a DB failure (it does NOT throw), so every write is checked
+// and retried without the optional columns before it is allowed to fail — never silently.
+async function insertRel(fields){ let r=await sb.from('relationships').insert(fields); if(!r.error) return null;
+  const min={from_person:fields.from_person, to_person:fields.to_person, kind:fields.kind, status:fields.status};
+  if(fields.created_by) min.created_by=fields.created_by;
+  r=await sb.from('relationships').insert(min); if(!r.error) return null;
+  delete min.created_by; r=await sb.from('relationships').insert(min); return r.error||null; }
+
+async function commitConnect(){ const a=CF.cur, b=CF.other, rel=CF.rel; if(!a||!b||!rel||!user) return {ok:false};
+  const ends=endsFor(a,b,rel);
   if(state.keeper){
-    try{ if(CF.editing&&CF.existing) await sb.from('relationships').update({...row,from_person:ends.from,to_person:ends.to}).eq('id',CF.existing.id);
-      else await sb.from('relationships').insert({from_person:ends.from,to_person:ends.to,...row});
-    }catch(e){ try{ if(CF.editing&&CF.existing) await sb.from('relationships').update({from_person:ends.from,to_person:ends.to}).eq('id',CF.existing.id);
-      else await sb.from('relationships').insert({from_person:ends.from,to_person:ends.to}); }catch(e2){} }
-  } else {
-    const payload=JSON.stringify({ op:CF.editing?'edit':'add', rel_id:CF.existing?CF.existing.id:null, other:b, other_name:nm(b),
-      kind:ends.kind, dir:ends.dir, certainty:CF.cert, note:CF.note||'', from:'tree' });
-    try{ await sb.from('person_facts').insert({person_id:a, group_id:uuid(), field:'kin', lang:'und', value:payload, ord:0, status:'in_review', created_by:user.id}); }catch(e){}
-  } }
-async function commitRemove(){ const e=CF.existing; if(!e||!user) return;
-  if(state.keeper){ try{ await sb.from('relationships').delete().eq('id',e.id); }catch(err){} return; }
-  const payload=JSON.stringify({ op:'remove', rel_id:e.id, other:CF.other, other_name:nm(CF.other), kind:e.kind||'other', dir:'other_child', certainty:e.certainty||'remembered', note:'' });
-  try{ await sb.from('person_facts').insert({person_id:CF.cur, group_id:uuid(), field:'kin', lang:'und', value:payload, ord:0, status:'in_review', created_by:user.id}); } catch(err){} }
+    // keeper writes straight to the tree (published). If the write is rejected, fall back to a
+    // pending suggestion so nothing is lost — and toast, never fail silently.
+    if(CF.editing&&CF.existing){
+      let r=await sb.from('relationships').update({from_person:ends.from,to_person:ends.to,kind:ends.kind,certainty:CF.cert,note:CF.note||'',status:'published',reviewed_by:user.id}).eq('id',CF.existing.id);
+      if(r.error) r=await sb.from('relationships').update({from_person:ends.from,to_person:ends.to,kind:ends.kind}).eq('id',CF.existing.id);
+      if(r.error){ toast(L().sendFail); return {ok:false}; }
+      return {ok:true};
+    }
+    const err=await insertRel({from_person:ends.from,to_person:ends.to,kind:ends.kind,certainty:CF.cert,note:CF.note||'',status:'published',created_by:user.id});
+    if(err){ const perr=await insertRel({from_person:ends.from,to_person:ends.to,kind:ends.kind,certainty:CF.cert,note:CF.note||'',status:'in_review',created_by:user.id});
+      CF.mode='suggest'; toast(L().savedPending); return {ok:!perr, pending:true}; }
+    return {ok:true};
+  }
+  // non-keeper: a REAL in_review relationship row (not a live write). The "waiting for the
+  // keeper" receipt is therefore truthful, and the row surfaces in the keeper's review queue.
+  const err=await insertRel({from_person:ends.from,to_person:ends.to,kind:ends.kind,certainty:CF.cert,note:CF.note||'',status:'in_review',created_by:user.id});
+  if(err) toast(L().sendFail);
+  return {ok:!err, pending:true};
+}
+async function commitRemove(){ const e=CF.existing; if(!e||!user) return {ok:false};
+  if(state.keeper){ const r=await sb.from('relationships').delete().eq('id',e.id); if(r.error) toast(L().sendFail); return {ok:!r.error}; }
+  // non-keeper: request removal — a pending row that mirrors the live tie. The keeper's queue
+  // reads a pending row matching a published tie as "remove this connection".
+  const err=await insertRel({from_person:e.from,to_person:e.to,kind:e.kind||'parent',certainty:e.certainty||'remembered',note:'',status:'in_review',created_by:user.id});
+  if(err) toast(L().sendFail);
+  return {ok:!err}; }
 
 async function afterWrite(){ await loadData(); computeLayout(); redraw(); }
 
 /* ---------- rendering pipeline ---------- */
-function redraw(){ buildCards(); buildLinks(); buildUnlinked(); sapShimmer(); apply(); }
+function redraw(){ buildCards(); buildLinks(); buildUnlinked(); apply(); }
 function fullRender(){ applyText(); setIcons(); buildLegend(); computeLayout(); redraw(); }
 
 /* ---------- interactions: pan / pinch / wheel ---------- */
@@ -1180,8 +1290,8 @@ document.body.addEventListener('click',e=>{
   const act=e.target.closest('[data-act]'); if(!act) return; const a=act.dataset.act, s=L();
   if(a==='home'){ goHome(); }
   else if(a==='lang'){ cycleLang(); }
-  else if(a==='legend'){ state.legendHid=!state.legendHid; $('#legend').classList.toggle('hid',state.legendHid); }
-  else if(a==='unlinked'){ $('#unlinked').classList.toggle('open'); }
+  else if(a==='legend'){ togglePop('legend'); }
+  else if(a==='unlinked'){ togglePop('unlinked'); }
   else if(a==='zin'){ stopInertia(); zoomAt(1.14, vpCenter().x, vpCenter().y); }
   else if(a==='zout'){ stopInertia(); zoomAt(1/1.14, vpCenter().x, vpCenter().y); }
   else if(a==='zreset'){ stopInertia(); zoomAt(1/state.scale, vpCenter().x, vpCenter().y); }
@@ -1214,7 +1324,7 @@ function cycleLang(){ const o=['en','ru','he']; state.lang=o[(o.indexOf(state.la
 
 /* expose reusable connect flow (person-real or any page can call after loading this file) */
 window.LFConnect={ open:openConnect, close:closeConnect };
-window.__lfClose=function(){ if(sheet.classList.contains('show')){ closeConnect(); return true; } if($('#unlinked').classList.contains('open')){ $('#unlinked').classList.remove('open'); return true; } return false; };
+window.__lfClose=function(){ if(sheet.classList.contains('show')){ closeConnect(); return true; } if(anyPopOpen()){ closePops(); return true; } return false; };
 
 /* ================= AURORA VINES v2 — living background ================= */
 function auroraVines(cv){
@@ -1301,6 +1411,8 @@ async function boot(){
   fullRender();
   try{ selfTestGenerations(); }catch(e){}
   try{ selfTestOrdering(); }catch(e){}
+  try{ selfTestOverlap(); }catch(e){}
+  try{ selfTestPlacement(); }catch(e){}
   // initial framing: centre on ?id or the viewer, else fit all
   const focus = (FOCUS_PARAM&&pos[FOCUS_PARAM])?FOCUS_PARAM : ((viewerPersonId&&pos[viewerPersonId])?viewerPersonId:null);
   if(focus){ setTimeout(()=>centerOn(focus, 1.0), 60); }

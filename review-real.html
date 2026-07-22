@@ -290,8 +290,35 @@
     shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V6z"/><path d="M9 12l2 2 4-4"/></svg>',
     play:'<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z"/></svg>',
     leaf:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c0-6 3-10 8-11-1 6-4 9-8 9zM12 21c0-5-2.5-8.5-7-9.5 1 5 3.5 8 7 8.5zM12 21v-4"/></svg>',
-    check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>'
+    check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>',
+    kin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="8" r="3"/><circle cx="17" cy="16" r="3"/><path d="M9.2 10.1l5.6 3.8"/></svg>',
+    unlink:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 14.5l-2 2a3.4 3.4 0 01-4.8-4.8l2-2M14.5 9.5l2-2a3.4 3.4 0 014.8 4.8l-2 2M8 8l8 8"/></svg>'
   };
+
+  /* ---------- relationship nouns (gendered per language) ---------- */
+  const RNOUN={
+    father:{en:'father',ru:'отец',he:'אבא'}, mother:{en:'mother',ru:'мать',he:'אמא'},
+    son:{en:'son',ru:'сын',he:'בן'}, daughter:{en:'daughter',ru:'дочь',he:'בת'},
+    husband:{en:'husband',ru:'муж',he:'בעל'}, wife:{en:'wife',ru:'жена',he:'אישה'},
+    brother:{en:'brother',ru:'брат',he:'אח'}, sister:{en:'sister',ru:'сестра',he:'אחות'}
+  };
+  function rnoun(key){ return (RNOUN[key]||{})[state.lang]||key; }
+  function relSexOf(id){ const p=pending&&pending.personRow&&pending.personRow[id]; return ((p&&p.sex)||'').toString().toLowerCase().charAt(0); } // 'f'|'m'|''
+  // role of `from` toward `to` (from='parent' side for kind='parent')
+  function roleFwd(kind,sex){ const f=sex==='f';
+    if(kind==='parent') return f?'mother':'father';
+    if(kind==='spouse') return f?'wife':'husband';
+    return f?'sister':'brother'; }              // sibling
+  // reciprocal role of `to` toward `from`
+  function roleBack(kind,sex){ const f=sex==='f';
+    if(kind==='parent') return f?'daughter':'son';
+    if(kind==='spouse') return f?'wife':'husband';
+    return f?'sister':'brother'; }              // sibling
+  // "X is Y's Z", per language (dash form for RU/HE to avoid gendered copula/genitive)
+  function connPhrase(xName, roleNoun, yName){ const l=state.lang;
+    if(l==='he') return `${xName} — ${roleNoun} של ${yName}`;
+    if(l==='ru') return `${xName} — ${roleNoun} ${yName}`;
+    return `${xName} is ${yName}’s ${roleNoun}`; }
 
   /* ---------- i18n ---------- */
   const T={
@@ -303,8 +330,9 @@
       notKeeperT:'This is the keeper’s quiet corner.', notKeeperS:'Only the keeper reviews what the family suggests. Everything you add is safe — it simply waits here for the keeper to welcome it.', backToForest:'Back to the forest',
       warm:n=>`${num(n,'en')} ${n===1?'gift is':'gifts are'} <em>waiting</em> for you.`,
       warmSub:'Take them in any order. Each one is someone reaching toward the family — held safe until you say yes.',
-      all:'All', groups:{ newcomers:'Newcomers', names:'Names', memories:'Memories', facts:'Facts' },
-      cntNew:'proposed people', cntNames:'name parts', cntMem:'waiting', cntFacts:'waiting',
+      all:'All', groups:{ newcomers:'Newcomers', names:'Names', memories:'Memories', facts:'Facts', connections:'Connections' },
+      cntNew:'proposed people', cntNames:'name parts', cntMem:'waiting', cntFacts:'waiting', cntConn:'waiting',
+      connSo:'so', removeReq:'Remove this connection',
       waiting:'Waiting', approve:'Approve', decline:'Decline', approved:'Welcomed — it lives in the forest now', declined:'Set aside',
       toapprove:'Approve and it joins the forest in <span class="g">gold</span>, for the family.',
       suggestedBy:'Suggested by', toldBy:'Told by', uploadedBy:'uploaded by', someone:'a family member', ago:'',
@@ -330,8 +358,9 @@
       notKeeperT:'Это тихий уголок хранителя.', notKeeperS:'Только хранитель просматривает предложенное семьёй. Всё, что вы добавляете, в сохранности — оно ждёт здесь.', backToForest:'Назад в лес',
       warm:n=>`${num(n,'ru')} ${plRu(n,'подарок','подарка','подарков')} <em>ждёт</em> вас.`,
       warmSub:'Берите в любом порядке. Каждый — это кто-то, кто тянется к семье, — в сохранности, пока вы не скажете да.',
-      all:'Всё', groups:{ newcomers:'Новые', names:'Имена', memories:'Воспоминания', facts:'Факты' },
-      cntNew:'новых людей', cntNames:'частей имени', cntMem:'ждёт', cntFacts:'ждёт',
+      all:'Всё', groups:{ newcomers:'Новые', names:'Имена', memories:'Воспоминания', facts:'Факты', connections:'Связи' },
+      cntNew:'новых людей', cntNames:'частей имени', cntMem:'ждёт', cntFacts:'ждёт', cntConn:'ждёт',
+      connSo:'значит', removeReq:'Удалить эту связь',
       waiting:'Ожидает', approve:'Одобрить', decline:'Отклонить', approved:'Принято — теперь это в лесу', declined:'Отложено',
       toapprove:'Одобрите — и это войдёт в лес <span class="g">золотом</span>, для семьи.',
       suggestedBy:'Предложил', toldBy:'Рассказал', uploadedBy:'загрузил', someone:'член семьи', ago:'',
@@ -357,8 +386,9 @@
       notKeeperT:'זו הפינה השקטה של השומר.', notKeeperS:'רק השומר עובר על מה שהמשפחה מציעה. כל מה שאתה מוסיף שמור — הוא פשוט מחכה כאן.', backToForest:'חזרה ליער',
       warm:n=>`${num(n,'he')} ${n===1?'מתנה מחכה':'מתנות <em>מחכות</em>'} לך.`,
       warmSub:'קח אותן בכל סדר. כל אחת היא מישהו שמושיט יד למשפחה — שמורה עד שתאמר כן.',
-      all:'הכל', groups:{ newcomers:'חדשים', names:'שמות', memories:'זכרונות', facts:'עובדות' },
-      cntNew:'אנשים מוצעים', cntNames:'חלקי שם', cntMem:'ממתינים', cntFacts:'ממתינות',
+      all:'הכל', groups:{ newcomers:'חדשים', names:'שמות', memories:'זכרונות', facts:'עובדות', connections:'קשרים' },
+      cntNew:'אנשים מוצעים', cntNames:'חלקי שם', cntMem:'ממתינים', cntFacts:'ממתינות', cntConn:'ממתינים',
+      connSo:'אז', removeReq:'הסר את הקשר הזה',
       waiting:'ממתין', approve:'אשר', decline:'דחה', approved:'התקבל — כעת זה ביער', declined:'הונח בצד',
       toapprove:'אשר וזה יצטרף ליער ב<span class="g">זהב</span>, למשפחה.',
       suggestedBy:'הוצע על ידי', toldBy:'סופר על ידי', uploadedBy:'הועלה על ידי', someone:'בן משפחה', ago:'',
@@ -400,7 +430,7 @@
 
   /* ---------- data ---------- */
   async function loadData(){
-    const out={ people:[], newcomers:[], facts:[], nvs:[], arts:[], peopleMap:{}, profMap:{}, personRow:{},
+    const out={ people:[], newcomers:[], facts:[], nvs:[], arts:[], rels:[], pubRels:[], peopleMap:{}, profMap:{}, personRow:{},
                 pub:[], pubNvs:[], pubIdx:{}, pubAny:{}, pubGroup:{} };
     // all people -> name map + newcomers (+ the whole row: primary_asset is the OLD portrait)
     try{ const {data}=await sb.from('people').select('*'); (data||[]).forEach(p=>{ out.peopleMap[p.id]=p.display_name||p.name||''; out.personRow[p.id]=p; if(p.status&&p.status!=='published') out.newcomers.push(p); }); }catch(e){}
@@ -410,6 +440,12 @@
     try{ const {data}=await sb.from('name_variants').select('*').not('status','eq','published'); out.nvs=data||[]; }catch(e){ out.nvs=[]; }
     // pending artefacts (photo/voice)
     try{ const {data}=await sb.from('artefacts').select('*').not('pub_status','eq','published'); out.arts=(data||[]).filter(a=>a.kind==='photo'||a.kind==='voice'); }catch(e){ out.arts=[]; }
+    // relationships: pending (in_review) go to the queue as connections; published ones are
+    // needed to recognise a pending row that mirrors a live tie (= a removal request).
+    try{ const {data,error}=await sb.from('relationships').select('id,from_person,to_person,kind,certainty,note,status,created_by,created_at'); if(error) throw error;
+      const all=data||[]; out.rels=all.filter(r=>r.status&&r.status!=='published'&&r.status!=='rejected'&&r.status!=='declined'); out.pubRels=all.filter(r=>!r.status||r.status==='published');
+    }catch(e){ try{ const {data}=await sb.from('relationships').select('id,from_person,to_person,kind,status'); const all=data||[];
+        out.rels=all.filter(r=>r.status&&r.status!=='published'); out.pubRels=all.filter(r=>!r.status||r.status==='published'); }catch(e2){ out.rels=[]; out.pubRels=[]; } }
     // PUBLISHED rows -> the OLD value standing behind each pending one (newest published wins)
     try{ const {data}=await sb.from('person_facts').select('id,person_id,group_id,field,lang,value,ord,status,published_at,created_at').eq('status','published'); out.pub=data||[]; }catch(e){ out.pub=[]; }
     try{ const {data}=await sb.from('name_variants').select('*').eq('status','published'); out.pubNvs=data||[]; }catch(e){ out.pubNvs=[]; }
@@ -429,9 +465,21 @@
     pending=out;
   }
 
+  /* a pending relationship that mirrors an existing PUBLISHED tie is a removal request
+     (you cannot re-add a tie that already exists — the tree routes that to edit/remove). */
+  function matchesPublished(r){ const k=r.kind||'parent';
+    return (pending.pubRels||[]).some(p=>(p.kind||'parent')===k && (
+      (p.from_person===r.from_person && p.to_person===r.to_person) ||
+      ((k==='spouse'||k==='sibling') && p.from_person===r.to_person && p.to_person===r.from_person) )); }
+
   /* ---------- grouping ---------- */
   function buildItems(){
-    const items={ newcomers:[], names:[], memories:[], facts:[] };
+    const items={ newcomers:[], names:[], connections:[], memories:[], facts:[] };
+    // pending relationships -> connections
+    (pending.rels||[]).forEach(r=>{ const kind=r.kind||'parent';
+      items.connections.push({ kind:'rel', id:r.id, group:'connections', relkind:kind,
+        from:r.from_person, to:r.to_person, isRemove:matchesPublished(r),
+        suggester:accountName(r.created_by), created_at:r.created_at }); });
     // newcomers
     pending.newcomers.forEach(p=>{ items.newcomers.push({ kind:'person', id:p.id, group:'newcomers',
       value:p.display_name||p.name||'—', suggester:accountName(p.created_by), created_at:p.created_at }); });
@@ -441,6 +489,7 @@
     // person_facts -> names / facts ; custom pairs grouped
     const customByGroup={};
     pending.facts.forEach(f=>{
+      if(f.field==='kin') return; // legacy connection channel — connections now live in the relationships table
       if(f.field==='custom_label'||f.field==='custom_value'){ const g=f.group_id||f.id; (customByGroup[g]=customByGroup[g]||{group_id:g,rows:[],personId:f.person_id,created_by:f.created_by,created_at:f.created_at}).rows.push(f); return; }
       const grp = NAME_FIELDS.includes(f.field) ? 'names' : 'facts';
       items[grp].push({ kind:'fact', id:f.id, group:grp, field:f.field, lang:f.lang, value:factValue(f), personId:f.person_id, suggester:accountName(f.created_by), created_at:f.created_at, raw:f });
@@ -554,7 +603,33 @@
     return IC.fact;
   }
 
+  function connCardHTML(it){ const L=d();
+    const fromNm=personName(it.from)||L.someone, toNm=personName(it.to)||L.someone;
+    const fwd=rnoun(roleFwd(it.relkind, relSexOf(it.from)));
+    const back=rnoun(roleBack(it.relkind, relSexOf(it.to)));
+    const main=connPhrase(`<b>${esc(fromNm)}</b>`, esc(fwd), `<b>${esc(toNm)}</b>`);
+    const recip=connPhrase(esc(toNm), esc(back), esc(fromNm));
+    const ref='rel:'+it.id;
+    const ago=agoText(it.created_at);
+    return `<div class="qcard">
+      <div class="qtop"><span class="qtype">${esc(L.groups.connections)} · <b>${esc(it.isRemove?L.removeReq:fwd)}</b></span><span class="waitchip"><span class="d"></span>${esc(L.waiting)}</span></div>
+      <div class="qbody">
+        <div class="qthumb">${it.isRemove?IC.unlink:IC.kin}</div>
+        <div class="qmain">
+          ${it.isRemove?`<div class="newmark" style="color:var(--coral-hi)">${IC.unlink} ${esc(L.removeReq)}</div>`:''}
+          <div class="qval" style="font-size:20px">${main}</div>
+          <div class="qfor">${esc(L.connSo)} ${recip}</div>
+          <div class="qwho"><span class="av">${IC.person}</span>${esc(L.suggestedBy)} <span class="by">${esc(it.suggester||L.someone)}</span>${ago?` <span class="via">· ${esc(ago)}</span>`:''}</div>
+        </div>
+      </div>
+      <div class="qacts">
+        <button class="decline" data-decline="${esc(ref)}">${IC.no} ${esc(L.decline)}</button>
+        <button class="approve" data-approve="${esc(ref)}">${IC.ok} ${esc(L.approve)}</button>
+      </div>
+    </div>`;
+  }
   function cardHTML(it){ const L=d();
+    if(it.kind==='rel') return connCardHTML(it);
     const ref = it.kind+':'+it.id;
     const voiceExtra = (it.kind==='artefact'&&it.mediaKind==='voice') ? `<button class="miniplay" data-play="${esc(it.storage)}" aria-label="Play">${IC.play}</button>` : '';
     return `<div class="qcard">
@@ -592,8 +667,8 @@
     if(!state.keeper){ pad.innerHTML=notKeeperHTML(); return; }
 
     const items=buildItems();
-    const counts={ newcomers:items.newcomers.length, names:items.names.length, memories:items.memories.length, facts:items.facts.length };
-    const total=counts.newcomers+counts.names+counts.memories+counts.facts;
+    const counts={ newcomers:items.newcomers.length, names:items.names.length, connections:items.connections.length, memories:items.memories.length, facts:items.facts.length };
+    const total=counts.newcomers+counts.names+counts.connections+counts.memories+counts.facts;
 
     if(total===0){ pad.innerHTML=emptyHTML(); attachThumbs(); return; }
 
@@ -602,14 +677,16 @@
     h+=`<div class="filters">`;
     h+=`<span class="fchip${activeFilter==='all'?' on':''}" data-filter="all">${esc(L.all)} <span class="c">${total}</span></span>`;
     if(counts.newcomers) h+=`<span class="fchip${activeFilter==='newcomers'?' on':''}" data-filter="newcomers">${esc(L.groups.newcomers)} <span class="c">${counts.newcomers}</span></span>`;
+    if(counts.connections) h+=`<span class="fchip${activeFilter==='connections'?' on':''}" data-filter="connections">${esc(L.groups.connections)} <span class="c">${counts.connections}</span></span>`;
     if(counts.names) h+=`<span class="fchip${activeFilter==='names'?' on':''}" data-filter="names">${esc(L.groups.names)} <span class="c">${counts.names}</span></span>`;
     if(counts.memories) h+=`<span class="fchip${activeFilter==='memories'?' on':''}" data-filter="memories">${esc(L.groups.memories)} <span class="c">${counts.memories}</span></span>`;
     if(counts.facts) h+=`<span class="fchip${activeFilter==='facts'?' on':''}" data-filter="facts">${esc(L.groups.facts)} <span class="c">${counts.facts}</span></span>`;
     h+=`</div>`;
 
     const show=k=>(activeFilter==='all'||activeFilter===k);
-    if(show('newcomers')) h+=groupHTML('newcomers',IC.newcomer,L.cntNew,items.newcomers);
-    if(show('names'))     h+=groupHTML('names',IC.name,L.cntNames,items.names);
+    if(show('newcomers'))   h+=groupHTML('newcomers',IC.newcomer,L.cntNew,items.newcomers);
+    if(show('connections')) h+=groupHTML('connections',IC.kin,L.cntConn,items.connections);
+    if(show('names'))       h+=groupHTML('names',IC.name,L.cntNames,items.names);
     if(show('memories'))  h+=groupHTML('memories',IC.memory,L.cntMem,items.memories);
     if(show('facts'))     h+=groupHTML('facts',IC.fact,L.cntFacts,items.facts);
     h+=`<div class="foot"><div class="l">${esc(L.foot)}</div></div>`;
@@ -655,6 +732,14 @@
     else if(kind==='nv'){ try{ await sb.from('name_variants').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){} }
     else if(kind==='artefact'){ try{ await sb.from('artefacts').update({pub_status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){ try{ await sb.from('artefacts').update({pub_status:'published',reviewed_by:user.id}).eq('id',id); }catch(e2){} } }
     else if(kind==='person'){ try{ await sb.from('people').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){ try{ await sb.from('people').update({status:'published'}).eq('id',id); }catch(e2){} } }
+    else if(kind==='rel'){ const r=(pending.rels||[]).find(x=>x.id===id);
+      if(r && matchesPublished(r)){ // removal request: delete the live tie it mirrors, then the request
+        const k=r.kind||'parent';
+        const tw=(pending.pubRels||[]).find(p=>(p.kind||'parent')===k && ((p.from_person===r.from_person&&p.to_person===r.to_person)||((k==='spouse'||k==='sibling')&&p.from_person===r.to_person&&p.to_person===r.from_person)));
+        if(tw){ try{ await sb.from('relationships').delete().eq('id',tw.id); }catch(e){} }
+        try{ await sb.from('relationships').delete().eq('id',id); }catch(e){}
+      } else { let u=await sb.from('relationships').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id);
+        if(u.error){ u=await sb.from('relationships').update({status:'published',reviewed_by:user.id}).eq('id',id); if(u.error) await sb.from('relationships').update({status:'published'}).eq('id',id); } } }
     await reload(); toast(d().approved,true);
   }
   async function declineRef(ref){ if(!user||!state.keeper) return; const [kind,id]=ref.split(':');
@@ -663,6 +748,7 @@
     else if(kind==='nv'){ try{ await sb.from('name_variants').delete().eq('id',id); }catch(e){} }
     else if(kind==='artefact'){ try{ await sb.from('artefacts').update({pub_status:'rejected'}).eq('id',id); }catch(e){} }
     else if(kind==='person'){ try{ await sb.from('people').update({status:'rejected'}).eq('id',id); }catch(e){} }
+    else if(kind==='rel'){ try{ await sb.from('relationships').delete().eq('id',id); }catch(e){} } // drop the pending request; a live tie it mirrored stays untouched
     await reload(); toast(d().declined,false);
   }
 
