@@ -82,6 +82,12 @@
   .pcard .conn:hover{ transform:scale(1.12); }
   [dir="rtl"] .pcard .conn{ right:auto; left:-11px; }
   .pcard .conn svg{ width:15px; height:15px; }
+  .pcard .opic{ position:absolute; top:-9px; left:-9px; width:27px; height:27px; border-radius:50%; z-index:6;
+    display:grid; place-items:center; cursor:pointer; color:#1a0f2e; border:2px solid #04070e;
+    background:linear-gradient(180deg,#f7dfa4,var(--gold,#f3cd84)); box-shadow:0 4px 12px -2px #000; transition:transform .18s; }
+  .pcard .opic:hover{ transform:scale(1.12); }
+  [dir="rtl"] .pcard .opic{ left:auto; right:-9px; }
+  .pcard .opic svg{ width:14px; height:14px; }
   .pcard .pendpin{ position:absolute; top:-6px; right:-6px; width:17px; height:17px; border-radius:50%; z-index:5;
     background:var(--edit); border:2px solid #04070e; display:grid; place-items:center; }
   [dir="rtl"] .pcard .pendpin{ right:auto; left:-6px; }
@@ -403,6 +409,7 @@ const I={
   fit:'<path d="M8 3H3v5"/><path d="M21 8V3h-5"/><path d="M16 21h5v-5"/><path d="M3 16v5h5"/>',
   chev:'<path d="M6 9l6 6 6-6"/>', clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   spark:'<path d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6z"/>',
+  photo:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10.5" r="1.6"/><path d="M4 17l5-4 4 3 3-2 4 4"/>',
   bust:'<circle cx="12" cy="9" r="3.6"/><path d="M5 20c0-3.4 3.1-6 7-6s7 2.6 7 6"/>',
   back:'<path d="M15 18l-6-6 6-6"/>', search:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>',
   check:'<path d="M20 6L9 17l-5-5"/>',
@@ -426,7 +433,7 @@ const STR={
     parentchild:'Parent & child', pcsub:'the line drops a generation', spouse2:'Married', spsub:'a joined pair',
     sibling2:'Brothers & sisters', sibsub:'share the same bar', documented:'Documented', remembered:'Remembered', uncertain:'Uncertain',
     pending:'Waiting for the keeper', apppath:'A path the app worked out',
-    fitmsg:'The whole family', tracePick:'Pick a person, then trace how they reach you', traceoff:'Trace off',
+    fitmsg:'The whole family', tracePick:'Pick a person, then trace how they reach you', traceoff:'Trace off', openPhoto:'Open this photograph',
     noYou:'We don’t know yet which person is you. Ask the keeper to link your account.', noPath:'No family path found between them and you yet.',
     homeToast:'Back to the globe →', born:'b. {y}', child_of:'child of {n}',
     /* connect */
@@ -453,7 +460,7 @@ const STR={
     parentchild:'Родитель и ребёнок', pcsub:'линия спускается на поколение', spouse2:'В браке', spsub:'соединённая пара',
     sibling2:'Братья и сёстры', sibsub:'на общей перекладине', documented:'Задокументировано', remembered:'По памяти', uncertain:'Неточно',
     pending:'Ждёт хранителя', apppath:'Путь, вычисленный приложением',
-    fitmsg:'Вся семья', tracePick:'Выберите человека, чтобы проследить путь к вам', traceoff:'Трасса выкл',
+    fitmsg:'Вся семья', tracePick:'Выберите человека, чтобы проследить путь к вам', traceoff:'Трасса выкл', openPhoto:'Открыть фотографию',
     noYou:'Мы пока не знаем, кто из людей — это вы. Попросите хранителя связать ваш аккаунт.', noPath:'Пока не найден семейный путь между ними и вами.',
     homeToast:'К глобусу →', born:'р. {y}', child_of:'ребёнок: {n}',
     connectTitle:'Связать этого человека', connectSub:'с другим родственником — приложение проверит',
@@ -479,7 +486,7 @@ const STR={
     parentchild:'הורה וילד', pcsub:'הקו יורד דור', spouse2:'נשואים', spsub:'זוג מחובר',
     sibling2:'אחים ואחיות', sibsub:'חולקים אותו מוט', documented:'מתועד', remembered:'מהזיכרון', uncertain:'לא בטוח',
     pending:'ממתין לשומר', apppath:'נתיב שהאפליקציה חישבה',
-    fitmsg:'כל המשפחה', tracePick:'בחר אדם, ועקוב איך הוא מגיע אליך', traceoff:'מעקב כבוי',
+    fitmsg:'כל המשפחה', tracePick:'בחר אדם, ועקוב איך הוא מגיע אליך', traceoff:'מעקב כבוי', openPhoto:'פתח את התצלום',
     noYou:'עדיין לא ידוע מי מהאנשים הוא אתה. בקשו מהשומר לקשר את החשבון.', noPath:'עדיין לא נמצא נתיב משפחתי בינם ובינך.',
     homeToast:'חזרה לגלובוס →', born:'נ׳ {y}', child_of:'ילד/ה של {n}',
     connectTitle:'לחבר את האדם הזה', connectSub:'לקרוב אחר — האפליקציה מוודאת שזה נכון',
@@ -603,6 +610,8 @@ async function loadFaceCrop(path,box){ const u=await signedUrl(path,900); let r=
 function setFaceEl(el,dataUrl){ const im=new Image(); im.decoding='async'; im.onload=()=>{ el.innerHTML=''; el.appendChild(im); }; im.src=dataUrl; }
 
 function hasFace(id){ const p=people[id]; return !!((p&&p.primary_asset)||faceFallback[id]); }
+// the artefact the card's face is cropped from → its Moment page (primary_asset resolved via artByPath, else the tagged fallback)
+function faceArt(id){ const p=people[id]; if(p&&p.primary_asset&&artByPath[p.primary_asset]) return artByPath[p.primary_asset]; const fb=faceFallback[id]; return (fb&&fb.art)||''; }
 // true when the card for `id` is at/near the current viewport (world→screen), so it loads first
 function inViewport(id){ if(!pos[id]) return false; const s=state.scale;
   const sx=CX(id)*s+state.tx, sy=CTOP(id)*s+state.ty, mx=CW*s, my=CH*s;
@@ -630,7 +639,8 @@ let people={};        // id -> {id,display_name,sex,primary_asset,birth_year,dea
 let nameLoc={};       // id -> {lang -> {given,family,called,display}}
 let edges=[];         // {id, from, to, kind, certainty, note, status}
 let pendingKin=[];    // {id, person_id, value(json), created_by, status}
-let faceFallback={};  // id -> {path, box:{x,y,w,h}} — a photo the person is tagged in (artefact_subjects), used when no primary_asset
+let faceFallback={};  // id -> {path, box:{x,y,w,h}, art} — a photo the person is tagged in (artefact_subjects), used when no primary_asset
+let artByPath={};     // storage_path -> artefact_id, to resolve a person's primary_asset back to its moment
 let pos={};           // id -> {x(centre px), tier}
 let placedSet=new Set();
 let unplaced=[];      // ids
@@ -824,6 +834,7 @@ function buildCards(){
   [...placedSet].forEach(id=>{ const p=people[id]; const el=document.createElement('button');
     const isYou=(viewerPersonId&&id===viewerPersonId);
     const noPhoto=!hasFace(id);
+    const fa=faceArt(id);
     el.className='pcard'+(noPhoto?' nophoto':'')+(isYou?' you':'')+(state.sel===id?' sel':'');
     el.style.left=(CX(id)-CW/2)+'px'; el.style.top=CTOP(id)+'px'; el.dataset.id=id;
     const pend=pendingKin.some(k=>{ const v=parseKin(k.value); return k.person_id===id || (v&&v.other===id); });
@@ -831,6 +842,7 @@ function buildCards(){
       (isYou?`<span class="youtag">${esc(state.lang==='he'?'זה אתה':state.lang==='ru'?'это вы':'this is you')}</span>`:'')+
       (pend?`<span class="pendpin">${svg(I.clock,2)}</span>`:'')+
       `<span class="por" data-face="${esc(id)}"></span>`+
+      (fa?`<span class="opic" data-open-moment="${esc(fa)}" role="button" aria-label="${esc((L().openPhoto)||'Open this photograph')}" title="${esc((L().openPhoto)||'Open this photograph')}" tabindex="0">${svg(I.photo,2)}</span>`:'')+
       `<span class="pnm serif">${esc(firstName(id))}</span>`+
       `<span class="phint">${esc(lifeHint(id))}</span>`+
       `<span class="conn" data-conn="${esc(id)}" role="button" aria-label="connect" tabindex="0">${svg(I.plus,2.2)}</span>`;
@@ -993,13 +1005,13 @@ async function loadData(){
       sb.from('artefact_subjects').select('artefact_id,person_id,detail'),
       sb.from('artefacts').select('id,storage_path').eq('status','published').eq('kind','photo')
     ]);
-    const artPath={}; (artsR.data||[]).forEach(a=>{ if(a.storage_path) artPath[a.id]=a.storage_path; });
+    const artPath={}; artByPath={}; (artsR.data||[]).forEach(a=>{ if(a.storage_path){ artPath[a.id]=a.storage_path; artByPath[a.storage_path]=a.id; } });
     const bestArea={};
     (subsR.data||[]).forEach(s=>{ const d=s.detail; if(!d||typeof d.x!=='number'||typeof d.w!=='number') return;
       const path=artPath[s.artefact_id]; if(!path) return;
       const area=(d.w||0)*(d.h||0);
       if(faceFallback[s.person_id]==null || area>bestArea[s.person_id]){
-        faceFallback[s.person_id]={ path, box:{x:d.x, y:d.y, w:d.w, h:d.h} }; bestArea[s.person_id]=area; } });
+        faceFallback[s.person_id]={ path, box:{x:d.x, y:d.y, w:d.w, h:d.h}, art:s.artefact_id }; bestArea[s.person_id]=area; } });
   }catch(e){ faceFallback={}; }
 }
 
@@ -1133,7 +1145,7 @@ function dist(a,b){ return Math.hypot(a.x-b.x,a.y-b.y)||1; }
 function stopInertia(){ if(inertia){ cancelAnimationFrame(inertia); inertia=null; } }
 function startInertia(vx,vy){ let fx=vx,fy=vy; (function run(){ fx*=0.92; fy*=0.92; state.tx+=fx; state.ty+=fy; apply();
   if(Math.abs(fx)+Math.abs(fy)>0.4){ inertia=requestAnimationFrame(run); } else inertia=null; })(); }
-vp.addEventListener('pointerdown',e=>{ if(e.target.closest('[data-conn]')) return; vp.setPointerCapture(e.pointerId);
+vp.addEventListener('pointerdown',e=>{ if(e.target.closest('[data-conn]')||e.target.closest('[data-open-moment]')) return; vp.setPointerCapture(e.pointerId);
   ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); stopInertia();
   if(ptrs.size===1){ const card=e.target.closest('.pcard'); world.style.transition='';
     drag={x:e.clientX,y:e.clientY,tx:state.tx,ty:state.ty,moved:false,card,vx:0,vy:0,lx:e.clientX,ly:e.clientY}; vp.classList.add('drag'); }
@@ -1158,7 +1170,9 @@ function onCardTap(id){ if(state.trace){ state.sel=(state.sel===id?null:id); bui
   location.href='person-real.html?id='+encodeURIComponent(id); }
 
 /* ---------- global click routing ---------- */
+document.body.addEventListener('keydown',e=>{ if(e.key!=='Enter'&&e.key!==' ')return; const om=e.target.closest&&e.target.closest('[data-open-moment]'); if(om){ e.preventDefault(); const aid=om.getAttribute('data-open-moment'); if(aid) location.href='moment-real.html?id='+encodeURIComponent(aid); } });
 document.body.addEventListener('click',e=>{
+  const om=e.target.closest('[data-open-moment]'); if(om){ e.preventDefault(); e.stopPropagation(); const aid=om.getAttribute('data-open-moment'); if(aid) location.href='moment-real.html?id='+encodeURIComponent(aid); return; }
   const conn=e.target.closest('[data-conn]'); if(conn){ e.preventDefault(); openConnect(conn.dataset.conn); return; }
   const pick=e.target.closest('[data-pick]'); if(pick){ CF.other=(CF.other===pick.dataset.pick?null:pick.dataset.pick); renderPick(); return; }
   const rel=e.target.closest('[data-rel]'); if(rel){ CF.rel=rel.dataset.rel; renderRel(); return; }

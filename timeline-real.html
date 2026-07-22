@@ -185,7 +185,7 @@ async function load(){
       let chips='';
       if(ppl.length){ chips='<div class="chips">'+ppl.slice(0,10).map(n=>'<span class="chip" data-id="'+esc(idByName[n]||'')+'">'+esc(n)+'</span>').join('')+'</div>'; }
       h+='<div class="mem" data-edit="'+esc(a.id)+'">'+
-           (isImg?'<div class="thumb" data-path="'+esc(a.storage_path)+'">photo</div>':'<div class="thumb">'+esc(a.kind||'memory')+'</div>')+
+           (isImg?'<div class="thumb" data-path="'+esc(a.storage_path)+'" data-art="'+esc(a.id)+'" role="button" tabindex="0" aria-label="Open this photograph" title="Open this photograph" style="cursor:pointer">photo</div>':'<div class="thumb">'+esc(a.kind||'memory')+'</div>')+
            '<div class="mt"><div class="ww"><b>'+esc(a.metadata.when)+'</b>'+where+'</div><div class="ttl">'+title+'</div>'+chips+'</div>'+
          '</div>';
     });
@@ -202,6 +202,12 @@ async function load(){
 
     /* thumbnails */
     document.querySelectorAll('.thumb[data-path]').forEach(el=>{ bgThumb(el, el.getAttribute('data-path')); });
+    /* the photo itself → the Moment page (any photo, anywhere, opens the moment) */
+    document.querySelectorAll('.thumb[data-art]').forEach(el=>{
+      const go=e=>{ e.stopPropagation(); const aid=el.getAttribute('data-art'); if(aid) location.href='moment-real.html?id='+encodeURIComponent(aid); };
+      el.addEventListener('click',go);
+      el.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(e); } });
+    });
     /* chip → person */
     document.querySelectorAll('.chip').forEach(c=>{ c.addEventListener('click',e=>{ e.stopPropagation(); const id=c.getAttribute('data-id'); if(id) location.href='person-real.html?id='+encodeURIComponent(id); }); });
     /* row → its people's first person (a gentle way in); if none, no-op */
