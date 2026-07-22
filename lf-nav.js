@@ -31,7 +31,7 @@
   + '#lfnavPanel a:active{background:rgba(243,205,132,.16);}'
   + '#lfnavPanel a.cur{color:#f3cd84;}'
   + '#lfnavPanel a .ic{width:18px;text-align:center;opacity:.9;}'
-  + '#lfnavBtn{width:48px;height:48px;border-radius:50%;border:1px solid rgba(243,205,132,.5);background:rgba(9,16,30,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#f3cd84;font-size:20px;line-height:1;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;}'
+  + '#lfnavBtn{touch-action:none;width:48px;height:48px;border-radius:50%;border:1px solid rgba(243,205,132,.5);background:rgba(9,16,30,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#f3cd84;font-size:20px;line-height:1;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;}'
   + '#lfnav.open #lfnavBtn{border-color:rgba(243,205,132,.9);}';
   var st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);
 
@@ -127,12 +127,14 @@
   try{ var saved=JSON.parse(localStorage.getItem(DRAG_KEY)||'null'); if(saved) applyPos(clamp(saved.x,saved.y)); }catch(e){}
 
   btn.addEventListener('pointerdown', function(e){
+    e.preventDefault();
     dragging=true; moved=false;
     var r=wrap.getBoundingClientRect(); ox=r.left; oy=r.top; sx=e.clientX; sy=e.clientY;
     try{ btn.setPointerCapture(e.pointerId); }catch(_){}
   });
-  btn.addEventListener('pointermove', function(e){
+  window.addEventListener('pointermove', function(e){
     if(!dragging) return;
+    e.preventDefault();
     var dx=e.clientX-sx, dy=e.clientY-sy;
     if(!moved && Math.abs(dx)+Math.abs(dy) < 6) return;   // small movement = still a tap
     moved=true; wrap.classList.remove('open');
@@ -146,8 +148,8 @@
       try{ localStorage.setItem(DRAG_KEY, JSON.stringify({x:r.left,y:r.top})); }catch(_){}
     }
   }
-  btn.addEventListener('pointerup', endDrag);
-  btn.addEventListener('pointercancel', endDrag);
+  window.addEventListener('pointerup', endDrag);
+  window.addEventListener('pointercancel', endDrag);
   window.addEventListener('resize', function(){
     try{ var sp=JSON.parse(localStorage.getItem(DRAG_KEY)||'null'); if(sp) applyPos(clamp(sp.x,sp.y)); }catch(_){}
   });
