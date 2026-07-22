@@ -122,10 +122,14 @@
   .lgsep{ height:1px; background:var(--hair); margin:2px 0; }
 
   /* unlinked drawer */
-  .unlinked{ position:absolute; z-index:15; left:50%; bottom:0; transform:translate(-50%, calc(100% - 34px)); width:calc(100% - 24px); max-width:520px;
-    background:linear-gradient(180deg,#0f1e33,#081120); border:1px solid var(--hair); border-bottom:none; border-radius:18px 18px 0 0;
-    box-shadow:0 -20px 60px -30px #000; transition:transform .34s cubic-bezier(.16,.8,.28,1); }
-  .unlinked.open{ transform:translate(-50%,0); }
+  /* floats above the collapsed legend (~60px) and clears the zoom dock on the far side.
+     Logical inset keeps it on the reading-start side and dock-clear in RTL too. */
+  .unlinked{ position:absolute; z-index:15; inset-inline-start:12px; inset-inline-end:auto; bottom:calc(66px + env(safe-area-inset-bottom));
+    width:calc(100% - 88px); max-width:460px;
+    background:linear-gradient(180deg,#0f1e33,#081120); border:1px solid var(--hair); border-radius:18px;
+    box-shadow:0 22px 60px -30px #000; transition:transform .34s cubic-bezier(.16,.8,.28,1);
+    transform:translateY(calc(100% - 70px)); }
+  .unlinked.open{ transform:translateY(0); }
   .unlinked.empty{ display:none; }
   .unlinked .uh{ position:relative; display:flex; align-items:center; gap:9px; padding:14px 16px 11px; cursor:pointer; }
   .unlinked .uh .grip{ position:absolute; top:7px; left:50%; transform:translateX(-50%); width:38px; height:4px; border-radius:99px; background:rgba(255,255,255,.2); }
@@ -544,9 +548,20 @@ async function signedUrl(path){ if(!path) return ''; try{ const r=await sb.stora
 async function faceInto(el, path, box){ if(!el||!path) return; const u=await signedUrl(path); if(!u) return;
   const img=new Image(); img.crossOrigin='anonymous';
   img.onload=()=>{ const c=document.createElement('canvas'); c.width=c.height=160; const g=c.getContext('2d');
-    if(box&&box.w>0&&box.h>0){ const pad=0.35, side=Math.max(box.w*(1+2*pad),box.h*(1+2*pad))*Math.max(img.naturalWidth,img.naturalHeight);
-      let sx=(box.x+box.w/2)*img.naturalWidth-side/2, sy=(box.y+box.h/2)*img.naturalHeight-side/2;
-      sx=Math.max(0,Math.min(img.naturalWidth-side,sx)); sy=Math.max(0,Math.min(img.naturalHeight-side,sy)); g.drawImage(img,sx,sy,side,side,0,0,160,160);
+    if(box&&box.w>0&&box.h>0){
+      // box is NORMALISED (fractions of the image). Convert to pixels PER-AXIS — w is a
+      // fraction of WIDTH, h a fraction of HEIGHT; they must not share one dimension.
+      const bw=box.w*img.naturalWidth;                 // face width in px
+      const bh=box.h*img.naturalHeight;                // face height in px
+      const cx=(box.x+box.w/2)*img.naturalWidth;       // face centre px
+      const cy=(box.y+box.h/2)*img.naturalHeight;
+      const pad=0.35;                                   // keep some head-room
+      let side=Math.max(bw,bh)*(1+2*pad);               // square crop around the face
+      side=Math.min(side,img.naturalWidth,img.naturalHeight); // never exceed the image
+      let sx=cx-side/2, sy=cy-side/2;                   // clamp into bounds
+      sx=Math.max(0,Math.min(img.naturalWidth-side,sx));
+      sy=Math.max(0,Math.min(img.naturalHeight-side,sy));
+      g.drawImage(img,sx,sy,side,side,0,0,160,160);
     } else { const s=Math.min(img.naturalWidth,img.naturalHeight); g.drawImage(img,(img.naturalWidth-s)/2,(img.naturalHeight-s)/2,s,s,0,0,160,160); }
     el.innerHTML=''; el.appendChild(c); }; img.src=u; }
 function hasFace(id){ const p=people[id]; return !!((p&&p.primary_asset)||faceFallback[id]); }
@@ -699,29 +714,40 @@ function buildLinks(){
     // find co-parents of this child that are placed
     const par=parentsOf(e.to).filter(p=>pos[p]); const key=par.slice().sort().join('|');
     (fam[key]=fam[key]||{parents:par, kids:{}}); fam[key].kids[e.to]=e; });
+  let famOff=0;
   Object.values(fam).forEach(f=>{ if(!f.parents.length) return;
     // co-parents get a spouse bar too if not already
     if(f.parents.length===2){ const key=f.parents.slice().sort().join('|'); if(!drawnSp.has(key)){ drawnSp.add(key); drawSpouse(f.parents[0],f.parents[1]); } }
     const px = f.parents.reduce((a,b)=>a+CX(b),0)/f.parents.length;
     const py = Math.max(...f.parents.map(CBOT));
     const kidIds=Object.keys(f.kids);
-    const kidTops=kidIds.map(CTOP); const busY=Math.min(...kidTops)-26;
+    // bus sits in the empty gap ABOVE the children's row; a small per-family offset keeps
+    // two families' buses on one tier from lining up into a single apparent connector.
+    const kidTops=kidIds.map(CTOP); const busY=Math.min(...kidTops)-26-(famOff%3)*7; famOff++;
     const certs=kidIds.map(k=>f.kids[k].certainty||'remembered');
     const rep = certs.includes('documented')?'documented':(certs.includes('remembered')?'remembered':'uncertain');
     links.appendChild(mkPath(`M ${px} ${py} V ${busY}`,'ln c-'+rep+(rep==='documented'&&!reduceMotion?' sap':'')));
+    // horizontal sibling bar spans ONLY this parent-set's real children
     const xs=kidIds.map(CX); const minx=Math.min(...xs), maxx=Math.max(...xs);
     if(kidIds.length>1) links.appendChild(mkPath(`M ${minx} ${busY} H ${maxx}`,'ln c-'+rep));
     kidIds.forEach(k=>{ const c=(f.kids[k].certainty||'remembered'); links.appendChild(mkPath(`M ${CX(k)} ${busY} V ${CTOP(k)}`,'ln c-'+c)); });
   });
-  // explicit sibling edges (subtle) when not already sharing a parent bus
+  // explicit sibling edges (subtle) when not already sharing a parent bus.
+  // Route as a bracket in the gap ABOVE the cards — up from each card top, across, down —
+  // so a run between distant siblings never passes THROUGH an unrelated card (the old
+  // curve sat at card-mid height and read as a spurious connection). Stagger per edge.
+  let sibOff=0;
   edges.forEach(e=>{ if(e.kind!=='sibling'||!pos[e.from]||!pos[e.to]) return;
     const shared=parentsOf(e.from).some(p=>parentsOf(e.to).includes(p)); if(shared) return;
-    const y=Math.min(CMID(e.from),CMID(e.to))-8; links.appendChild(mkPath(`M ${CX(e.from)} ${CMID(e.from)} C ${CX(e.from)} ${y}, ${CX(e.to)} ${y}, ${CX(e.to)} ${CMID(e.to)}`,'ln sibling')); });
-  // pending kin suggestions → violet dashed connectors between the two placed cards
+    const ax=CX(e.from), bx=CX(e.to); const busY=Math.min(CTOP(e.from),CTOP(e.to))-16-(sibOff%3)*7; sibOff++;
+    links.appendChild(mkPath(`M ${ax} ${CTOP(e.from)} V ${busY} H ${bx} V ${CTOP(e.to)}`,'ln sibling')); });
+  // pending kin suggestions → violet dashed connector, routed in the gap ABOVE the cards
+  // (never through an unrelated card), staggered so several don't merge into one line.
+  let pendOff=0;
   pendingKin.forEach(k=>{ const v=parseKin(k.value); if(!v||v.op==='remove') return; const a=k.person_id, b=v.other;
-    if(pos[a]&&pos[b]){ const y=Math.min(CMID(a),CMID(b))-14;
-      links.appendChild(mkPath(`M ${CX(a)} ${CMID(a)} C ${CX(a)} ${y}, ${CX(b)} ${y}, ${CX(b)} ${CMID(b)}`,'ln pend'));
-      links.appendChild(mkEl('circle',{cx:(CX(a)+CX(b))/2, cy:y, r:8, class:'pendbadge'})); } });
+    if(pos[a]&&pos[b]){ const ax=CX(a), bx=CX(b); const busY=Math.min(CTOP(a),CTOP(b))-20-(pendOff%3)*7; pendOff++;
+      links.appendChild(mkPath(`M ${ax} ${CTOP(a)} V ${busY} H ${bx} V ${CTOP(b)}`,'ln pend'));
+      links.appendChild(mkEl('circle',{cx:(ax+bx)/2, cy:busY, r:8, class:'pendbadge'})); } });
   // trace path (cool)
   if(state.trace && state.sel && viewerPersonId && state.sel!==viewerPersonId){ const chain=tracePath(viewerPersonId,state.sel);
     if(chain){ for(let i=0;i<chain.length-1;i++){ const a=chain[i],b=chain[i+1]; if(pos[a]&&pos[b])
@@ -729,8 +755,17 @@ function buildLinks(){
   sizeLinks();
 }
 function drawSpouse(a,b){ const y=CMID(a), x1=CX(a), x2=CX(b), mx=(x1+x2)/2;
-  links.appendChild(mkPath(`M ${Math.min(x1,x2)+CW/2-6} ${y} H ${Math.max(x1,x2)-CW/2+6}`,'ln spouse'));
-  links.appendChild(mkEl('circle',{cx:mx, cy:y, r:4.5, class:'knot'})); }
+  // adjacent partners: a short bar between their edges. Distant co-parents: route the join
+  // through the gap ABOVE the cards so the bar never crosses an unrelated card between them.
+  if(Math.abs(x1-x2) <= COLW*1.35){
+    links.appendChild(mkPath(`M ${Math.min(x1,x2)+CW/2-6} ${y} H ${Math.max(x1,x2)-CW/2+6}`,'ln spouse'));
+    links.appendChild(mkEl('circle',{cx:mx, cy:y, r:4.5, class:'knot'}));
+  } else {
+    const busY=Math.min(CTOP(a),CTOP(b))-12;
+    links.appendChild(mkPath(`M ${x1} ${CTOP(a)} V ${busY} H ${x2} V ${CTOP(b)}`,'ln spouse'));
+    links.appendChild(mkEl('circle',{cx:mx, cy:busY, r:4.5, class:'knot'}));
+  } }
+
 function sizeLinks(){ const bb=worldBBox(); const w=bb.maxX+PADX, h=bb.maxY+PADY;
   links.setAttribute('width',w); links.setAttribute('height',h); world.style.width=w+'px'; world.style.height=h+'px'; }
 function sapShimmer(){ if(reduceMotion) return; links.querySelectorAll('.ln.c-documented.sap').forEach((l,i)=>{ l.style.strokeDasharray='42 14'; l.style.animationDelay=(i*0.5)+'s'; }); }
