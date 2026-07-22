@@ -111,6 +111,53 @@
   wrap.appendChild(panel); wrap.appendChild(btn);
   function place(){ (document.body||document.documentElement).appendChild(wrap); }
   if(document.body) place(); else document.addEventListener('DOMContentLoaded', place);
-  btn.addEventListener('click', function(e){ e.stopPropagation(); wrap.classList.toggle('open'); });
+  // --- tap opens the menu; DRAG moves the whole dock (position remembered) ---
+  var DRAG_KEY='lf-nav-pos', dragging=false, moved=false, sx=0, sy=0, ox=0, oy=0;
+  function applyPos(p){
+    if(!p) return;
+    wrap.style.right='auto'; wrap.style.bottom='auto';
+    wrap.style.left=p.x+'px'; wrap.style.top=p.y+'px';
+  }
+  function clamp(x,y){
+    var r=wrap.getBoundingClientRect();
+    var maxX=Math.max(0, window.innerWidth  - r.width  - 6);
+    var maxY=Math.max(0, window.innerHeight - r.height - 6);
+    return { x: Math.min(Math.max(6,x), maxX), y: Math.min(Math.max(6,y), maxY) };
+  }
+  try{ var saved=JSON.parse(localStorage.getItem(DRAG_KEY)||'null'); if(saved) applyPos(clamp(saved.x,saved.y)); }catch(e){}
+
+  btn.addEventListener('pointerdown', function(e){
+    dragging=true; moved=false;
+    var r=wrap.getBoundingClientRect(); ox=r.left; oy=r.top; sx=e.clientX; sy=e.clientY;
+    try{ btn.setPointerCapture(e.pointerId); }catch(_){}
+  });
+  btn.addEventListener('pointermove', function(e){
+    if(!dragging) return;
+    var dx=e.clientX-sx, dy=e.clientY-sy;
+    if(!moved && Math.abs(dx)+Math.abs(dy) < 6) return;   // small movement = still a tap
+    moved=true; wrap.classList.remove('open');
+    var p=clamp(ox+dx, oy+dy); applyPos(p);
+  });
+  function endDrag(e){
+    if(!dragging) return; dragging=false;
+    try{ btn.releasePointerCapture(e.pointerId); }catch(_){}
+    if(moved){
+      var r=wrap.getBoundingClientRect();
+      try{ localStorage.setItem(DRAG_KEY, JSON.stringify({x:r.left,y:r.top})); }catch(_){}
+    }
+  }
+  btn.addEventListener('pointerup', endDrag);
+  btn.addEventListener('pointercancel', endDrag);
+  window.addEventListener('resize', function(){
+    try{ var sp=JSON.parse(localStorage.getItem(DRAG_KEY)||'null'); if(sp) applyPos(clamp(sp.x,sp.y)); }catch(_){}
+  });
+  // double-tap the button resets it to the default corner
+  btn.addEventListener('dblclick', function(e){
+    e.stopPropagation();
+    try{ localStorage.removeItem(DRAG_KEY); }catch(_){}
+    wrap.style.left='auto'; wrap.style.top='auto'; wrap.style.right='14px'; wrap.style.bottom='calc(14px + env(safe-area-inset-bottom))';
+  });
+
+  btn.addEventListener('click', function(e){ e.stopPropagation(); if(moved){ moved=false; return; } wrap.classList.toggle('open'); });
   document.addEventListener('click', function(e){ if(!wrap.contains(e.target)) wrap.classList.remove('open'); });
 })();
