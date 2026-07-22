@@ -544,9 +544,40 @@ function faceSVG(seed){ seed=seed>>>0;
   const bg=['#2a3a52','#26324a','#2c3b46','#323a52','#2a3448'][seed%5];
   return `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="${bg}"/><path d="M50 98 Q50 70 26 66 Q30 42 50 42 Q70 42 74 66 Q50 70 50 98Z" fill="#c9c1b4"/><ellipse cx="50" cy="52" rx="23" ry="26" fill="${skin}"/><path d="M27 46 Q30 22 50 22 Q70 22 73 46 Q62 33 50 33 Q38 33 27 46Z" fill="${hair}"/><ellipse cx="42" cy="52" rx="2.6" ry="3" fill="#3a2b22"/><ellipse cx="58" cy="52" rx="2.6" ry="3" fill="#3a2b22"/><path d="M44 65 Q50 69 56 65" stroke="#a06b4c" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>`; }
 function placeholderFor(id){ return faceSVG(hash(id)); }
-async function signedUrl(path){ if(!path) return ''; try{ const r=await sb.storage.from('family').createSignedUrl(path,3600); return (r.data&&r.data.signedUrl)||''; }catch(e){ return ''; } }
-async function faceInto(el, path, box){ if(!el||!path) return; const u=await signedUrl(path); if(!u) return;
-  const img=new Image(); img.crossOrigin='anonymous';
+// Signed URL. When `width` is given, ask Supabase Storage's render endpoint for a
+// resized source (much smaller than the full group photo) — falls back gracefully:
+// callers retry without a transform if the render feature is unavailable on the project.
+async function signedUrl(path,width){ if(!path) return ''; try{
+    const opts = width ? { transform:{ width:width, resize:'contain' } } : undefined;
+    const r=await sb.storage.from('family').createSignedUrl(path,3600,opts); return (r.data&&r.data.signedUrl)||'';
+  }catch(e){ return ''; } }
+
+/* ---- cropped-face cache (IndexedDB): store the finished 160×160 crop as a dataURL,
+   keyed by personId|storagePath|box. On next load the crop is served instantly and the
+   full-size download + client crop is skipped entirely. Key changes ⇒ auto-invalidated. */
+const FaceCache=(function(){ let dbp=null;
+  function open(){ if(dbp) return dbp; dbp=new Promise(res=>{ try{ const r=indexedDB.open('lf-tree-faces',1);
+    r.onupgradeneeded=()=>{ try{ r.result.createObjectStore('crops'); }catch(e){} };
+    r.onsuccess=()=>res(r.result); r.onerror=()=>res(null); }catch(e){ res(null); } }); return dbp; }
+  return {
+    async get(k){ const d=await open(); if(!d) return null; return new Promise(res=>{ try{ const rq=d.transaction('crops','readonly').objectStore('crops').get(k); rq.onsuccess=()=>res(rq.result||null); rq.onerror=()=>res(null); }catch(e){ res(null); } }); },
+    async put(k,v){ const d=await open(); if(!d) return; try{ d.transaction('crops','readwrite').objectStore('crops').put(v,k); }catch(e){} }
+  };
+})();
+function boxKey(box){ if(!box) return 'full'; return [box.x,box.y,box.w,box.h].map(n=>Math.round((+n||0)*1000)).join('_'); }
+function faceKey(id,path,box){ return id+'|'+path+'|'+boxKey(box); }
+
+/* concurrency-capped loader — viewport-first (priority tasks jump the queue) so the
+   visible cards fill in before the rest; the cap keeps the network from thrashing. */
+const faceQ={ tasks:[], active:0, cap:5 };
+function faceEnqueue(task,priority){ if(priority) faceQ.tasks.unshift(task); else faceQ.tasks.push(task); facePump(); }
+function facePump(){ while(faceQ.active<faceQ.cap && faceQ.tasks.length){ const t=faceQ.tasks.shift(); faceQ.active++;
+    Promise.resolve().then(t).catch(()=>{}).then(()=>{ faceQ.active--; facePump(); }); } }
+
+// download (resized) source → crop the face into a 160×160 canvas → dataURL for caching.
+// Resolves {dataUrl, canvas}: dataUrl is null only if the canvas is tainted (still shows the canvas).
+function cropImage(u,box){ return new Promise(resolve=>{ if(!u){ resolve(null); return; }
+  const img=new Image(); img.crossOrigin='anonymous'; img.onerror=()=>resolve(null);
   img.onload=()=>{ const c=document.createElement('canvas'); c.width=c.height=160; const g=c.getContext('2d');
     if(box&&box.w>0&&box.h>0){
       // box is NORMALISED (fractions of the image). Convert to pixels PER-AXIS — w is a
@@ -563,11 +594,35 @@ async function faceInto(el, path, box){ if(!el||!path) return; const u=await sig
       sy=Math.max(0,Math.min(img.naturalHeight-side,sy));
       g.drawImage(img,sx,sy,side,side,0,0,160,160);
     } else { const s=Math.min(img.naturalWidth,img.naturalHeight); g.drawImage(img,(img.naturalWidth-s)/2,(img.naturalHeight-s)/2,s,s,0,0,160,160); }
-    el.innerHTML=''; el.appendChild(c); }; img.src=u; }
+    let dataUrl=null; try{ dataUrl=c.toDataURL('image/jpeg',0.85); }catch(e){ dataUrl=null; }
+    resolve({dataUrl, canvas:c}); };
+  img.src=u; }); }
+async function loadFaceCrop(path,box){ const u=await signedUrl(path,900); let r=await cropImage(u,box);
+  if(!r){ const u2=await signedUrl(path); if(u2&&u2!==u) r=await cropImage(u2,box); } // render endpoint off ⇒ plain source
+  return r; }
+function setFaceEl(el,dataUrl){ const im=new Image(); im.decoding='async'; im.onload=()=>{ el.innerHTML=''; el.appendChild(im); }; im.src=dataUrl; }
+
 function hasFace(id){ const p=people[id]; return !!((p&&p.primary_asset)||faceFallback[id]); }
-function hydrateFace(el,id){ if(!el) return; el.innerHTML=placeholderFor(id); const p=people[id];
-  if(p&&p.primary_asset){ faceInto(el,p.primary_asset,(p.metadata&&p.metadata.face_box)||null); return; }
-  const fb=faceFallback[id]; if(fb) faceInto(el,fb.path,fb.box); } // else: keep the SVG placeholder
+// true when the card for `id` is at/near the current viewport (world→screen), so it loads first
+function inViewport(id){ if(!pos[id]) return false; const s=state.scale;
+  const sx=CX(id)*s+state.tx, sy=CTOP(id)*s+state.ty, mx=CW*s, my=CH*s;
+  return sx>-mx && sx<vp.clientWidth+mx && sy>-my && sy<vp.clientHeight+my; }
+function hydrateFace(el,id,opts){ if(!el) return; opts=opts||{};
+  el.innerHTML=placeholderFor(id);                       // placeholder shows instantly — no layout shift
+  const p=people[id]; let path=null, box=null;
+  if(p&&p.primary_asset){ path=p.primary_asset; box=(p.metadata&&p.metadata.face_box)||null; }
+  else { const fb=faceFallback[id]; if(fb){ path=fb.path; box=fb.box; } }
+  if(!path) return;                                       // no photo → keep the SVG placeholder
+  const key=faceKey(id,path,box); el.dataset.fkey=key;
+  const priority = opts.priority!==undefined ? opts.priority : inViewport(id);
+  faceEnqueue(async()=>{
+    const cached=await FaceCache.get(key);
+    if(cached){ if(el.dataset.fkey===key) setFaceEl(el,cached); return; }   // instant on repeat visits
+    const r=await loadFaceCrop(path,box); if(!r) return;
+    if(r.dataUrl){ FaceCache.put(key,r.dataUrl); if(el.dataset.fkey===key) setFaceEl(el,r.dataUrl); }
+    else if(el.dataset.fkey===key){ el.innerHTML=''; el.appendChild(r.canvas); } // tainted: show, don't cache
+  }, priority);
+}
 
 /* ---------- state + data ---------- */
 let user=null, viewerPersonId=null;
@@ -614,6 +669,39 @@ function spousesOf(x){ const out=new Set();
   return [...out]; }
 function anyTie(a,b){ return edges.find(e=>(e.from===a&&e.to===b)||(e.from===b&&e.to===a))||null; }
 
+/* Generation numbers via fixed-point iteration over two constraints, alternated to
+   convergence: (1) spouses share a row [max], (2) each child sits one row below its
+   HIGHEST parent. Because gen only ever increases, the loop always settles; and because
+   the child constraint is re-applied AFTER every spouse pull-down, no child can remain on
+   or above a parent once a parentless spouse is moved to their partner's row (the
+   Dudi→Leeya inversion). Returns {id -> gen}. */
+function genAssign(placed){
+  const inSet=new Set(placed); const tier={}; placed.forEach(id=>tier[id]=0);
+  const pairs=[]; { const seen=new Set();   // spouse edges OR co-parents, over the placed set
+    placed.forEach(id=>spousesOf(id).forEach(s=>{ if(!inSet.has(s)) return; const k=id<s?id+'|'+s:s+'|'+id; if(seen.has(k)) return; seen.add(k); pairs.push([id,s]); })); }
+  const pc=[]; edges.forEach(e=>{ if(isParentEdge(e)&&inSet.has(e.from)&&inSet.has(e.to)) pc.push([e.from,e.to]); });
+  const cap=placed.length+8;                  // monotonic increase ⇒ converges well inside this
+  for(let it=0; it<cap; it++){ let ch=false;
+    pairs.forEach(([a,b])=>{ const m=Math.max(tier[a],tier[b]); if(tier[a]!==m){tier[a]=m;ch=true;} if(tier[b]!==m){tier[b]=m;ch=true;} });
+    pc.forEach(([p,c])=>{ if(tier[c]<tier[p]+1){ tier[c]=tier[p]+1; ch=true; } });
+    if(!ch) break; }
+  return tier;
+}
+/* self-test: assert every child is strictly below both parents (uses final pos[].tier). */
+function selfTestGenerations(){
+  const pe=edges.filter(isParentEdge); const viol=[];
+  pe.forEach(e=>{ const p=e.from,c=e.to; if(!pos[p]||!pos[c]) return;
+    if(!(pos[c].tier>pos[p].tier)) viol.push(nm(p)+' (gen '+pos[p].tier+') → '+nm(c)+' (gen '+pos[c].tier+')'); });
+  const byName=n=>Object.keys(people).find(id=>String((people[id]&&people[id].display_name)||'').toLowerCase().includes(n.toLowerCase()));
+  const probe=(pn,cn)=>{ const p=byName(pn),c=byName(cn); if(!p||!c) return pn+'→'+cn+': n/a (not in data)';
+    const pt=pos[p]?pos[p].tier:'?', ct=pos[c]?pos[c].tier:'?';
+    return pn+'→'+cn+': '+((pos[p]&&pos[c]&&pos[c].tier>pos[p].tier)?'OK':'FAIL')+'  (parent gen '+pt+', child gen '+ct+')'; };
+  console.log('[tree] generation self-test — parent edges:',pe.length,'| placed:',placedSet.size,'| violations:',viol.length);
+  if(viol.length) console.warn('[tree] GENERATION VIOLATIONS:\n  '+viol.join('\n  ')); else console.log('[tree] ✓ every child is strictly below both parents');
+  [['Dudi','Leeya'],['Dudi','Karni'],['Efim','Leonid'],['Leonid','Jonathan']].forEach(pr=>console.log('[tree]   '+probe(pr[0],pr[1])));
+  return viol.length;
+}
+
 /* ================= LAYOUT ================= */
 function computeLayout(){
   pos={}; placedSet=new Set(); unplaced=[];
@@ -626,14 +714,15 @@ function computeLayout(){
   unplaced=ids.filter(id=>!placedSet.has(id));
   const placed=[...placedSet];
   if(!placed.length){ return; }
-  // tiers via longest path from roots
-  const tier={}; placed.forEach(id=>tier[id]=0);
-  for(let it=0; it<placed.length+2; it++){ let ch=false;
-    placed.forEach(id=>{ childrenOf(id).forEach(c=>{ if(placedSet.has(c) && tier[c]<tier[id]+1){ tier[c]=tier[id]+1; ch=true; } }); });
-    if(!ch) break; }
-  // align parentless spouses to partner tier
-  for(let it=0; it<4; it++){ placed.forEach(id=>{ if(parentsOf(id).length) return;
-    spousesOf(id).forEach(s=>{ if(placedSet.has(s) && tier[s]>tier[id]) tier[id]=tier[s]; }); }); }
+  // ---- generation assignment: iterate to a FIXED POINT so that, after spouses share a
+  // row, EVERY child still lands strictly below BOTH parents. The old code tiered children
+  // from their parents' FIRST estimate, then pulled a parentless spouse down to their
+  // partner — but never re-propagated, so a child of that spouse (e.g. Dudi→Leeya) could end
+  // up on or ABOVE the parent's final row. Alternating the two constraints to convergence
+  // removes that inversion.  gen only ever increases ⇒ the loop always settles.
+  const tier=genAssign(placed);
+  // re-pack: drop empty generations, keep order (so gaps from the max() pushes don't show)
+  { const used=[...new Set(placed.map(id=>tier[id]))].sort((a,b)=>a-b); const remap={}; used.forEach((g,i)=>remap[g]=i); placed.forEach(id=>tier[id]=remap[tier[id]]); }
   // group into couple-units (each person at most one partner, same tier)
   const partner={}; const usedPair=new Set();
   placed.forEach(id=>{ if(partner[id]) return; const cand=spousesOf(id).filter(s=>placedSet.has(s)&&!partner[s]&&tier[s]===tier[id]); if(cand.length){ partner[id]=cand[0]; partner[cand[0]]=id; } });
@@ -1143,6 +1232,7 @@ async function boot(){
   await loadData();
   $('#loading').style.display='none';
   fullRender();
+  try{ selfTestGenerations(); }catch(e){}
   // initial framing: centre on ?id or the viewer, else fit all
   const focus = (FOCUS_PARAM&&pos[FOCUS_PARAM])?FOCUS_PARAM : ((viewerPersonId&&pos[viewerPersonId])?viewerPersonId:null);
   if(focus){ setTimeout(()=>centerOn(focus, 1.0), 60); }
