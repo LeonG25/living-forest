@@ -701,6 +701,23 @@ function selfTestGenerations(){
   [['Dudi','Leeya'],['Dudi','Karni'],['Efim','Leonid'],['Leonid','Jonathan']].forEach(pr=>console.log('[tree]   '+probe(pr[0],pr[1])));
   return viol.length;
 }
+/* self-test: connector sprawl. Sums every drawn edge's length and counts the ones whose
+   HORIZONTAL span exceeds ~3 card widths (those are the "strange lines" across the tree).
+   Reports named probes (Chaya / Sofia) so the far-apart edges are visible in the console. */
+function selfTestOrdering(){
+  const THRESH=3*CW; let total=0, long=0, n=0;
+  const drawn=edges.filter(e=>pos[e.from]&&pos[e.to]);
+  drawn.forEach(e=>{ const dx=CX(e.from)-CX(e.to), dy=CTOP(e.from)-CTOP(e.to); total+=Math.hypot(dx,dy); n++; if(Math.abs(dx)>THRESH) long++; });
+  const byName=n=>Object.keys(people).find(id=>String((people[id]&&people[id].display_name)||'').toLowerCase().includes(n.toLowerCase()));
+  const spansOf=nm=>{ const id=byName(nm); if(!id) return nm+': n/a'; const es=drawn.filter(e=>e.from===id||e.to===id);
+    if(!es.length) return nm+': no drawn edges'; const mx=Math.max(...es.map(e=>Math.abs(CX(e.from)-CX(e.to))));
+    return nm+': max |span| '+Math.round(mx)+'px ('+ (mx/CW).toFixed(1) +' card-widths) over '+es.length+' edge(s)'; };
+  console.log('[tree] ordering self-test — edges:',n,'| total connector length:',Math.round(total)+'px',
+    '| long-span (> '+THRESH+'px = 3 card widths):',long);
+  console.log('[tree]   '+spansOf('Chaya'));
+  console.log('[tree]   '+spansOf('Sofia'));
+  return {total:Math.round(total), long, edges:n};
+}
 
 /* ================= LAYOUT ================= */
 function computeLayout(){
@@ -723,36 +740,72 @@ function computeLayout(){
   const tier=genAssign(placed);
   // re-pack: drop empty generations, keep order (so gaps from the max() pushes don't show)
   { const used=[...new Set(placed.map(id=>tier[id]))].sort((a,b)=>a-b); const remap={}; used.forEach((g,i)=>remap[g]=i); placed.forEach(id=>tier[id]=remap[tier[id]]); }
-  // group into couple-units (each person at most one partner, same tier)
-  const partner={}; const usedPair=new Set();
-  placed.forEach(id=>{ if(partner[id]) return; const cand=spousesOf(id).filter(s=>placedSet.has(s)&&!partner[s]&&tier[s]===tier[id]); if(cand.length){ partner[id]=cand[0]; partner[cand[0]]=id; } });
-  // units per tier
+
+  // ---- couple-units (each person at most one partner, same tier). Deterministic:
+  // iterate ids in a stable sort so the same pairs form on every load.
+  const sortId=(a,b)=> a<b?-1:(a>b?1:0);
+  const sortedPlaced=placed.slice().sort(sortId);
+  const partner={};
+  sortedPlaced.forEach(id=>{ if(partner[id]) return;
+    const cand=spousesOf(id).filter(s=>placedSet.has(s)&&!partner[s]&&tier[s]===tier[id]).sort(sortId);
+    if(cand.length){ partner[id]=cand[0]; partner[cand[0]]=id; } });
+
   const maxTier=Math.max(...placed.map(id=>tier[id]));
   const unitsByTier={}; for(let t=0;t<=maxTier;t++) unitsByTier[t]=[];
-  const seen=new Set();
-  placed.forEach(id=>{ if(seen.has(id)) return; const t=tier[id];
+  const unitOf={}; const seen=new Set();
+  sortedPlaced.forEach(id=>{ if(seen.has(id)) return; const t=tier[id]; let mem;
     if(partner[id]&&!seen.has(partner[id])){ const a=id,b=partner[id]; seen.add(a); seen.add(b);
-      // order couple by sex (m left) then birth
-      let mem=[a,b]; if(sexOf(b)==='m'&&sexOf(a)!=='m') mem=[b,a];
-      unitsByTier[t].push({mem, tier:t}); }
-    else { seen.add(id); unitsByTier[t].push({mem:[id], tier:t}); } });
-  // assign x, tier by tier (top-down): desired centre = avg parent centre, else sequential
-  let seqBase=0;
-  for(let t=0;t<=maxTier;t++){ const units=unitsByTier[t];
-    units.forEach(u=>{ const par=[]; u.mem.forEach(id=>parentsOf(id).forEach(p=>{ if(pos[p]) par.push(pos[p].x); }));
-      u.anchor = par.length? (par.reduce((a,b)=>a+b,0)/par.length) : null; });
-    // units with anchors sorted by anchor; anchorless keep incremental order interleaved by original order
-    let auto = seqBase;
-    units.forEach(u=>{ if(u.anchor==null){ u.anchor = auto; } auto = Math.max(auto, u.anchor) + (COLW); });
-    units.sort((a,b)=> a.anchor-b.anchor);
-    // place left→right, de-overlap
-    let prevRight=-1e9;
-    units.forEach(u=>{ const w=u.mem.length*COLW; let left=u.anchor - w/2; if(left < prevRight+GAP) left=prevRight+GAP;
-      u.left=left; prevRight=left+w; });
-    units.forEach(u=>{ u.mem.forEach((id,i)=>{ pos[id]={ x:u.left + (i+0.5)*COLW, tier:t }; }); });
-    // next tier baseline
-    if(units.length){ seqBase = Math.min(...units.map(u=>u.left)); }
+      mem=[a,b]; if(sexOf(b)==='m'&&sexOf(a)!=='m') mem=[b,a]; }      // couple: m to the left
+    else { seen.add(id); mem=[id]; }
+    const u={ mem, tier:t, uid:mem.slice().sort(sortId).join('|'), minId:mem.slice().sort(sortId)[0] };
+    mem.forEach(m=>unitOf[m]=u); unitsByTier[t].push(u); });
+  const allUnits=[]; for(let t=0;t<=maxTier;t++) allUnits.push(...unitsByTier[t]);
+  // parent-/child-unit adjacency (a couple counts as ONE unit for both)
+  allUnits.forEach(u=>{ const ps=new Set(), cs=new Set();
+    u.mem.forEach(m=>{ parentsOf(m).forEach(p=>{ if(unitOf[p]&&unitOf[p]!==u) ps.add(unitOf[p]); });
+      childrenOf(m).forEach(c=>{ if(unitOf[c]&&unitOf[c]!==u) cs.add(unitOf[c]); }); });
+    u.parentUnits=[...ps]; u.childUnits=[...cs]; });
+
+  // ---- ORDER THE ROWS (Sugiyama-style). Seed with a DFS from the roots so each family's
+  // descendants start contiguous & siblings sit together; then sweep barycentres down/up to
+  // pull children under their parents and cut crossings. Every step is a STABLE sort with an
+  // id tie-break, so the layout is deterministic and never jumps between loads.
+  const order={}; for(let t=0;t<=maxTier;t++) order[t]=[];
+  const vis=new Set();
+  const dfs=u=>{ if(vis.has(u.uid)) return; vis.add(u.uid); order[u.tier].push(u);
+    u.childUnits.slice().sort((a,b)=>sortId(a.minId,b.minId)).forEach(dfs); };
+  allUnits.filter(u=>!u.parentUnits.length).sort((a,b)=>(a.tier-b.tier)||sortId(a.minId,b.minId)).forEach(dfs);
+  allUnits.slice().sort((a,b)=>(a.tier-b.tier)||sortId(a.minId,b.minId)).forEach(u=>{ if(!vis.has(u.uid)){ vis.add(u.uid); order[u.tier].push(u); } });
+  for(let t=0;t<=maxTier;t++) order[t].forEach((u,i)=>u.idx=i);
+  const meanIdx=arr=>arr.reduce((a,u)=>a+u.idx,0)/arr.length;
+  const reorder=(t,key)=>{ const list=order[t]; if(list.length<2) return;
+    list.forEach(u=>{ const ns=u[key]; u._bc = ns.length? meanIdx(ns) : u.idx; });
+    list.sort((a,b)=> (a._bc-b._bc) || sortId(a.minId,b.minId));
+    list.forEach((u,i)=>u.idx=i); };
+  for(let pass=0; pass<8; pass++){
+    for(let t=1;t<=maxTier;t++) reorder(t,'parentUnits');       // down: settle under parents
+    for(let t=maxTier-1;t>=0;t--) reorder(t,'childUnits');      // up: settle over children
   }
+
+  // ---- X-POSITION with the row order FIXED. Pool-adjacent-violators keeps the min gap
+  // between neighbours while centring each unit as close to its barycentre as possible, so a
+  // family's children land directly beneath the couple. Alternate down/up to a compromise.
+  const uw=u=>u.mem.length*COLW;
+  const pav=(targets,weights)=>{ const bm=[],bw=[],bc=[];
+    for(let i=0;i<targets.length;i++){ let m=targets[i], w=weights[i], c=1;
+      while(bm.length && bm[bm.length-1]>=m){ const j=bm.length-1; m=(bm[j]*bw[j]+m*w)/(bw[j]+w); w=bw[j]+w; c+=bc[j]; bm.pop();bw.pop();bc.pop(); }
+      bm.push(m);bw.push(w);bc.push(c); }
+    const out=[]; for(let k=0;k<bm.length;k++) for(let j=0;j<bc[k];j++) out.push(bm[k]); return out; };
+  const placeRow=list=>{ if(!list.length) return; const S=[]; let acc=0;
+    for(let i=0;i<list.length;i++){ if(i>0) acc += uw(list[i-1])/2 + uw(list[i])/2 + GAP; S.push(acc); }
+    const tg=list.map((u,i)=> (u._tx==null?S[i]:u._tx) - S[i]);
+    const q=pav(tg, list.map(u=>u._w||1)); list.forEach((u,i)=> u.cx=q[i]+S[i]); };
+  for(let t=0;t<=maxTier;t++){ order[t].forEach(u=>{u._tx=null;u._w=1;}); placeRow(order[t]); }  // sequential seed
+  for(let pass=0; pass<10; pass++){
+    for(let t=0;t<=maxTier;t++){ order[t].forEach(u=>{ if(u.parentUnits.length){ u._tx=u.parentUnits.reduce((a,p)=>a+p.cx,0)/u.parentUnits.length; u._w=u.parentUnits.length; } else { u._tx=u.cx; u._w=1; } }); placeRow(order[t]); }
+    for(let t=maxTier;t>=0;t--){ order[t].forEach(u=>{ if(u.childUnits.length){ u._tx=u.childUnits.reduce((a,c)=>a+c.cx,0)/u.childUnits.length; u._w=u.childUnits.length; } else { u._tx=u.cx; u._w=1; } }); placeRow(order[t]); }
+  }
+  for(let t=0;t<=maxTier;t++){ order[t].forEach(u=>{ const left=u.cx-uw(u)/2; u.mem.forEach((id,i)=>{ pos[id]={ x:left+(i+0.5)*COLW, tier:t }; }); }); }
   // normalise so min x = PADX + CW/2
   const xs=placed.map(id=>pos[id].x); const minx=Math.min(...xs);
   const shift=(PADX+CW/2)-minx; placed.forEach(id=>{ pos[id].x += shift; });
@@ -1233,6 +1286,7 @@ async function boot(){
   $('#loading').style.display='none';
   fullRender();
   try{ selfTestGenerations(); }catch(e){}
+  try{ selfTestOrdering(); }catch(e){}
   // initial framing: centre on ?id or the viewer, else fit all
   const focus = (FOCUS_PARAM&&pos[FOCUS_PARAM])?FOCUS_PARAM : ((viewerPersonId&&pos[viewerPersonId])?viewerPersonId:null);
   if(focus){ setTimeout(()=>centerOn(focus, 1.0), 60); }
