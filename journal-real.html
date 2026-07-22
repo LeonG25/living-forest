@@ -219,7 +219,7 @@
       today:'Today', yesterday:'Yesterday', earlier:'Earlier this week', older:'Earlier',
       foot:'Not what you scored — what you kept alive.',
       provWords:'In your words', provTold:'You told us', provBrought:'You brought them in',
-      provForest:'The forest worked it out', provWaiting:'Waiting for the keeper',
+      provForest:'The forest worked it out', provWaiting:'Waiting for the keeper', openPhoto:'Open this photograph',
       aPhoto:cap=>`You added a photograph${cap?` — ${esc(cap)}`:''}.`,
       aWelcome:nm=>`You welcomed <span class="nm">${esc(nm)}</span> into the forest — a new name on the tree.`,
       aFace:nm=>`You named a face — that's <span class="nm">${esc(nm)}</span>.`,
@@ -247,7 +247,7 @@
       today:'Сегодня', yesterday:'Вчера', earlier:'Ранее на неделе', older:'Ранее',
       foot:'Не то, что вы набрали — то, что вы сохранили живым.',
       provWords:'Вашими словами', provTold:'Вы рассказали', provBrought:'Вы привели',
-      provForest:'Лес разобрался сам', provWaiting:'Ожидает хранителя',
+      provForest:'Лес разобрался сам', provWaiting:'Ожидает хранителя', openPhoto:'Открыть фотографию',
       aPhoto:cap=>`Вы добавили фотографию${cap?` — ${esc(cap)}`:''}.`,
       aWelcome:nm=>`Вы приняли <span class="nm">${esc(nm)}</span> в лес — новое имя на дереве.`,
       aFace:nm=>`Вы назвали лицо — это <span class="nm">${esc(nm)}</span>.`,
@@ -274,7 +274,7 @@
       today:'היום', yesterday:'אתמול', earlier:'מוקדם יותר השבוע', older:'מוקדם יותר',
       foot:'לא מה שצברת — אלא מה ששמרת בחיים.',
       provWords:'במילים שלך', provTold:'אתה סיפרת לנו', provBrought:'אתה הבאת',
-      provForest:'היער הבין לבד', provWaiting:'מחכה לשומר',
+      provForest:'היער הבין לבד', provWaiting:'מחכה לשומר', openPhoto:'פתח את התצלום',
       aPhoto:cap=>`הוספת צילום${cap?` — ${esc(cap)}`:''}.`,
       aWelcome:nm=>`קיבלת את <span class="nm">${esc(nm)}</span> אל היער — שם חדש על העץ.`,
       aFace:nm=>`זיהית פנים — זהו <span class="nm">${esc(nm)}</span>.`,
@@ -389,7 +389,7 @@
           const m=a.metadata||{}; const cap=[m.when,m.where].filter(Boolean).join(' · ');
           const pub=a.pub_status==null||a.pub_status==='published'||a.pub_status==='approved';
           const prov=pub?'gold':'wait'; const label=pub?d().provWords:d().provWaiting;
-          entries.push({ts, act:d().aPhoto(cap), icon:I.photo, prov, label}); counts.mem++;
+          entries.push({ts, act:d().aPhoto(cap), icon:I.photo, prov, label, art:a.id}); counts.mem++;
         }
       }
     }catch(e){}
@@ -418,9 +418,10 @@
 
   function entryHTML(e, fresh){
     const objIcon = e.prov; // gold|cool|wait tint
+    const openAttr = e.art?` data-open-moment="${esc(e.art)}" role="button" tabindex="0" aria-label="${esc(d().openPhoto)}" style="cursor:pointer"`:'';
     return `<div class="entry${fresh?' fresh':''}">`
       +`<div class="node ${e.prov}">${sv(e.icon,1.6)}</div>`
-      +`<div class="ecard"><div class="obj glyph ${objIcon}">${sv(e.icon,1.5)}</div><div class="eb">`
+      +`<div class="ecard"${openAttr}><div class="obj glyph ${objIcon}">${sv(e.icon,1.5)}</div><div class="eb">`
       +`<div class="when">${esc(e.when)}</div>`
       +`<div class="act">${e.act}</div>`
       +`<span class="prov ${e.prov}"><span class="d"></span>${esc(e.label)}</span>`
@@ -484,6 +485,12 @@
   window.__lfClose=function(){ if($('.sheet[data-sheet="lang"]').classList.contains('show')){ closeSheet(); return true; } return false; };
 
   function wire(){
+    const pad=$('.pad');
+    if(pad && !pad._momentWired){ pad._momentWired=true;
+      const open=el=>{ const aid=el&&el.getAttribute('data-open-moment'); if(aid) location.href='moment-real.html?id='+encodeURIComponent(aid); };
+      pad.addEventListener('click',e=>{ const om=e.target.closest('[data-open-moment]'); if(om) open(om); });
+      pad.addEventListener('keydown',e=>{ if(e.key!=='Enter'&&e.key!==' ')return; const om=e.target.closest('[data-open-moment]'); if(om){ e.preventDefault(); open(om); } });
+    }
     const back=$('[data-back]'); if(back) back.onclick=()=>{ if(window.__lfClose&&window.__lfClose())return; history.back(); };
     const lo=$('[data-lang-open]'); if(lo) lo.onclick=openSheet;
     $('.scrim').onclick=closeSheet;

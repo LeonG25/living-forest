@@ -211,6 +211,7 @@
 
     <div class="stage" id="stage" aria-label="A family gathering. Find the person you are asked for.">
       <svg id="scene" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
+      <a id="openMoment" href="#" aria-label="Open this photograph" title="Open this photograph" style="position:absolute;top:10px;left:10px;z-index:6;display:none;align-items:center;gap:6px;padding:7px 11px;border-radius:999px;background:rgba(12,22,42,.72);border:1px solid rgba(243,205,132,.45);color:#f3cd84;font:600 11.5px/1 'Hanken Grotesk',sans-serif;text-decoration:none;backdrop-filter:blur(6px)"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M4 18l5-4 4 3 3-2 4 4"/></svg><span>this photograph</span></a>
       <div class="zoombar"><button id="zIn" aria-label="zoom in">+</button><button id="zOut" aria-label="zoom out">&minus;</button></div>
     </div>
 
@@ -313,6 +314,7 @@ function clueFor(pid, inIds){
 
 async function loadRound(i){
   ri=i; const round=ROUNDS[i]; foundOrder=[]; hintNode=null; ti=0;
+  { const om=$('#openMoment'); if(om){ if(round.art&&round.art.id){ om.href='moment-real.html?id='+encodeURIComponent(round.art.id); om.style.display='inline-flex'; } else { om.style.display='none'; } } }
   $('#caption').classList.remove('lit'); $('#allHere').classList.remove('show'); $('#quest').classList.remove('done');
   $('#hintBtn').style.display=''; $('#hintNote').textContent='Tap where you think they are. No wrong moves \u2014 only warmer or cooler.';
   const who=(round.art.contributor_id&&window.__prov&&window.__prov[round.art.contributor_id])||null;

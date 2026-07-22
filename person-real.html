@@ -433,7 +433,7 @@
       called:'Called', calledHint:'everyday form', patronymic:'Patronymic', honorific:'Honorific',
       addpart:'add a name part', addpartHint:'Adds in this language and sends it to the keeper.', otherlangs:'other languages',
       nicks:'Nicknames & pet names', nickname:'Nickname / pet name', pendingChip:'waiting', approve:'Approve', decline:'Decline',
-      faceLine:'The photos she appears in. The camera on her portrait chooses the crop that represents her everywhere.', changeface:'Change the face',
+      faceLine:'The photos she appears in. The camera on her portrait chooses the crop that represents her everywhere.', changeface:'Change the face', openPhoto:'Open this photograph',
       noFace:'No photographs are tagged to this person yet.',
       about:'About', occupation:'Occupation', addoccupation:'add her work', langspoken:'Languages spoken',
       born:'Born', died:'Died', precision:'Precision', prec:['exact','month','year','approx','unknown'], living:'Still living',
@@ -473,7 +473,7 @@
       called:'Зовут', calledHint:'обиходная форма', patronymic:'Отчество', honorific:'Титул',
       addpart:'добавить часть имени', addpartHint:'Добавит на этом языке и отправит хранителю.', otherlangs:'другие языки',
       nicks:'Прозвища и ласковые имена', nickname:'Прозвище / ласковое имя', pendingChip:'ожидает', approve:'Одобрить', decline:'Отклонить',
-      faceLine:'Фото, где она есть. Камера на портрете выбирает кадр, который представляет её везде.', changeface:'Сменить лицо',
+      faceLine:'Фото, где она есть. Камера на портрете выбирает кадр, который представляет её везде.', changeface:'Сменить лицо', openPhoto:'Открыть фотографию',
       noFace:'К этому человеку пока не привязано ни одной фотографии.',
       about:'О человеке', occupation:'Занятие', addoccupation:'добавить занятие', langspoken:'Языки',
       born:'Родилась', died:'Умерла', precision:'Точность', prec:['точно','месяц','год','около','неизв.'], living:'Ещё жива',
@@ -513,7 +513,7 @@
       called:'קוראים לה', calledHint:'צורה יומיומית', patronymic:'שם האב', honorific:'תואר',
       addpart:'הוספת חלק לשם', addpartHint:'יתווסף בשפה זו ויישלח לשומר.', otherlangs:'שפות נוספות',
       nicks:'כינויים ושמות חיבה', nickname:'כינוי / שם חיבה', pendingChip:'ממתין', approve:'לאשר', decline:'לדחות',
-      faceLine:'התמונות שהיא מופיעה בהן. המצלמה שעל הדיוקן בוחרת את החיתוך שמייצג אותה בכל מקום.', changeface:'החלפת התמונה',
+      faceLine:'התמונות שהיא מופיעה בהן. המצלמה שעל הדיוקן בוחרת את החיתוך שמייצג אותה בכל מקום.', changeface:'החלפת התמונה', openPhoto:'פתח את התצלום',
       noFace:'עדיין לא תויגו תמונות לאדם הזה.',
       about:'אודות', occupation:'עיסוק', addoccupation:'הוספת עיסוק', langspoken:'שפות',
       born:'נולדה', died:'נפטרה', precision:'דיוק', prec:['מדויק','חודש','שנה','בערך','לא ידוע'], living:'עדיין בחיים',
@@ -787,7 +787,10 @@
     return `<button class="cat ${cool?'cool':''} ${sel?'sel':''}" data-jump="${f.id}" style="--k:${facetK(f.id)};left:${x}px;top:${y}px" aria-label="${esc(L.facet[f.id])}" aria-pressed="${sel?'true':'false'}" aria-controls="facet-${f.id}"><span class="bead">${sv(I[f.id])}${play}${pin}</span><span class="lab">${esc(L.facet[f.id])}</span></button>`; }
   function facetCard(f){ const on=state.facet===f.id;
     return `<div class="facet${on?' enter':''}" id="facet-${f.id}" data-facet="${f.id}"${on?'':' hidden'}>${fhead(f)}<div class="fbody">${bodyFor(f)}</div></div>`; }
+  function portraitArtId(){ if(person&&person.primary_asset){ const t=tagged.find(x=>x.storage_path===person.primary_asset); if(t) return t.artefact_id; } return (tagged[0]&&tagged[0].artefact_id)||''; }
   function ringShell(){ const L=d(); const cx=154,cy=154,R=126;
+    const portArt=portraitArtId();
+    const portAttr=portArt?` data-open-moment="${esc(portArt)}" role="button" tabindex="0" aria-label="${esc(L.openPhoto)}" style="position:absolute;inset:0;cursor:pointer"`:` style="position:absolute;inset:0"`;
     const beads=FACETS.map((f,i)=>{ const a=-Math.PI/2+i*(Math.PI*2/8); const x=cx+R*Math.cos(a), y=cy+R*Math.sin(a);
       return bead(f,x,y); }).join('');
     const cards=FACETS.map(f=>facetCard(f)).join('');
@@ -795,7 +798,7 @@
     const f0=NAME.family[state.lang]||(NAME.display[state.lang]||'').split(' ').slice(1).join(' ')||'';
     return `<div class="hero">
       <svg class="ring-svg" viewBox="0 0 308 308"><circle cx="154" cy="154" r="126" fill="none" stroke="rgba(243,205,132,.12)" stroke-width="1"/><circle cx="154" cy="154" r="126" fill="none" stroke="rgba(243,205,132,.34)" stroke-width="2" stroke-dasharray="1 13" stroke-linecap="round"/></svg>
-      <div class="facewrap"><div class="face"><div id="faceHost" style="position:absolute;inset:0">${faceSVG()}</div><button class="changef" data-act="changeface" aria-label="${esc(L.changeface)}">${sv(I.camera,1.6)}</button></div></div>
+      <div class="facewrap"><div class="face"><div id="faceHost"${portAttr}>${faceSVG()}</div><button class="changef" data-act="changeface" aria-label="${esc(L.changeface)}">${sv(I.camera,1.6)}</button></div></div>
       ${beads}
       <div class="who"><div class="nm serif">${esc(g0)} <em>${esc(f0)}</em></div></div>
     </div>
@@ -877,7 +880,7 @@
       return `<div class="detailrow" style="border-color:rgba(201,162,255,.34);background:rgba(201,162,255,.06)"><div><div class="dl">${esc(lab)}</div><div class="dv">${esc(val)}</div>${state.keeper?keeperInline(c.group_id,'group'):`<div class="pending" style="margin-top:6px"><span class="sp"></span>${L.bothpending}</div>`}</div>${state.keeper?`<span class="x" data-delgroup="${c.group_id}">${sv(I.x,2)}</span>`:''}</div>`; }).join(''); }
   function bodyFor(f){ const L=d(); const id=f.id, lang=state.lang;
     if(id==='name') return nameBody();
-    if(id==='face'){ const shots=tagged.map((t,i)=>`<div class="tagshot"><div class="im" data-thumb="${i}">${galSVG(i)}</div><div class="cap2">${esc([t.meta&&t.meta.when,t.meta&&t.meta.where].filter(Boolean).join(' · '))}</div></div>`).join('');
+    if(id==='face'){ const shots=tagged.map((t,i)=>`<div class="tagshot"><div class="im" data-thumb="${i}"${t.artefact_id?` data-open-moment="${esc(t.artefact_id)}" role="button" tabindex="0" aria-label="${esc(L.openPhoto)}" style="cursor:pointer"`:''}>${galSVG(i)}</div><div class="cap2">${esc([t.meta&&t.meta.when,t.meta&&t.meta.where].filter(Boolean).join(' · '))}</div></div>`).join('');
       return `<div class="hint" style="margin-top:0;margin-bottom:12px">${L.faceLine}</div>
         ${tagged.length?`<div class="tagstrip">${shots}</div>`:`<div class="hint">${L.noFace}</div>`}
         <div class="chips" style="margin-top:10px"><button class="chip add" data-act="addmemory">${sv(I.plus,2)} ${L.addmemory}</button></div>
@@ -1182,8 +1185,10 @@
 
   /* ---------- wiring (delegated once) ---------- */
   function wireOnce(){ const root=$('#dev');
+    root.addEventListener('keydown', e=>{ if(e.key!=='Enter'&&e.key!==' ')return; const om=e.target.closest&&e.target.closest('[data-open-moment]'); if(om){ e.preventDefault(); const aid=om.getAttribute('data-open-moment'); if(aid) location.href='moment-real.html?id='+encodeURIComponent(aid); } });
     root.addEventListener('click', async e=>{
       const L=d();
+      const om=e.target.closest('[data-open-moment]'); if(om){ const aid=om.getAttribute('data-open-moment'); if(aid) location.href='moment-real.html?id='+encodeURIComponent(aid); return; }
       const jt=e.target.closest('[data-jump]'); if(jt){ selectFacet(jt.dataset.jump); return; }
       const ap=e.target.closest('[data-approve]'); if(ap){ await approveRef(ap.getAttribute('data-approve')); return; }
       const dc=e.target.closest('[data-decline]'); if(dc){ await declineRef(dc.getAttribute('data-decline')); return; }

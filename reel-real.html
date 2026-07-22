@@ -264,7 +264,7 @@
       sceneOf:(i,n)=>`Scene ${i} of ${n}`,
       kindledA:'kindled', ofEight:'of eight facets kindled', ringOf:'of eight facets', nee:'was', stillDark:n=>n===1?'one still dark':`${n} still dark`, allLit:'all eight alight',
       provGold:'Gold — a person told us this', provCool:'Cool — the app worked this out', provViolet:'Violet — still gathering, held for the keeper',
-      toldBy:'Told by',
+      toldBy:'Told by', openPhoto:'Open this photograph',
       capName:'Her name, as the family keeps it', capNameN:'Their name, as the family keeps it',
       appearsIn:n=>n===1?'Appears in one photograph':`Appears in ${n} photographs`,
       born:'Born', died:'Died', pbirth:'Born in', livedIn:'Lived in',
@@ -287,7 +287,7 @@
       sceneOf:(i,n)=>`Сцена ${i} из ${n}`,
       kindledA:'зажжено', ofEight:'из восьми граней зажжены', ringOf:'из восьми граней', nee:'урожд.', stillDark:n=>n===1?'одна ещё тёмная':`ещё ${n} тёмных`, allLit:'все восемь горят',
       provGold:'Золото — это рассказал человек', provCool:'Синее — приложение вычислило', provViolet:'Фиолетовое — ещё собирается, ждёт хранителя',
-      toldBy:'Рассказал(а)',
+      toldBy:'Рассказал(а)', openPhoto:'Открыть фотографию',
       capName:'Её имя, как хранит семья', capNameN:'Их имя, как хранит семья',
       appearsIn:n=>`На ${n} фотографиях`,
       born:'Родилась', died:'Умерла', pbirth:'Место рождения', livedIn:'Жила в',
@@ -310,7 +310,7 @@
       sceneOf:(i,n)=>`סצנה ${i} מתוך ${n}`,
       kindledA:'נדלקו', ofEight:'מתוך שמונה גרנים נדלקו', ringOf:'מתוך שמונה', nee:'לבית', stillDark:n=>n===1?'אחת עדיין חשוכה':`${n} עדיין חשוכות`, allLit:'כל השמונה דולקות',
       provGold:'זהב — אדם סיפר לנו את זה', provCool:'כחול — האפליקציה חישבה זאת', provViolet:'סגול — עדיין נאסף, שמור לשומר',
-      toldBy:'סיפר/ה',
+      toldBy:'סיפר/ה', openPhoto:'פתח את התצלום',
       capName:'שמה, כפי שהמשפחה שומרת', capNameN:'שמם, כפי שהמשפחה שומרת',
       appearsIn:n=>`מופיעה ב-${n} תצלומים`,
       born:'נולדה', died:'נפטרה', pbirth:'נולדה ב', livedIn:'גרה ב',
@@ -450,7 +450,7 @@
     if(LIT.name){ scenes.push({facet:'name', prov:'gold', tile:()=>nameSVG(nameInitial()),
       cap:isFem()?d().capName:d().capNameN }); }
     if(LIT.face){ scenes.push({facet:'face', prov:'gold', photo:(person.primary_asset||(tagged[0]&&tagged[0].storage_path)||''), seed:0,
-      cap:d().appearsIn(tagged.length) }); }
+      artId:(tagged[0]&&tagged[0].artefact_id)||'', cap:d().appearsIn(tagged.length) }); }
     if(LIT.life){
       const parts=[]; const by=person.birth_date?String(person.birth_date).slice(0,4):(pubNewest('birth','und')?String(pubNewest('birth','und')).slice(0,4):'');
       const dy=person.death_date?String(person.death_date).slice(0,4):(pubNewest('death','und')?String(pubNewest('death','und')).slice(0,4):'');
@@ -465,7 +465,7 @@
       const line=(pb?d().pbirth+' '+pb:'')+((pb&&lived.length)?' · ':'')+(lived.length?d().livedIn+' '+lived.join(', '):'');
       scenes.push({facet:'places', prov:'cool', tile:placeSVG, cap:line||d().facet.places }); }
     memories.forEach((m,i)=>{ scenes.push({facet:'story', prov:'gold', photo:m.storage_path, seed:i+1,
-      cap:m.cap||'', teller:m.teller }); });
+      artId:m.id||'', cap:m.cap||'', teller:m.teller }); });
     if(LIT.kin){ scenes.push({facet:'kin', prov:'cool', tile:kinSVG, cap:d().kinLine(rels.length) }); }
     if(state.idx>=scenes.length) state.idx=Math.max(0,scenes.length-1);
   }
@@ -523,7 +523,7 @@
     $('.pad').innerHTML=`
       ${whoBlock()}
       <div class="reelhero">
-        <div class="scene on"><div class="im" id="heroIm" data-hero="${state.idx}">${heroSVG}</div><div class="tint"></div></div>
+        <div class="scene on"><div class="im" id="heroIm" data-hero="${state.idx}"${(s.photo&&s.artId)?` data-act="open-moment" data-art="${esc(s.artId)}" role="button" tabindex="0" aria-label="${esc(L.openPhoto)}" style="cursor:pointer"`:''}>${heroSVG}</div><div class="tint"></div></div>
         <div class="leak"></div><div class="grain"></div><div class="vig"></div>
         <div class="gate top">${gatesRow()}</div><div class="gate bot">${gatesRow()}</div>
         <div class="sceneno ${cool?'cool':''}"><span class="dot"></span> ${esc(L.sceneOf(state.idx+1,scenes.length))} · ${esc(L.facet[s.facet])}</div>
@@ -640,6 +640,7 @@
   /* ---------- wiring ---------- */
   function wire(){ const root=$('#dev');
     root.addEventListener('click', e=>{
+      const om=e.target.closest('[data-act="open-moment"]'); if(om){ const aid=om.getAttribute('data-art'); if(aid) location.href='moment-real.html?id='+encodeURIComponent(aid); return; }
       const seekEl=e.target.closest('[data-seek]'); if(seekEl){ seek(+seekEl.getAttribute('data-seek')); return; }
       const a=e.target.closest('[data-act]'); if(!a) return; const act=a.dataset.act;
       const m=$('.langmenu'); if(m&&!m.hidden&&act!=='lang') m.hidden=true;
@@ -652,6 +653,7 @@
       if(act==='go-add'){ location.href='person-real.html'+(person&&person.id?('?id='+encodeURIComponent(person.id)):''); return; }
     });
     document.addEventListener('click', e=>{ const m=$('.langmenu'); if(m&&!m.hidden&&!e.target.closest('.langmenu')&&!e.target.closest('[data-act="lang"]')) m.hidden=true; });
+    root.addEventListener('keydown', e=>{ if(e.key!=='Enter'&&e.key!==' ') return; const om=e.target.closest&&e.target.closest('[data-act="open-moment"]'); if(om){ e.preventDefault(); const aid=om.getAttribute('data-art'); if(aid) location.href='moment-real.html?id='+encodeURIComponent(aid); } });
   }
 
   /* ---------- gate + boot ---------- */
