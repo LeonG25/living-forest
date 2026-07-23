@@ -530,3 +530,10 @@ Then ping Leon once: design + build + QC done, here is the link.
   open + immediate over an approval gate). This idea is the future refinement of that: keep
   open sign-up, but let keepers scope what each account can see. Needs a per-account ↔
   branch/tree grant store and a keeper UI to manage grants.
+- **Sky page (`home-real.html`) — retired from the app 2026-07-23, parked not deleted.**
+  Removed from the ⊕ lens menu (`lf-nav.js` items); the globe (`index.html`) is now the
+  root/home — it is the first menu entry and the `data-parent` of all 12 top-level pages
+  (0 pages parent to the sky). The only hardcoded links to the sky — `timeline-real` and
+  `crowd-real` back buttons + their gate-error links — were re-pointed to the globe. The
+  file stays in the repo but is unreachable from anywhere in the app; nothing was orphaned
+  (the sky only linked out to the globe). Commit `1e00baf`. **New home = the globe.**
