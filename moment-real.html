@@ -64,6 +64,15 @@
   .photoart .ph-empty{ display:grid; place-items:center; width:100%; aspect-ratio:4/3; color:var(--muted);
     font-family:'Newsreader',serif; font-style:italic; font-size:16px; text-align:center; padding:20px; }
   .taglayer{ position:absolute; inset:0; touch-action:none; z-index:4; }
+  .zoomwrap{ position:relative; transform-origin:0 0; will-change:transform; }
+  .zoomctl{ position:absolute; top:12px; inset-inline-start:12px; z-index:6; display:flex; flex-direction:column; gap:6px; }
+  .zoomctl .zbtn{ width:30px; height:30px; border-radius:9px; display:grid; place-items:center; padding:0;
+    font-family:'Azeret Mono',monospace; font-size:17px; line-height:1; cursor:pointer;
+    color:var(--gold-hi); background:rgba(6,16,28,.5); backdrop-filter:blur(7px);
+    border:1px solid rgba(243,205,132,.26); box-shadow:0 2px 8px -4px #000; }
+  .zoomctl .zbtn:active{ background:rgba(243,205,132,.14); }
+  .zoomctl .zreset{ opacity:.45; font-size:14px; }
+  .zoomctl.on .zreset{ opacity:1; }
   body.tagging .photostage{ cursor:crosshair; }
   .stage-dim{ position:absolute; inset:0; background:rgba(4,7,14,.34); opacity:0; pointer-events:none; transition:opacity .3s; z-index:3; }
   body.tagging .stage-dim{ opacity:1; }
@@ -75,20 +84,21 @@
   .yearstamp .y{ font-family:'Azeret Mono',monospace; font-size:12px; letter-spacing:.12em; color:var(--cool-hi); }
 
   /* ===== tag boxes on the photo ===== */
-  .tagbox{ position:absolute; border:2px solid var(--gold); border-radius:9px; z-index:4;
-    box-shadow:0 0 0 1px rgba(4,7,14,.6), 0 0 18px -3px rgba(243,205,132,.6); cursor:pointer; }
-  .tagbox.pending{ border-color:var(--edit); border-style:dashed; box-shadow:0 0 0 1px rgba(4,7,14,.6), 0 0 18px -3px rgba(201,162,255,.6); }
-  .tagbox.unnamed{ border-color:var(--gold); border-style:dashed; box-shadow:0 0 0 1px rgba(4,7,14,.6), 0 0 14px -3px rgba(243,205,132,.45); }
-  .tagbox.sel{ border-width:2.5px; box-shadow:0 0 0 1px rgba(4,7,14,.7), 0 0 26px -2px rgba(255,232,180,.8); }
-  .tagbox.draft{ border-color:var(--gold-hi); border-style:solid; background:rgba(243,205,132,.08); }
+  .tagbox{ position:absolute; border:1px solid rgba(243,205,132,.7); border-radius:6px; z-index:4;
+    box-shadow:0 0 0 1px rgba(4,7,14,.5); cursor:pointer; }
+  .tagbox.pending{ border-color:rgba(201,162,255,.72); border-style:dashed; box-shadow:0 0 0 1px rgba(4,7,14,.5); }
+  .tagbox.unnamed{ border-color:rgba(243,205,132,.62); border-style:dashed; box-shadow:0 0 0 1px rgba(4,7,14,.5); }
+  .tagbox.sel{ border-width:1.5px; border-color:var(--gold-hi); box-shadow:0 0 0 1px rgba(4,7,14,.6), 0 0 10px -4px rgba(255,232,180,.65); }
+  .tagbox.draft{ border-color:var(--gold-hi); border-style:solid; background:rgba(243,205,132,.06); }
   /* numbered marker pinned to the box corner — small, never covers the face inside the box */
   .tagbox{ transform-origin:center; }
-  .tagbox .tagno{ position:absolute; inset-block-start:-10px; inset-inline-start:-10px; z-index:6;
-    min-width:22px; height:22px; padding:0 5px; border-radius:11px; cursor:pointer;
+  .tagbox .tagno{ position:absolute; inset-block-start:-8px; inset-inline-start:-8px; z-index:6;
+    min-width:16px; height:16px; padding:0 4px; border-radius:9px; cursor:pointer;
+    transform:scale(calc(1 / var(--z,1))); transform-origin:top left;
     display:inline-flex; align-items:center; justify-content:center;
-    font-family:'Azeret Mono',monospace; font-size:12px; font-weight:500; line-height:1;
-    background:rgba(6,16,28,.92); color:var(--gold-hi); border:1.5px solid var(--gold);
-    box-shadow:0 0 10px -2px rgba(243,205,132,.7), 0 1px 5px rgba(0,0,0,.55); }
+    font-family:'Azeret Mono',monospace; font-size:9.5px; font-weight:500; line-height:1;
+    background:rgba(6,16,28,.8); color:var(--gold-hi); border:1px solid rgba(243,205,132,.78);
+    box-shadow:0 1px 3px rgba(0,0,0,.5); }
   .tagbox .tagno:focus-visible{ outline:2px solid var(--gold-hi); outline-offset:2px; }
   .tagbox.pending .tagno{ color:#efe6ff; border-color:var(--edit); box-shadow:0 0 10px -2px rgba(201,162,255,.7), 0 1px 5px rgba(0,0,0,.55); }
   .tagbox.unnamed .tagno{ color:var(--gold); border-style:dashed; }
@@ -107,9 +117,10 @@
   .tagbox.pending .tagname .fdot{ background:var(--edit); box-shadow:0 0 7px 1px var(--edit); }
   .tagbox.flash{ animation:tagpulse .85s ease-in-out 2; }
   @keyframes tagpulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.05); } }
-  .tagbox .handle{ position:absolute; width:14px; height:14px; border-radius:50%;
-    background:#fff7e6; border:2px solid var(--gold); display:none; z-index:6;
-    box-shadow:0 1px 5px rgba(0,0,0,.5); }
+  .tagbox .handle{ position:absolute; width:11px; height:11px; border-radius:50%;
+    background:#fff7e6; border:1.5px solid var(--gold); display:none; z-index:6;
+    transform:scale(calc(1 / var(--z,1)));
+    box-shadow:0 1px 4px rgba(0,0,0,.5); }
   .tagbox .handle::after{ content:""; position:absolute; inset:-9px; }
   .tagbox.sel .handle{ display:block; }
   .tagbox .handle.nw{ inset-block-start:-7px; inset-inline-start:-7px; cursor:nwse-resize; }
@@ -716,13 +727,18 @@
 
       <div class="stage" data-edit="photo">
         <div class="frame"><div class="photostage" id="photostage">
-          <div class="rotor" id="rotor">
+          <div class="zoomwrap" id="zoomwrap"><div class="rotor" id="rotor">
             <div class="photoart" id="photoart">${ hasPhoto
               ? `<img id="momentPhoto" alt="">`
               : `<div class="ph-empty">${esc(d.emWhereEm? '' : '')}${sv(ICON.tag,1.4)}</div>` }</div>
             <div class="taglayer" id="taglayer"></div>
-          </div>
+          </div></div>
           <div class="stage-dim"></div>
+          <div class="zoomctl" id="zoomctl">
+            <button type="button" class="zbtn" data-z="in" aria-label="Zoom in">+</button>
+            <button type="button" class="zbtn" data-z="out" aria-label="Zoom out">−</button>
+            <button type="button" class="zbtn zreset" data-z="reset" aria-label="Reset zoom">⤢</button>
+          </div>
           ${d.year?`<div class="yearstamp"><span class="d"></span><span class="y">${esc(d.year)}</span></div>`:''}
           <div class="taghint">${sv(ICON.tag,1.7)} <span>${esc(d.tagHint)}</span></div>
           <div class="selbar" id="selbar"></div>
@@ -831,6 +847,42 @@
   function positionBox(tg){ const el=boxEl(tg.id); if(!el) return; el.style.left=tg.x*100+'%'; el.style.top=tg.y*100+'%'; el.style.width=tg.w*100+'%'; el.style.height=tg.h*100+'%'; }
   function drawLive(tg){ let el=boxEl(tg.id); if(!el){ renderBoxes(); el=boxEl(tg.id);} if(el){ el.classList.add('draft'); positionBox(tg);} }
 
+  // ---- pinch / button zoom on the photo stage (precise face tagging) ----
+  let zoom={s:1,tx:0,ty:0}; const zP=new Map(); let zPinch=null, zPan=null;
+  function stageRect(){ const st=document.getElementById('photostage'); return st?st.getBoundingClientRect():{left:0,top:0,width:1,height:1}; }
+  function zClampPan(){ const st=stageRect(); const minX=st.width-st.width*zoom.s, minY=st.height-st.height*zoom.s;
+    zoom.tx=Math.min(0,Math.max(minX,zoom.tx)); zoom.ty=Math.min(0,Math.max(minY,zoom.ty)); if(zoom.s<=1.0001){ zoom.tx=0; zoom.ty=0; } }
+  function applyZoom(){ const w=document.getElementById('zoomwrap'); if(!w) return; zClampPan();
+    w.style.transform=`translate(${zoom.tx}px,${zoom.ty}px) scale(${zoom.s})`; w.style.setProperty('--z', zoom.s);
+    const ps=document.getElementById('photostage'); if(ps) ps.classList.toggle('zoomed', zoom.s>1.0001);
+    const zc=document.getElementById('zoomctl'); if(zc) zc.classList.toggle('on', zoom.s>1.0001); }
+  function zoomAt(ns,cx,cy){ ns=Math.min(4,Math.max(1,ns)); const st=stageRect();
+    const px=(cx-st.left-zoom.tx)/zoom.s, py=(cy-st.top-zoom.ty)/zoom.s;
+    zoom.s=ns; zoom.tx=(cx-st.left)-px*ns; zoom.ty=(cy-st.top)-py*ns; applyZoom(); }
+  function zoomReset(){ zoom={s:1,tx:0,ty:0}; applyZoom(); }
+  function zAbortDraw(){ if(gesture){ if(gesture.mode==='draw'){ TAGS=TAGS.filter(x=>x.id!==gesture.id); } gesture=null; renderBoxes(); } }
+  function bindZoom(){ const ps=document.getElementById('photostage'); if(!ps || ps.__zoomBound) return; ps.__zoomBound=true;
+    const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+    ps.addEventListener('pointerdown', e=>{ if(e.target.closest('.zoomctl')) return; zP.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      if(zP.size===2){ zAbortDraw(); const p=[...zP.values()];
+        zPinch={d:dist(p[0],p[1]), mx:(p[0].x+p[1].x)/2, my:(p[0].y+p[1].y)/2, s0:zoom.s, tx0:zoom.tx, ty0:zoom.ty};
+        e.preventDefault(); e.stopPropagation();
+      } else if(zP.size===1 && zoom.s>1.0001 && !document.body.classList.contains('tagging') && !e.target.closest('.tagno')){
+        zPan={x:e.clientX,y:e.clientY,tx0:zoom.tx,ty0:zoom.ty}; }
+    }, true);
+    ps.addEventListener('pointermove', e=>{ if(!zP.has(e.pointerId)) return; zP.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      if(zPinch && zP.size>=2){ const p=[...zP.values()]; const nd=dist(p[0],p[1]); const nmx=(p[0].x+p[1].x)/2, nmy=(p[0].y+p[1].y)/2;
+        const st=stageRect(); const ns=Math.min(4,Math.max(1, zPinch.s0*(nd/(zPinch.d||1))));
+        const px=(zPinch.mx-st.left-zPinch.tx0)/zPinch.s0, py=(zPinch.my-st.top-zPinch.ty0)/zPinch.s0;
+        zoom.s=ns; zoom.tx=(nmx-st.left)-px*ns; zoom.ty=(nmy-st.top)-py*ns; applyZoom(); e.preventDefault(); e.stopPropagation();
+      } else if(zPan && zP.size===1){ zoom.tx=zPan.tx0+(e.clientX-zPan.x); zoom.ty=zPan.ty0+(e.clientY-zPan.y); applyZoom(); e.preventDefault(); e.stopPropagation(); }
+    }, true);
+    const up=e=>{ zP.delete(e.pointerId); if(zP.size<2) zPinch=null; if(zP.size===0) zPan=null; };
+    ps.addEventListener('pointerup', up, true); ps.addEventListener('pointercancel', up, true);
+    const zc=document.getElementById('zoomctl');
+    if(zc){ zc.querySelectorAll('[data-z]').forEach(b=>b.onclick=ev=>{ ev.preventDefault(); const st=stageRect(); const cx=st.left+st.width/2, cy=st.top+st.height/2;
+      const z=b.dataset.z; if(z==='in') zoomAt(zoom.s*1.5,cx,cy); else if(z==='out') zoomAt(zoom.s/1.5,cx,cy); else zoomReset(); }); }
+  }
   function bindTagLayer(){ const layer=$('#taglayer'); if(!layer) return;
     // tapping the number marker links to the list — it must never start a draw/move gesture
     layer.addEventListener('click', e=>{ const no=e.target.closest('.tagno'); if(!no) return;
@@ -838,6 +890,7 @@
     layer.addEventListener('keydown', e=>{ const no=e.target.closest('.tagno'); if(!no) return;
       if(e.key==='Enter'||e.key===' '){ e.preventDefault(); const box=no.closest('.tagbox'); if(box) onTagNoTap(box.dataset.tag); } });
     layer.addEventListener('pointerdown', e=>{
+      if(zPinch || zP.size>=2) return; // two fingers = pinch/pan, never a draw
       if(e.target.closest('.tagno')) return; // let the click handler above take it (highlight, no gesture)
       const box=e.target.closest('.tagbox'); const handle=e.target.closest('.handle');
       if(!box && document.body.classList.contains('tagging')){
@@ -1169,7 +1222,7 @@
     else { if(item.field==='photo_replace'&&item.new_value){ try{await sb.storage.from('family').remove([item.new_value]);}catch(e){} } await sb.from('artefact_edits').delete().eq('id',item.id); } }catch(e){} }
 
   /* ---------- wire ---------- */
-  function setTagging(on){ document.body.classList.toggle('tagging', on);
+  function setTagging(on){ document.body.classList.toggle('tagging', on); if(!on){ try{ zoomReset(); }catch(_){} }
     const b=$('#tagBtn'); if(b){ b.classList.toggle('on',on); const l=$('#tagBtnLabel'); if(l) l.textContent= on?t().tagDone:t().tagFace; }
     if(!on){ selId=null; } renderBoxes(); }
   function wire(){ const d=t();
@@ -1187,7 +1240,7 @@
     const delBtn=$('#delBtn'); if(delBtn) delBtn.onclick=()=>openEditor('photo-delete');
     const addDetail=$('#addDetailBtn'); if(addDetail) addDetail.onclick=()=>openEditor('detail-new');
 
-    bindTagLayer();
+    bindTagLayer(); bindZoom();
 
     $$('.face').forEach(f=>f.addEventListener('click', e=>{
       const id=f.dataset.face, kind=f.dataset.kind, tagId=f.dataset.tagid;
