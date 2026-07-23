@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Optimize photos · The Living Forest</title>
+<style>
+  :root{ --gold:#f3cd84; --gold-hi:#ffe9b8; --cool:#7fb4d8; --cream:#efe6d6; --hair:rgba(180,205,235,.18); }
+  *{ box-sizing:border-box; }
+  body{ margin:0; min-height:100vh; background:radial-gradient(120% 90% at 50% -10%, #1a1330, #0a0e1c 60%, #070912);
+    color:var(--cream); font-family:'Hanken Grotesk',system-ui,sans-serif; padding:26px 18px 60px; }
+  .wrap{ max-width:640px; margin:0 auto; }
+  h1{ font-family:Georgia,'Newsreader',serif; font-weight:500; font-size:23px; margin:0 0 4px; color:#fbf5e8; }
+  .sub{ color:rgba(230,235,245,.6); font-size:14px; line-height:1.5; margin:0 0 20px; }
+  .card{ background:rgba(9,16,30,.6); border:1px solid var(--hair); border-radius:16px; padding:18px; margin-bottom:16px; }
+  button{ font:inherit; cursor:pointer; border-radius:12px; padding:13px 18px; font-weight:600; border:1px solid transparent; }
+  .go{ background:linear-gradient(180deg,var(--gold-hi),var(--gold)); color:#1a1206; }
+  .go:disabled{ opacity:.5; cursor:default; }
+  .stat{ display:flex; gap:18px; flex-wrap:wrap; margin:14px 0 2px; font-size:13.5px; color:rgba(230,235,245,.85); }
+  .stat b{ color:var(--gold-hi); font-variant-numeric:tabular-nums; }
+  #log{ margin-top:14px; font-family:ui-monospace,Menlo,monospace; font-size:12px; line-height:1.55;
+    max-height:52vh; overflow:auto; background:rgba(4,7,14,.5); border:1px solid var(--hair); border-radius:12px; padding:12px; white-space:pre-wrap; }
+  .ok{ color:#9fe0b0; } .skip{ color:rgba(230,235,245,.5); } .err{ color:#ff9d9d; } .hd{ color:var(--cool); }
+  .note{ font-size:12.5px; color:rgba(230,235,245,.55); line-height:1.5; margin-top:10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Optimize stored photos</h1>
+  <p class="sub">One-time cleanup. Each stored photo is re-encoded to at most 1600px and saved back <b>to the same place</b>, so every tag, box, and portrait keeps working — only the file gets smaller and faster to load. A photo is only replaced when the smaller version is genuinely smaller and valid; anything already small is skipped.</p>
+  <div class="card">
+    <div id="who" class="sub" style="margin:0 0 12px">Checking your sign-in…</div>
+    <button id="run" class="go" disabled>Run optimization</button>
+    <div class="stat">
+      <span>Optimized: <b id="nOk">0</b></span>
+      <span>Skipped: <b id="nSkip">0</b></span>
+      <span>Errors: <b id="nErr">0</b></span>
+      <span>Saved: <b id="saved">0 KB</b></span>
+    </div>
+    <div id="log" hidden></div>
+    <p class="note">Safe to close and re-open — it only ever shrinks, never enlarges, and re-running just skips the already-optimized ones.</p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  const SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
+  const sb=window.supabase.createClient(SB_URL,SB_KEY);
+  const $=s=>document.querySelector(s);
+  const logEl=$('#log');
+  let nOk=0,nSkip=0,nErr=0,saved=0;
+  function log(cls,msg){ logEl.hidden=false; const d=document.createElement('div'); if(cls)d.className=cls; d.textContent=msg; logEl.appendChild(d); logEl.scrollTop=logEl.scrollHeight; }
+  function kb(b){ return Math.round(b/1024)+' KB'; }
+  function upd(){ $('#nOk').textContent=nOk; $('#nSkip').textContent=nSkip; $('#nErr').textContent=nErr; $('#saved').textContent=kb(saved); }
+
+  async function lfDownscaleImage(blob, maxDim, q){ maxDim=maxDim||1600; q=q||0.85;
+    try{
+      if(!blob || !/^image\//.test(blob.type||'')) return blob;
+      let W,H,src,bmp=null;
+      try{ bmp=await createImageBitmap(blob); W=bmp.width; H=bmp.height; src=bmp; }
+      catch(_){ src=await new Promise((res,rej)=>{ const u=URL.createObjectURL(blob),i=new Image();
+        i.onload=()=>{URL.revokeObjectURL(u);res(i);}; i.onerror=()=>{URL.revokeObjectURL(u);rej(0);}; i.src=u; });
+        W=src.naturalWidth; H=src.naturalHeight; }
+      if(!W||!H){ if(bmp&&bmp.close)bmp.close(); return blob; }
+      const scale=Math.min(1, maxDim/Math.max(W,H));
+      if(scale===1 && blob.size<=512000){ if(bmp&&bmp.close)bmp.close(); return blob; }
+      const cw=Math.max(1,Math.round(W*scale)), ch=Math.max(1,Math.round(H*scale));
+      const c=document.createElement('canvas'); c.width=cw; c.height=ch; c.getContext('2d').drawImage(src,0,0,cw,ch);
+      if(bmp&&bmp.close)bmp.close();
+      const out=await new Promise(r=>c.toBlob(r,'image/jpeg',q));
+      if(!out || out.size<20480) return blob;
+      return out.size < blob.size ? out : blob;
+    }catch(e){ return blob; }
+  }
+
+  async function run(){
+    $('#run').disabled=true;
+    log('hd','Loading photo list…');
+    let rows=[];
+    try{ const {data,error}=await sb.from('artefacts').select('id,storage_path,kind').not('storage_path','is',null).neq('kind','voice');
+      if(error) throw error; rows=data||[]; }
+    catch(e){ log('err','Could not load photos: '+(e.message||e)); $('#run').disabled=false; return; }
+    log('hd','Found '+rows.length+' stored photos. Working…');
+    for(const r of rows){
+      const path=r.storage_path;
+      try{
+        const {data:blob,error:de}=await sb.storage.from('family').download(path);
+        if(de||!blob){ nErr++; upd(); log('err','✗ '+path+' — download failed'); continue; }
+        const before=blob.size;
+        const out=await lfDownscaleImage(blob);
+        if(out===blob || out.size>=before){ nSkip++; upd(); log('skip','• '+path+' — already small ('+kb(before)+')'); continue; }
+        const {error:ue}=await sb.storage.from('family').upload(path,out,{upsert:true,contentType:'image/jpeg'});
+        if(ue){ nErr++; upd(); log('err','✗ '+path+' — save failed: '+ue.message); continue; }
+        saved+=(before-out.size); nOk++; upd();
+        log('ok','✓ '+path+' — '+kb(before)+' → '+kb(out.size));
+      }catch(e){ nErr++; upd(); log('err','✗ '+path+' — '+(e.message||e)); }
+    }
+    log('hd','Done. Optimized '+nOk+', skipped '+nSkip+', errors '+nErr+', saved '+kb(saved)+'.');
+    $('#run').disabled=false;
+  }
+
+  (async function init(){
+    try{
+      const {data:{session}}=await sb.auth.getSession();
+      const user=session&&session.user;
+      if(!user){ $('#who').innerHTML='You are not signed in. Open the app, sign in as the keeper, then reopen this page.'; return; }
+      let keeper=false;
+      try{ const {data:pr}=await sb.from('profiles').select('is_keeper').eq('id',user.id).maybeSingle(); keeper=!!(pr&&pr.is_keeper); }catch(e){}
+      if(!keeper){ $('#who').innerHTML='Signed in, but this tool is for keepers only.'; return; }
+      $('#who').innerHTML='Signed in as keeper. Ready.';
+      $('#run').disabled=false;
+      $('#run').onclick=run;
+    }catch(e){ $('#who').textContent='Could not check sign-in: '+(e.message||e); }
+  })();
+})();
+</script>
+</body>
+</html>

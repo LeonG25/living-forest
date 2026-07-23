@@ -787,6 +787,27 @@
   }
 
   /* ---------- upload + submit ---------- */
+  // Downscale images before storing so a 1.6MB phone photo isn't shipped just to show a 50px face.
+  // Image-only (audio/other blobs pass through untouched), kept only if genuinely smaller, and never breaks an upload.
+  async function lfDownscaleImage(blob, maxDim, q){ maxDim=maxDim||1600; q=q||0.85;
+    try{
+      if(!blob || !/^image\//.test(blob.type||'')) return blob;
+      let W,H,src,bmp=null;
+      try{ bmp=await createImageBitmap(blob); W=bmp.width; H=bmp.height; src=bmp; }
+      catch(_){ src=await new Promise((res,rej)=>{ const u=URL.createObjectURL(blob),i=new Image();
+        i.onload=()=>{URL.revokeObjectURL(u);res(i);}; i.onerror=()=>{URL.revokeObjectURL(u);rej(0);}; i.src=u; });
+        W=src.naturalWidth; H=src.naturalHeight; }
+      if(!W||!H){ if(bmp&&bmp.close)bmp.close(); return blob; }
+      const scale=Math.min(1, maxDim/Math.max(W,H));
+      if(scale===1 && blob.size<=512000){ if(bmp&&bmp.close)bmp.close(); return blob; }
+      const cw=Math.max(1,Math.round(W*scale)), ch=Math.max(1,Math.round(H*scale));
+      const c=document.createElement('canvas'); c.width=cw; c.height=ch; c.getContext('2d').drawImage(src,0,0,cw,ch);
+      if(bmp&&bmp.close)bmp.close();
+      const out=await new Promise(r=>c.toBlob(r,'image/jpeg',q));
+      if(!out || out.size<20480) return blob;
+      return out.size < blob.size ? out : blob;
+    }catch(e){ return blob; }
+  }
   async function uploadBlob(fileOrBlob,ext){
     const path=M.user.id+'/'+(crypto.randomUUID?crypto.randomUUID():('x'+Date.now()+Math.random().toString(36).slice(2)))+'.'+ext;
     const up=await sb.storage.from('family').upload(path,fileOrBlob,{contentType:(fileOrBlob.type||undefined)});
@@ -823,7 +844,7 @@
       if(M.where&&M.where.trim()) meta.where=M.where.trim();
 
       let photoPath=null;
-      if(M.hasPhoto&&M.photoFile){ const ext=(M.photoFile.name.split('.').pop()||'jpg').toLowerCase(); photoPath=await uploadBlob(M.photoFile,ext); }
+      if(M.hasPhoto&&M.photoFile){ const pf=await lfDownscaleImage(M.photoFile); const tp=(pf.type||''); const ext = tp==='image/jpeg'?'jpg':tp==='image/png'?'png':tp==='image/webp'?'webp':((M.photoFile.name.split('.').pop())||'jpg').toLowerCase(); photoPath=await uploadBlob(pf,ext); }
 
       const primaryKind = M.hasPhoto?'photo':'text';
       const primary=await sb.from('artefacts').insert({
