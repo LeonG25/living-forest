@@ -662,6 +662,7 @@ let artByPath={};     // storage_path -> artefact_id, to resolve a person's prim
 let pos={};           // id -> {x(centre px), tier}
 let placedSet=new Set();
 let unplaced=[];      // ids
+let treeRootGroups=[]; // [[rootId,...]] sibling groups with no parent card (draw a sibling bar)
 const state={ lang:'en', keeper:false, scale:1, tx:0, ty:0, sel:null, trace:false, legendHid:true };
 const ZMIN=0.28, ZMAX=2.8;
 const world=$('#world'), links=$('#links'), vp=$('#vp'), toastEl=$('#toast'), sheet=$('#sheet'), scrim=$('#scrim'), sbody=$('#sbody'), sfoot=$('#sfoot');
@@ -874,154 +875,75 @@ function orderCluster(comp, adj){ const sortId=(a,b)=> a<b?-1:(a>b?1:0);
 
 /* ================= LAYOUT ================= */
 function computeLayout(){
-  pos={}; placedSet=new Set(); unplaced=[];
+  // ---- TIDY DESCENDANT TREE (MyHeritage grammar; ported from the prototype, enhanced with
+  // sibling-group blocks). A unit = a nuclear family: a couple (spouse OR co-parents) is one
+  // unit of two cards; everyone else a single-card unit. Units form a tree via parent edges;
+  // each subtree RESERVES its own horizontal width, so nothing can overlap and a parent always
+  // sits centred over its children. Generation = depth = a fixed row. Top-generation siblings
+  // whose parent isn't in the data are grouped under a virtual parent so they sit together
+  // under one sibling bar. Leon's rulings: all a person's spouses ride on their row; blood-
+  // related spouses keep their own generation (drawn as a cross-level marriage connector). ----
+  pos={}; placedSet=new Set(); unplaced=[]; treeRootGroups=[];
   const ids=Object.keys(people);
-  // A person belongs in the tree if they have ANY relationship — parent, child, spouse OR
-  // sibling. (Previously only parent-child-connected people, plus their spouses, were placed,
-  // so spouse-only and sibling-only relatives were wrongly dumped in the "not yet placed"
-  // drawer even though they ARE connected. Only people with ZERO ties belong in the drawer.)
   ids.forEach(id=>{ if(hasAnyRel(id)) placedSet.add(id); });
   unplaced=ids.filter(id=>!placedSet.has(id));
-  const placed=[...placedSet];
-  if(!placed.length){ return; }
-  // ---- generation assignment: iterate to a FIXED POINT so that, after spouses share a
-  // row, EVERY child still lands strictly below BOTH parents. The old code tiered children
-  // from their parents' FIRST estimate, then pulled a parentless spouse down to their
-  // partner — but never re-propagated, so a child of that spouse (e.g. Dudi→Leeya) could end
-  // up on or ABOVE the parent's final row. Alternating the two constraints to convergence
-  // removes that inversion.  gen only ever increases ⇒ the loop always settles.
-  const tier=genAssign(placed);
-  // re-pack: drop empty generations, keep order (so gaps from the max() pushes don't show)
-  { const used=[...new Set(placed.map(id=>tier[id]))].sort((a,b)=>a-b); const remap={}; used.forEach((g,i)=>remap[g]=i); placed.forEach(id=>tier[id]=remap[tier[id]]); }
-
-  // ---- MARRIAGE CLUSTERS as layout units (Leon's rule: every spouse on the partner's level,
-  // to the side — INCLUDING serial/multiple marriages, all on that same level). A unit is a
-  // connected component of the SAME-TIER spouse graph, laid out as one contiguous line. Spouses
-  // that landed on a DIFFERENT tier (the related-spouse edge case kept on their blood level) are
-  // deliberately NOT in the cluster — their marriage is drawn later as a cross-level connector.
-  // Deterministic: a stable id sort seeds every step, so the same clusters form on every load.
+  const placed=[...placedSet]; if(!placed.length) return;
+  const P=new Set(placed);
+  const bk=id=>{ const p=people[id]; const y=p&&(p.birth_year||(p.birth_date?parseInt(String(p.birth_date).slice(0,4)):0)); return y||9999; };
+  const ord=(a,b)=>(bk(a)-bk(b))||(nm(a)<nm(b)?-1:nm(a)>nm(b)?1:0);
   const sortId=(a,b)=> a<b?-1:(a>b?1:0);
-  const sortedPlaced=placed.slice().sort(sortId);
-  const spAdj={}; sortedPlaced.forEach(id=>spAdj[id]=new Set());
-  sortedPlaced.forEach(id=>spousesOf(id).forEach(s=>{ if(placedSet.has(s)&&s!==id&&tier[s]===tier[id]){ spAdj[id].add(s); spAdj[s].add(id); } }));
-
-  const maxTier=Math.max(...placed.map(id=>tier[id]));
-  const unitsByTier={}; for(let t=0;t<=maxTier;t++) unitsByTier[t]=[];
-  const unitOf={}; const seen=new Set();
-  sortedPlaced.forEach(start=>{ if(seen.has(start)) return;
-    // gather the same-tier spouse component (marriage cluster) containing `start`
-    const comp=[], stack=[start], inC=new Set([start]);
-    while(stack.length){ const x=stack.pop(); comp.push(x); [...spAdj[x]].sort(sortId).forEach(y=>{ if(!inC.has(y)){ inC.add(y); stack.push(y); } }); }
-    comp.forEach(x=>seen.add(x));
-    let mem=orderCluster(comp, spAdj);
-    if(mem.length===2 && sexOf(mem[1])==='m' && sexOf(mem[0])!=='m') mem=[mem[1],mem[0]];   // simple couple: m to the left
-    const t=tier[start];
-    const u={ mem, tier:t, uid:mem.slice().sort(sortId).join('|'), minId:mem.slice().sort(sortId)[0] };
-    mem.forEach(m=>unitOf[m]=u); unitsByTier[t].push(u); });
-  const allUnits=[]; for(let t=0;t<=maxTier;t++) allUnits.push(...unitsByTier[t]);
-  // parent-/child-/sibling-unit adjacency (a couple counts as ONE unit for all).
-  // A member with no parents of their own borrows their sibling's parents as a LAYOUT-ONLY
-  // pull (never drawn) so a parentless sibling gravitates beneath the same couple; explicit
-  // sibling units keep parentless siblings contiguous with each other.
-  allUnits.forEach(u=>{ const ps=new Set(), cs=new Set(), ss=new Set();
-    u.mem.forEach(m=>{ let mp=parentsOf(m);
-      if(!mp.length){ const bp=[]; siblingsOf(m).forEach(sib=>parentsOf(sib).forEach(p=>bp.push(p))); mp=bp; }
-      mp.forEach(p=>{ if(unitOf[p]&&unitOf[p]!==u) ps.add(unitOf[p]); });
-      childrenOf(m).forEach(c=>{ if(unitOf[c]&&unitOf[c]!==u) cs.add(unitOf[c]); });
-      siblingsOf(m).forEach(sib=>{ if(unitOf[sib]&&unitOf[sib]!==u) ss.add(unitOf[sib]); }); });
-    u.parentUnits=[...ps]; u.childUnits=[...cs]; u.siblingUnits=[...ss]; });
-
-  // ---- SIBLING BLOCKS: a sibling group is an ATOMIC block that unrelated people may NEVER
-  // split (Leon's bug: Vera's children Lia & Berenika, interrupted by Amma's child Ida + her
-  // married-in spouse Grisha). Group the units of each tier into blocks: two units join the
-  // same block when they share a parentUnit (⇒ the SAME parent-set — true siblings) OR are
-  // tied by an explicit sibling edge. A married-in spouse rides inside their partner's UNIT,
-  // so a couple (Ida+Grisha) is ONE unit and lands in Ida's sibling block, beside Ida's own
-  // siblings — never inside another family's block. Blocks are the atoms the row-ordering
-  // sweep may reorder; the order of units WITHIN a block is FIXED (parent-set, then birth
-  // order, then id), so nothing outside the block can ever be placed between two siblings.
-  const blockOf={}; const blocksByTier={};
-  for(let t=0;t<=maxTier;t++){ blocksByTier[t]=[]; const us=unitsByTier[t]||[]; if(!us.length) continue;
-    const uf={}; us.forEach(u=>uf[u.uid]=u.uid);
-    const find=x=>{ while(uf[x]!==x){ uf[x]=uf[uf[x]]; x=uf[x]; } return x; };
-    const join=(a,b)=>{ const ra=find(a),rb=find(b); if(ra!==rb) uf[ra]=rb; };
-    const byParent={};                                   // units sharing a parentUnit = full siblings
-    us.forEach(u=>u.parentUnits.forEach(p=>{ (byParent[p.uid]=byParent[p.uid]||[]).push(u); }));
-    Object.keys(byParent).forEach(k=>{ const l=byParent[k]; for(let i=1;i<l.length;i++) join(l[0].uid,l[i].uid); });
-    us.forEach(u=>u.siblingUnits.forEach(sb=>{ if(sb.tier===t&&uf[sb.uid]!=null) join(u.uid,sb.uid); }));  // explicit sibling ties
-    const comps={}; us.forEach(u=>{ const r=find(u.uid); (comps[r]=comps[r]||[]).push(u); });
-    // fixed internal order: keep each exact parent-set contiguous (sort by parent-set key),
-    // then birth order (earliest first), then id — deterministic, identical on every load.
-    // Key by the exact PARENT PERSONS (not parentUnits): under a serial marriage (one parent
-    // married to several) full- and half-siblings share a parentUnit but differ here, so each
-    // exact parent-set stays contiguous and half-siblings never interleave full siblings.
-    const pkey=u=>{ const ps=new Set(); u.mem.forEach(m=>parentsOf(m).forEach(p=>{ if(placedSet.has(p)) ps.add(p); })); return [...ps].sort(sortId).join(','); };
-    const byr=u=>{ const ys=u.mem.map(m=>parseInt((people[m]&&people[m].birth_year),10)).filter(y=>y>0); return ys.length?Math.min(...ys):1e9; };
-    Object.keys(comps).forEach(r=>{ const list=comps[r];
-      list.sort((a,b)=> (pkey(a)<pkey(b)?-1:pkey(a)>pkey(b)?1:0) || (byr(a)-byr(b)) || sortId(a.minId,b.minId));
-      const mem=[]; list.forEach(u=>mem.push(...u.mem));
-      const minId=list.map(u=>u.minId).sort(sortId)[0];
-      const blk={ tier:t, units:list, mem, minId, uid:'B'+t+'#'+minId };
-      list.forEach(u=>blockOf[u.uid]=blk); blocksByTier[t].push(blk); }); }
-  const allBlocks=[]; for(let t=0;t<=maxTier;t++) allBlocks.push(...blocksByTier[t]);
-  // block-level parent/child adjacency, lifted from the per-unit adjacency (a couple = one unit)
-  allBlocks.forEach(b=>{ const ps=new Set(), cs=new Set();
-    b.units.forEach(u=>{ u.parentUnits.forEach(p=>{ const pb=blockOf[p.uid]; if(pb&&pb!==b) ps.add(pb); });
-      u.childUnits.forEach(c=>{ const cb=blockOf[c.uid]; if(cb&&cb!==b) cs.add(cb); }); });
-    b.parentBlocks=[...ps]; b.childBlocks=[...cs]; });
-
-  // ---- ORDER THE BLOCKS per tier (Sugiyama-style). DFS from the roots so each family's
-  // descendants start contiguous; then sweep barycentres down/up to pull children under their
-  // parents and cut crossings. Every step is a STABLE sort with an id tie-break, so the layout
-  // is deterministic and never jumps between loads. Reordering acts on whole BLOCKS, so a
-  // sibling group moves as one and can never be split.
-  const border={}; for(let t=0;t<=maxTier;t++) border[t]=[];
-  const vis=new Set();
-  const dfs=b=>{ if(vis.has(b.uid)) return; vis.add(b.uid); border[b.tier].push(b);
-    b.childBlocks.slice().sort((x,y)=>sortId(x.minId,y.minId)).forEach(dfs); };
-  allBlocks.filter(b=>!b.parentBlocks.length).sort((a,b)=>(a.tier-b.tier)||sortId(a.minId,b.minId)).forEach(dfs);
-  allBlocks.slice().sort((a,b)=>(a.tier-b.tier)||sortId(a.minId,b.minId)).forEach(b=>{ if(!vis.has(b.uid)){ vis.add(b.uid); border[b.tier].push(b); } });
-  for(let t=0;t<=maxTier;t++) border[t].forEach((b,i)=>b.idx=i);
-  const meanIdx=arr=>arr.reduce((a,b)=>a+b.idx,0)/arr.length;
-  const reorder=(t,key)=>{ const list=border[t]; if(list.length<2) return;
-    list.forEach(b=>{ const ns=b[key]; b._bc = ns.length? meanIdx(ns) : b.idx; });
-    list.sort((a,b)=> (a._bc-b._bc) || sortId(a.minId,b.minId));
-    list.forEach((b,i)=>b.idx=i); };
-  for(let pass=0; pass<8; pass++){
-    for(let t=1;t<=maxTier;t++) reorder(t,'parentBlocks');       // down: settle under parents
-    for(let t=maxTier-1;t>=0;t--) reorder(t,'childBlocks');      // up: settle over children
-  }
-  // expand blocks → a FIXED unit order per tier (blocks stay contiguous, internal order frozen)
-  const order={}; for(let t=0;t<=maxTier;t++){ order[t]=[]; border[t].forEach(b=>b.units.forEach(u=>order[t].push(u))); order[t].forEach((u,i)=>u.idx=i); }
-
-  // ---- X-POSITION with the row order FIXED. Pool-adjacent-violators keeps the min gap
-  // between neighbours while centring each unit as close to its barycentre as possible, so a
-  // family's children land directly beneath the couple. Alternate down/up to a compromise.
-  const uw=u=>u.mem.length*COLW;
-  const pav=(targets,weights)=>{ const bm=[],bw=[],bc=[];
-    for(let i=0;i<targets.length;i++){ let m=targets[i], w=weights[i], c=1;
-      while(bm.length && bm[bm.length-1]>=m){ const j=bm.length-1; m=(bm[j]*bw[j]+m*w)/(bw[j]+w); w=bw[j]+w; c+=bc[j]; bm.pop();bw.pop();bc.pop(); }
-      bm.push(m);bw.push(w);bc.push(c); }
-    const out=[]; for(let k=0;k<bm.length;k++) for(let j=0;j<bc[k];j++) out.push(bm[k]); return out; };
-  const placeRow=list=>{ if(!list.length) return; const S=[]; let acc=0;
-    for(let i=0;i<list.length;i++){ if(i>0) acc += uw(list[i-1])/2 + uw(list[i])/2 + GAP; S.push(acc); }
-    const tg=list.map((u,i)=> (u._tx==null?S[i]:u._tx) - S[i]);
-    const q=pav(tg, list.map(u=>u._w||1)); list.forEach((u,i)=> u.cx=q[i]+S[i]); };
-  for(let t=0;t<=maxTier;t++){ order[t].forEach(u=>{u._tx=null;u._w=1;}); placeRow(order[t]); }  // sequential seed
-  for(let pass=0; pass<10; pass++){
-    for(let t=0;t<=maxTier;t++){ order[t].forEach(u=>{ if(u.parentUnits.length){ u._tx=u.parentUnits.reduce((a,p)=>a+p.cx,0)/u.parentUnits.length; u._w=u.parentUnits.length; } else { u._tx=u.cx; u._w=1; } }); placeRow(order[t]); }
-    for(let t=maxTier;t>=0;t--){ order[t].forEach(u=>{ if(u.childUnits.length){ u._tx=u.childUnits.reduce((a,c)=>a+c.cx,0)/u.childUnits.length; u._w=u.childUnits.length; } else { u._tx=u.cx; u._w=1; } }); placeRow(order[t]); }
-  }
-  for(let t=0;t<=maxTier;t++){ order[t].forEach(u=>{ const left=u.cx-uw(u)/2; u.mem.forEach((id,i)=>{ pos[id]={ x:left+(i+0.5)*COLW, tier:t }; }); }); }
-  compactRows();   // hard guarantee: no two cards overlap within a generation
-  // normalise so min x = PADX + CW/2
+  // home units — couples first (spouse OR co-parent), then singletons
+  const homeUnit={}, units=[];
+  const partnersOf=id=>[...new Set(spousesOf(id))].filter(x=>P.has(x));
+  placed.slice().sort(sortId).forEach(id=>{ if(homeUnit[id]) return;
+    const partner=partnersOf(id).find(x=>!homeUnit[x]);
+    if(partner){ const u={members:[id,partner],childUnits:[]}; units.push(u); homeUnit[id]=u; homeUnit[partner]=u; } });
+  placed.forEach(id=>{ if(!homeUnit[id]){ const u={members:[id],childUnits:[]}; units.push(u); homeUnit[id]=u; } });
+  // anchor each unit by the blood-line member (one with parents), else first
+  units.forEach(u=>{ u.root = u.members.find(m=>parentsOf(m).length>0) ?? u.members.find(m=>siblingsOf(m).some(x=>placedSet.has(x))) ?? u.members[0]; });
+  units.forEach(u=>{ const par=parentsOf(u.root)[0]; u.parentUnit=(par!=null&&homeUnit[par])?homeUnit[par]:null; });
+  units.forEach(u=>{ if(u.parentUnit&&u.parentUnit!==u) u.parentUnit.childUnits.push(u); });
+  units.forEach(u=>u.childUnits.sort((a,b)=>ord(a.root,b.root)));
+  // sibling groups among ROOT units (siblings whose parent isn't placed) via union-find on home units
+  const roots=units.filter(u=>!u.parentUnit); const rootSet=new Set(roots);
+  const uf={}; roots.forEach(u=>uf[u.root]=u.root);
+  const find=x=>(uf[x]===undefined||uf[x]===x)?x:(uf[x]=find(uf[x]));
+  const uni=(a,b)=>{a=find(a);b=find(b); if(a!=null&&b!=null&&a!==b) uf[a]=b;};
+  edges.forEach(e=>{ if(e.kind!=='sibling')return; const ua=homeUnit[e.from], ub=homeUnit[e.to];
+    if(ua&&ub&&rootSet.has(ua)&&rootSet.has(ub)) uni(ua.root,ub.root); });
+  const gmap={}; roots.forEach(u=>{ const g=find(u.root); (gmap[g]=gmap[g]||[]).push(u); });
+  const vroots=[];
+  Object.keys(gmap).forEach(g=>{ const mem=gmap[g].sort((a,b)=>ord(a.root,b.root));
+    const v={members:[],childUnits:mem,virtual:true}; mem.forEach(u=>u.parentUnit=v); vroots.push(v);
+    if(mem.length>1) treeRootGroups.push(mem.map(u=>u.root)); });
+  // measure + place (Reingold-Tilford tidy tree)
+  const OFF=COLW/2, SIB=40, FAM=94;
+  const ownW=u=>u.virtual?0:(u.members.length>1?(COLW+CWX):CWX);
+  const M=new Set();
+  function measure(u){ if(M.has(u))return u.sub; M.add(u); const k=u.childUnits;
+    if(!k.length){u.sub=ownW(u);return u.sub;}
+    let w=0;k.forEach((c,i)=>{w+=measure(c);if(i<k.length-1)w+=SIB;}); u.sub=Math.max(ownW(u),w); return u.sub; }
+  const PL=new Set();
+  function place(u,left,depth){ if(PL.has(u))return; PL.add(u); u.depth=depth;
+    const k=u.childUnits;
+    if(!k.length){ u.cx=left+u.sub/2; }
+    else{ const cw=k.reduce((a,c,i)=>a+c.sub+(i<k.length-1?SIB:0),0);
+      let cur=left+(u.sub-cw)/2; k.forEach(c=>{place(c,cur,depth+1);cur+=c.sub+SIB;});
+      u.cx=(k[0].cx+k[k.length-1].cx)/2; }
+    if(!u.virtual){ if(u.members.length>1){ pos[u.members[0]]={x:u.cx-OFF,tier:u.depth}; pos[u.members[1]]={x:u.cx+OFF,tier:u.depth}; }
+      else pos[u.members[0]]={x:u.cx,tier:u.depth}; } }
+  vroots.sort((a,b)=>ord(a.childUnits[0].root,b.childUnits[0].root));
+  let xLeft=0; vroots.forEach(v=>{ measure(v); place(v,xLeft,-1); xLeft+=v.sub+FAM; });
+  // safety: any unit not placed (shouldn't happen) → a fresh bottom row so nobody is lost
+  let maxTier=Math.max(0,...placed.filter(id=>pos[id]).map(id=>pos[id].tier));
+  let sx=0; placed.forEach(id=>{ if(!pos[id]){ pos[id]={x:sx*COLW,tier:maxTier+1}; sx++; } });
+  // normalise: leftmost card-left → PADX
   const xs=placed.map(id=>pos[id].x); const minx=Math.min(...xs);
-  const shift=(PADX+CW/2)-minx; placed.forEach(id=>{ pos[id].x += shift; });
+  const shift=(PADX+CW/2)-minx; placed.forEach(id=>{ pos[id].x+=shift; });
   // RTL mirror
-  if(rtl()){ const mx=Math.max(...placed.map(id=>pos[id].x)); placed.forEach(id=>{ pos[id].x = (PADX+CW/2) + (mx - pos[id].x); }); }
+  if(rtl()){ const mx=Math.max(...placed.map(id=>pos[id].x)); placed.forEach(id=>{ pos[id].x=(PADX+CW/2)+(mx-pos[id].x); }); }
 }
 
-/* ================= RENDER ================= */
 function worldBBox(){ let maxX=0,maxY=0,minX=1e9,minY=1e9; const placed=[...placedSet];
   if(!placed.length) return {minX:0,minY:0,maxX:600,maxY:600};
   // include the badge overhang so edge cards (and their connect/moment badges) are never clipped
@@ -1085,6 +1007,14 @@ function buildLinks(){
     if(kidIds.length>1) links.appendChild(mkPath(`M ${minx} ${busY} H ${maxx}`,'ln c-'+rep));
     kidIds.forEach(k=>{ const c=(f.kids[k].certainty||'remembered'); links.appendChild(mkPath(`M ${CX(k)} ${busY} V ${CTOP(k)}`,'ln c-'+c)); });
   });
+  // sibling bar for a top-generation sibling group that has NO parent card: one clean
+  // horizontal bar over the group with a short drop to each sibling (the married-in spouse
+  // beside them gets no drop). This is the parentless-siblings case (e.g. Amma/Evel/Chaya).
+  const rootGrpOf={}; treeRootGroups.forEach((g,i)=>g.forEach(id=>rootGrpOf[id]=i));
+  treeRootGroups.forEach(grp=>{ const gs=grp.filter(id=>pos[id]); if(gs.length<2) return;
+    const xs=gs.map(CX); const busY=Math.min(...gs.map(CTOP))-24;
+    links.appendChild(mkPath(`M ${Math.min(...xs)} ${busY} H ${Math.max(...xs)}`,'ln c-documented'));
+    gs.forEach(id=>links.appendChild(mkPath(`M ${CX(id)} ${busY} V ${CTOP(id)}`,'ln c-documented'))); });
   // explicit sibling edges (subtle) when not already sharing a parent bus.
   // Route as a bracket in the gap ABOVE the cards — up from each card top, across, down —
   // so a run between distant siblings never passes THROUGH an unrelated card (the old
@@ -1092,6 +1022,7 @@ function buildLinks(){
   let sibOff=0;
   edges.forEach(e=>{ if(e.kind!=='sibling'||!pos[e.from]||!pos[e.to]) return;
     const shared=parentsOf(e.from).some(p=>parentsOf(e.to).includes(p)); if(shared) return;
+    if(rootGrpOf[e.from]!=null && rootGrpOf[e.from]===rootGrpOf[e.to]) return;
     const ax=CX(e.from), bx=CX(e.to); const busY=Math.min(CTOP(e.from),CTOP(e.to))-16-(sibOff%3)*7; sibOff++;
     links.appendChild(mkPath(`M ${ax} ${CTOP(e.from)} V ${busY} H ${bx} V ${CTOP(e.to)}`,'ln sibling')); });
   // pending (in_review) connections → violet dashed connector, routed in the gap ABOVE the
