@@ -92,7 +92,7 @@ be visibly mid-construction if Leon peeks early — accepted.
 
 ---
 
-## 2. Where we are — live pages (verified 2026-07-18)
+## 2. Where we are — live pages (verified 2026-07-18; tree layout 2026-07-23)
 
 `home-real.html` (Sky) · **`index.html`** (the globe — **front door**) · `person-real.html`
 · `crowd-real.html` · `moment-real.html` · `place-real.html` · `timeline-real.html`.
@@ -375,6 +375,31 @@ no data yet — hence §1's empty-structure + engine approach.
      onward MUST be listed** or arriving from it silently falls back to `data-parent`.
      `globe-real.html` is deliberately absent — retired name.
 - `node --check` every inline `<script>` before committing.
+
+### Tree layout — tidy descendant tree (MyHeritage grammar) — decided 2026-07-23
+`tree-real.html` `computeLayout()` was a barycentre/Sugiyama sweep → same-generation
+people scattered onto different rows, marriage lines drawn between far-apart spouses
+(Leon's "2 parallel yellow lines"). **Replaced** (`0f454c1`) with the prototype's
+Reingold–Tilford tidy tree:
+- Unit = nuclear family. A couple (spouse **or** co-parents) = one 2-card block anchored
+  by the blood-line member (has-parents, else has-a-placed-sibling, else first). Everyone
+  else = a single-card unit.
+- Units form a tree via parent edges (`u.parentUnit` = home unit of the anchor's parent).
+  Each subtree **reserves its own horizontal width** ⇒ no overlap by construction; a
+  parent sits centred over its children; generation = fixed depth row.
+- **Sibling-group blocks** (enhancement over the raw prototype): root units linked by an
+  explicit sibling edge (union-find on *home units*, either spouse) are grouped under a
+  virtual parent so top-generation siblings whose parent isn't in the data (Amma/Chaya/
+  Evel) sit adjacent under one clean sibling bar. Constants: `COLW/couple-pitch 170`,
+  `COUPLE_OFF 85`, `SIB 40`, `FAM 94`.
+- Lines were already MyHeritage-style (provenance-coloured vertical→sibling-bus→drops,
+  short gold marriage bar, violet pending); only placement changed, plus one sibling bar
+  per parentless root group (`treeRootGroups`).
+- Leon's edge rulings baked in but **untested** (no such data yet): serial marriages seat
+  all spouses on the row; blood-related spouses keep their own generation, marriage as a
+  cross-level connector.
+- Verified against live data before deploy (37 placed, 4 generations, parents strictly
+  above children, siblings & spouses same row, couples 170px, zero overlaps).
 
 ### Fixed — do not re-report
 - ~~`moment-real.html` shows the uploader as the teller.~~ Fixed & deployed (`e566a08`):
