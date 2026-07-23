@@ -100,7 +100,7 @@
   <div class="sky" id="sky" aria-hidden="true"></div>
   <main class="phone">
     <div class="topbar">
-      <a class="icon-btn" id="back" href="home-real.html" aria-label="Back to the sky">
+      <a class="icon-btn" id="back" href="index.html" aria-label="Back to the globe">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
       </a>
       <div class="breadcrumb"><span class="appvoice">The Living Forest</span><span class="dot"></span><span class="appvoice">the timeline</span></div>
@@ -230,7 +230,7 @@ function showSignIn(){ const box=$('#gateBox');
     m.style.color='rgba(206,221,240,.65)'; m.textContent='Signing in\u2026';
     const { error }=await sb.auth.signInWithPassword({email,password});
     if(error){ m.style.color='#ff9a8f'; m.textContent=error.message; } else { box.innerHTML='<div class="spin"></div><p style="margin-top:16px">Opening\u2026</p>'; load(); } }; }
-function gateError(msg){ $('#gate').style.display='flex'; $('#gateBox').innerHTML='<h2 class="serif">Hmm</h2><p>'+esc(msg)+'</p><a href="home-real.html" style="color:#f3cd84;text-decoration:none">\u2190 back to the sky</a>'; }
+function gateError(msg){ $('#gate').style.display='flex'; $('#gateBox').innerHTML='<h2 class="serif">Hmm</h2><p>'+esc(msg)+'</p><a href="index.html" style="color:#f3cd84;text-decoration:none">\u2190 back to the globe</a>'; }
 
 load();
 </script>

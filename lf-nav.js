@@ -1,6 +1,6 @@
 /* The Living Forest — shared nav + hardware-back guard.
-   Include near </body>:  <script src="lf-nav.js" data-parent="home-real.html" data-here="map"></script>
-   Root page (the sky) omits data-parent. A page with a closeable overlay may define
+   Include near </body>:  <script src="lf-nav.js" data-parent="index.html" data-here="map"></script>
+   Root page (the globe) omits data-parent. A page with a closeable overlay may define
    window.__lfClose = () => boolean (true if it closed something). */
 (function(){
   var s = document.currentScript || (function(){ var a=document.getElementsByTagName('script'); return a[a.length-1]; })();
@@ -35,7 +35,7 @@
   + '#lfnav.open #lfnavBtn{border-color:rgba(243,205,132,.9);}';
   var st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);
 
-  var items=[['sky','✦','The sky','home-real.html'],
+  var items=[
              ['map','◍','The globe','index.html'],
              ['find','⌕','Search','search-real.html'],
              ['tree','⋔','The tree','tree-real.html'],

@@ -197,7 +197,7 @@
   <div class="wrap">
     <header>
       <div class="masthead">
-        <a class="appvoice kicker" id="back" href="home-real.html" style="text-decoration:none">&lsaquo; the sky</a>
+        <a class="appvoice kicker" id="back" href="index.html" style="text-decoration:none">&lsaquo; the globe</a>
         <div class="appvoice kicker" style="opacity:.8;">a remembering</div>
       </div>
       <div class="title-line"><h1>Find them in the <em>crowd.</em></h1></div>
@@ -507,7 +507,7 @@ function showSignIn(){ const box=$('#gateBox');
     m.style.color='rgba(206,221,240,.65)'; m.textContent='Signing in\u2026';
     const { error }=await sb.auth.signInWithPassword({email,password});
     if(error){ m.style.color='#ff9a8f'; m.textContent=error.message; } else { box.innerHTML='<div class="spin"></div><p style="margin-top:16px">Gathering the family\u2026</p>'; load(); } }; }
-function gateError(msg){ $('#gate').style.display='flex'; $('#gateBox').innerHTML='<h2 class="serif">Hmm</h2><p>'+esc(msg)+'</p><a href="home-real.html" style="color:#f3cd84">\u2190 back to the sky</a>'; }
+function gateError(msg){ $('#gate').style.display='flex'; $('#gateBox').innerHTML='<h2 class="serif">Hmm</h2><p>'+esc(msg)+'</p><a href="index.html" style="color:#f3cd84">\u2190 back to the globe</a>'; }
 
 load();
 </script>
