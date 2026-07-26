@@ -471,12 +471,12 @@
       state.done=true;
       if(nq) nq.classList.remove('show');
       $$('#opts .opt').forEach(el=>{ if(el!==btn) el.classList.add('dim'); });
-      btn.classList.remove('wrong'); btn.classList.add('right');
+      btn.classList.remove('wrong'); btn.classList.add('right'); try{window.Fen&&Fen.react(state.streak>=2?'jump':'delight');}catch(e){}
       if(state.firstTry){ state.streak++; } state.streakShown=true; paintChrome();
       setTimeout(()=>renderReveal(round), 480);
     } else {
       state.firstTry=false;
-      btn.classList.add('wrong');
+      btn.classList.add('wrong'); try{window.Fen&&Fen.react('stumble');}catch(e){}
       if(nq) nq.classList.add('show');
       setTimeout(()=>{ btn.classList.remove('wrong'); }, 900);
     }
@@ -597,5 +597,6 @@
   atmosphere($('#dev .atmo')); wire(); boot();
 })();
 </script>
+<script src="lf-fen.js"></script>
 <script src="lf-nav.js" data-here="" data-parent="person-real.html"></script>
 </body></html>
