@@ -537,3 +537,36 @@ Then ping Leon once: design + build + QC done, here is the link.
   `crowd-real` back buttons + their gate-error links — were re-pointed to the globe. The
   file stays in the repo but is unreachable from anywhere in the app; nothing was orphaned
   (the sky only linked out to the globe). Commit `1e00baf`. **New home = the globe.**
+
+---
+
+# FEN — COMPANION (single source: mapping, layout, clips, speech). Supersedes docs/fen-*.md.
+
+## Layout — two frames (locked)
+Every page with Fen splits into: (1) PAGE frame — content, its own scroll, ends at the strip top; (2) FEN STRIP — a fixed bottom band (~151px) that never scrolls, his ground. Content can never cross into the strip. The strip's background IS the forest (animated firefly loop; static fallback); Fen (pre-keyed transparent webm) sits on the left; the open right side is his voice + movement lane + a home for persistent controls. A soft horizon joins the frames (forest fades up into the page's dark sky). This resolves the "one world" problem: forest lives only in the fixed strip, transparent Fen on top — continuous, no seam. Tap the strip -> Fen speaks. Hold his size as-is.
+Implemented in lf-fen.js (played as transparent webm; version the script ref to bust cache).
+
+## 1. Where he appears
+- The seven games — full companion. Front door (globe) — light greeting presence. NOT content pages (person/tree/place/journal) — quiet looking.
+
+## 2. Situations -> movement clips
+Lifecycle: arrive: strip fades in -> entrance (walk in) -> idle. present: idle loop; ~25-40s calm -> stretch; ~60s -> sleep (wake on touch). leave: wave -> walk-away -> strip dissolves [NEW CLIP NEEDED: walk-away].
+Reactions: new question->ear-perk; clue/between->talking; right->delight (alt light-delight); wrong->stumble; streak/win->jump; tap him/strip->talking; idle 25/60s->stretch/sleep.
+Clips: LIVE (baked webm): idle, light-delight, jump [+ right->delight, streak->jump, tap->speech wired]. Generated, not baked: stumble, talking, sleep, entrance, ear-perk, wave, stretch. To generate: walk-away; clean re-gen (vivid idle, jump with headroom, whole body in frame).
+
+## 3. Speech dictionary
+Voice law (§0): present tense; meet/know/be-with; never remember/preserve/nostalgia. Dry, warm, patient, short. Goal: EN+RU+HE, then data-aware.
+REACTIONS NOW COME FROM FEN — not written on the game screen. The old on-screen reaction sentences are removed as Fen takes each game. (Functional verdicts, e.g. the timeline year in what-happened-next, STAY — they are facts, not reactions.)
+- Greeting: "There you are. Come meet your people." / "Right - who do we know today?" / "Everyone's here. Let's find them."
+- Idle/taps: "Take your time. They're not going anywhere." / "Trust your first guess - it's usually right." / "Look properly. You know this one." / "Family's a puzzle. Good thing you like those."
+- New question: "Here's someone." / "This one - do you know them?" / "Ah, you'll like this one."
+- Right: "Yes. You actually know them." / "That's them. Of course it is." / "See? You knew."
+- Wrong: "Not them - but you're closer than you think." / "Interesting theory." / "Try again. No hurry."
+- Streak / win: "That's the whole row. Well done." / "Look at you - you know your family."
+- Find-people (crowd, harvested): "The first light returns." / "Just one soul left to find - you're nearly there." / "Every face is home." / "That's everyone. Beautifully done." / "Some still waiting in the dark. Keep looking."
+- Waiting: "Still here whenever you are." / (wake) "Oh - you're back."
+- Leaving: "Come back soon. They'll keep." / "Off you go. I'll be here."
+Data-aware (wire later): name the revealed person; echo a clue detail; mark first meetings; celebrate a full branch.
+
+## Build order
+1. Bake remaining green clips -> transparent webm (server pipeline). 2. Wire lifecycle + reactions into lf-fen.js. 3. As Fen enters each game, REMOVE that game's on-screen reaction sentences (harvest good ones into the dictionary above first). 4. Generate walk-away + clean re-gen set. 5. Expand dictionary, add RU/HE, then data-aware.
