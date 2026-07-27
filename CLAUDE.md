@@ -1,5 +1,6 @@
 # Table of contents
 
+- [CURRENT STATE — session handover (read me first)](#current-state-session-handover-read-me-first)
 - [The Living Forest — agent rules & source of truth](#the-living-forest-agent-rules-source-of-truth)
   - [0. Working style & bookkeeping](#0-working-style-bookkeeping)
   - [1. THE MANDATE — autonomous build to completion (Leon, 2026-07-18)](#1-the-mandate-autonomous-build-to-completion-leon-2026-07-18)
@@ -120,6 +121,20 @@
   - [Screen 2 — Who they knew](#screen-2-who-they-knew)
   - [The relationship that isn't blood](#the-relationship-that-isnt-blood)
   - [States to draw](#states-to-draw-6)
+
+---
+
+# CURRENT STATE — session handover (read me first)
+
+Live now: Fen the companion is in the **who-is-who game** — a fixed bottom **forest strip** (two-frame layout), a **pre-keyed transparent webm** fox on the left, and **tap the strip -> he speaks**. Reactions wired: right answer -> delight, streak -> jump. Deployed on GitHub Pages (works on Android/Chrome). URL: https://leong25.github.io/living-forest/game-who-is-who.html
+
+WHERE THINGS LIVE
+- Code + baked clips: repo LeonG25/living-forest (served by GitHub Pages). Companion script = lf-fen.js. Baked transparent clips = assets/fen/fen-{idle,delight,jump}.webm.
+- Source media: Supabase bucket `companion` (project oabcdrktuikifbormjip). Green sources baked so far: "Fox - idle, green bg.mp4", "Fox - light delight, green bg.mp4", "Fox - jump, green bg.mp4". Forest bg the app loads: "Wood animated bg 9s.mp4". Non-green mood clips (stumble, talking, sleep, entrance, ear perk, wave, stretch, etc.) are also there as reference — to be REGENERATED on vivid green before baking.
+- Bake pipeline is set up ON THE SERVER (droplet, /home/botuser/living-forest): static ffmpeg at ~/bin/ffmpeg (VP9-alpha capable); numpy/PIL/scipy via pip --user. Bake = curl the green clip from Supabase -> per-frame key (greenness = G-max(R,B); adaptive Thi/Tlo set BELOW the clip's own green; despill G=min(G,max(R,B)); scipy fill-holes to keep eyes solid) -> RGBA png -> ffmpeg -c:v libvpx-vp9 -pix_fmt yuva420p -> commit to assets/fen/. Then lf-fen.js plays it. (iOS later needs an HEVC-alpha twin of each.)
+- Deploy: push to main via URL with the PAT at ~/.gh_token; Pages rebuilds (~1-2 min). Version the lf-fen.js script ref (?v=N) when it changes, to bust the phone cache.
+
+NEXT (full build order is in the FEN section below): regenerate the remaining moods on VIVID green with the whole body in frame -> bake to webm -> wire the lifecycle (walk-in on open, stretch @10s / sleep @20s, wave + walk-away on close) and the ear-perk / talking reactions; generate the walk-away clip; and strip each game's old on-screen reaction sentences as Fen arrives in that game.
 
 ---
 
