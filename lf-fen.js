@@ -7,7 +7,7 @@
   var A="assets/fen/";
   var CLIP={ idle:A+"fen-idle.webm", delight:A+"fen-delight.webm", jump:A+"fen-jump.webm" };
   var FOREST="https://oabcdrktuikifbormjip.supabase.co/storage/v1/object/public/companion/"+encodeURIComponent("Wood animated bg 9s.mp4");
-  var STRIP=168;
+  var STRIP=151;
   function mk(t,c){ var e=document.createElement(t); if(c)e.style.cssText=c; return e; }
   function vid(src,c){ var v=mk('video',c); v.muted=1;v.loop=1;v.autoplay=1;v.playsInline=1; v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline',''); v.src=src; return v; }
   function start(){
