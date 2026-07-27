@@ -70,6 +70,56 @@
   - [6 · Contribute: the hub, and three ways in](#6-contribute-the-hub-and-three-ways-in)
   - [7 · Manage curators](#7-manage-curators)
 - [One last thing](#one-last-thing)
+- [BRIEF — contribute](#brief-contribute)
+- [Brief — Contribute: the hub, and three ways in](#brief-contribute-the-hub-and-three-ways-in)
+  - [The job](#the-job)
+  - [Screen 1 — the hub](#screen-1-the-hub)
+  - [Screen 2 — Propose a person](#screen-2-propose-a-person)
+  - [Screen 3 — Record a voice](#screen-3-record-a-voice)
+  - [Screen 4 — Gaps](#screen-4-gaps)
+  - [Threaded through all four](#threaded-through-all-four)
+  - [States to draw](#states-to-draw)
+- [BRIEF — manage-curators](#brief-manage-curators)
+- [Brief — Manage curators](#brief-manage-curators-1)
+  - [The job](#the-job-1)
+  - [What a curator is](#what-a-curator-is)
+  - [The tone problem, which is the whole problem](#the-tone-problem-which-is-the-whole-problem)
+  - [What it must do](#what-it-must-do)
+  - [The question underneath](#the-question-underneath)
+  - [The one that must not be forgotten](#the-one-that-must-not-be-forgotten)
+  - [States to draw](#states-to-draw-1)
+- [BRIEF — moment-photoless](#brief-moment-photoless)
+- [Brief — Moment page: when there is no photograph](#brief-moment-page-when-there-is-no-photograph)
+  - [What exists](#what-exists)
+  - [What we need](#what-we-need)
+  - [Keep identical](#keep-identical)
+  - [One correction to fold in](#one-correction-to-fold-in)
+  - [States to draw](#states-to-draw-2)
+- [BRIEF — person-name-delta](#brief-person-name-delta)
+- [Brief — Person page: three more name parts](#brief-person-page-three-more-name-parts)
+  - [What exists](#what-exists-1)
+  - [What we need](#what-we-need-1)
+  - [States to draw](#states-to-draw-3)
+  - [The real question](#the-real-question)
+- [BRIEF — place-modernise](#brief-place-modernise)
+- [Brief — Place page: bring it up to the system](#brief-place-page-bring-it-up-to-the-system)
+  - [What exists](#what-exists-2)
+  - [The problem](#the-problem)
+  - [What we need](#what-we-need-2)
+  - [States to draw](#states-to-draw-4)
+- [BRIEF — search](#brief-search)
+- [Brief — Search](#brief-search-1)
+  - [The job](#the-job-2)
+  - [Why it is not an ordinary search box](#why-it-is-not-an-ordinary-search-box)
+  - [What results look like](#what-results-look-like)
+  - [The parts that need real thought](#the-parts-that-need-real-thought)
+  - [States to draw](#states-to-draw-5)
+- [BRIEF — tree-and-kin](#brief-tree-and-kin)
+- [Brief — Tree · kinship, and Who they knew](#brief-tree-kinship-and-who-they-knew)
+  - [Screen 1 — the Tree](#screen-1-the-tree)
+  - [Screen 2 — Who they knew](#screen-2-who-they-knew)
+  - [The relationship that isn't blood](#the-relationship-that-isnt-blood)
+  - [States to draw](#states-to-draw-6)
 
 ---
 
@@ -1524,3 +1574,309 @@ The hardest state in this whole app is **empty**. A young family archive is most
 An empty state here is never an apology. It is an invitation to the one person still alive who can answer.
 
 Design for that, and the rest follows.
+
+---
+
+# BRIEF — contribute
+
+# Brief — Contribute: the hub, and three ways in
+
+> **Rev 2026-07-15 19:40** · Batch B · **four screens, one brief** · *(Design #8)*
+> **Append `docs/design-house-rules.md` below this brief before sending.**
+
+## The job
+Everything in this app came from a person who bothered to tell it. **These four screens are where that happens.** If they are cold or fussy, the forest stays dark. This is the most important brief in the batch.
+
+## Screen 1 — the hub
+Where someone goes when they have something to give. It must answer *"what can I do?"* warmly and in about two seconds. The ways in: **add a memory** (built already — do not redraw), **propose a person**, **record a voice**, **fill a gap**.
+
+The hub's real job is **making a person feel able**. A relative who has one photograph and no idea what to do with it should find their way in without reading anything.
+
+## Screen 2 — Propose a person
+Someone remembers a great-aunt nobody has entered. They may know only her name — perhaps only her first name, perhaps only in Russian, perhaps only what she was *called*.
+
+**The whole design problem is: never ask for more than they have.** A form with fourteen fields turns a memory into homework and the aunt is lost. What is the smallest thing someone can give that is still worth keeping? Probably a single name. Everything after that is a bonus the app should invite, never demand.
+
+The proposal goes to the keeper. The person does not appear in the forest until approved.
+
+## Screen 3 — Record a voice
+A relative tells something aloud, in their own voice, in their own language. **This is the app's most precious content type** — a voice outlives everything else here — and it is the one most likely to make someone self-conscious and quit.
+
+Nobody who has been asked to "record now" has ever felt relaxed. The design problem is **not the recorder** — it is the moment before. What makes an elderly relative willing to start talking? A prompt? A question? Silence? We have no answer and are genuinely open.
+
+It must also be about **someone**: this is Rita's voice, telling about Efim.
+
+## Screen 4 — Gaps
+The forest showing what it does not know. *"Nobody has told us where this was taken."* *"This person has no face."* *"Nobody knows who told this story."*
+
+This is the screen that turns an archive into something with a pulse. Done wrong it is a nagging chore list. Done right it is **an invitation to a person who is the only one who can answer** — and it should feel like being needed, not audited.
+
+**The tone must be right.** A gap is not a failure. It is a place the family has not reached yet, and someone alive today can still fill it. That urgency is real and must never become guilt.
+
+## Threaded through all four
+- **Nothing appears until the keeper approves.** The contributor must see their suggestion waiting, in violet, and feel it was received — not swallowed.
+- A contributor **may not be a keeper**, and may be a child, or eighty. Both must manage.
+- All three languages. Someone contributing in Russian must never be pushed through English.
+
+## States to draw
+1. Each screen at rest
+2. Something **submitted, waiting** — the receipt
+3. **Propose a person** with only one name given
+4. **Gaps** with a great many, and with almost none
+
+---
+
+# BRIEF — manage-curators
+
+# Brief — Manage curators
+
+> **Rev 2026-07-15 19:40** · Batch B · **a new page** · *(Design #10)*
+> **Append `docs/design-house-rules.md` below this brief before sending.**
+
+## The job
+The keeper decides who else can tend the forest.
+
+## What a curator is
+Every contribution passes a keeper before the family sees it. Today there is **one keeper** and he does all of it. That does not survive contact with an extended family — and more importantly, **the keeper is a single point of failure for a thing meant to outlive him.** This page is where that begins to be solved.
+
+## The tone problem, which is the whole problem
+Every screen ever built for this is **an admin panel**: roles, permissions, a table of users, checkboxes. That is the wrong instrument entirely. Nothing about this family app is administrative — and **"who may look after our family's memories" is one of the most personal questions in it.** It sits far closer to trust than to access control.
+
+Language matters more than layout here. This app has *keepers*, *curators*, *the family* — not admins, users, or roles. The right screen probably feels like **asking someone to help**, not granting a privilege.
+
+## What it must do
+- Show who tends the forest now, and what each looks after
+- **Invite** someone to help
+- Let a keeper step back — gracefully, and without the forest going untended
+- Show what is waiting for approval, and who it is waiting on
+
+## The question underneath
+Does a curator look after **everything**, or after **something**? A person who knew the Odessa branch is the right reader for Odessa memories and the wrong one for Haifa. Scoped curatorship is more true to how families actually hold their knowledge — but it is more machinery, and machinery is what this page must not feel like. **We do not know the answer.**
+
+## The one that must not be forgotten
+**What happens when the keeper is gone?** The app exists so that memory outlives people; the keeper role must outlive the keeper. Nobody wants to design that screen and it is the reason the page exists. It does not need solving here, but it should not be designed *against*.
+
+## States to draw
+1. One keeper, nobody else — **today's real state**
+2. Several curators, with things waiting
+3. An invitation **sent, not yet accepted**
+4. All three languages, RTL Hebrew
+
+---
+
+# BRIEF — moment-photoless
+
+# Brief — Moment page: when there is no photograph
+
+> **Rev 2026-07-15 19:40** · Batch A · **a delta, not a redraw** · *(absorbs what was planned as a separate "Memory / Story" page — it is the same page)*
+> **Append `docs/design-house-rules.md` below this brief before sending.**
+
+## What exists
+The Moment page is designed and built. Its skeleton:
+
+**the photograph** → **the story** (per language; gold if a human told it, cool if the machine translated it, with *"Told by…"*) → **where** → **when** → **the people in it** → **ways out** (to a Person, to a Place)
+
+It has the full keeper queue: suggested stories and edits arrive in violet, the keeper approves or declines each.
+
+**Do not redraw any of that. Do not restyle.** Everything below is about **one** change.
+
+## What we need
+**A memory does not need a photograph.** Someone can tell a story with no picture attached. Today the page leads with the image; with no image, it has no head.
+
+Four kinds of memory:
+| kind | what leads |
+|---|---|
+| **photo** | the photograph *(exists today — do not change it)* |
+| **story** | **the words** — there is nothing else |
+| **voice** | a recording — the family hears the person's actual voice |
+| **object** | a photograph of the thing — so, a photo again |
+
+So the real work is **story** and **voice**.
+
+### The story-led moment
+When the words are all there is, the words become the hero. They get the display face, the size, the space the photograph had. This is the app's whole promise made literal — *someone told us this* — with nothing between the reader and the telling.
+
+It should not look like a photo Moment with an empty hole where the picture goes. It should look like it was always meant to be words.
+
+### The voice-led moment
+A recording of a family member telling something. It needs to be playable and it needs to feel like a person, not a media player. What the eye rests on while a voice speaks is the open question — we have no answer and are not attached to one.
+
+## Keep identical
+The story block, the teller, where, when, the people tagged, all three languages, the guardrail colours, the keeper queue, the ways out. **A memory is a memory** — only the head changes.
+
+## One correction to fold in
+The page currently shows the **uploader** as the teller. It must show **who told it** — a person in the family, who is often not the person who typed it in. Leon may upload a story that Rita told; the page must say **Rita**. Draw *"Told by…"* as a person, and draw the case where **nobody knows who told it** — a real and common state, and an invitation: someone in the family knows.
+
+**Leon's steer:** an optional field — *"Who told the story?"* — with a **"me"** button beside it. Most of the time the person typing is the person telling, and that should cost one tap. But it must stay just as easy to say *"Rita told me this"*, because that is the case the whole field exists for.
+
+## States to draw
+1. A **story-led** memory, told by a person, in all three languages
+2. A **voice-led** memory
+3. **No teller known** — the invitation
+4. **Empty** — *"No one has told the story of this moment yet."* This is the most common state in a young family archive. Make it an invitation, not an apology.
+5. **Suggested** — violet, per-field, with its author
+
+---
+
+# BRIEF — person-name-delta
+
+# Brief — Person page: three more name parts
+
+> **Rev 2026-07-15 19:40** · Batch A · **a delta, not a redraw**
+> **Append `docs/design-house-rules.md` below this brief before sending.**
+
+## What exists
+The Person page is designed and built: eight facets — Name, Face, Life, Places, Story, Kin, Reel, More. The **Name** facet currently draws: display name, given, family, maiden, nicknames (a list, with *add a nickname*), and a former surname (*"was Golnik"*).
+
+**Do not redraw the other seven facets. Do not restyle anything.** We want the Name facet, and only the Name facet, with three fields added.
+
+## What we need
+Three more name parts, **all optional**, **all per-language**:
+
+| Field | What it is | Example |
+|---|---|---|
+| **called** | the everyday form of the formal name | Маргарита → **Рита** · Леонид → **Лёня** |
+| **patronymic** | father's name, as Russian and many cultures use it | Мироновна |
+| **honorific** | a title that belongs to the name | Dr · Savta |
+
+### The distinction that matters
+**`called` is not a nickname.** *Рита* is what Маргарита is actually called — it is her name, in everyday use. *Ritaleh* is a pet name and belongs in `nicknames`, which is a list. `called` is a single value per language. **A person can have both, and they must not look alike.**
+
+### Real data to draw with
+Rita Golnick, Russian: given **Маргарита** · called **Рита** · family **Бетито-Гольник** · patronymic *(none yet)*
+Rita Golnick, Hebrew: given **ריטה** · family **בטיטו-גולניק** · called *(none)*
+Rita Golnick, English: display **Rita Golnick** · nothing else set
+
+That is the real shape of the data: **mostly empty**. Most people have two or three parts, not seven. **Design for the sparse case first** — a Name facet with three fields filled and four unset is the normal one, not the exception.
+
+## States to draw
+1. **Set + published** — the ordinary case
+2. **Unset** — the field is not there. How does someone *add* a patronymic that has never existed? The facet already has *add a nickname* for the list; single fields need an equivalent that does not clutter a facet where most slots are empty.
+3. **Suggested** — violet, *"Suggested by Michael"* + waiting chip, **on that one field alone**. Michael may suggest only the maiden name; Leonid may suggest only the patronymic, at the same time, on the same person. Each is approved or declined by itself. **Never one approve button across several fields.**
+4. **Auto-transliterated** — the machine can guess a Russian or Hebrew name from the English. It must be marked (`#9a8bbd`) and it must offer the family the chance to correct it. Transliteration is gender-aware (Церлин → **Церлина**).
+
+## The real question
+Seven optional name parts × three languages is a lot of surface for a facet that is mostly empty. **The design problem is not the fields — it is not drowning the sparse case.** Solve that and this is done.
+
+---
+
+# BRIEF — place-modernise
+
+# Brief — Place page: bring it up to the system
+
+> **Rev 2026-07-15 19:40** · Batch A · **a delta to an older design**
+> **Append `docs/design-house-rules.md` below this brief before sending.**
+
+## What exists
+A Place page was designed (Tel-Aviv / Jaffo) with six sections:
+**A place we stood** · **Seen here** · **Moments here** · **Ways in** · **See it on the globe** · *Located by The Living Forest*
+
+Three are built and live: *Seen here*, *Moments here*, *Located by*. The design is sound and we are not questioning it.
+
+## The problem
+**That design predates three decisions that now define the app.** It has none of them:
+
+1. **No languages.** The page is English only. There is no Russian, no Hebrew, no RTL. Every other page has all three.
+2. **No keeper flow.** Nothing on it can be suggested, and nothing shows as waiting for approval.
+3. **No editing in place.** A place has facts a family corrects — its name in three languages, what it was called then versus now, where it actually is. None of that can be touched.
+
+## What we need
+**The same page, in the system.** Not a redesign — a modernisation.
+
+### Languages
+A place carries names the way a person does, and for the same reason: **Jaffo · Яффо · יפו** are one place with three names, and a family that moved between languages calls it different things in different decades. Hebrew is RTL and the whole page mirrors.
+
+There is a harder case underneath, and it is the interesting one: **a place's name changes over time.** Leningrad became St Petersburg; the family lived in both, and it was one city. A place-name is not just multilingual — it is **historical**. We have no answer for this and would like to see one.
+
+### Keeper flow and editing in place
+Same grammar as everywhere: a value is published (gold if a human told us, cool if the app worked it out), or suggested (violet, with its author and a waiting chip), approved or declined **one field at a time**.
+
+### The three unbuilt sections
+*A place we stood*, *Ways in*, and *See it on the globe* were designed but never built. Draw them again in the current system, with languages and keeper states. If any of the three no longer earns its space now that the globe exists as a lens of its own, **say so** — we would rather delete a section than build one out of politeness.
+
+## States to draw
+1. A place with all three names, several moments, several people
+2. A place with **one name and one photograph** — the common case
+3. A place whose name **changed** — the historical case
+4. A name **suggested**, waiting
+5. A place the app located itself (cool) versus one a person placed (gold)
+
+---
+
+# BRIEF — search
+
+# Brief — Search
+
+> **Rev 2026-07-15 19:40** · Batch B · **a new page** · *(Design #6)*
+> **Append `docs/design-house-rules.md` below this brief before sending.**
+
+## The job
+Find anything in the forest: a person, a place, a moment, a memory.
+
+## Why it is not an ordinary search box
+**The family thinks in three languages and does not know which one the answer is stored in.** Someone types *"Rita"* and the match is `ריטה`. Someone types *"Яффо"* and the place is filed as *Jaffo*. Someone types *"Маргарита"* and everyone calls her **Рита**. **The search must not care.** Typing a name in any language finds the person in every language.
+
+Names in particular have parts — given, called, family, patronymic, maiden, honorific, nicknames — each in each language, each independently. *Ritaleh* must find Rita. **Мироновна** must find Rita.
+
+## What results look like
+Four things can match, and they are not alike:
+- **a person** — a face, a name, and *how you are related to them*
+- **a place** — where, and how many moments happened there
+- **a moment** — the photograph, when, where
+- **a memory** — the words, and who told them
+
+A person is the most important result and should feel it. The others support.
+
+## The parts that need real thought
+
+**Matching across languages must be honest.** If someone types *"Rita"* and we surface `ריטה`, the family should see **why** — the match was on the Hebrew name. A result that appears without explanation feels like magic, and this app does not do magic: it says where things come from. Consider showing the matched name part, in the language it matched.
+
+**The empty state is the real page.** A family archive is small and young. Searching finds nothing far more often than it finds something — and "no results" is the wrong answer, because the truth is usually *"nobody has told us that yet."* That is an invitation: **a gap someone can fill**. This is the single most important state in the page.
+
+**Before you type.** What does the page show at rest? Recent people? Someone not visited in a while? A gap? This is an opportunity, not dead space.
+
+## States to draw
+1. Results across all four kinds
+2. A **cross-language match**, with the reason visible
+3. **Nothing found** — the invitation
+4. **At rest**, before typing
+5. All three languages, including RTL Hebrew — *the search field itself flips*
+
+---
+
+# BRIEF — tree-and-kin
+
+# Brief — Tree · kinship, and Who they knew
+
+> **Rev 2026-07-15 19:40** · Batch B · **two screens, one brief** · *(Design #7)*
+> **Append `docs/design-house-rules.md` below this brief before sending.**
+
+## Screen 1 — the Tree
+A lens on the whole family, alongside the Sky and the Globe. Where the Sky is people as lights and the Globe is people in places, the **Tree is people by blood and marriage**.
+
+### What makes it hard
+A family tree is the most drawn object in this entire field, and almost every version of it is **a corporate org chart with better fonts**. Boxes, lines, hierarchy, a root at the top. That is not this app. This app is a night sky with warm light in it, and the tree must belong to that world — **it must feel grown, not organised**.
+
+Real families are also not tidy. There are second marriages, half-siblings, people whose parents are unknown, whole branches with one name and nothing else. **The tree must hold a family with holes in it** without looking broken — the holes are the point; they are what the family fills in.
+
+We are **not** attached to any particular shape. If the honest answer is that it is not a tree at all, we want to know.
+
+### It must connect
+Every node opens a Person. And **the thread back to you always lights the way home** — a founding promise of the app. From anywhere in the tree, the path from that person to *you* should be findable.
+
+## Screen 2 — Who they knew
+Reached from a Person's **Kin** facet. Not the whole family: **this one person's people**, and how each is related to them.
+
+The difference from the tree is scope and intimacy. The tree is the forest; this is one person's circle — who they married, who they raised, who raised them, who stood beside them in photographs.
+
+It should answer a question the tree cannot: **not "where does Rita sit in the family" but "who was Rita's life full of."**
+
+## The relationship that isn't blood
+Two people appear in eleven photographs together across forty years and are related to nobody. **The family knows exactly who they are to each other. The database does not.** Consider whether "who they knew" includes people the photographs connect, not only the ones the tree does.
+
+## States to draw
+1. A family with **holes** — unknown parents, a branch with one name
+2. A person with a **large** circle, and one with almost nobody
+3. **The thread back to you**, lit
+4. A suggested relationship, waiting for the keeper
+5. All three languages, RTL Hebrew — **a tree mirrors completely in RTL**
