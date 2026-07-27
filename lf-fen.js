@@ -1,11 +1,14 @@
 /* lf-fen.js — Fen companion. Plays PRE-KEYED transparent webm clips (baked once,
-   server-side). No live keying: a plain <video> with a transparent background that
-   works on any screen. API: window.Fen.idle() ; window.Fen.react('delight'|'jump'). */
+   server-side). Also reserves bottom space so page content clears his corner.
+   API: window.Fen.idle() ; window.Fen.react('delight'|'jump'). */
 (function(){
   if(window.__fen) return; window.__fen=1;
   var A="assets/fen/";
   var CLIP={ idle:A+"fen-idle.webm", delight:A+"fen-delight.webm", jump:A+"fen-jump.webm" };
   function start(){
+    // reserve a clear band at the bottom so nothing tappable sits under him
+    var sc=document.querySelector('.screen');
+    if(sc){ var cur=parseInt(getComputedStyle(sc).paddingBottom)||0; if(cur<150) sc.style.paddingBottom=(cur+165)+'px'; }
     var v=document.createElement('video');
     v.muted=true; v.loop=true; v.autoplay=true; v.playsInline=true;
     v.setAttribute('playsinline',''); v.setAttribute('webkit-playsinline','');
