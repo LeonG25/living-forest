@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="lf-face.js?v=1"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
   html,body{ background:#04070e; }
@@ -267,6 +268,7 @@
   'use strict';
   const SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
   const sb=window.supabase.createClient(SB_URL,SB_KEY);
+  if(window.LFFace) LFFace.init(sb);
   const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
   const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
   const LANGS=['en','ru','he'];
@@ -574,9 +576,16 @@
     return { kind:'text', text:factValue(row) };
   }
 
-  function imgCell(path,cls,cap){
-    const box = path ? `<span class="box im" data-thumb="${esc(path)}">${IC.photo}</span>` : `<span class="box">${IC.photo}</span>`;
+  function imgCell(path,cls,cap,fbox){
+    const round=fbox!==undefined?' style="border-radius:50%"':'';
+    const fb=fbox?` data-fbox="${esc(JSON.stringify(fbox))}"`:'';
+    const box = path ? `<span class="box im"${round} data-thumb="${esc(path)}"${fb}>${IC.photo}</span>` : `<span class="box"${round}>${IC.photo}</span>`;
     return `<div class="imgcell ${cls}">${box}<div class="cap">${esc(cap)}</div></div>`;
+  }
+
+  // the keeper must see the ROUND CROP that is proposed — position and zoom included
+  function imgCompareFace(oldPath,oldBox,newPath,newBox){ const L=d();
+    return `<div class="imgcmp">${imgCell(oldPath,'old',oldPath?L.capCurrent:L.noPortrait,oldBox||null)}<span class="cmparrow">${arrowCh()}</span>${imgCell(newPath,'new',L.capProposed,newBox||null)}</div>`;
   }
 
   // side-by-side portraits: what the family sees today vs what is being proposed
@@ -587,7 +596,14 @@
   }
 
   function deltaMarkup(it){ const L=d(); const o=oldInfo(it);
-    if(isFaceItem(it)) return imgCompare(o.path||'', facePath(it.raw&&it.raw.value), false);
+    if(isFaceItem(it)){ let nv=null; try{ nv=JSON.parse(it.raw&&it.raw.value); }catch(e){}
+      const nBox=nv?(nv.box||((nv.zoom!=null)?{zoom:nv.zoom,px:nv.px,py:nv.py}:null)):null;
+      const per=pending.personRow&&pending.personRow[it.personId];
+      let oPath=o.path||'', oBox=null;
+      if(per&&per.primary_asset===oPath&&per.metadata&&per.metadata.face_box) oBox=per.metadata.face_box;
+      if(!oBox&&oPath){ const row=pubRowFor(it.personId,'face',it.lang);
+        if(row){ try{ const ov=JSON.parse(row.value); if(ov&&ov.storage_path===oPath) oBox=ov.box||((ov.zoom!=null)?{zoom:ov.zoom,px:ov.px,py:ov.py}:null); }catch(e){} } }
+      return imgCompareFace(oPath,oBox,facePath(it.raw&&it.raw.value),nBox); }
     if(isPhotoItem(it)) return imgCompare('', it.storage||'', true);
     if(o.kind==='new')  return `<div class="newmark">${IC.leaf} ${esc(o.why==='person'?L.newPerson:L.newMemory)}</div>`;
     if(o.kind==='none') return `<div class="wasrow"><span class="wastag">${esc(L.wasTag)}</span><span class="wasnone">${esc(L.noPrev)}</span></div>`;
@@ -720,6 +736,9 @@
   }
 
   async function attachThumbs(){ for(const el of $$('.im[data-thumb]')){ const path=el.getAttribute('data-thumb'); if(!path) continue;
+    const fb=el.getAttribute('data-fbox');
+    if(fb&&window.LFFace){ try{ LFFace.into(el,{path:path,box:LFFace.normBox(JSON.parse(fb)),size:220,keep:true,priority:true}); continue; }catch(e){} }
+    if(el.hasAttribute('data-fbox')&&window.LFFace){ try{ LFFace.into(el,{path:path,box:null,size:220,keep:true,priority:true}); continue; }catch(e){} }
     try{ const s=await sb.storage.from('family').createSignedUrl(path,3600); const u=s&&s.data&&s.data.signedUrl; if(u){ const img=new Image(); img.onload=()=>{ el.innerHTML=''; el.appendChild(img); }; img.src=u; } }catch(e){} } }
 
   /* ---------- keeper actions (per-field / per-row, Rule 3) ---------- */
@@ -727,7 +746,13 @@
     if(kind==='fact'){ const f=(pending.facts||[]).find(x=>x.id===id); if(f){ const patch={};
         if(f.field==='birth')patch.birth_date=f.value||null; if(f.field==='death')patch.death_date=f.value||null;
         if(f.field==='birth_prec')patch.birth_certainty=f.value||null; if(f.field==='living')patch.is_living=(f.value==='1');
-        if(f.field==='gender')patch.sex=f.value||null; if(f.field==='face'){ try{ patch.primary_asset=JSON.parse(f.value).storage_path; }catch(e){} }
+        if(f.field==='gender')patch.sex=f.value||null;
+        if(f.field==='face'){ try{ const fv=JSON.parse(f.value); patch.primary_asset=fv.storage_path;
+            const fb2=fv.box||((fv.zoom!=null)?{zoom:fv.zoom,px:fv.px,py:fv.py}:null);
+            const per=(pending.personRow&&pending.personRow[f.person_id])||{};
+            if(fb2) patch.metadata=Object.assign({},per.metadata||{},{face_box:fb2}); }catch(e){}
+          /* one portrait per person: supersede older published crops and stale pending suggestions */
+          try{ await sb.from('person_facts').delete().eq('person_id',f.person_id).eq('field','face').neq('id',id); }catch(e){} }
         if(Object.keys(patch).length && f.person_id){ try{ await sb.from('people').update(patch).eq('id',f.person_id); }catch(e){} }
         try{ await sb.from('person_facts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){} } }
     else if(kind==='group'){ for(const ff of (pending.facts||[]).filter(x=>x.group_id===id&&x.status!=='published')){ try{ await sb.from('person_facts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',ff.id); }catch(e){} } }

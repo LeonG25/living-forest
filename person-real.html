@@ -962,7 +962,7 @@
     $('.pad').innerHTML=ringShell();
     fillFaces();
   }
-  async function fillFaces(){ const fh=$('#faceHost'); if(fh){ const ff=pubList('face','und')[0]; const fv=ff?(function(){try{return JSON.parse(ff.value);}catch(e){return null;}})():null;
+  async function fillFaces(){ const fh=$('#faceHost'); if(fh){ const ff=pubList('face','und').slice().sort((a,b)=>String(b.published_at||b.created_at||'').localeCompare(String(a.published_at||a.created_at||'')))[0]; const fv=ff?(function(){try{return JSON.parse(ff.value);}catch(e){return null;}})():null;
     const mbox=(person.metadata&&person.metadata.face_box)||null;
     if(person.primary_asset&&mbox){ faceInto(fh,person.primary_asset,mbox); }
     else if(fv&&fv.storage_path){ faceInto(fh,fv.storage_path,fv); }
@@ -996,12 +996,20 @@
     sh.innerHTML=`<div class="grip"></div><h3>${L.changeface}</h3><div class="sub">${L.changefaceSub}</div>
       <div class="gal">${gals||`<div class="sub">${L.noFace}</div>`}</div>
       <div class="cropstage" data-crop><div class="cimg"></div><div class="cmask"></div><div class="cring"></div></div>
-      <div class="zoomrow">${sv(I.zoomout,1.6)}<input type="range" min="100" max="260" value="145" data-zoom>${sv(I.zoomin,1.6)}</div>
+      <div class="zoomrow">${sv(I.zoomout,1.6)}<input type="range" min="100" max="400" value="145" data-zoom>${sv(I.zoomin,1.6)}</div>
       <div class="btnrow"><button class="btn ghost" data-act="close">${L.cancel}</button><button class="btn violet" data-act="facesave">${L.send}</button></div>`;
     let z=145,px=50,py=44,drag=false,sx,sy,bx,by,chosen=null; const img=sh.querySelector('.cimg'), st=sh.querySelector('[data-crop]');
     const apply=()=>{ img.style.cssText=`position:absolute;left:${px}%;top:${py}%;width:100%;height:100%;transform:translate(-50%,-50%) scale(${z/100});transform-origin:center`; };
     const setImg=g=>{ chosen=g; img.innerHTML=g.url?`<img src="${g.url}" alt="">`:galSVG(g.i); apply(); };
-    if(gal[0]) setImg(gal[0]);
+    /* open on the current portrait: same photo, same zoom, same position */
+    const curFF=pubList('face','und').slice().sort((a,b)=>String(b.published_at||b.created_at||'').localeCompare(String(a.published_at||a.created_at||'')))[0];
+    let cur0=null; if(curFF){ try{ cur0=JSON.parse(curFF.value); }catch(e){} }
+    let startG=gal[0], gi0=0;
+    if(cur0){ const j=tagged.findIndex(t=>t.artefact_id===cur0.artefact_id||t.storage_path===cur0.storage_path);
+      if(j>=0&&gal[j]){ startG=gal[j]; gi0=j;
+        if(cur0.zoom!=null){ z=Math.max(100,Math.min(400,+cur0.zoom||145)); }
+        if(cur0.px!=null) px=+cur0.px; if(cur0.py!=null) py=+cur0.py; } }
+    if(startG){ setImg(startG); const ge=sh.querySelector('[data-g="'+gi0+'"]'); if(ge) ge.classList.add('on'); const zr=sh.querySelector('[data-zoom]'); if(zr) zr.value=z; }
     sh.querySelector('[data-zoom]').oninput=e=>{ z=+e.target.value; apply(); };
     st.addEventListener('pointerdown',e=>{ drag=true; sx=e.clientX; sy=e.clientY; bx=px; by=py; st.setPointerCapture(e.pointerId); });
     st.addEventListener('pointermove',e=>{ if(!drag)return; px=bx+(e.clientX-sx)/st.clientWidth*100; py=by+(e.clientY-sy)/st.clientHeight*100; apply(); });
@@ -1188,6 +1196,8 @@
            the new value is already safely stored, so this cannot lose data. */
         const NAMEPARTS=['given','family','patronymic','maiden','called','honorific'];
         if(NAMEPARTS.includes(f.field)){ try{ await sb.from('person_facts').delete().eq('person_id',PERSON_ID).eq('lang',f.lang).eq('field',f.field).eq('status','published'); }catch(e){} }
+        /* one portrait per person: publishing this face supersedes every other face row (older published crops AND stale pending suggestions) */
+        if(f.field==='face'){ try{ await sb.from('person_facts').delete().eq('person_id',PERSON_ID).eq('field','face').neq('id',id); }catch(e){} }
         try{ await sb.from('person_facts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){} } }
     else if(kind==='nv'){ try{ await sb.from('name_variants').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){} }
     else if(kind==='group'){ for(const ff of facts.filter(x=>x.group_id===id&&x.status!=='published')) { try{ await sb.from('person_facts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',ff.id); }catch(e){} } }
