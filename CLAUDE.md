@@ -126,7 +126,9 @@
 
 # CURRENT STATE — session handover (read me first)
 
-Live now: Fen the companion is in the **who-is-who game** — a fixed bottom **forest strip** (two-frame layout), a **pre-keyed transparent webm** fox on the left, and **tap the strip -> he speaks**. Reactions wired: right answer -> delight, streak -> jump. Deployed on GitHub Pages (works on Android/Chrome). URL: https://leong25.github.io/living-forest/game-who-is-who.html
+**2026-07-28 · commit `2ac56ec`** — Fen v3 is live in ALL SEVEN games (who-is-who, order-of-things, where-was-this, missing-voice, what-happened-next, tangled-thread, crowd-real). lf-fen.js rewritten: clip registry with declared fallbacks (pending clips fall back to idle — when a baked clip lands, add one `src:` line and every page picks it up), lifecycle (fade-in -> greeting; inactivity 10s -> stretch, 20s -> sleep, wake on touch — active only once real clips exist), and a cue API `Fen.cue(greeting|question|clue|right|wrong|streak|win|leave)` with a trilingual EN/RU/HE speech dictionary following `lf_lang` (RTL handled on the speech line). On-screen reaction sentences moved to Fen: who-is-who "not quite" banner no longer shows (Fen speaks); crowd-real praise lines route through Fen (visual glow kept). Voice-law fixes: who-is-who reelnote EN/HE ("remembered" -> "you know"), crowd-real "it will remember you" removed. All inline scripts node --checked; droplet/sandbox SHAs verified identical; live lf-fen.js SHA verified = source. NEXT: bake pending green clips as Leon delivers them (add srcs to CLIP registry in lf-fen.js), then data-aware lines.
+
+Previous state (still accurate for pipeline/bucket details): Fen was first wired into the **who-is-who game** — a fixed bottom **forest strip** (two-frame layout), a **pre-keyed transparent webm** fox on the left, and **tap the strip -> he speaks**. Reactions wired: right answer -> delight, streak -> jump. Deployed on GitHub Pages (works on Android/Chrome). URL: https://leong25.github.io/living-forest/game-who-is-who.html
 
 WHERE THINGS LIVE
 - Code + baked clips: repo LeonG25/living-forest (served by GitHub Pages). Companion script = lf-fen.js. Baked transparent clips = assets/fen/fen-{idle,delight,jump}.webm.
@@ -692,7 +694,7 @@ Implemented in lf-fen.js (played as transparent webm; version the script ref to 
 ## 2. Situations -> movement clips
 Lifecycle: arrive: strip fades in -> entrance (walk in) -> idle. present: idle loop; ~10s calm -> stretch; ~20s -> sleep (wake on touch). leave: wave -> walk-away -> strip dissolves [NEW CLIP NEEDED: walk-away].
 Reactions: new question->ear-perk; clue/between->talking; right->delight (alt light-delight); wrong->stumble; streak/win->jump; tap him/strip->talking; idle 10/20s->stretch/sleep.
-Clips: LIVE (baked webm): idle, light-delight, jump [+ right->delight, streak->jump, tap->speech wired]. Generated, not baked: stumble, talking, sleep, entrance, ear-perk, wave, stretch. To generate: walk-away; clean re-gen (vivid idle, jump with headroom, whole body in frame).
+Clips: LIVE (baked webm): idle, light-delight, jump. Wiring: ALL cues wired in all 7 games via lf-fen.js v3 cue API (2026-07-28, `2ac56ec`); pending clips fall back to idle via the CLIP registry. Generated, not baked: stumble, talking, sleep, entrance, ear-perk, wave, stretch. To generate: walk-away; clean re-gen (vivid idle, jump with headroom, whole body in frame).
 
 ## 3. Speech dictionary
 Voice law (§0): present tense; meet/know/be-with; never remember/preserve/nostalgia. Dry, warm, patient, short. Goal: EN+RU+HE, then data-aware.
