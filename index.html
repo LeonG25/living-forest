@@ -798,12 +798,15 @@ function fieldError(text){ const box=document.getElementById('gErr'); if(box) bo
 function infoMsg(text){ const box=document.getElementById('gErr'); if(box) box.innerHTML='<div class="infoline">'+text+'</div>'; const fin=document.getElementById('gPwFin'); if(fin) fin.classList.remove('wrong'); }
 function clearErr(){ const box=document.getElementById('gErr'); if(box) box.innerHTML=''; const fin=document.getElementById('gPwFin'); if(fin) fin.classList.remove('wrong'); }
 
+async function anchorGate(){ try{ const {data:u}=await sb.auth.getUser(); const uid=u&&u.user&&u.user.id; if(!uid) return false;
+ const {data:a}=await sb.from('player_anchors').select('status').eq('user_id',uid).maybeSingle();
+ if(!a||a.status==='declined'){ location.href='tree-real.html?choose=1'; return true; } }catch(e){} return false; }
 async function doSignIn(){ clearErr(); const t=T[GLANG];
  const email=(gscreen().querySelector('#gEmail').value||'').trim(), password=gscreen().querySelector('#gPw').value;
  if(!email||!password){ fieldError(t.needBoth); return; }
  const { error }=await sb.auth.signInWithPassword({ email, password });
  if(error){ fieldError(/invalid|credential|password|not found/i.test(error.message||'')?t.badPw:error.message); return; }
- showPlanting('plant'); load();
+ showPlanting('plant'); if(await anchorGate()) return; load();
 }
 async function doRegister(){ clearErr(); const t=T[GLANG];
  const name=(gscreen().querySelector('#gName').value||'').trim(), email=(gscreen().querySelector('#gEmail').value||'').trim(), password=gscreen().querySelector('#gPw').value;
@@ -811,11 +814,11 @@ async function doRegister(){ clearErr(); const t=T[GLANG];
  if(password.length<6){ fieldError(t.shortPw); return; }
  const { data, error }=await sb.auth.signUp({ email, password, options:{ data:{ display_name:name } } });
  if(error){ fieldError(error.message); return; }
- if(data && data.session){ showPlanting('plant'); load(); return; }
+ if(data && data.session){ showPlanting('plant'); if(await anchorGate()) return; load(); return; }
  // Open registration: no approval gate. If no session came back the project may want
  // email confirmation — try an immediate sign-in in case it isn't actually enforced.
  const { data:si }=await sb.auth.signInWithPassword({ email, password });
- if(si && si.session){ showPlanting('plant'); load(); return; }
+ if(si && si.session){ showPlanting('plant'); if(await anchorGate()) return; load(); return; }
  // Confirmation genuinely required — still open, just point the way (no keeper step).
  infoMsg(t.madeConfirm);
 }

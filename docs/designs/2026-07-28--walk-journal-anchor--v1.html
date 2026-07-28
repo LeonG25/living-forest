@@ -1,0 +1,126 @@
+<!doctype html>
+<!-- Design delivery — 2026-07-28 — The Walk surfaces — v1
+     Three screens: (A) the anchor chooser "Who are you in this forest?",
+     (B) Journal · My walk, (C) Journal · The family.
+     Guardrail: gold = human knowing (levels earned, names chosen, suggestions),
+     cool blue = facts (counts, dates, structural lines). Alive: aurora drift + fireflies.
+     Build must cite this file. -->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Design — The Walk — v1</title>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{ --gold:#f3cd84; --blue:#8fb7e8; --ink:#e9eef8; --dim:#9aa7bd; --bg:#070b14; }
+  html,body{ margin:0; background:#03060c; color:var(--ink); font-family:'Hanken Grotesk',system-ui,sans-serif; }
+  .serif{ font-family:'Newsreader',serif; }
+  .frame{ width:min(420px,94vw); margin:34px auto; border-radius:26px; overflow:hidden; position:relative;
+    background:radial-gradient(140% 90% at 50% -8%, #101d33 0%, #0a1424 46%, #04070e 100%);
+    box-shadow:0 40px 120px -40px #000, 0 0 0 1px #1b2438; min-height:760px; }
+  .aur{ position:absolute; border-radius:50%; filter:blur(46px); opacity:.5; pointer-events:none; }
+  .a1{ width:240px;height:240px; left:-60px; top:40px; background:rgba(127,180,216,.30); animation:dr 23s ease-in-out infinite; }
+  .a2{ width:220px;height:220px; right:-70px; top:300px; background:rgba(243,205,132,.16); animation:dr 29s ease-in-out infinite reverse; }
+  .a3{ width:260px;height:260px; left:20px; bottom:-80px; background:rgba(143,214,160,.13); animation:dr 35s ease-in-out infinite; }
+  @keyframes dr{ 0%,100%{transform:translate(0,0)} 50%{transform:translate(26px,-18px)} }
+  .fly{ position:absolute; width:4px; height:4px; border-radius:50%; background:var(--gold); opacity:.55;
+    box-shadow:0 0 8px 2px rgba(243,205,132,.5); animation:fl 9s ease-in-out infinite; }
+  @keyframes fl{ 0%,100%{transform:translate(0,0); opacity:.25} 50%{transform:translate(-14px,-22px); opacity:.7} }
+  .in{ position:relative; z-index:2; padding:26px 22px 30px; }
+  .eyebrow{ letter-spacing:.24em; font-size:11px; color:var(--blue); text-transform:uppercase; }
+  h1{ font-family:'Newsreader',serif; font-weight:500; font-size:30px; margin:8px 0 6px; }
+  .sub{ color:var(--dim); font-size:14.5px; line-height:1.5; }
+  .note{ margin:36px auto; width:min(560px,94vw); color:var(--dim); font-size:13.5px; line-height:1.65; }
+  .note b{ color:var(--ink); }
+
+  /* A — chooser */
+  .search{ margin:18px 0 12px; background:rgba(13,22,40,.8); border:1px solid #223050; border-radius:12px;
+    padding:11px 13px; color:var(--dim); font-size:14px; }
+  .prow{ display:flex; align-items:center; gap:12px; padding:11px 12px; border-radius:12px; }
+  .prow:nth-child(2){ background:rgba(243,205,132,.09); outline:1px solid rgba(243,205,132,.35); }
+  .pface{ width:38px; height:38px; border-radius:50%; background:linear-gradient(140deg,#2a3a52,#182338); border:1px solid #2c3a58; }
+  .pname{ font-family:'Newsreader',serif; font-size:17.5px; color:var(--gold); }
+  .confirm{ margin-top:16px; border-top:1px solid #1c2740; padding-top:16px; display:flex; gap:10px; align-items:center; justify-content:space-between; }
+  .cq{ font-family:'Newsreader',serif; font-size:17px; }
+  .cbtn{ background:rgba(243,205,132,.14); border:1px solid rgba(243,205,132,.5); color:var(--gold);
+    border-radius:999px; padding:10px 18px; font-size:14px; }
+  .cghost{ background:none; border:1px solid #2a3a52; color:var(--dim); border-radius:999px; padding:10px 14px; font-size:13.5px; }
+
+  /* B — my walk */
+  .tabs{ display:flex; gap:8px; margin:16px 0 18px; }
+  .tab{ padding:8px 14px; border-radius:999px; font-size:13.5px; border:1px solid #223050; color:var(--dim); }
+  .tab.on{ color:var(--gold); border-color:rgba(243,205,132,.5); background:rgba(243,205,132,.08); }
+  .kcard{ display:flex; gap:13px; align-items:center; padding:12px 12px; border-radius:14px; background:rgba(11,18,34,.62);
+    border:1px solid #1b2740; margin-bottom:10px; }
+  .kface{ width:46px; height:46px; border-radius:50%; background:linear-gradient(140deg,#33415f,#1a2540); border:1px solid #2c3a58; flex:none; }
+  .kn{ font-family:'Newsreader',serif; font-size:17px; }
+  .beads{ display:flex; gap:6px; margin-top:5px; }
+  .bead{ font-size:10.5px; letter-spacing:.06em; padding:3px 8px; border-radius:999px; border:1px solid #26324e; color:#5d6c88; }
+  .bead.earn{ color:var(--gold); border-color:rgba(243,205,132,.55); background:rgba(243,205,132,.10);
+    text-shadow:0 0 8px rgba(243,205,132,.35); }
+  .edge{ margin-top:20px; }
+  .edge .eh{ letter-spacing:.2em; font-size:10.5px; color:var(--blue); text-transform:uppercase; margin-bottom:9px; }
+  .sug{ font-family:'Newsreader',serif; font-size:15.5px; line-height:1.5; padding:10px 12px; border-inline-start:2px solid rgba(243,205,132,.45);
+    background:linear-gradient(90deg, rgba(243,205,132,.06), transparent); border-radius:0 12px 12px 0; margin-bottom:8px; }
+  .sug b{ color:var(--gold); font-weight:500; }
+
+  /* C — family */
+  .fam{ margin-top:14px; }
+  .frow{ display:flex; align-items:center; gap:12px; padding:11px 4px; border-bottom:1px solid #141d31; }
+  .fname{ font-family:'Newsreader',serif; font-size:16px; min-width:86px; }
+  .flies{ display:flex; flex-wrap:wrap; gap:5px; align-items:center; }
+  .fdot{ width:7px; height:7px; border-radius:50%; background:var(--gold); box-shadow:0 0 7px 1px rgba(243,205,132,.55); opacity:.9; animation:fl 7s ease-in-out infinite; }
+  .fdot.d2{ animation-delay:2.2s } .fdot.d3{ animation-delay:4.1s }
+  .together{ margin-top:18px; color:var(--blue); font-size:13.5px; letter-spacing:.02em; }
+</style></head><body>
+
+<div class="frame"><div class="aur a1"></div><div class="aur a2"></div><div class="aur a3"></div>
+ <span class="fly" style="left:18%;top:24%"></span><span class="fly" style="left:74%;top:38%;animation-delay:3s"></span>
+ <div class="in">
+  <div class="eyebrow">The forest asks once</div>
+  <h1>Who are you in this forest?</h1>
+  <div class="sub">Choose yourself on the tree. The forest welcomes you at once; a keeper simply confirms it later.</div>
+  <div class="search">Find your name…</div>
+  <div class="prow"><div class="pface"></div><div class="pname">Rita Golnick</div></div>
+  <div class="prow"><div class="pface"></div><div class="pname">Leonid Golnick</div></div>
+  <div class="prow"><div class="pface"></div><div class="pname">Maya Berg</div></div>
+  <div class="confirm"><div class="cq">You are <span style="color:var(--gold)">Leonid</span>?</div>
+    <div><button class="cghost">Not me</button> <button class="cbtn">That's me</button></div></div>
+ </div>
+</div>
+
+<div class="frame"><div class="aur a1"></div><div class="aur a2"></div><div class="aur a3"></div>
+ <span class="fly" style="left:64%;top:20%"></span><span class="fly" style="left:30%;top:60%;animation-delay:4s"></span>
+ <div class="in">
+  <div class="eyebrow">Journal</div>
+  <h1>My walk</h1>
+  <div class="tabs"><span class="tab on">My walk</span><span class="tab">The family</span><span class="tab">The log</span></div>
+  <div class="kcard"><div class="kface"></div><div><div class="kn">Rita Golnick</div>
+    <div class="beads"><span class="bead earn">MET</span><span class="bead earn">HEARD</span><span class="bead">FOLLOWED</span></div></div></div>
+  <div class="kcard"><div class="kface"></div><div><div class="kn">Leonid Golnick</div>
+    <div class="beads"><span class="bead earn">MET</span><span class="bead">WOVEN</span></div></div></div>
+  <div class="edge"><div class="eh">The edge of the known</div>
+    <div class="sug">Close by stands <b>Maya Berg</b> — go and meet her.</div>
+    <div class="sug">Two branches over lives <b>David Berg</b> — his stories are waiting.</div></div>
+ </div>
+</div>
+
+<div class="frame"><div class="aur a1"></div><div class="aur a2"></div><div class="aur a3"></div>
+ <span class="fly" style="left:48%;top:18%"></span><span class="fly" style="left:22%;top:44%;animation-delay:2s"></span>
+ <div class="in">
+  <div class="eyebrow">Journal</div>
+  <h1>The family</h1>
+  <div class="sub">Each flame is one person known. No numbers on anyone — the light says it.</div>
+  <div class="fam">
+   <div class="frow"><div class="kface" style="width:38px;height:38px"></div><div class="fname">Leonid</div>
+     <div class="flies"><span class="fdot"></span><span class="fdot d2"></span><span class="fdot d3"></span><span class="fdot"></span><span class="fdot d2"></span><span class="fdot"></span><span class="fdot d3"></span><span class="fdot d2"></span></div></div>
+   <div class="frow"><div class="kface" style="width:38px;height:38px"></div><div class="fname">Maya</div>
+     <div class="flies"><span class="fdot"></span><span class="fdot d2"></span><span class="fdot d3"></span></div></div>
+   <div class="frow"><div class="kface" style="width:38px;height:38px"></div><div class="fname">Tomer</div>
+     <div class="flies"><span class="fdot d2"></span></div></div>
+  </div>
+  <div class="together">Together the family knows 12 of 45.</div>
+ </div>
+</div>
+
+<div class="note">
+ <b>Design notes.</b> Gold marks human knowing: earned level beads, chosen names, Fen's suggestions, the flames of the family view. Cool blue marks facts: the together-line, section eyebrows, structural counts. Levels render only when earned or offerable — an unofferable level is simply absent (never "not yet" where there is nothing to reach). The family view carries no per-person numbers and no ranking words; brighter rows simply glow more. The chooser is calm and single-purpose: name list, one confirm, done — the keeper's confirmation happens elsewhere and never blocks. Fen's strip may sit under the Journal as in the games; his line there is data-aware and points to the nearest unmet person with content. Motion: aurora drift and fireflies only; nothing pulses for attention.
+</div>
+</body></html>
