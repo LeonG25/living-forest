@@ -443,7 +443,7 @@
     const L=d();
     const voiceRows=state.voices.map((v,i)=>`
       <div class="voice-count">
-        <div class="av ${AV[i%AV.length]}"><i></i></div>
+        <div class="av ${AV[i%AV.length]}" data-id="${esc(v.id)}"><i></i></div>
         <div class="vt"><div class="n serif">${esc(v.name||'—')}</div><div class="s"><span class="flame"></span>${esc(L.told(v.count))}</div></div>
         <div class="tag">${esc(L.vtag(1))}</div>
       </div>`).join('');
@@ -460,6 +460,9 @@
       ${voiceRows}
       <a class="invite-cta serif" href="contribute-real.html">${sv(I.mic,1.6)}${esc(L.record)}</a>
       <div class="locked-foot serif">${L.lockFoot}</div>`;
+    try{ if(window.LFFace){ LFFace.resolve(state.voices.map(v=>v.id)).then(fmap=>{
+      $$('#locked .voice-count .av[data-id]').forEach(el=>{ const f=fmap[el.getAttribute('data-id')];
+        if(f) LFFace.into(el,{path:f.path,box:f.box,size:120,keep:true}); }); }); } }catch(e){}
   }
 
   /* ---------- ERROR ---------- */
