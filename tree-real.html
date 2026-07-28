@@ -588,7 +588,7 @@ const FaceCache=(function(){ let dbp=null;
     async put(k,v){ const d=await open(); if(!d) return; try{ d.transaction('crops','readwrite').objectStore('crops').put(v,k); }catch(e){} }
   };
 })();
-function boxKey(box){ if(!box) return 'full'; return [box.x,box.y,box.w,box.h].map(n=>Math.round((+n||0)*1000)).join('_'); }
+function boxKey(box){ if(!box) return 'full'; if(box.exact) return 'e'+[box.x,box.y,box.w,box.h].map(n=>Math.round((+n||0)*1000)).join('_'); if(box.zoom!=null) return 'z'+[box.zoom,box.px,box.py].map(n=>Math.round(+n||0)).join('_'); return [box.x,box.y,box.w,box.h].map(n=>Math.round((+n||0)*1000)).join('_'); }
 function faceKey(id,path,box){ return id+'|'+path+'|'+boxKey(box); }
 
 /* concurrency-capped loader — viewport-first (priority tasks jump the queue) so the
@@ -603,7 +603,18 @@ function facePump(){ while(faceQ.active<faceQ.cap && faceQ.tasks.length){ const 
 function cropImage(u,box){ return new Promise(resolve=>{ if(!u){ resolve(null); return; }
   const img=new Image(); img.crossOrigin='anonymous'; img.onerror=()=>resolve(null);
   img.onload=()=>{ const c=document.createElement('canvas'); c.width=c.height=160; const g=c.getContext('2d');
-    if(box&&box.w>0&&box.h>0){
+    if(box&&box.exact&&box.w>0){
+      const W=img.naturalWidth,H=img.naturalHeight;
+      let side=Math.max(box.w*W,box.h*H); side=Math.min(side,W,H);
+      const sx=Math.max(0,Math.min(W-side,box.x*W)), sy=Math.max(0,Math.min(H-side,box.y*H));
+      g.drawImage(img,sx,sy,side,side,0,0,160,160);
+    } else if(box&&box.zoom!=null){
+      const W=img.naturalWidth,H=img.naturalHeight,k=Math.max(0.2,(+box.zoom||145)/100),m=Math.min(W,H);
+      let side=Math.min(m/k,m);
+      let sx=(W-m)/2+m*(0.5-((+box.px||50)/100)/k), sy=(H-m)/2+m*(0.5-((+box.py||50)/100)/k);
+      sx=Math.max(0,Math.min(W-side,sx)); sy=Math.max(0,Math.min(H-side,sy));
+      g.drawImage(img,sx,sy,side,side,0,0,160,160);
+    } else if(box&&box.w>0&&box.h>0){
       // box is NORMALISED (fractions of the image). Convert to pixels PER-AXIS — w is a
       // fraction of WIDTH, h a fraction of HEIGHT; they must not share one dimension.
       const bw=box.w*img.naturalWidth;                 // face width in px
@@ -636,7 +647,8 @@ function inViewport(id){ if(!pos[id]) return false; const s=state.scale;
 function hydrateFace(el,id,opts){ if(!el) return; opts=opts||{};
   el.innerHTML=placeholderFor(id);                       // placeholder shows instantly — no layout shift
   const p=people[id]; let path=null, box=null;
-  if(p&&p.primary_asset){ path=p.primary_asset; box=(p.metadata&&p.metadata.face_box)||null; }
+  if(p&&p.primary_asset){ path=p.primary_asset; box=(p.metadata&&p.metadata.face_box)||null;
+    if(!box){ const fv=(window.__lfFaceFacts||{})[id]; if(fv&&fv.storage_path===path) box=fv.box||((fv.zoom!=null)?{zoom:fv.zoom,px:fv.px,py:fv.py}:null); } }
   else { const fb=faceFallback[id]; if(fb){ path=fb.path; box=fb.box; } }
   if(!path) return;                                       // no photo → keep the SVG placeholder
   const key=faceKey(id,path,box); el.dataset.fkey=key;
@@ -1138,6 +1150,9 @@ let tT; function toast(m){ $('#toastmsg').textContent=m; toastEl.classList.add('
 /* ---------- data ---------- */
 function parseKin(v){ try{ const o=JSON.parse(v); return (o&&o.other)?o:null; }catch(e){ return null; } }
 async function loadData(){
+  try{ const {data:ffs}=await sb.from('person_facts').select('person_id,value,published_at').eq('field','face').eq('status','published').order('published_at',{ascending:false});
+    window.__lfFaceFacts={}; (ffs||[]).forEach(r=>{ if(window.__lfFaceFacts[r.person_id]) return; try{ const v=JSON.parse(r.value); if(v&&v.storage_path) window.__lfFaceFacts[r.person_id]=v; }catch(e){} });
+  }catch(e){ window.__lfFaceFacts={}; }
   try{ const {data:pp}=await sb.from('people').select('id,display_name,sex,primary_asset,birth_date,death_date,metadata'); (pp||[]).forEach(p=>{
     people[p.id]={ id:p.id, display_name:p.display_name, sex:p.sex, primary_asset:p.primary_asset,
       birth_year:(p.birth_date?String(p.birth_date).slice(0,4):''), death_year:(p.death_date?String(p.death_date).slice(0,4):''), metadata:p.metadata||{} }; });

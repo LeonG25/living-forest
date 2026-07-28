@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="lf-face.js?v=1"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
   html,body{ background:#04070e; }
@@ -415,6 +416,7 @@
   'use strict';
   const SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
   const sb=window.supabase.createClient(SB_URL,SB_KEY);
+  if(window.LFFace) LFFace.init(sb);
   const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
   const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
   const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
@@ -634,14 +636,13 @@
     return has?`<button class="np-ctl" data-clearperson="${col}">${sv(I.trash,1.7)} ${esc(L.remove)}</button>`:''; }
 
   /* ---------- storage / face crop ---------- */
-  async function signedUrl(path){ if(!path) return ''; try{ const r=await sb.storage.from('family').createSignedUrl(path,3600); return (r.data&&r.data.signedUrl)||''; }catch(e){ return ''; } }
-  async function faceInto(el, path, box){ if(!el||!path) return; const u=await signedUrl(path); if(!u) return;
+  async function signedUrl(path,width){ if(!path) return ''; try{ const opts=width?{transform:{width:width,resize:'contain'}}:undefined; const r=await sb.storage.from('family').createSignedUrl(path,3600,opts); if(r.data&&r.data.signedUrl) return r.data.signedUrl; }catch(e){} if(width){ try{ const r2=await sb.storage.from('family').createSignedUrl(path,3600); return (r2.data&&r2.data.signedUrl)||''; }catch(e){} } return ''; }
+  async function faceInto(el, path, box){ if(!el||!path) return;
+    if(window.LFFace){ LFFace.into(el,{path:path,box:LFFace.normBox(box),size:200,priority:true}); return; }
+    const u=await signedUrl(path); if(!u) return;
     const img=new Image(); img.crossOrigin='anonymous';
     img.onload=()=>{ const c=document.createElement('canvas'); c.width=c.height=200; const g=c.getContext('2d');
-      if(box&&box.w>0&&box.h>0){ const pad=0.35, side=Math.max(box.w*(1+2*pad),box.h*(1+2*pad))*Math.max(img.naturalWidth,img.naturalHeight);
-        let sx=(box.x+box.w/2)*img.naturalWidth-side/2, sy=(box.y+box.h/2)*img.naturalHeight-side/2;
-        sx=Math.max(0,Math.min(img.naturalWidth-side,sx)); sy=Math.max(0,Math.min(img.naturalHeight-side,sy)); g.drawImage(img,sx,sy,side,side,0,0,200,200);
-      } else { const s=Math.min(img.naturalWidth,img.naturalHeight); g.drawImage(img,(img.naturalWidth-s)/2,(img.naturalHeight-s)/2,s,s,0,0,200,200); }
+      const s=Math.min(img.naturalWidth,img.naturalHeight); g.drawImage(img,(img.naturalWidth-s)/2,(img.naturalHeight-s)/2,s,s,0,0,200,200);
       c.style.cssText='width:100%;height:100%;display:block'; el.innerHTML=''; el.appendChild(c); }; img.src=u; }
 
   /* ---------- write helpers (EVERY write lands as an in_review suggestion) ---------- */
@@ -961,8 +962,13 @@
     $('.pad').innerHTML=ringShell();
     fillFaces();
   }
-  async function fillFaces(){ const fh=$('#faceHost'); if(fh){ if(person.primary_asset){ faceInto(fh,person.primary_asset,(person.metadata&&person.metadata.face_box)||null); } else if(tagged[0]){ faceInto(fh,tagged[0].storage_path,tagged[0].box); } }
-    $$('.tagshot .im[data-thumb]').forEach(async el=>{ const i=+el.getAttribute('data-thumb'); const t=tagged[i]; if(!t) return; const u=await signedUrl(t.storage_path); if(u) el.innerHTML=`<img src="${u}" alt="">`; }); }
+  async function fillFaces(){ const fh=$('#faceHost'); if(fh){ const ff=pubList('face','und')[0]; const fv=ff?(function(){try{return JSON.parse(ff.value);}catch(e){return null;}})():null;
+    const mbox=(person.metadata&&person.metadata.face_box)||null;
+    if(person.primary_asset&&mbox){ faceInto(fh,person.primary_asset,mbox); }
+    else if(fv&&fv.storage_path){ faceInto(fh,fv.storage_path,fv); }
+    else if(person.primary_asset){ faceInto(fh,person.primary_asset,null); }
+    else if(tagged[0]){ faceInto(fh,tagged[0].storage_path,tagged[0].box); } }
+    $$('.tagshot .im[data-thumb]').forEach(async el=>{ const i=+el.getAttribute('data-thumb'); const t=tagged[i]; if(!t) return; const u=await signedUrl(t.storage_path,640); if(u) el.innerHTML=`<img src="${u}" alt="" loading="lazy" decoding="async">`; }); }
   /* the beads ARE the navigation: one facet on screen at a time */
   function selectFacet(fid){ if(!FACETS.some(f=>f.id===fid)) return;
     state.facet=fid;
@@ -1001,7 +1007,16 @@
     st.addEventListener('pointermove',e=>{ if(!drag)return; px=bx+(e.clientX-sx)/st.clientWidth*100; py=by+(e.clientY-sy)/st.clientHeight*100; apply(); });
     st.addEventListener('pointerup',()=>drag=false);
     sh.querySelectorAll('[data-g]').forEach(el=>el.onclick=()=>{ sh.querySelectorAll('.g').forEach(x=>x.classList.remove('on')); el.classList.add('on'); setImg(gal[+el.dataset.g]); });
-    sh._faceSave=async()=>{ let ok=true; if(chosen){ const t=tagged[chosen.i]; if(t&&await insFact('face','und',JSON.stringify({artefact_id:t.artefact_id,storage_path:t.storage_path,zoom:z,px:px,py:py}))===false) ok=false; } hideSheets(); await reload(); if(ok) toast(L.sent); };
+    sh._faceSave=async()=>{ let ok=true; if(chosen){ const t=tagged[chosen.i];
+      const payload={artefact_id:t.artefact_id,storage_path:t.storage_path,zoom:z,px:px,py:py};
+      const ri=img.querySelector('img');
+      if(ri&&ri.naturalWidth&&ri.naturalHeight){ const W=ri.naturalWidth,H=ri.naturalHeight,k=z/100,m=Math.min(W,H);
+        let side=Math.min(m/k,m);
+        let sx=(W-m)/2+m*(0.5-(px/100)/k), sy=(H-m)/2+m*(0.5-(py/100)/k);
+        sx=Math.max(0,Math.min(W-side,sx)); sy=Math.max(0,Math.min(H-side,sy));
+        const rnd=v=>Math.round(v*10000)/10000;
+        payload.box={x:rnd(sx/W),y:rnd(sy/H),w:rnd(side/W),h:rnd(side/H),exact:1}; }
+      if(t&&await insFact('face','und',JSON.stringify(payload))===false) ok=false; } hideSheets(); await reload(); if(ok) toast(L.sent); };
     showSheet('face'); }
 
   function openAdd(groupId){ const L=d(); const sh=$('.sheet[data-sheet="add"]');
@@ -1164,7 +1179,9 @@
       if(f){ const patch={};
         if(f.field==='birth')patch.birth_date=f.value||null; if(f.field==='death')patch.death_date=f.value||null;
         if(f.field==='birth_prec')patch.birth_certainty=f.value||null; if(f.field==='living')patch.is_living=(f.value==='1');
-        if(f.field==='gender')patch.sex=f.value||null; if(f.field==='face'){ try{ patch.primary_asset=JSON.parse(f.value).storage_path; }catch(e){} }
+        if(f.field==='gender')patch.sex=f.value||null; if(f.field==='face'){ try{ const fv=JSON.parse(f.value); patch.primary_asset=fv.storage_path;
+          const fb=fv.box||((fv.zoom!=null)?{zoom:fv.zoom,px:fv.px,py:fv.py}:null);
+          if(fb) patch.metadata=Object.assign({},(person&&person.metadata)||{},{face_box:fb}); }catch(e){} }
         if(Object.keys(patch).length){ try{ await sb.from('people').update(patch).eq('id',PERSON_ID); }catch(e){} }
         /* one published part per (person,lang,field): supersede the old one BEFORE publishing this,
            else person_facts_one_published_name_part rejects the update. Keeper DELETE is allowed by RLS;

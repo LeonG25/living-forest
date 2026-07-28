@@ -300,6 +300,7 @@
 (function(){
   var SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
   var sb=window.supabase.createClient(SB_URL,SB_KEY);
+  if(window.LFFace) LFFace.init(sb);
 
   // ---- i18n -------------------------------------------------------------
   var T={
@@ -516,6 +517,12 @@
       tmap.appendChild(b);
     });
 
+    // real faces onto the discs — the coloured disc remains the placeholder
+    try{ if(window.LFFace){ LFFace.resolve(chosen.map(function(c){ return c.id; })).then(function(fmap){
+      chosen.forEach(function(c){ var f=fmap[c.id]; if(!f) return;
+        var n=tmap.querySelector('.tnode[data-id="'+c.id+'"] .disc');
+        if(n) LFFace.into(n,{path:f.path,box:f.box,size:120,keep:true}); }); }); } }catch(e){}
+
     // stash the pair for the payoff (names/avatars), by display order
     renderPlay._pair=(res.pair||[]).map(function(p){ return { id:p.id, label:p.label }; });
     renderPlay._place=place;
@@ -583,6 +590,10 @@
     $('pfaceA').className='pface '+avA; $('pfaceB').className='pface '+avB;
     var nA=firstName((pair[0]||{}).label), nB=firstName((pair[1]||{}).label);
     $('pnames').innerHTML='<b>'+esc(nA)+'</b> <span style="opacity:.5">—</span> <b>'+esc(nB)+'</b>';
+    try{ if(window.LFFace&&pair[0]&&pair[1]){ LFFace.resolve([pair[0].id,pair[1].id]).then(function(fmap){
+      var fa=fmap[pair[0].id], fb2=fmap[pair[1].id];
+      if(fa) LFFace.into($('pfaceA'),{path:fa.path,box:fa.box,size:120,keep:true});
+      if(fb2) LFFace.into($('pfaceB'),{path:fb2.path,box:fb2.box,size:120,keep:true}); }); } }catch(e){}
   }
 
   // ---- wiring -----------------------------------------------------------
@@ -620,6 +631,7 @@
 })();
 </script>
 <script src="lf-nav.js" data-here="" data-parent="person-real.html"></script>
+<script src="lf-face.js?v=1"></script>
 <script src="lf-fen.js?v=3"></script>
 </body>
 </html>
