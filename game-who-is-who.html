@@ -277,7 +277,7 @@
       photos:n=>`${n} ${n===1?'photograph':'photographs'}`,
       kindleL:'How lit up are they', kindleR:(n)=>`${wordNum(n,'en')} of eight kindled`,
       another:'Another face', reel:'Go to their Reel',
-      reelnote:'One more face, remembered.',
+      reelnote:'One more face you know.',
       lockK:'The game is sleeping', lockH:'No faces to name — yet',
       lockBody:'This game needs a memory that is tied to a <em>person</em>. Add someone to a photo or a story, and a face appears here to name.',
       needL:'It’s waiting for', invite:'Add a memory & tag who is in it',
@@ -317,7 +317,7 @@
       photos:n=>`${n} תצלומים`,
       kindleL:'כמה הם מוארים', kindleR:(n)=>`${wordNum(n,'he')} מתוך שמונה`,
       another:'פנים נוספות', reel:'אל הסרט שלהם',
-      reelnote:'עוד פנים — נזכרו.',
+      reelnote:'עוד פנים שאתם מכירים.',
       lockK:'המשחק ישן', lockH:'עדיין אין פנים לנקוב בשמן',
       lockBody:'המשחק הזה צריך זיכרון שקשור ל<em>אדם</em>. תייגו מישהו בתצלום או בסיפור, ופנים יופיעו כאן כדי לנקוב בשמן.',
       needL:'ממתין ל', invite:'הוסיפו זיכרון ותייגו מי בו',
@@ -471,13 +471,12 @@
       state.done=true;
       if(nq) nq.classList.remove('show');
       $$('#opts .opt').forEach(el=>{ if(el!==btn) el.classList.add('dim'); });
-      btn.classList.remove('wrong'); btn.classList.add('right'); try{window.Fen&&Fen.react(state.streak>=2?'jump':'delight');}catch(e){}
+      btn.classList.remove('wrong'); btn.classList.add('right'); try{window.Fen&&Fen.cue(state.streak>=2?'streak':'right');}catch(e){}
       if(state.firstTry){ state.streak++; } state.streakShown=true; paintChrome();
       setTimeout(()=>renderReveal(round), 480);
     } else {
       state.firstTry=false;
-      btn.classList.add('wrong'); try{window.Fen&&Fen.react('stumble');}catch(e){}
-      if(nq) nq.classList.add('show');
+      btn.classList.add('wrong'); try{window.Fen&&Fen.cue('wrong');}catch(e){}
       setTimeout(()=>{ btn.classList.remove('wrong'); }, 900);
     }
   }
@@ -597,6 +596,6 @@
   atmosphere($('#dev .atmo')); wire(); boot();
 })();
 </script>
-<script src="lf-fen.js?v=2"></script>
+<script src="lf-fen.js?v=3"></script>
 <script src="lf-nav.js" data-here="" data-parent="person-real.html"></script>
 </body></html>

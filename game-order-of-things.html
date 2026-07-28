@@ -555,6 +555,7 @@
     const total=placed.length;
 
     if(right===total){ state.streak++; } else { state.streak=0; }
+    try{window.Fen&&Fen.cue(right===total?(state.streak>=3?'streak':'right'):'wrong');}catch(e){}
     state.streakShown=true; paintChrome();
 
     const byId={}; placedCards.forEach(c=>{ byId[c.getAttribute('data-id')]=c; });
@@ -716,4 +717,5 @@
 })();
 </script>
 <script src="lf-nav.js" data-here="" data-parent="person-real.html"></script>
+<script src="lf-fen.js?v=3"></script>
 </body></html>

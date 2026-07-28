@@ -556,6 +556,7 @@
     const correct = idx===res.answer_index;
 
     if(!correct){
+      try{window.Fen&&Fen.cue('wrong');}catch(e){}
       card.classList.add('wrong');   // no 'answered' yet — the verdict line stays sealed
       card.querySelector('.mk').innerHTML=sv(I.cross,2.2);
       setTimeout(()=>card.classList.remove('wrong'), 900);
@@ -566,6 +567,7 @@
     state.streak++; state.streakShown=true; paintChrome();
     cards.forEach(c=>{ if(c!==card) c.classList.add('dim'); });
     card.classList.add('right');
+    try{window.Fen&&Fen.cue(state.streak>=3?'streak':'right');}catch(e){}
     card.querySelector('.mk').innerHTML=sv(I.check,2.4);
 
     // now — and only now — the years may be shown
@@ -763,4 +765,5 @@
 })();
 </script>
 <script src="lf-nav.js" data-here="" data-parent="person-real.html"></script>
+<script src="lf-fen.js?v=3"></script>
 </body></html>

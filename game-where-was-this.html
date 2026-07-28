@@ -848,6 +848,7 @@
       $('hint').style.display='none';
       $('triesPill').hidden=true;
       if(o) o.classList.add('right');
+      try{window.Fen&&Fen.cue('right');}catch(e){}
       if(pn) pn.classList.add('hit');
       Array.prototype.forEach.call(document.querySelectorAll('#opts .opt'), function(el){ if(el!==o) el.classList.add('dim'); });
       Array.prototype.forEach.call(document.querySelectorAll('#globe .gpin'), function(el){ if(el!==pn) el.classList.add('miss'); });
@@ -876,6 +877,7 @@
       $('warmH').textContent=L.coldPlainH;
       $('warmS').textContent=L.coldPlainS;
     }
+    try{window.Fen&&Fen.cue('wrong',{quiet:(tries===0)});}catch(e){}
     if(o){ o.classList.add('wrong'); setTimeout(function(){ o.classList.remove('wrong'); o.classList.add('dim'); }, 420); }
     if(pn) pn.classList.add('miss');
 
@@ -946,5 +948,6 @@
 })();
 </script>
 <script src="lf-nav.js" data-here="" data-parent="person-real.html"></script>
+<script src="lf-fen.js?v=3"></script>
 </body>
 </html>

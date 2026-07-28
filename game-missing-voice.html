@@ -416,12 +416,14 @@
       state.done=true;
       $$('#tellers .teller').forEach(el=>{ if(el!==btn) el.classList.add('dim'); });
       btn.classList.remove('wrong'); btn.classList.add('right');
+      try{window.Fen&&Fen.cue(state.streak>=2?'streak':'right');}catch(e){}
       btn.querySelector('[data-right]').style.display='grid';
       if(state.firstTry){ state.streak++; } state.streakShown=true; paintChrome();
       setTimeout(()=>renderReveal(round), 480);
     } else {
       state.firstTry=false;
       btn.classList.add('wrong');
+      try{window.Fen&&Fen.cue('wrong');}catch(e){}
       const wm=btn.querySelector('[data-wrong]'); wm.style.display='grid';
       setTimeout(()=>{ btn.classList.remove('wrong'); wm.style.display='none'; }, 900);
     }
@@ -549,4 +551,5 @@
 })();
 </script>
 <script src="lf-nav.js" data-here="" data-parent="person-real.html"></script>
+<script src="lf-fen.js?v=3"></script>
 </body></html>

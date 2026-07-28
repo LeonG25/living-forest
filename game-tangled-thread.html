@@ -556,6 +556,7 @@
       var mx=(a.x+b.x)/2, my=(a.y+b.y)/2-46;
       $('tpath').setAttribute('d','M'+a.x+' '+a.y+' Q '+mx+' '+my+' '+b.x+' '+b.y);
       $('thread').classList.add('draw');
+      try{window.Fen&&Fen.cue('win');}catch(e){}
       fillSolved();
       setTimeout(function(){ $('solved').classList.add('show'); }, 650);
       return;
@@ -567,6 +568,7 @@
     } else {
       readout('cold', L.coldH, L.coldS(place), SNOW);
     }
+    try{window.Fen&&Fen.cue('wrong',{quiet:true});}catch(e){}
     setTimeout(clearSel, 260);
   }
 
@@ -618,5 +620,6 @@
 })();
 </script>
 <script src="lf-nav.js" data-here="" data-parent="person-real.html"></script>
+<script src="lf-fen.js?v=3"></script>
 </body>
 </html>
