@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="lf-progress.js?v=1"></script>
 <script src="lf-games.js"></script>
 <style>
   /* ============================================================
@@ -293,6 +294,7 @@
   'use strict';
   const SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
   const sb=window.supabase.createClient(SB_URL,SB_KEY);
+  if(window.LFProgress) LFProgress.init(sb);
   const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
   const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
   const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
@@ -557,6 +559,7 @@
 
     if(!correct){
       try{window.Fen&&Fen.cue('wrong');}catch(e){}
+      try{window.LFProgress&&LFProgress.record('life-order','followed',[state.round&&state.round.person_id],false);}catch(e){}
       card.classList.add('wrong');   // no 'answered' yet — the verdict line stays sealed
       card.querySelector('.mk').innerHTML=sv(I.cross,2.2);
       setTimeout(()=>card.classList.remove('wrong'), 900);
@@ -568,6 +571,7 @@
     cards.forEach(c=>{ if(c!==card) c.classList.add('dim'); });
     card.classList.add('right');
     try{window.Fen&&Fen.cue(state.streak>=3?'streak':'right');}catch(e){}
+    try{window.LFProgress&&LFProgress.record('life-order','followed',[state.round&&state.round.person_id],true);}catch(e){}
     card.querySelector('.mk').innerHTML=sv(I.check,2.4);
 
     // now — and only now — the years may be shown

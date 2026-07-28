@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="lf-progress.js?v=1"></script>
 <script src="lf-face.js?v=1"></script>
 <script src="lf-games.js"></script>
 <style>
@@ -237,6 +238,7 @@
   'use strict';
   const SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
   const sb=window.supabase.createClient(SB_URL,SB_KEY);
+  if(window.LFProgress) LFProgress.init(sb);
   if(window.LFFace) LFFace.init(sb);
   const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
   const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -426,6 +428,7 @@
       $$('#tellers .teller').forEach(el=>{ if(el!==btn) el.classList.add('dim'); });
       btn.classList.remove('wrong'); btn.classList.add('right');
       try{window.Fen&&Fen.cue(state.streak>=2?'streak':'right');}catch(e){}
+      try{window.LFProgress&&LFProgress.record('missing-voice','heard',[state.round&&state.round.answer_id],true);}catch(e){}
       btn.querySelector('[data-right]').style.display='grid';
       if(state.firstTry){ state.streak++; } state.streakShown=true; paintChrome();
       setTimeout(()=>renderReveal(round), 480);
@@ -433,6 +436,7 @@
       state.firstTry=false;
       btn.classList.add('wrong');
       try{window.Fen&&Fen.cue('wrong');}catch(e){}
+      try{window.LFProgress&&LFProgress.record('missing-voice','heard',[state.round&&state.round.answer_id],false);}catch(e){}
       const wm=btn.querySelector('[data-wrong]'); wm.style.display='grid';
       setTimeout(()=>{ btn.classList.remove('wrong'); wm.style.display='none'; }, 900);
     }

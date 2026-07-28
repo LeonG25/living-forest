@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="lf-progress.js?v=1"></script>
 <script src="lf-face.js?v=1"></script>
 <style>
   /* ===== Design: "Game - The Tangled Thread (play)" — reproduced verbatim ===== */
@@ -301,6 +302,7 @@
 (function(){
   var SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
   var sb=window.supabase.createClient(SB_URL,SB_KEY);
+  if(window.LFProgress) LFProgress.init(sb);
   if(window.LFFace) LFFace.init(sb);
 
   // ---- i18n -------------------------------------------------------------
@@ -565,6 +567,7 @@
       $('tpath').setAttribute('d','M'+a.x+' '+a.y+' Q '+mx+' '+my+' '+b.x+' '+b.y);
       $('thread').classList.add('draw');
       try{window.Fen&&Fen.cue('win');}catch(e){}
+      try{window.LFProgress&&LFProgress.record('tangled-thread','woven',(renderPlay._pair||[]).map(function(p){return p.id;}),true);}catch(e){}
       fillSolved();
       setTimeout(function(){ $('solved').classList.add('show'); }, 650);
       return;
@@ -577,6 +580,7 @@
       readout('cold', L.coldH, L.coldS(place), SNOW);
     }
     try{window.Fen&&Fen.cue('wrong',{quiet:true});}catch(e){}
+    try{window.LFProgress&&LFProgress.record('tangled-thread','woven',(renderPlay._pair||[]).map(function(p){return p.id;}),false);}catch(e){}
     setTimeout(clearSel, 260);
   }
 

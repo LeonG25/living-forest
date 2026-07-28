@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="lf-progress.js?v=1"></script>
 <style>
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -255,6 +256,7 @@ const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const SUPABASE_URL='https://oabcdrktuikifbormjip.supabase.co';
 const SUPABASE_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+if(window.LFProgress) LFProgress.init(sb);
 
 let W=1200, H=800, ROUNDS=[], ri=0, PEOPLE=[], TARGETS=[], ti=0, foundOrder=[];
 let scaleZ=1, vbX=0, vbY=0; const MAXZ=5;
@@ -405,7 +407,7 @@ function doFind(cx,cy){ if(ti>=TARGETS.length || !PEOPLE.length) return;
   if(n.nx>=p.x && n.nx<=p.x+p.w && n.ny>=p.y && n.ny<=p.y+p.h){
     reveal(p); if(hintNode){ hintNode.remove(); hintNode=null; }
     ti++; const f=PEOPLE.filter(x=>x.found).length;
-    if(ti>=TARGETS.length){ allHere(); } else { celebrateOne(praise(p.name,f,PEOPLE.length)); setTimeout(setQuest, 2500); }
+    if(ti>=TARGETS.length){ allHere(); } else { celebrateOne(praise(p.name,f,PEOPLE.length),p.id); setTimeout(setQuest, 2500); }
   } else { feedback(cx,cy,n,p); }
 }
 function feedback(clientX,clientY,n,p){
@@ -473,7 +475,7 @@ function showBig(text,dur){ const b=$('#bigmsg'); if(!b) return; b.textContent=t
   if(reduce){ b.style.transition='opacity .3s ease'; b.style.opacity='1'; setTimeout(()=>{ b.style.opacity='0'; }, Math.max(500,dur-300)); return; }
   b.style.transition='opacity .4s ease'; b.style.opacity='0'; requestAnimationFrame(()=>{ b.style.opacity='1'; });
   setTimeout(()=>{ b.style.transition='opacity .55s ease'; b.style.opacity='0'; }, Math.max(400,dur-550)); }
-function celebrateOne(msg){ glow(0.72,2500,1); if(msg){ if(window.Fen){ try{Fen.cue('right',{say:msg});}catch(e){ showBig(msg,2500);} } else showBig(msg,2500); } }
+function celebrateOne(msg,pid){ try{window.LFProgress&&pid&&LFProgress.record('crowd','met',[pid],true);}catch(e){} glow(0.72,2500,1); if(msg){ if(window.Fen){ try{Fen.cue('right',{say:msg});}catch(e){ showBig(msg,2500);} } else showBig(msg,2500); } }
 function celebrateAll(msg){ const c=$('#celebrate'); if(c) c.classList.add('grand'); glow(0.92,4400,3); if(msg){ showBig(msg,4400); try{window.Fen&&Fen.cue('win',{quiet:true});}catch(e){} } setTimeout(()=>{ if(c) c.classList.remove('grand'); },4600); }
 
 /* warm, non-competitive encouragement */
