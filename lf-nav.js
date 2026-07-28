@@ -60,11 +60,11 @@
     var rv=document.createElement('a'); rv.href='review-real.html'; rv.setAttribute('data-lf','review');
     rv.innerHTML='<span class="ic">\u2713</span><span>'+(window.__lfReviewLabel||'Review')+'</span>';
     if(HERE==='review') rv.className='cur';
-    panel.appendChild(rv);
+    panel.insertBefore(rv, panel.querySelector('a[data-lf="signout"]'));
     var a=document.createElement('a'); a.href='curators-real.html'; a.setAttribute('data-lf','curators');
     a.innerHTML='<span class="ic">\u2609</span><span>'+(window.__lfKeeperLabel||'Keepers')+'</span>';
     if(HERE==='curators') a.className='cur';
-    panel.appendChild(a);
+    panel.insertBefore(a, panel.querySelector('a[data-lf="signout"]'));
   }
   function removeKeeperItems(){
     var n=panel.querySelectorAll('a[data-lf="review"],a[data-lf="curators"]');
@@ -106,6 +106,18 @@
       .catch(function(){});                                    // offline: leave the fast path as-is
   }
   keeperCheck(2);
+  /* ---- step out: visible whenever a session exists; back to the globe's gate ---- */
+  if(storedSession()){
+    var so=document.createElement('a'); so.href='#'; so.setAttribute('data-lf','signout');
+    so.innerHTML='<span class="ic">\u238b</span><span>Step out</span>';
+    so.addEventListener('click', function(ev){ ev.preventDefault();
+      var s2=storedSession();
+      try{ if(s2) fetch(SB_URL+'/auth/v1/logout',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+s2.token}}); }catch(e){}
+      try{ localStorage.removeItem(SB_STORE); }catch(e){}
+      setTimeout(function(){ location.href='index.html'; },150);
+    });
+    panel.appendChild(so);
+  }
   var btn=document.createElement('button'); btn.id='lfnavBtn'; btn.type='button';
   btn.setAttribute('aria-label','Move between lenses'); btn.textContent='\u2295';
   wrap.appendChild(panel); wrap.appendChild(btn);
