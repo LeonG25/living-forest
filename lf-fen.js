@@ -12,19 +12,24 @@
   var A="assets/fen/";
   var CLIP={
     idle:    {src:A+"fen-idle.webm"},
-    delight: {src:A+"fen-delight.webm"},
+    delight: {src:[A+"fen-delight.webm",A+"fen-nod-big.webm"]},
     jump:    {src:A+"fen-jump.webm"},
+    talking: {src:A+"fen-nod-small.webm"},
+    earperk: {src:A+"fen-earperk.webm"},
+    sleep:   {src:A+"fen-sleep.webm",freeze:1},
+    stretch: {src:A+"fen-stretch.webm"},
+    wave:    {src:A+"fen-wave.webm"},
+    walk:    {src:A+"fen-walk.webm"},
     /* pending — add src when baked */
-    entrance:{fb:'idle'},
     stumble: {fb:'idle'},
-    talking: {fb:'idle'},
-    sleep:   {fb:'idle'},
-    earperk: {fb:'idle'},
-    wave:    {fb:'idle'},
-    stretch: {fb:'idle'},
-    walkaway:{fb:'idle'}
+    entrance:{fb:'walk'},
+    walkaway:{fb:'walk'}
   };
-  function clipSrc(n){ var c=CLIP[n], g=0; while(c && !c.src && c.fb && g++<5) c=CLIP[c.fb]; return c&&c.src||null; }
+  function clipSrc(n){ var c=CLIP[n], g=0; while(c && !c.src && c.fb && g++<5) c=CLIP[c.fb];
+    if(!c||!c.src) return null; var s=c.src;
+    if(Object.prototype.toString.call(s)==='[object Array]') s=s[Math.floor(Math.random()*s.length)];
+    return s; }
+  function clipMeta(n){ var c=CLIP[n], g=0; while(c && !c.src && c.fb && g++<5) c=CLIP[c.fb]; return c||{}; }
   var FOREST="https://oabcdrktuikifbormjip.supabase.co/storage/v1/object/public/companion/"+encodeURIComponent("Wood animated bg 9s.mp4");
   var STRIP=151;
 
@@ -88,18 +93,32 @@
     strip.appendChild(bg); strip.appendChild(horizon); strip.appendChild(v); strip.appendChild(say); host.appendChild(strip);
     requestAnimationFrame(function(){ strip.style.opacity='1'; });
     bg.play().catch(function(){}); v.play().catch(function(){});
+    /* entrance: he walks in from the left edge to his spot, then sits */
+    (function(){ if(!CLIP.walk.src) return;
+      v.style.transition='none'; v.style.transform='translateX(-160px)';
+      var ok=false;
+      try{ cur='entrance'; v.loop=true; v.onended=null; v.src=CLIP.walk.src; v.play().catch(function(){}); ok=true; }catch(e){}
+      if(!ok) return;
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){
+        v.style.transition='transform 2.4s ease-out'; v.style.transform='translateX(0)';
+        setTimeout(function(){ v.style.transition='none'; toIdle(); },2500); }); });
+    })();
 
     var cur='idle', sleeping=false;
     function setClip(name, loop, onend){
       var src=clipSrc(name); if(!src) return false;
-      var real = (src!==clipSrc('idle')) || name==='idle';
+      var real = (src!==CLIP.idle.src) || name==='idle';
       if(!real){ /* fallback resolves to idle — leave idle running */ if(cur!=='idle'){ toIdle(); } return false; }
       if(v.src.indexOf(src)>=0 && loop) return true;
-      cur=name; v.loop=!!loop; v.onended=onend||null; v.src=src; v.play().catch(function(){});
+      var meta=clipMeta(name);
+      cur=name; v.loop=!!loop&&!meta.freeze;
+      v.onended=meta.freeze?function(){ try{ v.pause(); }catch(e){} }:(onend||null);
+      v.onerror=function(){ toIdle(); };
+      v.src=src; v.play().catch(function(){});
       return true;
     }
     function toIdle(){ cur='idle'; sleeping=false; v.loop=true; v.onended=null;
-      var s=clipSrc('idle'); if(v.src.indexOf(s)<0) v.src=s; v.play().catch(function(){}); }
+      var s=CLIP.idle.src; if(v.src.indexOf(s)<0) v.src=s; v.play().catch(function(){}); }
     function play(name){ setClip(name,false,toIdle); }
 
     var st;
@@ -142,7 +161,11 @@
       react:function(n){ alive(); var m={delight:'delight',jump:'jump',stumble:'stumble'}; play(m[n]||n); },
       idle:toIdle,
       leave:function(cb){ speak(line('leave')); play('wave');
-        setTimeout(function(){ strip.style.opacity='0'; if(cb)setTimeout(cb,850); },1200); }
+        setTimeout(function(){
+          if(CLIP.walk.src){ cur='walkaway'; v.loop=true; v.onended=null; v.src=CLIP.walk.src; v.play().catch(function(){});
+            v.style.transition='transform 2.2s ease-in'; v.style.transform='translateX(120vw)'; }
+          setTimeout(function(){ strip.style.opacity='0'; if(cb)setTimeout(cb,850); },1600);
+        },2200); }
     };
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start); else start();
