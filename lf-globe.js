@@ -78,13 +78,15 @@
       /* a real drag must not fire the pin underneath it */
       ib.addEventListener('click',function(e){ if(dragDist>8){ e.stopPropagation(); e.preventDefault(); dragDist=0; } },true);
     })();
-    var box=el.parentElement||el;   // pins are positioned in this element's coordinate space
     function place(){
       if(!tracked.length) return;
-      var er=el.getBoundingClientRect(), br=box.getBoundingClientRect();
-      var ox=er.left-br.left, oy=er.top-br.top;
+      var er=el.getBoundingClientRect();
       tracked.forEach(function(t){
         if(t.lat==null||t.lng==null) return;
+        /* anchor against the pin's own positioning container — left/top are relative to it */
+        var op=t.el.offsetParent; if(!op) return;
+        var br=op.getBoundingClientRect();
+        var ox=er.left-br.left, oy=er.top-br.top;
         var p=ll2v(t.lat,t.lng,R*1.02).applyEuler(globe.rotation);
         var front=p.z>6;
         var s=p.clone().project(cam);
