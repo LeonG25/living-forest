@@ -963,6 +963,13 @@ load();
     const faces=seen.slice(0,FACE_CAP).map(id=>({id, name:nameOf(id)}));
 
     if(geo&&geo.lat!=null&&geo.lng!=null){ try{ if(typeof focusPlace==='function') focusPlace(+geo.lat,+geo.lng,PL); }catch(e){} }
+    else if(PL){ /* self-heal: unknown place -> geocode once, light it, persist for everyone */
+      try{ fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(PL))
+        .then(r=>r.json()).then(j=>{ const hit=j&&j[0]; if(!hit) return;
+          const la=+hit.lat, ln=+hit.lon;
+          try{ if(typeof focusPlace==='function') focusPlace(la,ln,PL); }catch(e){}
+          try{ sb2.from('place_geo').insert({name:PL,lat:la,lng:ln,label:hit.display_name||null}).then(()=>{},()=>{}); }catch(e){}
+        }).catch(()=>{}); }catch(e){} }
     model={
       name:head, region, coords,
       nameProv:(geo&&geo.label)?'cool':'gold',   /* app-canonical label → cool; else the family-typed string → gold */
