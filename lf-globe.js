@@ -54,13 +54,13 @@
     var markers=new THREE.Group(); globe.add(markers);
     function markerFor(t){
       var g=new THREE.Group(); g.position.copy(ll2v(t.lat,t.lng,R*1.015));
-      var dot=new THREE.Mesh(new THREE.SphereGeometry(2.6,12,12),
+      var dot=new THREE.Mesh(new THREE.SphereGeometry(1.6,12,12),
         new THREE.MeshBasicMaterial({color:0x7fb4d8}));
-      var ring=new THREE.Mesh(new THREE.RingGeometry(4.2,5.2,28),
+      var ring=new THREE.Mesh(new THREE.RingGeometry(2.7,3.4,28),
         new THREE.MeshBasicMaterial({color:0x7fb4d8,transparent:true,opacity:0.55,side:THREE.DoubleSide}));
       ring.lookAt(g.position.clone().multiplyScalar(2));
       g.add(dot); g.add(ring); markers.add(g);
-      t._dot=dot; t._ring=ring; return g;
+      t._dot=dot; t._ring=ring; t._g=g; return g;
     }
     function tint(t){
       var cl=t.el&&t.el.classList, gold=cl&&cl.contains('hit'), dim=cl&&cl.contains('miss');
@@ -104,6 +104,10 @@
       tracked.forEach(function(t){
         if(t.lat==null||t.lng==null||!t.el) return;
         tint(t);
+        /* constant on-screen size: markers scale with distance, so zooming in
+           brings the country closer while the dot stays a dot */
+        if(t._g){ var wp=t._g.position.clone().applyEuler(globe.rotation);
+          t._g.scale.setScalar(Math.max(0.05,cam.position.distanceTo(wp)/200)); }
         var op=t.el.offsetParent; if(!op) return;
         var br=op.getBoundingClientRect();
         var ox=er.left-br.left, oy=er.top-br.top;
