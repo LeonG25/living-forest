@@ -47,7 +47,27 @@
       }).catch(function(){});
     }
     globe.rotation.x=0.35; globe.rotation.y=1.2;
+    if(el.__lfgMounted) return el.__lfgMounted; /* singleton per container */
     var alive=true, tracked=[], auto=true;
+    /* markers live IN the scene as children of the rotating globe — they cannot
+       desynchronize from it. DOM keeps only labels + tap areas. */
+    var markers=new THREE.Group(); globe.add(markers);
+    function markerFor(t){
+      var g=new THREE.Group(); g.position.copy(ll2v(t.lat,t.lng,R*1.015));
+      var dot=new THREE.Mesh(new THREE.SphereGeometry(2.6,12,12),
+        new THREE.MeshBasicMaterial({color:0x7fb4d8}));
+      var ring=new THREE.Mesh(new THREE.RingGeometry(4.2,5.2,28),
+        new THREE.MeshBasicMaterial({color:0x7fb4d8,transparent:true,opacity:0.55,side:THREE.DoubleSide}));
+      ring.lookAt(g.position.clone().multiplyScalar(2));
+      g.add(dot); g.add(ring); markers.add(g);
+      t._dot=dot; t._ring=ring; return g;
+    }
+    function tint(t){
+      var cl=t.el&&t.el.classList, gold=cl&&cl.contains('hit'), dim=cl&&cl.contains('miss');
+      var c=gold?0xf3cd84:0x7fb4d8, op=dim?0.25:1;
+      if(t._dot){ t._dot.material.color.setHex(c); t._dot.material.transparent=dim; t._dot.material.opacity=op; }
+      if(t._ring){ t._ring.material.color.setHex(c); t._ring.material.opacity=dim?0.12:0.55; }
+    }
     /* interaction: first touch stops the drift; drag rotates; pinch/wheel zooms.
        zmin stays outside the atmosphere shell (R*1.16). */
     (function(){
@@ -82,27 +102,34 @@
       if(!tracked.length) return;
       var er=el.getBoundingClientRect();
       tracked.forEach(function(t){
-        if(t.lat==null||t.lng==null) return;
-        /* anchor against the pin's own positioning container — left/top are relative to it */
+        if(t.lat==null||t.lng==null||!t.el) return;
+        tint(t);
         var op=t.el.offsetParent; if(!op) return;
         var br=op.getBoundingClientRect();
         var ox=er.left-br.left, oy=er.top-br.top;
-        var p=ll2v(t.lat,t.lng,R*1.02).applyEuler(globe.rotation);
+        var p=ll2v(t.lat,t.lng,R*1.015).applyEuler(globe.rotation);
         var front=p.z>6;
         var s=p.clone().project(cam);
         var x=( s.x*0.5+0.5)*er.width, y=(-s.y*0.5+0.5)*er.height;
         t.el.style.left=Math.round(ox+x)+'px';
         t.el.style.top =Math.round(oy+y)+'px';
-        t.el.style.opacity=front?'':'0.12';
+        t.el.style.opacity=front?'':'0';
         t.el.style.pointerEvents=front?'':'none';
         t.el.style.zIndex=front?'6':'3';
       });
     }
     (function tick(){ if(!alive) return; if(auto) globe.rotation.y+=0.0016; renderer.render(scene,cam); place(); requestAnimationFrame(tick); })();
-    return {
+    return el.__lfgMounted={
       stop:function(){ alive=false; try{ renderer.dispose(); renderer.domElement.remove(); }catch(e){} },
-      track:function(items){ tracked=(items||[]).filter(function(t){ return t&&t.el; }); }
+      track:function(items){
+        while(markers.children.length) markers.remove(markers.children[0]);
+        tracked=(items||[]).filter(function(t){ return t&&t.el&&t.lat!=null&&t.lng!=null; });
+        tracked.forEach(markerFor);
+        /* the scene draws the dot — the DOM keeps label + finger area only */
+        tracked.forEach(function(t){ var d=t.el.querySelector('.dot'); if(d) d.style.visibility='hidden'; });
+      }
     };
+
   }
   window.LFGlobe={mount:mount};
 })();
