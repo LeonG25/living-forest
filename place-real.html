@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700;800&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;700&display=swap" rel="stylesheet" />
 <script src="https://unpkg.com/three@0.149.0/build/three.min.js"></script>
+<script src="lf-face.js?v=1"></script>
 <script src="https://unpkg.com/topojson-client@3/dist/topojson-client.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -437,8 +438,8 @@ function spr(tex,size,col,op){ const s=new THREE.Sprite(new THREE.SpriteMaterial
 
 /* ---- runtime state ---- */
 let PEOPLE=[], TIES=[], Y_MIN=2000, Y_MAX=2025, YEAR=2025;
-const pickables=[]; const pointsGroup=new THREE.Group(); globe.add(pointsGroup);
-const tiesGroup=new THREE.Group(); globe.add(tiesGroup); const flow=[];
+const pickables=[]; const pointsGroup=new THREE.Group(); globe.add(pointsGroup); pointsGroup.visible=!PLACE_ONLY;
+const tiesGroup=new THREE.Group(); globe.add(tiesGroup); tiesGroup.visible=!PLACE_ONLY; const flow=[];
 const dialSvg=$('#dial svg'), handleEl=$('#handle'), ticksEl=$('#ticks');
 
 /* ---- load real data ---- */
@@ -584,8 +585,9 @@ function updateTime(y){ let people=0; const places=new Set();
   $('#stPeople').textContent=people; $('#stTies').textContent=TIES.filter(t=>y>=t.fy).length; $('#stPlaces').textContent=places.size; }
 
 /* ---- interaction (design defaults) ---- */
-const idle=RM?0:0.0016, motion=RM?0:0.3;
-let spin=!RM, dragging=false, returning=false, vx=0, vy=0;
+const PLACE_ONLY=!!new URLSearchParams(location.search).get('place');
+const idle=(RM||PLACE_ONLY)?0:0.0016, motion=RM?0:0.3;
+let spin=!RM&&!PLACE_ONLY, dragging=false, returning=false, vx=0, vy=0;
 const dom=renderer.domElement, ptrs=new Map(); let px=0,py=0,moved=0,downT=0,lastVX=0,lastVY=0,pinchD=0; const MINZ=108,MAXZ=560;
 function stopSpin(){ spin=false; returning=false; vx=0; vy=0; }
 function zoom(dz){ stopSpin(); camera.position.z=Math.max(MINZ,Math.min(MAXZ,camera.position.z+dz)); }
@@ -701,7 +703,7 @@ window.__lfFocusPlace=function(lat,lng){
 };
 function tick(){ requestAnimationFrame(tick);
   if(returning){ vy*=0.94; vx*=0.90; globe.rotation.x+=vx+(homeX-globe.rotation.x)*0.05; globe.rotation.x=Math.max(-1.25,Math.min(1.25,globe.rotation.x)); globe.rotation.y+=vy+idle;
-    if(Math.abs(vx)<0.0006&&Math.abs(vy)<0.0006&&Math.abs(globe.rotation.x-homeX)<0.01){ returning=false; spin=true; vx=0; vy=0; } }
+    if(Math.abs(vx)<0.0006&&Math.abs(vy)<0.0006&&Math.abs(globe.rotation.x-homeX)<0.01){ returning=false; spin=!PLACE_ONLY; vx=0; vy=0; } }
   else if(spin&&!dragging){ globe.rotation.y+=idle; globe.rotation.x+=(homeX-globe.rotation.x)*0.02; }
   if(motion>0){ flow.forEach(f=>{ if(f.on){ f.t=(f.t+0.0016*(0.4+motion))%1; f.curve.getPoint(f.t,tmp); f.s.position.copy(tmp);} f.s.visible=!!f.on; }); }
   else flow.forEach(f=>f.s.visible=false);
@@ -740,6 +742,7 @@ load();
 (function(){
   const SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
   const sb2=window.supabase.createClient(SB_URL, SB_KEY, {auth:{autoRefreshToken:false}});
+  if(window.LFFace) LFFace.init(sb2);
   const $=id=>document.getElementById(id);
   const PL=new URLSearchParams(location.search).get('place');
 
@@ -885,12 +888,13 @@ load();
     /* doors */
     const door=(path,l,s,go,circle)=>'<div class="door" data-go="'+go+'"><div class="di">'+(circle?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="'+path+'"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="'+path+'"/></svg>')+'</div><div class="dt"><div class="l">'+l+'</div><div class="s">'+s+'</div></div><div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div></div>';
     $('doors').innerHTML=
-      door('M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18', t.dGlobe, t.dGlobeS, 'globe', true)+
       door('M9 9m-3 0a3 3 0 106 0a3 3 0 10-6 0M3 20c0-3 2.7-5 6-5s6 2 6 5M16 6a3 3 0 010 6M21 20c0-2.4-1.6-4.2-4-4.8', t.dSeen, t.dSeenS, 'faces', false)+
       door('M4 5h16v11H8l-4 4z', t.dMoments, t.dMomentsS, 'moments', false);
 
     /* fill real photos after DOM exists */
     document.querySelectorAll('#faces .crop[data-face]').forEach(el=>{ const id=el.getAttribute('data-face'); const f=m.faceAsset[id]; if(f&&f.path) faceInto(el,f.path,f.box); });
+    try{ if(window.LFFace){ const missing=m.faces.filter(f=>!(m.faceAsset[f.id]&&m.faceAsset[f.id].path)).map(f=>f.id);
+      if(missing.length) LFFace.resolve(missing).then(fm=>{ missing.forEach(id=>{ const el=document.querySelector('#faces .crop[data-face="'+id+'"]'); const ff=fm[id]; if(el&&ff) LFFace.into(el,{path:ff.path,box:ff.box,size:140,keep:true}); }); }); } }catch(e){}
     document.querySelectorAll('#moments .img img[data-msrc]').forEach(async el=>{ const mo=m.moments[+el.getAttribute('data-msrc')]; if(mo&&mo.path){ const u=await signedUrl(mo.path); if(u) el.src=u; } });
   }
 
@@ -912,6 +916,11 @@ load();
   /* ---- static event wiring (once) ---- */
   $('pBack').addEventListener('click', ()=>{ try{history.back();}catch(e){ location.href='index.html'; } });
   $('pScrollcue').addEventListener('click', ()=>{ const c=document.querySelector('.content'); if(c) c.scrollIntoView({behavior:'smooth',block:'start'}); });
+  (function(){ const els=['.placehead','.stats','.scrollcue'].map(s=>document.querySelector(s)).filter(Boolean);
+    const onS=()=>{ const y=window.scrollY||document.documentElement.scrollTop||0;
+      const k=Math.max(0,1-y/(window.innerHeight*0.26));
+      els.forEach(el=>{ el.style.opacity=k; el.style.pointerEvents=k<0.15?'none':''; }); };
+    window.addEventListener('scroll',onS,{passive:true}); onS(); })();
   $('pLang').addEventListener('click', async e=>{ const b=e.target.closest('button'); if(!b) return; const nl=b.dataset.lang; if(!T[nl]||nl===lang) return;
     lang=nl; try{localStorage.setItem('lf_lang',nl);}catch(_){}
     try{ const s=(await sb2.auth.getSession()).data.session; if(s) sb2.from('profiles').update({preferred_lang:nl}).eq('id',s.user.id); }catch(_){}
@@ -920,7 +929,7 @@ load();
     const mEl=e.target.closest('.moment[data-m]'); if(mEl){ openLb(model.moments[+mEl.getAttribute('data-m')]); return; }
     const fEl=e.target.closest('.face[data-id]'); if(fEl){ const id=fEl.getAttribute('data-id'); if(id) location.href='person-real.html?id='+encodeURIComponent(id); return; }
     const dEl=e.target.closest('.door[data-go]'); if(dEl){ const go=dEl.getAttribute('data-go');
-      if(go==='globe'){ location.href='index.html'; } else { const target=go==='faces'?$('faces'):$('moments'); if(target) target.scrollIntoView({behavior:'smooth',block:'start'}); } return; }
+      if(go==='globe'){ location.href='index.html'; } else { const target=go==='faces'?$('faces'):$('moments'); if(target){ target.scrollIntoView({behavior:'smooth',block:'center'}); target.style.transition='box-shadow .45s'; target.style.borderRadius='14px'; target.style.boxShadow='0 0 0 2px rgba(243,205,132,.55)'; setTimeout(()=>{ target.style.boxShadow='none'; },900); } } return; }
     const na=e.target.closest('[data-nact]'); if(na){ /* keeper approve/decline of a place-name suggestion — reserved for the place_facts store (§9); no data today */ return; }
   });
 
