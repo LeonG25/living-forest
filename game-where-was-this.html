@@ -8,6 +8,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/three@0.149.0/build/three.min.js"></script>
+<script src="https://unpkg.com/topojson-client@3/dist/topojson-client.min.js"></script>
+<script src="lf-globe.js?v=1"></script>
+<script src="lf-progress.js?v=1"></script>
 <style>
   /* ===== Design: "Game - Where Was This (play)" — reproduced verbatim ===== */
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
@@ -343,8 +347,9 @@
               <div class="stars"></div>
               <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg><span id="badgeTxt">Places this family knows</span></div>
               <div class="orb">
-                <div class="land"></div>
-                <div class="mer">
+                <div class="lfglobe" style="position:absolute;inset:0;border-radius:50%;overflow:hidden"></div>
+                <div class="land" style="display:none"></div>
+                <div class="mer" style="display:none">
                   <svg viewBox="0 0 214 214">
                     <g class="lines spin">
                       <ellipse cx="107" cy="107" rx="34" ry="106"></ellipse>
@@ -429,6 +434,7 @@
 (function(){
   var SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
   var sb=window.supabase.createClient(SB_URL,SB_KEY);
+  if(window.LFProgress) LFProgress.init(sb);
 
   // ---- i18n -------------------------------------------------------------
   var T={
@@ -694,6 +700,8 @@
   }
 
   // ---- rounds -----------------------------------------------------------
+  var __lfg=null;
+  function mountGlobe(){ try{ if(__lfg||!window.LFGlobe) return; var host=document.querySelector('#globe .lfglobe'); if(host) __lfg=LFGlobe.mount(host); }catch(e){} }
   function newRound(seed){
     done=false; tries=3; guessed={}; extra=null;
     showState('load');
@@ -707,7 +715,7 @@
         return countPlaceless().then(function(n){ extra={ placeless:n }; renderLocked(); }, function(){ extra={placeless:null}; renderLocked(); });
       }
       if(res.status==='ok'){
-        return enrich(res).then(function(x){ extra=x; renderPlay(); }, function(){ extra={geo:{}}; renderPlay(); });
+        return enrich(res).then(function(x){ extra=x; renderPlay(); mountGlobe(); }, function(){ extra={geo:{}}; renderPlay(); mountGlobe(); });
       }
       renderError();
     }, function(){ renderError(); });
@@ -849,6 +857,7 @@
       $('triesPill').hidden=true;
       if(o) o.classList.add('right');
       try{window.Fen&&Fen.cue('right');}catch(e){}
+      try{window.LFProgress&&LFProgress.record('where-was-this','followed',round.subject_ids||[],true);}catch(e){}
       if(pn) pn.classList.add('hit');
       Array.prototype.forEach.call(document.querySelectorAll('#opts .opt'), function(el){ if(el!==o) el.classList.add('dim'); });
       Array.prototype.forEach.call(document.querySelectorAll('#globe .gpin'), function(el){ if(el!==pn) el.classList.add('miss'); });
@@ -878,6 +887,7 @@
       $('warmS').textContent=L.coldPlainS;
     }
     try{window.Fen&&Fen.cue('wrong',{quiet:(tries===0)});}catch(e){}
+    try{window.LFProgress&&LFProgress.record('where-was-this','followed',round.subject_ids||[],false);}catch(e){}
     if(o){ o.classList.add('wrong'); setTimeout(function(){ o.classList.remove('wrong'); o.classList.add('dim'); }, 420); }
     if(pn) pn.classList.add('miss');
 
@@ -948,6 +958,6 @@
 })();
 </script>
 <script src="lf-nav.js" data-here="" data-parent="person-real.html"></script>
-<script src="lf-fen.js?v=4"></script>
+<script src="lf-fen.js?v=5"></script>
 </body>
 </html>

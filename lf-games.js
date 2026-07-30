@@ -387,9 +387,19 @@
         sb.from('artefacts').select('id,body,metadata,storage_path,kind,status').eq('status', 'published'),
         'artefacts'
       );
-      const withWhere = arts.filter(a => whereOf(a).length > 0);
+      let withWhere = arts.filter(a => whereOf(a).length > 0);
       if (!withWhere.length) {
         return { status: 'not_enough_data', need: 'artefacts with metadata.where set', seed: seed };
+      }
+      /* scoped to a person: prefer moments that person is in; whole corpus only as fallback */
+      let scopedTo = null;
+      if (opts.id) {
+        try {
+          const subs = await q(sb.from('artefact_subjects').select('artefact_id').eq('person_id', opts.id), 'artefact_subjects');
+          const inIt = {}; subs.forEach(s => { inIt[s.artefact_id] = 1; });
+          const mine = withWhere.filter(a => inIt[a.id]);
+          if (mine.length) { withWhere = mine; scopedTo = opts.id; }
+        } catch (e) {}
       }
 
       // distinct real place strings across the corpus (keyed lowercase, keep a raw label)
@@ -406,6 +416,11 @@
       }
 
       const art = pick(withWhere, rng);
+      let subject_ids = [];
+      try {
+        const ss = await q(sb.from('artefact_subjects').select('person_id').eq('artefact_id', art.id), 'subjects');
+        subject_ids = ss.map(x => x.person_id);
+      } catch (e) {}
       const correctKey = normPlace(whereOf(art));
       const distractorKeys = sampleN(distinctKeys.filter(k => k !== correctKey), Math.max(1, optionCount - 1), rng);
       const optionKeys = shuffle(distractorKeys.concat([correctKey]), rng);
@@ -428,6 +443,8 @@
         answer_index: answer_index,
         answer_id: correctKey,
         answer_label: placeLabel[correctKey],
+        subject_ids: subject_ids,
+        scoped_to: scopedTo,
         used_rows: { artefacts: [art.id] }
       };
     } catch (e) { return err(e && e.message || e); }

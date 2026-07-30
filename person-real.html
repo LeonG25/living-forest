@@ -863,6 +863,30 @@
     const seen={}, out=[];
     vals.forEach(v=>{ const k=normPlace(v); if(k&&!seen[k]){ seen[k]=1; out.push(String(v)); } });
     out.sort((a,b)=>a.localeCompare(b)); return out; }
+  /* Android's datalist is unreliable inside sheets and only prefix-matches, so a
+     visible typeahead rides on top of it; substring match, tap to fill. */
+  (function(){
+    let tbox=null;
+    function tclose(){ if(tbox){ tbox.remove(); tbox=null; } }
+    document.addEventListener('input',e=>{
+      const inp=e.target;
+      if(!(inp instanceof HTMLInputElement)||inp.getAttribute('list')!=='placelist') return;
+      const q=normPlace(inp.value); tclose(); if(!q) return;
+      const hits=placeSuggestions().filter(s=>normPlace(s).includes(q)&&normPlace(s)!==q).slice(0,6);
+      if(!hits.length) return;
+      tbox=document.createElement('div');
+      tbox.style.cssText='position:fixed;z-index:120;background:#0d1628;border:1px solid #223050;border-radius:12px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.5);';
+      hits.forEach(h=>{ const r=document.createElement('div'); r.textContent=h;
+        r.style.cssText='padding:10px 13px;font-size:14.5px;color:#e9eef8;cursor:pointer;border-bottom:1px solid #16203a;';
+        r.addEventListener('pointerdown',ev=>{ ev.preventDefault(); inp.value=h; tclose(); });
+        tbox.appendChild(r); });
+      const rc=inp.getBoundingClientRect();
+      tbox.style.left=rc.left+'px'; tbox.style.top=(rc.bottom+4)+'px'; tbox.style.width=rc.width+'px';
+      document.body.appendChild(tbox);
+    });
+    document.addEventListener('pointerdown',e=>{ if(tbox&&!tbox.contains(e.target)) tclose(); },true);
+    document.addEventListener('scroll',tclose,true);
+  })();
   function placeDatalist(){ return `<datalist id="placelist">${placeSuggestions().map(s=>`<option value="${esc(s)}"></option>`).join('')}</datalist>`; }
   function placesAppLine(n){ const t={ en:`Tied to ${n} place${n===1?'':'s'}; the route between them is drawn by the app.`, ru:`Связана с ${n} мест${n===1?'ом':'ами'}; маршрут строит приложение.`, he:`קשורה ל-${n} מקומות; המסלול משורטט על ידי האפליקציה.` }; return t[state.lang]||t.en; }
   /* "add a home": the home place AND a country field (Item D), each a place typeahead (Item E) */

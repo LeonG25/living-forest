@@ -93,15 +93,17 @@
     strip.appendChild(bg); strip.appendChild(horizon); strip.appendChild(v); strip.appendChild(say); host.appendChild(strip);
     requestAnimationFrame(function(){ strip.style.opacity='1'; });
     bg.play().catch(function(){}); v.play().catch(function(){});
-    /* entrance: he walks in from the left edge to his spot, then sits */
+    /* entrance: he walks in from beyond the left edge at gait speed, then sits.
+       Linear timing — easing makes his feet slide. Starts after the strip has faded in. */
     (function(){ if(!CLIP.walk.src) return;
-      v.style.transition='none'; v.style.transform='translateX(-160px)';
-      var ok=false;
-      try{ cur='entrance'; v.loop=true; v.onended=null; v.src=CLIP.walk.src; v.play().catch(function(){}); ok=true; }catch(e){}
-      if(!ok) return;
-      requestAnimationFrame(function(){ requestAnimationFrame(function(){
-        v.style.transition='transform 2.4s ease-out'; v.style.transform='translateX(0)';
-        setTimeout(function(){ v.style.transition='none'; toIdle(); },2500); }); });
+      v.style.transition='none'; v.style.transform='translateX(-260px)'; v.style.opacity='0';
+      setTimeout(function(){
+        try{ cur='entrance'; v.loop=true; v.onended=null; v.src=CLIP.walk.src; v.play().catch(function(){}); }catch(e){ return; }
+        v.style.opacity='1';
+        requestAnimationFrame(function(){ requestAnimationFrame(function(){
+          v.style.transition='transform 2.6s linear'; v.style.transform='translateX(0)';
+          setTimeout(function(){ v.style.transition='none'; toIdle(); },2650); }); });
+      },700);
     })();
 
     var cur='idle', sleeping=false;
@@ -163,7 +165,7 @@
       leave:function(cb){ speak(line('leave')); play('wave');
         setTimeout(function(){
           if(CLIP.walk.src){ cur='walkaway'; v.loop=true; v.onended=null; v.src=CLIP.walk.src; v.play().catch(function(){});
-            v.style.transition='transform 2.2s ease-in'; v.style.transform='translateX(120vw)'; }
+            v.style.transition='transform 3.2s linear'; v.style.transform='translateX(120vw)'; }
           setTimeout(function(){ strip.style.opacity='0'; if(cb)setTimeout(cb,850); },1600);
         },2200); }
     };
