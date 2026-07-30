@@ -882,7 +882,9 @@ load();
     } else $('faces').innerHTML='<div class="soft">'+t.noseen+'</div>';
 
     /* Ways-in doors removed 2026-07-30 — they only scrolled to on-page sections */
- const f=m.faceAsset[id]; if(f&&f.path) faceInto(el,f.path,f.box); });
+
+    /* fill real photos after DOM exists */
+    document.querySelectorAll('#faces .crop[data-face]').forEach(el=>{ const id=el.getAttribute('data-face'); const f=m.faceAsset[id]; if(f&&f.path) faceInto(el,f.path,f.box); });
     try{ if(window.LFFace){ const missing=m.faces.filter(f=>!(m.faceAsset[f.id]&&m.faceAsset[f.id].path)).map(f=>f.id);
       if(missing.length) LFFace.resolve(missing).then(fm=>{ missing.forEach(id=>{ const el=document.querySelector('#faces .crop[data-face="'+id+'"]'); const ff=fm[id]; if(el&&ff) LFFace.into(el,{path:ff.path,box:ff.box,size:140,keep:true}); }); }); } }catch(e){}
     document.querySelectorAll('#moments .img img[data-msrc]').forEach(async el=>{ const mo=m.moments[+el.getAttribute('data-msrc')]; if(mo&&mo.path){ const u=await signedUrl(mo.path); if(u) el.src=u; } });
