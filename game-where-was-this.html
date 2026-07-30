@@ -10,7 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://unpkg.com/three@0.149.0/build/three.min.js"></script>
 <script src="https://unpkg.com/topojson-client@3/dist/topojson-client.min.js"></script>
-<script src="lf-globe.js?v=1"></script>
+<script src="lf-globe.js?v=2"></script>
 <script src="lf-progress.js?v=1"></script>
 <style>
   /* ===== Design: "Game - Where Was This (play)" — reproduced verbatim ===== */
@@ -700,8 +700,9 @@
   }
 
   // ---- rounds -----------------------------------------------------------
-  var __lfg=null;
-  function mountGlobe(){ try{ if(__lfg||!window.LFGlobe) return; var host=document.querySelector('#globe .lfglobe'); if(host) __lfg=LFGlobe.mount(host); }catch(e){} }
+  var __lfg=null, __lfgPending=null;
+  function mountGlobe(){ try{ if(!__lfg&&window.LFGlobe){ var host=document.querySelector('#globe .lfglobe'); if(host) __lfg=LFGlobe.mount(host); } if(__lfg&&__lfgPending){ __lfg.track(__lfgPending); __lfgPending=null; } }catch(e){} }
+  function trackPins(items){ if(__lfg) __lfg.track(items); else __lfgPending=items; }
   function newRound(seed){
     done=false; tries=3; guessed={}; extra=null;
     showState('load');
@@ -802,17 +803,19 @@
     // pins on the globe
     var globe=$('globe');
     Array.prototype.slice.call(globe.querySelectorAll('.gpin')).forEach(function(n){ n.remove(); });
-    var pos=layout(opts);
+    var pos=layout(opts), tracked=[];
     opts.forEach(function(o,i){
       var b=document.createElement('button');
       b.className='gpin'; b.dataset.i=String(i);
       b.setAttribute('aria-label', o.label);
-      b.style.left='calc(50% + '+Math.round(pos[i].x)+'px)';
-      b.style.top='calc(52% + '+Math.round(pos[i].y)+'px)';
+      var g=geo[norm(o.label)];
+      if(g&&g.lat!=null&&g.lng!=null){ tracked.push({el:b,lat:+g.lat,lng:+g.lng}); }
+      else { b.style.left='calc(50% + '+Math.round(pos[i].x)+'px)'; b.style.top='calc(52% + '+Math.round(pos[i].y)+'px)'; }
       b.innerHTML='<span class="dot"></span><span class="lb serif">'+esc(o.label)+'</span>';
       b.addEventListener('click', function(){ choose(i); });
       globe.appendChild(b);
     });
+    trackPins(tracked);
 
     // the same answer, finger-sized
     var box=$('opts'); box.innerHTML='';

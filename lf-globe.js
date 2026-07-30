@@ -2,7 +2,10 @@
    (index.html): ocean 0x0a1526, additive atmosphere 0x3a86c0, graticule 0x2a5470,
    country outlines from world-atlas 110m, slow drift spin.
    Requires three.js + topojson-client on the page.
-   API: LFGlobe.mount(el) -> {stop()}   (el: the circular container to fill) */
+   API: LFGlobe.mount(el) -> {stop(), track(items)}
+   track(items): items=[{el,lat,lng}] — DOM pins anchored to coordinates ON the
+   turning globe; positions are projected every frame relative to el's PARENT box
+   (pins live outside the circle clip so labels aren't cut). Far-side pins fade. */
 (function(){
   if(window.LFGlobe) return;
   function mount(el){
@@ -44,9 +47,30 @@
       }).catch(function(){});
     }
     globe.rotation.x=0.35; globe.rotation.y=1.2;
-    var alive=true;
-    (function tick(){ if(!alive) return; globe.rotation.y+=0.0016; renderer.render(scene,cam); requestAnimationFrame(tick); })();
-    return { stop:function(){ alive=false; try{ renderer.dispose(); renderer.domElement.remove(); }catch(e){} } };
+    var alive=true, tracked=[];
+    var box=el.parentElement||el;   // pins are positioned in this element's coordinate space
+    function place(){
+      if(!tracked.length) return;
+      var er=el.getBoundingClientRect(), br=box.getBoundingClientRect();
+      var ox=er.left-br.left, oy=er.top-br.top;
+      tracked.forEach(function(t){
+        if(t.lat==null||t.lng==null) return;
+        var p=ll2v(t.lat,t.lng,R*1.02).applyEuler(globe.rotation);
+        var front=p.z>6;
+        var s=p.clone().project(cam);
+        var x=( s.x*0.5+0.5)*er.width, y=(-s.y*0.5+0.5)*er.height;
+        t.el.style.left=Math.round(ox+x)+'px';
+        t.el.style.top =Math.round(oy+y)+'px';
+        t.el.style.opacity=front?'':'0.12';
+        t.el.style.pointerEvents=front?'':'none';
+        t.el.style.zIndex=front?'6':'3';
+      });
+    }
+    (function tick(){ if(!alive) return; globe.rotation.y+=0.0016; renderer.render(scene,cam); place(); requestAnimationFrame(tick); })();
+    return {
+      stop:function(){ alive=false; try{ renderer.dispose(); renderer.domElement.remove(); }catch(e){} },
+      track:function(items){ tracked=(items||[]).filter(function(t){ return t&&t.el; }); }
+    };
   }
   window.LFGlobe={mount:mount};
 })();
