@@ -580,7 +580,10 @@
   /* ---------- state ---------- */
   const state={ lang:'en', keeper:false, facet:'name' };
   let user=null, person=null, NV=[], facts=[], tagged=[], rels=[], memories=[], contribNames={};
-  let NAME={}, NAMEROW={}, PEND={}, NICKS={en:[],ru:[],he:[]}, PENDNICKS={en:[],ru:[],he:[]};
+  const NF0=['display','given','called','family','maiden','patronymic','honorific'];
+  const _emptyN=()=>{ const o={}; NF0.forEach(f=>o[f]={}); return o; };
+  /* full shape from the first moment — renders before data arrive must never crash */
+  let NAME=_emptyN(), NAMEROW=_emptyN(), PEND=_emptyN(), NICKS={en:[],ru:[],he:[]}, PENDNICKS={en:[],ru:[],he:[]};
   let PEOPLE=[], PLACEVALS=[];
   const REL_KINDS=['parent','spouse','sibling','friend','mentor','neighbour','other'];
   const REL_CERTS=['documented','remembered','uncertain'];
@@ -704,7 +707,7 @@
     return Object.keys(groups).map(gid=>({group_id:gid,...groups[gid]})); }
   function buildNames(){
     const NF=['display','given','called','family','maiden','patronymic','honorific'];
-    NAME={}; PEND={}; NAMEROW={};
+    NAME=_emptyN(); PEND=_emptyN(); NAMEROW=_emptyN();
     NF.forEach(f=>{ NAME[f]={}; PEND[f]={}; NAMEROW[f]={}; LANGS.forEach(l=>{ const r=pubRow(f,l); NAMEROW[f][l]=r; NAME[f][l]=r?r.value:''; const p=pendList(f,l)[0]; PEND[f][l]=p?p.value:''; }); });
     LANGS.forEach(l=>{ const vp=NV.find(v=>v.lang===l&&v.status==='published'); if(vp){ if(!NAME.given[l]&&vp.given) NAME.given[l]=vp.given; if(!NAME.family[l]&&vp.family) NAME.family[l]=vp.family; }
       const vpe=NV.find(v=>v.lang===l&&v.status!=='published'); if(vpe){ if(!PEND.given[l]&&vpe.given) PEND.given[l]=vpe.given; if(!PEND.family[l]&&vpe.family) PEND.family[l]=vpe.family; } });
