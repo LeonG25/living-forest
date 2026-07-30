@@ -682,6 +682,23 @@ function focusPlace(lat,lng,name){
     core.scale.setScalar(10*(1+0.12*Math.sin(t*3))); })();
 }
 
+window.__lfFocusPlace=function(lat,lng){
+  try{
+    const v=ll2v(lat,lng,R);
+    const ry=Math.atan2(-v.x,v.z);
+    const z2=Math.sqrt(v.x*v.x+v.z*v.z);
+    const rx=Math.atan2(v.y,z2)+0.18;               /* the place sits a touch above centre */
+    spin=false; returning=false; homeX=rx;
+    const sy=globe.rotation.y, sx=globe.rotation.x, t0=performance.now();
+    (function gl(){ const k=Math.min(1,(performance.now()-t0)/1200);
+      const e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+      globe.rotation.y=sy+(ry-sy)*e; globe.rotation.x=sx+(rx-sx)*e;
+      if(k<1) requestAnimationFrame(gl); })();
+    const g=new THREE.Group(); g.position.copy(ll2v(lat,lng,R*1.005));
+    g.add(spr(glow,26,GOLD,.85)); g.add(spr(ringT,15,GOLD,.9)); g.add(spr(glow,8,CORE,.95));
+    globe.add(g);
+  }catch(e){}
+};
 function tick(){ requestAnimationFrame(tick);
   if(returning){ vy*=0.94; vx*=0.90; globe.rotation.x+=vx+(homeX-globe.rotation.x)*0.05; globe.rotation.x=Math.max(-1.25,Math.min(1.25,globe.rotation.x)); globe.rotation.y+=vy+idle;
     if(Math.abs(vx)<0.0006&&Math.abs(vy)<0.0006&&Math.abs(globe.rotation.x-homeX)<0.01){ returning=false; spin=true; vx=0; vy=0; } }
@@ -921,10 +938,11 @@ load();
     try{ const {data:pr}=await sb2.from('profiles').select('is_keeper,preferred_lang').eq('id',sess.user.id).maybeSingle();
       if(pr){ isKeeper=!!pr.is_keeper; if(pr.preferred_lang && !localStorage.getItem('lf_lang') && T[pr.preferred_lang]) lang=pr.preferred_lang; } }catch(e){}
 
-    const [geoR,artsR,peopleR]=await Promise.all([
+    const [geoR,artsR,peopleR,factsR]=await Promise.all([
       sb2.from('place_geo').select('name,lat,lng,label').eq('name',PL).maybeSingle(),
       sb2.from('artefacts').select('id,kind,body,metadata,storage_path,contributor_id').eq('status','published').eq('metadata->>where',PL),
-      sb2.from('people').select('id,display_name,called_name,primary_asset')
+      sb2.from('people').select('id,display_name,called_name,primary_asset'),
+      sb2.from('person_facts').select('person_id,value').in('field',['pbirth','lived','home','country']).eq('status','published')
     ]);
     const geo=geoR.data||null, arts=artsR.data||[];
     const pById={}; (peopleR.data||[]).forEach(p=>pById[p.id]=p);
@@ -954,9 +972,15 @@ load();
       return { id:a.id, path:isImg?a.storage_path:'', yr:isNaN(yr)?String(md.when||''):String(yr),
         ppl:joinNames(pplNames), pplList:pplNames, body:a.body||'', teller:tellerOf(a) }; });
 
+    /* people tied here by their life facts (born here, lived here) belong to this place too */
+    const plKey=String(PL).trim().toLowerCase();
+    ((factsR&&factsR.data)||[]).forEach(fr=>{ if(!fr.person_id||!fr.value) return;
+      if(String(fr.value).trim().toLowerCase()!==plKey) return;
+      if(!seenSet[fr.person_id]&&pById[fr.person_id]){ seenSet[fr.person_id]=1; seen.push(fr.person_id); } });
     const FACE_CAP=8;
     const faces=seen.slice(0,FACE_CAP).map(id=>({id, name:nameOf(id)}));
 
+    if(geo&&geo.lat!=null&&geo.lng!=null){ try{ window.__lfFocusPlace&&window.__lfFocusPlace(+geo.lat,+geo.lng); }catch(e){} }
     model={
       name:head, region, coords,
       nameProv:(geo&&geo.label)?'cool':'gold',   /* app-canonical label → cool; else the family-typed string → gold */
