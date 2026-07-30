@@ -47,7 +47,37 @@
       }).catch(function(){});
     }
     globe.rotation.x=0.35; globe.rotation.y=1.2;
-    var alive=true, tracked=[];
+    var alive=true, tracked=[], auto=true;
+    /* interaction: first touch stops the drift; drag rotates; pinch/wheel zooms.
+       zmin stays outside the atmosphere shell (R*1.16). */
+    (function(){
+      var zmin=125, zmax=340, pts={}, lastD=0, dragDist=0;
+      var ib=el.parentElement||el;
+      ib.style.touchAction='none';
+      ib.addEventListener('pointerdown',function(e){ auto=false; dragDist=0; lastD=0;
+        pts[e.pointerId]=[e.clientX,e.clientY]; try{ ib.setPointerCapture(e.pointerId); }catch(x){} });
+      ib.addEventListener('pointermove',function(e){
+        if(!(e.pointerId in pts)) return;
+        var prev=pts[e.pointerId], dx=e.clientX-prev[0], dy=e.clientY-prev[1];
+        pts[e.pointerId]=[e.clientX,e.clientY];
+        var ids=Object.keys(pts);
+        if(ids.length===1){
+          globe.rotation.y+=dx*0.006;
+          globe.rotation.x=Math.max(-1.2,Math.min(1.2,globe.rotation.x+dy*0.006));
+          dragDist+=Math.abs(dx)+Math.abs(dy);
+        } else if(ids.length===2){
+          var a=pts[ids[0]], b=pts[ids[1]], d=Math.hypot(a[0]-b[0],a[1]-b[1]);
+          if(lastD>0) cam.position.z=Math.max(zmin,Math.min(zmax,cam.position.z*(lastD/d)));
+          lastD=d; dragDist+=3;
+        }
+      });
+      function up(e){ delete pts[e.pointerId]; lastD=0; }
+      ib.addEventListener('pointerup',up); ib.addEventListener('pointercancel',up);
+      ib.addEventListener('wheel',function(e){ e.preventDefault(); auto=false;
+        cam.position.z=Math.max(zmin,Math.min(zmax,cam.position.z*(e.deltaY>0?1.1:0.9))); },{passive:false});
+      /* a real drag must not fire the pin underneath it */
+      ib.addEventListener('click',function(e){ if(dragDist>8){ e.stopPropagation(); e.preventDefault(); dragDist=0; } },true);
+    })();
     var box=el.parentElement||el;   // pins are positioned in this element's coordinate space
     function place(){
       if(!tracked.length) return;
@@ -66,7 +96,7 @@
         t.el.style.zIndex=front?'6':'3';
       });
     }
-    (function tick(){ if(!alive) return; globe.rotation.y+=0.0016; renderer.render(scene,cam); place(); requestAnimationFrame(tick); })();
+    (function tick(){ if(!alive) return; if(auto) globe.rotation.y+=0.0016; renderer.render(scene,cam); place(); requestAnimationFrame(tick); })();
     return {
       stop:function(){ alive=false; try{ renderer.dispose(); renderer.domElement.remove(); }catch(e){} },
       track:function(items){ tracked=(items||[]).filter(function(t){ return t&&t.el; }); }
