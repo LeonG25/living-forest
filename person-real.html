@@ -989,7 +989,7 @@
     $('.pad').innerHTML=ringShell();
     fillFaces();
   }
-  async function fillFaces(){ const fh=$('#faceHost'); if(fh){ const ff=pubList('face','und').slice().sort((a,b)=>String(b.published_at||b.created_at||'').localeCompare(String(a.published_at||a.created_at||'')))[0]; const fv=ff?(function(){try{return JSON.parse(ff.value);}catch(e){return null;}})():null;
+  async function fillFaces(){ if(!person) return; const fh=$('#faceHost'); if(fh){ const ff=pubList('face','und').slice().sort((a,b)=>String(b.published_at||b.created_at||'').localeCompare(String(a.published_at||a.created_at||'')))[0]; const fv=ff?(function(){try{return JSON.parse(ff.value);}catch(e){return null;}})():null;
     const mbox=(person.metadata&&person.metadata.face_box)||null;
     if(person.primary_asset&&mbox){ faceInto(fh,person.primary_asset,mbox); }
     else if(fv&&fv.storage_path){ faceInto(fh,fv.storage_path,fv); }
