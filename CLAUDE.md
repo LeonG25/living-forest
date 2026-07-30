@@ -1913,3 +1913,15 @@ Two people appear in eleven photographs together across forty years and are rela
 3. **The thread back to you**, lit
 4. A suggested relationship, waiting for the keeper
 5. All three languages, RTL Hebrew — **a tree mirrors completely in RTL**
+
+## Automated QC & nightly agents (2026-07-30)
+- QC rig on droplet: ~/qc (headless Chrome full build; run.js sweeps 19 live pages at 412x915, screenshots+errors to ~/qc/report; smoke.sh writes total to ~/qc/lastcount; baseline ~/qc/baseline.json).
+- Detection: ~/qc/detect/link-audit.js (dead links -> links.json), lang-rules.json (wordlist; null right = FILE only).
+- Nightly cron 03:00: ~/qc/nightly.sh = detect -> three Claude Code agents (qc-fixer, copy-editor, docs-auditor; plans in docs/agents/, law in COMMON.md) -> findings snapshot pushed to qc-report branch. Agents commit "[agent:name]" to main, node-check gated, auto-revert if rig errors rise above baseline. Judgement items go to docs/agents/FOR-LEON.md.
+- API key: ~/.anthropic_key (600). Claude Code global via ~/node.
+
+## Automated QC & nightly agents (2026-07-30)
+- QC rig on droplet: ~/qc (headless Chrome full build; run.js sweeps 19 live pages at 412x915, screenshots+errors to ~/qc/report; smoke.sh writes total to ~/qc/lastcount; baseline ~/qc/baseline.json).
+- Detection: ~/qc/detect/link-audit.js (dead links -> links.json), lang-rules.json (wordlist; null right = FILE only).
+- Nightly cron 03:00: ~/qc/nightly.sh = detect -> three Claude Code agents (qc-fixer, copy-editor, docs-auditor; plans in docs/agents/, law in COMMON.md) -> findings snapshot pushed to qc-report branch. Agents commit "[agent:name]" to main, node-check gated, auto-revert if rig errors rise above baseline. Judgement items go to docs/agents/FOR-LEON.md.
+- API key: ~/.anthropic_key (600). Claude Code global via ~/node.
