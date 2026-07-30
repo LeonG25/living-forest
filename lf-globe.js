@@ -70,8 +70,16 @@
     }
     /* interaction: first touch stops the drift; drag rotates; pinch/wheel zooms.
        zmin stays outside the atmosphere shell (R*1.16). */
+    var zoomK=1, FOV0=38;
+    function applyZoom(){
+      zoomK=Math.max(1,Math.min(10,zoomK));
+      var z=300/zoomK;
+      if(z>=125){ cam.position.z=z; cam.fov=FOV0; }
+      else { cam.position.z=125; cam.fov=FOV0*(z/125); }
+      cam.updateProjectionMatrix();
+    }
     (function(){
-      var zmin=125, zmax=340, pts={}, lastD=0, dragDist=0;
+      var pts={}, lastD=0, dragDist=0;
       var ib=el.parentElement||el;
       ib.style.touchAction='none';
       ib.addEventListener('pointerdown',function(e){ auto=false; dragDist=0; lastD=0;
@@ -82,19 +90,20 @@
         pts[e.pointerId]=[e.clientX,e.clientY];
         var ids=Object.keys(pts);
         if(ids.length===1){
-          globe.rotation.y+=dx*0.006;
-          globe.rotation.x=Math.max(-1.2,Math.min(1.2,globe.rotation.x+dy*0.006));
+          var k=0.006/Math.max(1,zoomK*0.7);
+          globe.rotation.y+=dx*k;
+          globe.rotation.x=Math.max(-1.35,Math.min(1.35,globe.rotation.x+dy*k));
           dragDist+=Math.abs(dx)+Math.abs(dy);
         } else if(ids.length===2){
           var a=pts[ids[0]], b=pts[ids[1]], d=Math.hypot(a[0]-b[0],a[1]-b[1]);
-          if(lastD>0) cam.position.z=Math.max(zmin,Math.min(zmax,cam.position.z*(lastD/d)));
+          if(lastD>0){ zoomK*=d/lastD; applyZoom(); }
           lastD=d; dragDist+=3;
         }
       });
       function up(e){ delete pts[e.pointerId]; lastD=0; }
       ib.addEventListener('pointerup',up); ib.addEventListener('pointercancel',up);
       ib.addEventListener('wheel',function(e){ e.preventDefault(); auto=false;
-        cam.position.z=Math.max(zmin,Math.min(zmax,cam.position.z*(e.deltaY>0?1.1:0.9))); },{passive:false});
+        zoomK*=(e.deltaY>0?1/1.1:1.1); applyZoom(); },{passive:false});
       /* a real drag must not fire the pin underneath it */
       ib.addEventListener('click',function(e){ if(dragDist>8){ e.stopPropagation(); e.preventDefault(); dragDist=0; } },true);
     })();
@@ -107,7 +116,8 @@
         /* constant on-screen size: markers scale with distance, so zooming in
            brings the country closer while the dot stays a dot */
         if(t._g){ var wp=t._g.position.clone().applyEuler(globe.rotation);
-          t._g.scale.setScalar(Math.max(0.05,cam.position.distanceTo(wp)/200)); }
+          var fovK=Math.tan(cam.fov*Math.PI/360)/Math.tan(19*Math.PI/180);
+          t._g.scale.setScalar(Math.max(0.02,(cam.position.distanceTo(wp)/200)*fovK)); }
         var op=t.el.offsetParent; if(!op) return;
         var br=op.getBoundingClientRect();
         var ox=er.left-br.left, oy=er.top-br.top;
