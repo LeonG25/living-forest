@@ -20,3 +20,7 @@ READ FIRST, EVERY RUN: /home/botuser/living-forest/CLAUDE.md — it is the singl
 
 ## Budget
 Stay under 20 tool-use turns. If the queue is bigger than the budget, fix the top items and file the rest.
+
+## Canon — read-and-obey order for every agent, every run
+1. CLAUDE.md (state + rules) 2. docs/game-feel-spec.md (§0 voice law lives here) 3. docs/progression-spec.md 4. docs/companion-fen.md 5. docs/design-house-rules.md + docs/designs/INDEX.md.
+When your task conflicts with any of these, the doc wins and you FILE the conflict. Consistency with the documentation outranks completing the task.

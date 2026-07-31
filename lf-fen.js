@@ -21,7 +21,7 @@
     wave:    {src:A+"fen-wave.webm"},
     walk:    {src:A+"fen-walk.webm"},
     /* pending — add src when baked */
-    stumble: {fb:'idle'},
+    stumble: {src:A+"fen-earperk.webm", fb:'idle'},  /* surprised ear-perk stands in for stumble: kind "oh!", never shaming (approved 2026-07-31) */
     entrance:{fb:'walk'},
     walkaway:{fb:'walk'}
   };
