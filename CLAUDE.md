@@ -266,9 +266,9 @@ be visibly mid-construction if Leon peeks early — accepted.
 - ⊕ menu today = 5 items (`lf-nav.js:39–43`): The sky → `home-real` · The globe →
   `index.html` · Find them in a crowd → `crowd-real` · The timeline → `timeline-real` ·
   Add a memory → `index.html`. Lenses become **Sky · Globe · Tree** when timeline retires.
-- 5 of 7 games live: Who Is Who?, Find Them in the Crowd, Put Their Life in Order,
-  Whose Memory Is This?, Where Was This?. Remaining: **The Missing Voice** (has data),
-  **The Tangled Thread** (structure + engine ready, data empty).
+- **All 7 games live** (2026-07-28 onward): Who Is Who?, Find Them in the Crowd, Put Their Life in Order,
+  Where Was This?, What Happened Next?, The Missing Voice, The Tangled Thread.
+  [**2026-07-31 correction:** Missing Voice and Tangled Thread shipped 2026-07-28; this section was written before then. See CURRENT STATE above for the real timeline.]
 
 ---
 

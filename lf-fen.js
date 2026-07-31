@@ -1,4 +1,4 @@
-/* lf-fen.js v3 — Fen companion. Two-frame layout: page above, fixed forest strip below.
+/* lf-fen.js v4 — Fen companion. Two-frame layout: page above, fixed forest strip below.
    Clip registry with fallbacks: pending clips fall back to idle until baked — when a
    clip lands, add its src to CLIP and every page picks it up.
    API:
