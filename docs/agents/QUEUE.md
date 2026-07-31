@@ -13,4 +13,7 @@
 6. [chat-only] Any FOR-LEON.md item — decided in chat only.
 
 7. who-is-who: (a) arriving from a Person page (?id=) seeds the round about that person; (b) real portraits (LFFace) beside option names replacing the plain circles. Leon-directed 2026-07-31.
-8. Animated forest+fireflies background (Leon-made, loopable) as the default backdrop on pages without a defined background. Exceptions: index (globe) and tree. Asset location: to be confirmed with Leon. [blocked: asset location]
+8. Animated forest+fireflies background as default backdrop on pages without a defined background (exceptions: index/globe and tree). Asset FOUND: companion bucket 'Wood animated bg 9s.mp4' (1.8MB, loopable). Serve via repo assets copy; video element behind content, object-fit cover, loop, muted, reduced-motion -> static first frame. One shared lf-bg.js include.
+
+9. Build the real Who Is Who game (face shown -> pick the name; the retired tile returns when it exists). Design pass required first — [chat-only].
+10. Fen stumble upgrade: bucket holds 'Fox - stumble.mp4' (original batch, forest bg, unkeyed). Once the forest background rollout (item 8) lands, unkeyed clips blend naturally; then swap stumble src from earperk to the real clip. Depends on 8.
