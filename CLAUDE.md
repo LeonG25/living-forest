@@ -1925,3 +1925,8 @@ Two people appear in eleven photographs together across forty years and are rela
 - Detection: ~/qc/detect/link-audit.js (dead links -> links.json), lang-rules.json (wordlist; null right = FILE only).
 - Nightly cron 03:00: ~/qc/nightly.sh = detect -> three Claude Code agents (qc-fixer, copy-editor, docs-auditor; plans in docs/agents/, law in COMMON.md) -> findings snapshot pushed to qc-report branch. Agents commit "[agent:name]" to main, node-check gated, auto-revert if rig errors rise above baseline. Judgement items go to docs/agents/FOR-LEON.md.
 - API key: ~/.anthropic_key (600). Claude Code global via ~/node.
+
+## QC status 2026-07-31 (signed-in tier)
+- QC test account: qc-rig@livingforest.test (member, non-keeper; creds ~/qc/qc-user.json, uid 17fb171e-2266-48b4-b1b7-7e442d63109e). run.js auth mode injects session; nightly runs anon EN + auth EN.
+- Signed-in sweep found+fixed: journal_entries ghost table probe, artefacts pub_status/contributor_user ghost columns (journal via profiles.person_id, reel), orphaned tWays write in place-real (Ways-in leftover). Rig waitUntil 'load' (networkidle false-failed on index/tree signed-in).
+- Baseline: 0 errors, anon+auth, all 19 pages.
