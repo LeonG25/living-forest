@@ -80,9 +80,24 @@
     if (error) throw new Error((where ? where + ': ' : '') + (error.message || String(error)));
     return data || [];
   }
+  /* names come from the published display facts (the keeper-edited truth),
+     per current language with EN fallback; people.display_name is only the last resort */
+  let NAMEMAP=null;
+  async function loadNames(sb){
+    if(NAMEMAP) return;
+    NAMEMAP={};
+    try{
+      const rows=await q(sb.from('person_facts').select('person_id,lang,value').eq('field','display').eq('status','published'),'names');
+      rows.forEach(r=>{ (NAMEMAP[r.person_id]=NAMEMAP[r.person_id]||{})[r.lang]=r.value; });
+    }catch(e){}
+  }
   function nameOf(p) {
     if (!p) return '';
-    return (p.display_name && String(p.display_name).trim())
+    let L='en'; try{ L=localStorage.getItem('lf_lang')||'en'; }catch(e){}
+    const m=NAMEMAP&&NAMEMAP[p.id];
+    const fact=m&&(m[L]||m.en);
+    return (fact && String(fact).trim())
+      || (p.display_name && String(p.display_name).trim())
       || (p.called_name && String(p.called_name).trim())
       || '';
   }

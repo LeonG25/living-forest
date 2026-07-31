@@ -676,10 +676,15 @@ function focusPlace(lat,lng,name){
   if(RM){ return; }
   const t0=performance.now();
   (function pulse(){ requestAnimationFrame(pulse); const t=(performance.now()-t0)/1000;
-    const s=26*(1+0.18*Math.sin(t*2.2)); ring.scale.set(s,s,1);
+    /* constant on-screen size: the light scales with camera distance, so zooming in
+       brings the land closer while the beacon stays a beacon */
+    const wp=g.position.clone().applyEuler(globe.rotation);
+    const k=Math.max(0.06, camera.position.distanceTo(wp)/220);
+    const s=26*(1+0.18*Math.sin(t*2.2))*k; ring.scale.set(s,s,1);
     ring.material.opacity=0.65+0.3*Math.abs(Math.sin(t*2.2));
     halo.material.opacity=0.5+0.28*Math.abs(Math.sin(t*1.6));
-    core.scale.setScalar(10*(1+0.12*Math.sin(t*3))); })();
+    halo.scale.setScalar(24*k); beam.scale.setScalar(42*k);
+    core.scale.setScalar(10*(1+0.12*Math.sin(t*3))*k); })();
 }
 
 function tick(){ requestAnimationFrame(tick);
