@@ -6,7 +6,9 @@
    - [done 2026-07-31] contribute-real.html: 0 issues (hub/gap/receipt sections all voice-law clean)
    - [done 2026-07-31] contribute-add-real.html: 0 issues (all sections present-tense, "as voice of living person" strong)
    - [done 2026-07-31] person-real.html: 0 issues (life events past-tense appropriate, gaps/invitations present-tense)
-2. HE deep copy pass, same method and order. Register: warm family Hebrew, הכל never הכול, no memorial tone (§0).
+   - [done 2026-07-31] place-real.html: 3 voice-law findings FILED (told/emptyw fields use past-tense, filed to FOR-LEON.md #3)
+   - [done 2026-07-31] review-real.html: 0 objective grammar errors; 1 voice-law past-tense finding (toldBy) FILED to FOR-LEON.md #4; app-wide «воспоминание» already filed by copy-editor
+2. [done 2026-07-31] HE deep copy pass, same method and order. Register: warm family Hebrew, הכל never הכול, no memorial tone (§0). All 10 pages clean (journal, search, contribute, contribute-add, person, place, review, curators, timeline, reel): 0 objective grammar/agreement errors, 0 lang-rule violations, all voice-law compliant. Past-tense issues in place/review were filed by RU pass (FOR-LEON findings #3–4).
 3. order-of-things knowledge recording: lf-games.js order engine must include subject person ids in its result payload; game-order-of-things.html then calls LFProgress.record('life-order','followed',ids) at the win cue, mirroring game-what-happened-next.html. See docs/progression-spec.md.
 4. [done 2026-07-31] Fen stumble: fen-earperk reused per Leon's delegation (see docs/companion-fen.md). A dedicated clip may replace the src later.
 5. [chat-only] Fen guidance layer — design pass with Claude Design, then build. Not for agents.
