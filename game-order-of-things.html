@@ -558,6 +558,7 @@
 
     if(right===total){ state.streak++; } else { state.streak=0; }
     try{window.Fen&&Fen.cue(right===total?(state.streak>=3?'streak':'right'):'wrong');}catch(e){}
+    try{window.LFProgress&&LFProgress.record('life-order','followed',round.subject_ids||[],right===total);}catch(e){}
     state.streakShown=true; paintChrome();
 
     const byId={}; placedCards.forEach(c=>{ byId[c.getAttribute('data-id')]=c; });

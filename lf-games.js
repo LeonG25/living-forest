@@ -594,6 +594,7 @@
         game: 'orderOfThings',
         seed: seed,
         person: { id: person.id, label: nameOf(person) },
+        subject_ids: [person.id],
         prompt: {
           person_name: nameOf(person),
           question: 'Put these moments from ' + nameOf(person) + "'s life in order."

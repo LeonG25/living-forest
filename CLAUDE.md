@@ -265,9 +265,8 @@ be visibly mid-construction if Leon peeks early — accepted.
   editable **in place**; the portrait has a camera control on the image itself.
   `person-edit-real.html` is retired (404).
 - **Person is reached from** globe, home, moment, place (×2), crowd (6 inbound, no orphans).
-- ⊕ menu today = 5 items (`lf-nav.js:39–43`): The sky → `home-real` · The globe →
-  `index.html` · Find them in a crowd → `crowd-real` · The timeline → `timeline-real` ·
-  Add a memory → `index.html`. Lenses become **Sky · Globe · Tree** when timeline retires.
+- ⊕ menu today = 7 items (`lf-nav.js:39–45`): The globe → `index.html` · Search →
+  `search-real.html` · The tree → `tree-real.html` · Find them in a crowd → `crowd-real.html` · The timeline → `timeline-real.html` · Contribute → `contribute-real.html` · My journal → `journal-real.html`. Keeper-only: Review + Keepers (inserted above the sign-out). **2026-07-31 correction:** The sky was removed from the menu (parked per §Parked ideas); all 7 pages parent to the globe (`data-parent="index.html"`).
 - **All 7 games live** (2026-07-28 onward): Who Is Who?, Find Them in the Crowd, Put Their Life in Order,
   Where Was This?, What Happened Next?, The Missing Voice, The Tangled Thread.
   [**2026-07-31 correction:** Missing Voice and Tangled Thread shipped 2026-07-28; this section was written before then. See CURRENT STATE above for the real timeline.]
