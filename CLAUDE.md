@@ -317,7 +317,7 @@ add a ninth.**
 | **Face** | the photos they appear in; choose & crop the portrait used everywhere | Who Is Who? · Find Them in the Crowd |
 | **Life** | birth, death, precision, still-living, gender, occupation, about, languages spoken | Put Their Life in Order |
 | **Places** | born in, places lived (ordered), on the map | Where Was This? · The Tangled Thread |
-| **Story** | the memories told about them | Whose Memory Is This? · The Missing Voice · What Happened Next? |
+| **Story** | the memories told about them | Whose Story Is This? · The Missing Voice · What Happened Next? |
 | **Kin** | relatives, and how you're related — **the thread back to you** | *the path itself, walked hop by hop* |
 | **Reel** | their life assembled; the payoff as the rest fill in | — |
 | **More** | any custom detail (label + value), sources / provenance | — |
@@ -372,7 +372,7 @@ the completion card touches the player axis, and it already speaks per-person la
 - **Neither remaining game is schema-blocked:**
   - *The Missing Voice* — `contributor_id` (uuid, FK → `people.id`) always existed; it was
     never wired. Backfilled 17/17 to Leonid Golnick (the *person*) 2026-07-15. **It has
-    data.** Not a "Whose Memory" variant — a different mechanic.
+    data.** Not a "Whose Story Is This?" variant — a different mechanic.
   - *The Tangled Thread* — places-lived exists: `person_facts` field=`lived`, ordered,
     keeper-gated. **0 rows** — build the engine + structure now (§1), Leon seeds data on
     review.
@@ -935,7 +935,7 @@ in different coats. The coherence is decided here, in this brief, before the des
 
 ## Scope & guardrails for this pass
 
-- **The seven games:** Find Them in the Crowd (`crowd-real.html`), Who Is Who? / Whose Memory
+- **The seven games:** Find Them in the Crowd (`crowd-real.html`), Who Is Who? / Whose Story Is This?
   (`game-who-is-who.html`, rename parked), The Order of Things (`game-order-of-things.html`),
   Where Was This? (`game-where-was-this.html`), The Missing Voice (`game-missing-voice.html`),
   What Happened Next? (`game-what-happened-next.html`), The Tangled Thread
