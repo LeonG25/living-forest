@@ -261,8 +261,10 @@
       await loadNames(sb);
       const byId = {}; people.forEach(p => { byId[p.id] = p; });
 
-      const usable = candidates.filter(c => byId[c.person_id]);
+      let usable = candidates.filter(c => byId[c.person_id]);
       if (!usable.length) return { status: 'not_enough_data', need: 'a subject that exists in people', seed: seed };
+      /* arriving from a person's page scopes the stories to that person */
+      if (opts && opts.id) { const scoped = usable.filter(c => c.person_id === opts.id); if (scoped.length) usable = scoped; }
       const chosen = pick(usable, rng);
       const art = artById[chosen.artefact_id];
       const correct = byId[chosen.person_id];

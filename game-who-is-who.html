@@ -4,7 +4,8 @@
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>Who Is Who? · The Living Forest</title>
+<title>Whose Story Is This? · The Living Forest</title>
+<script src="lf-face.js?v=1"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -269,7 +270,7 @@
   /* ---------- i18n (EN / RU / HE) — content shown once, in the chosen language ---------- */
   const T={
     en:{ dir:'ltr', native:'English', label:'English',
-      tk:'Face · a game', tn:'Who Is Who?',
+      tk:'Story · a game', tn:'Whose Story Is This?',
       cluesEye:'The clue',
       clueK:'Story · a person told us',
       qQ:'So — who is this?', qS:'Tap the name you’re sure of.',
@@ -289,7 +290,7 @@
       errK:'Something’s tangled', errH:'The faces are out of reach', errB:'The game couldn’t gather the memories just now. Give it another moment.', retry:'Try again',
       langtitle:'Language', langsub:'Titles, prompts and the whole game follow the language you choose.' },
     ru:{ dir:'ltr', native:'Русский', label:'Russian',
-      tk:'Лицо · игра', tn:'Кто есть кто?',
+      tk:'История · игра', tn:'Чья это история?',
       cluesEye:'Подсказка',
       clueK:'История · рассказал человек',
       qQ:'Итак — кто это?', qS:'Нажмите имя, в котором уверены.',
@@ -309,7 +310,7 @@
       errK:'Что-то запуталось', errH:'Лица недоступны', errB:'Игра не смогла собрать воспоминания сейчас. Попробуйте ещё раз.', retry:'Ещё раз',
       langtitle:'Язык', langsub:'Заголовки, вопросы и вся игра — на выбранном языке.' },
     he:{ dir:'rtl', native:'עברית', label:'Hebrew',
-      tk:'פנים · משחק', tn:'מי זה מי?',
+      tk:'סיפור · משחק', tn:'של מי הסיפור?',
       cluesEye:'הרמז',
       clueK:'סיפור · מישהו סיפר לנו',
       qQ:'אז — מי זה?', qS:'הקישו על השם שאתם בטוחים בו.',
@@ -415,7 +416,7 @@
       </div>`;
     const optCards=round.options.map((o,i)=>`
       <button class="opt" type="button" data-i="${i}" data-id="${esc(o.id)}">
-        <div class="av ${AV[i%AV.length]}"><i></i></div>
+        <div class="av ${AV[i%AV.length]}" data-face="${esc(o.id)}"><i></i></div>
         <div class="nm serif">${esc(o.label||'—')}</div>
         <div class="mk" data-right>${sv(I.check,2.4)}</div>
         <div class="mk" data-wrong>${sv(I.x,2.2)}</div>
@@ -519,6 +520,14 @@
       </div>`;
   }
 
+  function hydrateFaces(){ try{ if(!window.LFFace) return;
+    if(!hydrateFaces._i){ LFFace.init(sb); hydrateFaces._i=1; }
+    var els=Array.prototype.slice.call(document.querySelectorAll('#opts .av[data-face]'));
+    var ids=els.map(function(e){ return e.getAttribute('data-face'); });
+    if(!ids.length) return;
+    LFFace.resolve(ids).then(function(fm){ els.forEach(function(el){
+      var f=fm[el.getAttribute('data-face')]; if(f&&f.path) LFFace.into(el,{path:f.path,box:f.box,size:96,keep:true}); }); });
+  }catch(e){} }
   /* ---------- load a round (ENGINE) ---------- */
   async function loadRound(seed){
     state.seed=seed; state.done=false; state.firstTry=true; state.round=null;
@@ -526,7 +535,7 @@
     try{ res=await window.LFGames.whoseMemory(sb,{ id:PERSON_ID, seed:seed }); }
     catch(e){ res={status:'error', message:(e&&e.message)||String(e)}; }
     if(res && res.status==='ok'){
-      state.round=res; renderPlay(res); show('play');
+      state.round=res; renderPlay(res); show('play'); hydrateFaces();
     } else if(res && res.status==='not_enough_data'){
       renderLocked(res); show('locked');
     } else {
@@ -602,6 +611,6 @@
   atmosphere($('#dev .atmo')); wire(); boot();
 })();
 </script>
-<script src="lf-fen.js?v=7"></script>
+<script src="lf-fen.js?v=8"></script>
 <script src="lf-nav.js" data-here="" data-parent="person-real.html"></script>
 </body></html>

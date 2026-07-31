@@ -20,6 +20,7 @@
     stretch: {src:A+"fen-stretch.webm"},
     wave:    {src:A+"fen-wave.webm"},
     walk:    {src:A+"fen-walk.webm"},
+    arrive:  {src:A+"fen-entrance.mp4"},   /* walks in and settles, own forest bg, unkeyed */
     /* pending — add src when baked */
     stumble: {src:A+"fen-earperk.webm", fb:'idle'},  /* surprised ear-perk stands in for stumble: kind "oh!", never shaming (approved 2026-07-31) */
     entrance:{fb:'walk'},
@@ -95,30 +96,32 @@
     bg.play().catch(function(){}); v.play().catch(function(){});
     /* entrance: he walks in from beyond the left edge at gait speed, then sits.
        Linear timing — easing makes his feet slide. Starts after the strip has faded in. */
-    (function(){ if(!CLIP.walk.src) return;
-      v.style.transition='none'; v.style.transform='translateX(-260px)'; v.style.opacity='0';
+    /* entrance: the real walk-in clip, played in place — no sliding, no fakery.
+       Soft radial mask melts its edges; when he settles, we hold his last frame,
+       and the first keyed clip replaces him only when he next moves. */
+    (function(){ if(!CLIP.arrive.src){ toIdle(); return; }
+      v.style.transition='none'; v.style.transform='translateX(0)'; v.style.opacity='0';
+      var MASK='radial-gradient(115% 105% at 50% 62%, #000 60%, transparent 97%)';
       setTimeout(function(){
-        try{ cur='entrance'; v.loop=true; v.onended=null; v.src=CLIP.walk.src; v.play().catch(function(){}); }catch(e){ return; }
-        /* the slide waits for the WALK clip to actually be showing — otherwise a slow
-           network keeps the previous frame (idle) on screen and idle appears to glide in */
-        var started=false;
-        function go(){ if(started) return; started=true;
-          v.style.opacity='1';
-          requestAnimationFrame(function(){ requestAnimationFrame(function(){
-            v.style.transition='transform 2.6s linear'; v.style.transform='translateX(0)';
-            setTimeout(function(){ v.style.transition='none'; toIdle(); },2650); }); }); }
-        v.addEventListener('playing', go, {once:true});
-        setTimeout(go, 2500);  /* hard fallback: never strand him off-screen */
-      },700);
+        try{ cur='entrance'; v.loop=false;
+          v.style.webkitMaskImage=MASK; v.style.maskImage=MASK;
+          v.onended=function(){ try{ v.pause(); }catch(e){} cur='entrance-held'; };
+          v.src=CLIP.arrive.src; v.play().catch(function(){ toIdle(); });
+        }catch(e){ toIdle(); return; }
+        v.addEventListener('playing', function(){ v.style.opacity='1'; }, {once:true});
+        setTimeout(function(){ if(cur==='entrance'&&v.paused){ toIdle(); } }, 3000);
+      },500);
     })();
 
     var cur='idle', sleeping=false;
+    function clearEntranceMask(){ if(v.style.maskImage||v.style.webkitMaskImage){ v.style.webkitMaskImage=''; v.style.maskImage=''; } }
     function setClip(name, loop, onend){
       var src=clipSrc(name); if(!src) return false;
       var real = (src!==CLIP.idle.src) || name==='idle';
       if(!real){ /* fallback resolves to idle — leave idle running */ if(cur!=='idle'){ toIdle(); } return false; }
       if(v.src.indexOf(src)>=0 && loop) return true;
       var meta=clipMeta(name);
+      clearEntranceMask();
       cur=name; v.loop=!!loop&&!meta.freeze;
       v.onended=meta.freeze?function(){ try{ v.pause(); }catch(e){} }:(onend||null);
       v.onerror=function(){ toIdle(); };

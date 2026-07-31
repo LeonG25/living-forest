@@ -594,7 +594,7 @@
 
   const FACETS=[
     {id:'name',   kind:'gold', games:[]},
-    {id:'face',   kind:'gold', games:['whoiswho','crowd']},
+    {id:'face',   kind:'gold', games:['crowd']},
     {id:'life',   kind:'gold', games:['order']},
     {id:'places', kind:'cool', games:['wherewas','thread']},
     {id:'story',  kind:'gold', games:['whosememory','voice']},
@@ -602,7 +602,7 @@
     {id:'reel',   kind:'cool', games:[]},
     {id:'more',   kind:'gold', games:[]}
   ];
-  const GAMES={ whoiswho:{icon:'face'}, crowd:{icon:'face'}, order:{icon:'life'}, wherewas:{icon:'places'}, thread:{icon:'kin'}, whosememory:{icon:'story'}, voice:{icon:'story'}, whatnext:{icon:'story'} };
+  const GAMES={ crowd:{icon:'face'}, order:{icon:'life'}, wherewas:{icon:'places'}, thread:{icon:'kin'}, whosememory:{icon:'story'}, voice:{icon:'story'}, whatnext:{icon:'story'} };
   const FACETFIELDS={
     name:['display','given','called','family','maiden','patronymic','honorific','nickname'],
     face:['face'], life:['bio','occupation','birth','death','birth_prec','death_prec','living','gender','langspoken'],
@@ -1068,7 +1068,7 @@
     showSheet('add'); }
 
   // gids that have a real, built, engine-wired play page (scoped by ?id=)
-  const GAME_PAGES={ whoiswho:'game-who-is-who.html', whosememory:'game-who-is-who.html', voice:'game-missing-voice.html', thread:'game-tangled-thread.html', crowd:'crowd-real.html', order:'game-order-of-things.html', wherewas:'game-where-was-this.html', whatnext:'game-what-happened-next.html' };
+  const GAME_PAGES={ whosememory:'game-who-is-who.html', voice:'game-missing-voice.html', thread:'game-tangled-thread.html', crowd:'crowd-real.html', order:'game-order-of-things.html', wherewas:'game-where-was-this.html', whatnext:'game-what-happened-next.html' };
   function openGame(gid){ const L=d(); const g=GAMES[gid], sh=$('.sheet[data-sheet="game"]');
     const page=GAME_PAGES[gid];
     if(page){ const q=(person&&person.id)?('?id='+encodeURIComponent(person.id)):''; location.href=page+q; return; }
