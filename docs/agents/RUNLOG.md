@@ -7,3 +7,4 @@ One line per agent run: date · fixed · filed.
 - 2026-07-31 · qc-fixer · CLEAN: 0 mechanical errors (console/page/badRequests). 0 dead links. 0 actionable lang-rule hits. Baseline stable.
 - 2026-07-31 · copy-editor (second run) · CLEAN: 0 wordlist hits, 0 dead links, 0 console errors. No i18n mechanical fixes required. Baseline maintained.
 - 2026-07-31 · docs-auditor · CLEAN: 0 doc/code contradictions. All status claims verified against running app. Canon hierarchy intact. 0 findings.
+- 2026-07-31 · foreman · QUEUE #1: RU deep copy pass / journal-real.html — CLEAN: 0 grammar/agreement defects, voice-law compliant.
