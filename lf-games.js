@@ -193,6 +193,7 @@
       }
 
       const people = await q(sb.from('people').select('id,display_name,called_name'), 'people');
+      await loadNames(sb);
       const byId = {}; people.forEach(p => { byId[p.id] = p; });
 
       // choose a memory; ensure its teller resolves to a real person
@@ -257,6 +258,7 @@
       }
 
       const people = await q(sb.from('people').select('id,display_name,called_name'), 'people');
+      await loadNames(sb);
       const byId = {}; people.forEach(p => { byId[p.id] = p; });
 
       const usable = candidates.filter(c => byId[c.person_id]);
@@ -336,6 +338,7 @@
       const rawLabel = atPlace[personIds[0]].raw;
 
       const people = await q(sb.from('people').select('id,display_name,called_name'), 'people');
+      await loadNames(sb);
       const byId = {}; people.forEach(p => { byId[p.id] = p; });
 
       // the puzzle PAIR: two who shared the place at the largest ord gap (most
@@ -565,6 +568,7 @@
 
       const chosen = pick(playable, rng);
       const people = await q(sb.from('people').select('id,display_name,called_name'), 'people');
+      await loadNames(sb);
       const byId = {}; people.forEach(p => { byId[p.id] = p; });
       const person = byId[chosen.person_id];
       if (!person) return { status: 'not_enough_data', need: 'a person row for the dated events', seed: seed };
