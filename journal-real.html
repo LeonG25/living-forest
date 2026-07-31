@@ -347,10 +347,7 @@
       catch(e){ nameCache[pid]=d().aSomeone; } return nameCache[pid]; }
 
     // 1) journal_entries — the canonical log, if any rows exist for this user
-    let jrows=[];
-    for(const col of ['user_id','created_by','author','profile_id']){
-      try{ const {data,error}=await sb.from('journal_entries').select('*').eq(col,user.id); if(error) continue; if(data){ jrows=data; break; } }catch(e){}
-    }
+    let jrows=[];  /* there is no journal_entries table — the log derives from knowledge_events and artefacts */
     for(const j of jrows){
       const ts=j.created_at||j.inserted_at||j.at||Date.now();
       const kind=(j.kind||j.type||j.action||'').toString();
@@ -385,13 +382,14 @@
 
     // 3) memories you added : artefacts uploaded by this account (contributor_user, Rule 6)
     try{
-      const {data:arts,error}=await sb.from('artefacts')
-        .select('id,metadata,created_at,pub_status,contributor_user').eq('contributor_user',user.id);
+      let myPid=null; try{ const {data:pr}=await sb.from('profiles').select('person_id').eq('id',user.id).maybeSingle(); myPid=pr&&pr.person_id; }catch(e){}
+      const {data:arts,error}=myPid?await sb.from('artefacts')
+        .select('id,metadata,created_at,status,contributor_id').eq('contributor_id',myPid):{data:[],error:null};
       if(!error && arts){
         for(const a of arts){
           const ts=new Date(a.created_at||Date.now()).getTime();
           const m=a.metadata||{}; const cap=[m.when,m.where].filter(Boolean).join(' · ');
-          const pub=a.pub_status==null||a.pub_status==='published'||a.pub_status==='approved';
+          const pub=a.status==null||a.status==='published';
           const prov=pub?'gold':'wait'; const label=pub?d().provWords:d().provWaiting;
           entries.push({ts, act:d().aPhoto(cap), icon:I.photo, prov, label, art:a.id}); counts.mem++;
         }
