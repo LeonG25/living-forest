@@ -146,3 +146,5 @@ count.** The "26" predates three deliveries.
 - **Watch for JS `\uXXXX` escapes in the source.** They are literal backslash-u sequences in the design's own script, not encoding artefacts. They must not be turned into the characters they denote.
 - `etag` = epoch microseconds = the delivery date. It is the evidence; record it.
 - Fonts: substitute Google Fonts (Frank Ruhl Libre for Hebrew/RTL).
+
+| 2026-07-31 | fen-guidance | v1 | Play-bud + clearing + whispers + first walk; lf-invite engine spec | 2026-07-31--fen-guidance--v1.html |

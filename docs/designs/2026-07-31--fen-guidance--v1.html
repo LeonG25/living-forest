@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Design — Fen Guidance v1 · The Living Forest</title>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&family=Space+Grotesk:wght@300..500&display=swap" rel="stylesheet">
+<style>
+:root{ --ink:#fbf5e8; --muted:#8fa3b8; --gold:#f3cd84; --cool:#7fb4d8; --ember:#e8955c; --bg:#04070e; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Space Grotesk',sans-serif;overflow-x:hidden}
+.sky{position:fixed;inset:0;z-index:0;background:
+ radial-gradient(60% 42% at 22% 12%, rgba(56,120,90,.20), transparent 60%),
+ radial-gradient(52% 40% at 80% 20%, rgba(63,90,160,.22), transparent 65%),
+ radial-gradient(70% 55% at 55% 95%, rgba(30,66,48,.28), transparent 60%), #04070e;}
+.aur{position:fixed;inset:-20%;z-index:0;filter:blur(46px);opacity:.5;
+ background:conic-gradient(from 120deg at 50% 50%, transparent, rgba(96,180,140,.14), transparent 30%, rgba(120,140,220,.12), transparent 60%, rgba(232,149,92,.10), transparent);
+ animation:sw 26s linear infinite}
+@keyframes sw{to{transform:rotate(360deg)}}
+.fly{position:fixed;width:4px;height:4px;border-radius:50%;background:#ffe9b0;box-shadow:0 0 10px 3px rgba(255,233,176,.5);opacity:.7;animation:fl 11s ease-in-out infinite}
+@keyframes fl{0%,100%{transform:translate(0,0);opacity:.25}50%{transform:translate(26px,-40px);opacity:.85}}
+main{position:relative;z-index:2;max-width:1060px;margin:0 auto;padding:48px 20px 120px}
+.k{font-size:11px;letter-spacing:.28em;color:var(--cool);text-transform:uppercase}
+h1{font-family:'Newsreader',serif;font-weight:300;font-size:44px;margin:10px 0 6px}
+h2{font-family:'Newsreader',serif;font-weight:300;font-size:30px;margin:54px 0 8px}
+p.lead{color:var(--muted);max-width:70ch;line-height:1.65}
+.law{border:1px solid rgba(243,205,132,.25);border-radius:14px;padding:14px 18px;margin:22px 0;background:rgba(243,205,132,.05);color:#e9dcc0;font-size:14px;line-height:1.6}
+.row{display:flex;gap:26px;flex-wrap:wrap;margin-top:22px}
+.phone{width:300px;height:610px;border:1px solid rgba(127,180,216,.25);border-radius:30px;position:relative;overflow:hidden;flex:0 0 auto;
+ background:radial-gradient(120% 80% at 50% 0%, #0b1524, #04070e 70%)}
+.phone .cap{position:absolute;top:0;left:0;right:0;text-align:center;font-size:10px;letter-spacing:.2em;color:var(--muted);padding:8px;background:rgba(4,7,14,.6);z-index:9}
+.note{flex:1 1 300px;min-width:280px;color:#c9d6e2;font-size:14px;line-height:1.7}
+.note b{color:var(--ink)}
+.note .sub{color:var(--muted);font-size:12.5px}
+/* --- Surface A: Play bud --- */
+.treebg{position:absolute;inset:0;background:
+ radial-gradient(3px 3px at 30% 30%, rgba(243,205,132,.9), transparent),
+ radial-gradient(3px 3px at 62% 44%, rgba(243,205,132,.8), transparent),
+ radial-gradient(2px 2px at 44% 60%, rgba(127,180,216,.8), transparent),
+ radial-gradient(2px 2px at 72% 70%, rgba(127,180,216,.7), transparent);}
+.treebg::after{content:'';position:absolute;inset:0;background:
+ linear-gradient(rgba(127,180,216,.10) 1px, transparent 1px) 0 0/100% 64px}
+.bud{position:absolute;left:16px;bottom:18px;width:52px;height:52px;border-radius:50%;
+ background:radial-gradient(circle at 35% 30%, #f5b57e, #b65f2e 70%);
+ box-shadow:0 0 18px rgba(232,149,92,.55), inset 0 0 8px rgba(255,255,255,.25);
+ display:grid;place-items:center;animation:budp 3.4s ease-in-out infinite}
+.bud svg{width:26px;height:26px}
+@keyframes budp{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+.menu{position:absolute;right:14px;bottom:16px;width:56px;height:56px;border-radius:50%;border:1.5px solid var(--gold);display:grid;place-items:center;color:var(--gold);font-size:22px}
+.strip{position:absolute;left:0;right:0;bottom:0;height:170px;background:linear-gradient(transparent, rgba(10,22,14,.9) 40%);display:none}
+.phone.open .strip{display:block}
+.phone.open .bud{display:none}
+.fenfig{position:absolute;left:14px;bottom:10px;width:96px;height:110px;border-radius:12px;
+ background:radial-gradient(circle at 50% 38%, #e8955c 18%, #b65f2e 48%, transparent 70%);filter:saturate(1.1)}
+.fenfig::after{content:'🦊';position:absolute;inset:0;display:grid;place-items:center;font-size:56px}
+.bubble{position:absolute;left:116px;right:12px;bottom:52px;background:rgba(12,22,34,.92);border:1px solid rgba(232,149,92,.4);
+ border-radius:14px 14px 14px 4px;padding:11px 12px;font-family:'Newsreader',serif;font-size:14.5px;line-height:1.45;color:#f4ead6}
+.chips{position:absolute;left:116px;bottom:12px;display:flex;gap:8px}
+.chip{border:1px solid var(--ember);color:#ffd9b8;border-radius:999px;padding:5px 13px;font-size:12px;background:rgba(232,149,92,.12)}
+.chip.ghost{border-color:rgba(143,163,184,.5);color:var(--muted);background:none}
+/* --- Surface B: clearing --- */
+.clearbg{position:absolute;inset:0;background:
+ radial-gradient(80% 46% at 50% 100%, rgba(46,88,58,.55), transparent 70%),
+ radial-gradient(40% 22% at 50% 78%, rgba(120,180,120,.25), transparent),
+ #050a10}
+.moon{position:absolute;top:26px;right:30px;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 35%, #fff7e0, #d9c79a);box-shadow:0 0 26px rgba(255,240,200,.4)}
+.fenC{position:absolute;left:50%;bottom:120px;transform:translateX(-50%);font-size:64px;filter:drop-shadow(0 0 14px rgba(232,149,92,.5))}
+.lant{position:absolute;border-radius:14px;padding:9px 11px;background:rgba(10,18,28,.88);width:150px;font-size:11.5px;line-height:1.4;color:#dfe8f0}
+.lant b{display:block;font-family:'Newsreader',serif;font-size:13.5px;font-weight:400;margin-bottom:2px}
+.lant.meet{left:12px;top:120px;border:1px solid rgba(127,180,216,.5)}
+.lant.story{right:12px;top:196px;border:1px solid rgba(243,205,132,.55)}
+.lant.place{left:26px;top:290px;border:1px solid rgba(127,180,216,.4)}
+.lant::before{content:'';position:absolute;top:-14px;left:18px;width:8px;height:8px;border-radius:50%;background:#ffe9b0;box-shadow:0 0 12px 4px rgba(255,233,176,.55)}
+.cta{position:absolute;left:50%;bottom:52px;transform:translateX(-50%);font-size:11px;color:var(--muted)}
+/* --- Surface C: whisper --- */
+.whis{position:absolute;left:12px;right:12px;bottom:80px;background:rgba(12,22,34,.95);border:1px solid rgba(232,149,92,.35);border-radius:14px;
+ display:flex;align-items:center;gap:10px;padding:10px 12px;animation:wIn .5s ease}
+@keyframes wIn{from{transform:translateY(14px);opacity:0}}
+.whis .f{font-size:30px}
+.whis .t{flex:1;font-family:'Newsreader',serif;font-size:13.5px;line-height:1.4;color:#f0e6d2}
+.whis .go{border:1px solid var(--ember);border-radius:999px;padding:4px 11px;font-size:11.5px;color:#ffd9b8}
+/* --- strings table --- */
+table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13px}
+td,th{border:1px solid rgba(127,180,216,.18);padding:8px 10px;vertical-align:top;line-height:1.5}
+th{color:var(--cool);font-weight:400;text-align:left;font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+td.he{direction:rtl;text-align:right;font-size:14px}
+.gold{color:var(--gold)} .coolt{color:var(--cool)} .emb{color:var(--ember)}
+.small{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6}
+</style></head><body>
+<div class="sky"></div><div class="aur"></div>
+<div class="fly" style="left:12%;top:30%"></div><div class="fly" style="left:78%;top:18%;animation-delay:3s"></div>
+<div class="fly" style="left:60%;top:70%;animation-delay:6s"></div>
+<main>
+<div class="k">Design delivery · 2026-07-31 · immutable</div>
+<h1>Fen guidance <span style="color:var(--ember)">v1</span></h1>
+<p class="lead">Fen becomes the herald of the games. Four surfaces, one engine. Nothing interrupts; everything invites. Approved directions from the keeper: Play-bud instead of an ambient strip on non-game pages; the clearing; rare whispers; the first walk.</p>
+<div class="law">§0 holds everywhere: present tense, no memory-language. Truth palette holds: <span class="gold">gold = human-told</span>, <span class="coolt">cool blue = facts</span>. Fen herself owns a third accent — <span class="emb">ember amber</span> — used ONLY for her presence and her invitations, so her voice is never confused with either truth channel. Colour freely in the sky; keep the truths clear in the hand.</div>
+
+<h2>A · The Play-bud <span class="k" style="font-size:10px">tree · globe · person</span></h2>
+<div class="row">
+ <div class="phone"><div class="cap">RESTING — bud only, lower-left</div><div class="treebg"></div>
+  <div class="bud"><svg viewBox="0 0 24 24" fill="none" stroke="#3a1c08" stroke-width="2" stroke-linecap="round"><path d="M8 6l10 6-10 6z"/></svg></div>
+  <div class="menu">⊕</div></div>
+ <div class="phone open"><div class="cap">TAPPED — Fen arrives with ONE invitation</div><div class="treebg"></div>
+  <div class="strip"></div><div class="fenfig"></div>
+  <div class="bubble">You know Rita well. Her sister is still a stranger to you — come, I’ll show you.</div>
+  <div class="chips"><span class="chip">Come along</span><span class="chip ghost">Not now</span></div>
+  <div class="menu">⊕</div></div>
+ <div class="note"><b>Behaviour.</b> A small ember bud breathes in the lower-left — Fen’s colour, mirror of the ⊕ on the right. It occupies nothing: no strip, no companion, until asked.<br><br>
+ Tap → the strip fades in, Fen <b>walks in</b> (walk clip, 2.6s linear), speaks <b>one</b> data-drawn invitation, offers two chips. <b>Come along</b> → the seeded game (person pre-loaded). <b>Not now</b> → she waves (wave clip) and leaves; bud returns. Second tap same visit draws the <i>next</i> invitation — never repeats the declined one that day.<br>
+ <span class="sub">Bud hidden on game pages (she is already there) and inside Contribute flows. 52px, ≥16px from edges, above safe-area.</span></div>
+</div>
+
+<h2>B · Fen’s clearing <span class="k" style="font-size:10px">new page · ⊕ menu: “The clearing”</span></h2>
+<div class="row">
+ <div class="phone"><div class="cap">THE CLEARING — three lanterns, one fox</div><div class="clearbg"></div><div class="moon"></div>
+  <div class="lant meet"><b class="coolt">Someone to meet</b>Sofa, Amma’s daughter — you two haven’t met yet.</div>
+  <div class="lant story"><b class="gold">A story missing its teller</b>“The winter in Rybinsk” — nobody says whose story it is.</div>
+  <div class="lant place"><b class="coolt">A place no one has walked</b>Morschach holds one photograph and no visitors.</div>
+  <div class="fenC">🦊</div>
+  <div class="cta">show me other paths ›</div>
+  <div class="menu">⊕</div></div>
+ <div class="note"><b>The one place Fen always is.</b> Night clearing, moonlit; the animated forest plate from the companion bucket as ground; fireflies drift (pure CSS, reduced-motion honoured). Fen sits centre (idle clip), stretches or sleeps if you linger.<br><br>
+ Three lanterns = today’s invitations from the engine: <b>meet</b> (cool border — a fact-edge), <b>story</b> (gold border — a human gap), <b>place</b> (cool). Deterministic per player+day; “show me other paths” re-rolls once. Tap a lantern → seeded game or the Contribute gap.<br>
+ <span class="sub">Also holds the whisper toggle: “Fen speaks on her own — yes / only here.” (localStorage lf_fen_quiet).</span></div>
+</div>
+
+<h2>C · Threshold whispers <span class="k" style="font-size:10px">rare · dismissible · owned by the quiet toggle</span></h2>
+<div class="row">
+ <div class="phone"><div class="cap">A WHISPER — after closing a photo</div><div class="treebg"></div>
+  <div class="whis"><span class="f">🦊</span><span class="t">Grisha stands beside her in that photograph — do you know him?</span><span class="go">Come</span></div>
+  <div class="menu">⊕</div></div>
+ <div class="note"><b>Rules of restraint (hard):</b> only at a closed-loop pause (photo closed, story finished, game ended); <b>max one per session</b>; never twice on the same page; auto-fades in 7s; a swipe dismisses; “Not now” anywhere mutes for the day; the clearing toggle mutes forever. Contextual: the whisper references what was just seen, or stays silent — no generic lines, ever.<br>
+ <span class="sub">Fen does not animate in for a whisper — the card carries her face crop only. Whispers are murmurs, not visits.</span></div>
+</div>
+
+<h2>D · The first walk <span class="k" style="font-size:10px">once · after the anchor is chosen</span></h2>
+<div class="row">
+ <div class="phone"><div class="cap">AFTER “I am Michael’s daughter”</div><div class="clearbg"></div>
+  <div class="strip" style="display:block"></div><div class="fenfig"></div>
+  <div class="bubble">Michael’s daughter! Then Amma is your great-grandmother — she’s here, you know. Come, I’ll introduce you.</div>
+  <div class="chips"><span class="chip">Take me</span><span class="chip ghost">I’ll wander on my own</span></div>
+  <div class="menu">⊕</div></div>
+ <div class="note"><b>The warmest minute.</b> Fired once, right after anchor confirmation. Fen walks in, names a real relation computed from the anchor (grandparent preferred, else parent-sibling, else nearest unmet kin via the Walk’s BFS), and offers a guided first game seeded with that person. Declining is honoured instantly and forever — free roam is the law. Completing it records the first knowledge event and lands in the Journal as the first line of the player’s walk.</note>
+ </div>
+</div>
+
+<h2>E · The invitation engine <span class="k" style="font-size:10px">lf-invite.js — one machinery for A–D</span></h2>
+<p class="lead" style="font-size:14.5px">Inputs: player’s knowledge_events, anchor kin-BFS (extracted from lf-walk), artefacts with no narrator, places with no visits. Output: typed invitations <i>{kind: meet | story | place, subject, line(lang), target-url-with-seed}</i>, ranked: unmet close kin › unheard stories about known people › untrod places. Every surface draws from the same ranked pool, so Fen never contradicts herself between the bud, the clearing and a whisper. Lines are template+data, per language, §0-checked.</p>
+
+<h2>F · Voice — the strings <span class="k" style="font-size:10px">samples · EN / RU / HE</span></h2>
+<table>
+<tr><th>moment</th><th>EN</th><th>RU</th><th>HE</th></tr>
+<tr><td>bud invitation (meet)</td><td>You know Rita well. Her sister is still a stranger to you — come, I’ll show you.</td><td>Риту ты уже знаешь. А её сестра тебе пока незнакома — идём, покажу.</td><td class="he">את ריטה את כבר מכירה. אחותה עדיין זרה לך — בואי, אני אראה לך.</td></tr>
+<tr><td>clearing · story lantern</td><td>A story missing its teller.</td><td>История без рассказчика.</td><td class="he">סיפור שמחכה למספר שלו.</td></tr>
+<tr><td>whisper (photo)</td><td>Grisha stands beside her in that photograph — do you know him?</td><td>Рядом с ней на этом фото стоит Гриша — ты его знаешь?</td><td class="he">גרישה עומד לידה בתמונה — אתה מכיר אותו?</td></tr>
+<tr><td>first walk</td><td>Michael’s daughter! Then Amma is your great-grandmother — she’s here, you know. Come, I’ll introduce you.</td><td>Дочь Михаэля! Значит, Амма — твоя прабабушка. Она здесь. Идём, познакомлю.</td><td class="he">הבת של מיכאל! אז אמה היא סבתא-רבתא שלך — היא כאן. בואי, אכיר ביניכן.</td></tr>
+<tr><td>decline, always</td><td>Off you go, then. I’ll be in the clearing.</td><td>Ну, беги. Я буду на поляне.</td><td class="he">לכי, לכי. אני אהיה בקרחת היער.</td></tr>
+</table>
+<p class="small">All lines present-tense, §0-clean; Fen’s dry-clever-warm register per companion-fen.md; RTL mirrored layouts for HE (bud lower-right, ⊕ lower-left, bubble tail flipped). Clips: entrance=walk · speak=nod-small/talking · accept=delight · leave=wave · clearing idle=idle/stretch/sleep rotation. Reduced-motion: bud stops breathing, fireflies freeze, Fen enters by fade.</p>
+<p class="small">Build order after approval: lf-invite.js engine → Play-bud in lf-nav.js (shared, one include) → clearing page → first walk → whispers last (rarest, riskiest). Each step rig-verified before the next.</p>
+</main></body></html>
