@@ -1930,3 +1930,6 @@ Two people appear in eleven photographs together across forty years and are rela
 - QC test account: qc-rig@livingforest.test (member, non-keeper; creds ~/qc/qc-user.json, uid 17fb171e-2266-48b4-b1b7-7e442d63109e). run.js auth mode injects session; nightly runs anon EN + auth EN.
 - Signed-in sweep found+fixed: journal_entries ghost table probe, artefacts pub_status/contributor_user ghost columns (journal via profiles.person_id, reel), orphaned tWays write in place-real (Ways-in leftover). Rig waitUntil 'load' (networkidle false-failed on index/tree signed-in).
 - Baseline: 0 errors, anon+auth, all 19 pages.
+
+## 2026-07-31: continuous mode
+Scheduled cron replaced by ~/qc/worker.sh (flock-guarded loop; cron */30 only respawns it if dead). Cycles run back-to-back (sleep 90s) while QUEUE.md has open items or the rig reports errors; idle heartbeat every 4h otherwise. Kill switch: pkill -f qc/worker.sh + remove the respawn cron line.
