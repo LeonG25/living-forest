@@ -154,6 +154,8 @@ WHERE THINGS LIVE
 
 NEXT (full build order is in the FEN section below): regenerate the remaining moods on VIVID green with the whole body in frame -> bake to webm -> wire the lifecycle (walk-in on open, stretch @10s / sleep @20s, wave + walk-away on close) and the ear-perk / talking reactions; generate the walk-away clip; and strip each game's old on-screen reaction sentences as Fen arrives in that game.
 
+**2026-07-31 · VERSION CORRECTION — lf-fen.js.** The entries above claim v=5 (line 129) and v=4 (line 131); live pages now carry **v=8**. Timeline: v4 (b9b2de9, full clip set + rotation arrays), v5 (c0750a7, entrance at gait speed after fade), v6 (b68dfab, stumble registry), v7 (a489329, entrance event-waits), v8 (01c9caa, fen-entrance.mp4 real clip). All 8 Fen pages (who-is-who, order-of-things, where-was-this, missing-voice, what-happened-next, tangled-thread, crowd-real, journal-real) verified at ?v=8. No functional issues; the documentation lag is noted here for future reference.
+
 ---
 
 # The Living Forest — agent rules & source of truth
