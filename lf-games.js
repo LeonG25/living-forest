@@ -203,7 +203,7 @@
   }
 
   // =======================================================================
-  // 2. Whose Memory Is This? — "who is this memory ABOUT?"
+  // 2. Whose Story Is This? — "who is this story ABOUT?"
   //    Reads:  artefact_subjects(artefact_id, person_id)
   //            artefacts(id, body, metadata, storage_path, kind, status)
   //            people(id, display_name, called_name)
@@ -261,7 +261,7 @@
           memory_text: bodyText(art),
           has_photo: !!art.storage_path,
           storage_path: art.storage_path || null,   // play screen resolves a signed URL
-          question: 'Whose memory is this? Who is it about?'
+          question: 'Whose story is this? Who is it about?'
         },
         options: built.options,
         answer_index: built.answer_index,

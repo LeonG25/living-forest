@@ -26,7 +26,7 @@ Game → level:
 |---|---|---|
 | met | Who Is Who, Find Them in the Crowd | ≥1 photo (portrait or tag) |
 | followed | Put Their Life in Order, Where Was This | ≥2 dated/placed moments |
-| heard | Whose Memory Is This, The Missing Voice | ≥1 told memory |
+| heard | Whose Story Is This, The Missing Voice | ≥1 told story |
 | woven | Tangled Thread | relationships / places-lived |
 
 ## Roaming (Leon's decision 3)
