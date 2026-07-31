@@ -99,10 +99,16 @@
       v.style.transition='none'; v.style.transform='translateX(-260px)'; v.style.opacity='0';
       setTimeout(function(){
         try{ cur='entrance'; v.loop=true; v.onended=null; v.src=CLIP.walk.src; v.play().catch(function(){}); }catch(e){ return; }
-        v.style.opacity='1';
-        requestAnimationFrame(function(){ requestAnimationFrame(function(){
-          v.style.transition='transform 2.6s linear'; v.style.transform='translateX(0)';
-          setTimeout(function(){ v.style.transition='none'; toIdle(); },2650); }); });
+        /* the slide waits for the WALK clip to actually be showing — otherwise a slow
+           network keeps the previous frame (idle) on screen and idle appears to glide in */
+        var started=false;
+        function go(){ if(started) return; started=true;
+          v.style.opacity='1';
+          requestAnimationFrame(function(){ requestAnimationFrame(function(){
+            v.style.transition='transform 2.6s linear'; v.style.transform='translateX(0)';
+            setTimeout(function(){ v.style.transition='none'; toIdle(); },2650); }); }); }
+        v.addEventListener('playing', go, {once:true});
+        setTimeout(go, 2500);  /* hard fallback: never strand him off-screen */
       },700);
     })();
 
