@@ -338,9 +338,9 @@ remained undesigned is the **play screen** itself (pure mechanics).
 ## 5. Progression — half-settled
 
 - **Per-person axis: SETTLED.** "How lit up is Rita?" Non-competitive by construction —
-  you don't score points, you light someone up. Engine exists in the prototype
-  (`preview.html`: `fillSegment`, `ringCount`; SEGS `['face','story','place','people','reel']`);
-  design exists (Design #1: `--k` drives bead brightness; `reelBar:'Six of eight facets
+  you don't score points, you light someone up. Engine built into `reel-real.html` and the
+  Person page (facet card brightness via `--k`, progress bar, bead display);
+  design done (Design #1: `--k` drives bead brightness; `reelBar:'Six of eight facets
   kindled'`; `gameLocked`, `gameScoped`). Games feed this axis.
 - **Per-player axis: PARKED.** "What's my level?" This is what Journal, Profile and
   Idea 3 need. Blocks: Journal · Profile · Idea 3 · game *completion cards* only.
@@ -356,9 +356,9 @@ the completion card touches the player axis, and it already speaks per-person la
 - **Phase 1 has dissolved. Do not work from it.** Its four builds (Timeline → Journal →
   unify skin → Where Was This?) each evaporated or blocked under inspection. The design
   queue + §1 order is the only pipeline.
-- **Timeline is built but never designed** — `timeline-real.html`, no design pass.
-  **Timeline IS Reel** → merged into Design #9; `timeline-real.html` goes to retirement.
-  The reskin in `preview.html` is D9's *reference*, not a port target.
+- **Timeline was built but is obsoleted by Reel** — `timeline-real.html` exists (undesigned).
+  **Timeline IS Reel** → Design #9 built `reel-real.html` as the unified view;
+  `timeline-real.html` is orphaned and goes to retirement (§12).
 - **Journal is parked** — blocked on the player-axis progression model. It was never a
   page: a `<button data-w="journal">` tab, ~7 lines (`preview.html:1141–1148`),
   localStorage data. Direction is decided: **not a log** — it is where you are motivated
@@ -402,8 +402,8 @@ signature motion — do not clone one page's motion onto another.
 
 
 - Claude Design project **4931d7e6-358d-4ef9-a066-9a422439ee44**. `docs/designs/` holds
-  9 of 9 delivered designs byte-exact (commit `e566a08`). Cite the exact design file
-  (`docs/designs/INDEX.md`).
+  11 design files delivered (see `docs/designs/INDEX.md` for the full catalogue and status).
+  Cite the exact design file. Latest: Design #8 The Walk (2026-07-28) + Fen Guidance (2026-07-31).
 - **Flat HTML sources live in `screens/` inside the design project. Never extract the
   1MB bundles** — go to the flat source. The compiled-bundle problem is *solved but not
   guaranteed*: both bundles received embedded the page as JSON in
@@ -711,7 +711,7 @@ Implemented in lf-fen.js (played as transparent webm; version the script ref to 
 ## 2. Situations -> movement clips
 Lifecycle: arrive: strip fades in -> entrance (walk in) -> idle. present: idle loop; ~10s calm -> stretch; ~20s -> sleep (wake on touch). leave: wave -> walk-away -> strip dissolves [NEW CLIP NEEDED: walk-away].
 Reactions: new question->ear-perk; clue/between->talking; right->delight (alt light-delight); wrong->stumble; streak/win->jump; tap him/strip->talking; idle 10/20s->stretch/sleep.
-Clips: LIVE (baked webm): idle, light-delight, jump. Wiring: ALL cues wired in all 7 games via lf-fen.js v3 cue API (2026-07-28, `2ac56ec`); pending clips fall back to idle via the CLIP registry. Generated, not baked: stumble, talking, sleep, entrance, ear-perk, wave, stretch. To generate: walk-away; clean re-gen (vivid idle, jump with headroom, whole body in frame).
+Clips: LIVE (baked webm): idle, delight, jump, talking, earperk, sleep, stretch, wave, walk, arrive (video mp4). Wiring: ALL cues wired in all 7 games via lf-fen.js (v8 live, see VERSION CORRECTION below). Fallback entries: stumble→earperk (kind "oh!" approved 2026-07-31), entrance→walk, walkaway→walk. **2026-08-01 update:** clip inventory now complete except walk-away (reserved clip slot). delight includes rotation array [fen-delight.webm, fen-nod-big.webm]; talking uses fen-nod-small.webm.
 
 ## 3. Speech dictionary
 Voice law (§0): present tense; meet/know/be-with; never remember/preserve/nostalgia. Dry, warm, patient, short. Goal: EN+RU+HE, then data-aware.
