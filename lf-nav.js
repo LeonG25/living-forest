@@ -53,7 +53,7 @@
       var bud=document.getElementById('lfBud'); if(bud) bud.style.display='none';
       try{
         if(!window.LFInvite) await loadScript('lf-invite.js?v=2');
-        if(!window.Fen) await loadScript('lf-fen.js?v=19');
+        if(!window.Fen) await loadScript('lf-fen.js?v=20');
         /* our own client: the lib global is on every data page; the session rides localStorage */
         var sb=null;
         try{ if(window.supabase&&window.supabase.createClient)
