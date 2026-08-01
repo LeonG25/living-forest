@@ -12,3 +12,6 @@ Method: view shots page by page, compare the three language variants side by sid
 
 Output: append findings to /home/botuser/living-forest/docs/agents/VISUAL-FINDINGS.md — date, filename, what you saw, severity (P1 broken / P2 ugly / P3 polish). DO NOT fix anything visual yourself — you are eyes, not hands. Mechanical causes (a missing null-guard behind a blank page) may be handed to qc-fixer by writing them into your findings with [for:qc-fixer].
 Never file aesthetic OPINIONS (colors, taste) — only defects. Design taste belongs to the humans.
+
+## 2026-08-02 addendum — state shots
+Files ending -x.jpg are AFTER-INTERACTION states (a game answer tapped: reveal/win screens). Judge them with extra care: the reveal circle must show a real photographed face, never painted placeholder art; progress bars and chips must be coherent. A placeholder where a person belongs is P1.
