@@ -11,8 +11,9 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{ background:#050a10; color:var(--ink); font-family:'Hanken Grotesk',sans-serif; overflow:hidden; }
-.moon{ position:fixed; top:34px; inset-inline-end:34px; width:38px; height:38px; border-radius:50%; z-index:1;
-  background:radial-gradient(circle at 35% 35%, #fff7e0, #d9c79a); box-shadow:0 0 30px rgba(255,240,200,.4); }
+.moon{ position:fixed; top:40px; inset-inline-end:56px; width:42px; height:42px; border-radius:50%; z-index:1;
+  background:transparent; transform:rotate(-18deg);
+  box-shadow: inset -10px 7px 0 0 #f2e7c9, 0 0 34px rgba(255,240,200,.28); opacity:.9; }
 .fly{ position:fixed; width:4px; height:4px; border-radius:50%; background:#ffe9b0; z-index:1;
   box-shadow:0 0 10px 3px rgba(255,233,176,.5); opacity:.7; animation:fl 11s ease-in-out infinite; }
 @keyframes fl{0%,100%{transform:translate(0,0);opacity:.25}50%{transform:translate(26px,-40px);opacity:.85}}
