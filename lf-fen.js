@@ -81,6 +81,8 @@
   function vid(src,c){ var v=mk('video',c); v.muted=1;v.loop=1;v.autoplay=1;v.playsInline=1; v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline',''); v.src=src; return v; }
 
   function start(){
+    if(window.__lfFenMounted) return;   /* one fox per page — re-inits never replay the entrance */
+    window.__lfFenMounted=1;
     var sc=document.querySelector('.screen');
     var host=sc?sc.parentElement:document.body;
     var fixed=(host===document.body);
