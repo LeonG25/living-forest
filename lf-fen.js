@@ -89,9 +89,12 @@
     var strip=mk('div','position:'+(fixed?'fixed':'absolute')+';left:0;right:0;bottom:0;height:'+STRIP+'px;z-index:5;overflow:hidden;cursor:pointer;opacity:0;transition:opacity .8s;');
     var bg=vid(FOREST,'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;'); bg.playbackRate=0.6;
     var horizon=mk('div','position:absolute;left:0;right:0;top:0;height:42%;background:linear-gradient(to bottom,#080c14 6%,rgba(8,12,20,.4) 55%,transparent);pointer-events:none;');
-    var v=vid(clipSrc('idle'),'position:absolute;left:-1%;bottom:0;width:150px;height:150px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5));pointer-events:none;');
+    var BASEF='drop-shadow(0 4px 8px rgba(0,0,0,.5))';
+    var v=vid(clipSrc('idle'),'position:absolute;left:-1%;bottom:0;width:150px;height:150px;filter:'+BASEF+';pointer-events:none;');
+    var vb=vid(clipSrc('idle'),'position:absolute;left:-1%;bottom:0;width:150px;height:150px;filter:'+BASEF+';pointer-events:none;opacity:0;');
+    try{ vb.autoplay=false; vb.pause(); }catch(e){}
     var say=mk('div','position:absolute;left:41%;right:5%;top:50%;transform:translateY(-50%);font-family:Georgia,serif;font-style:italic;font-size:15px;line-height:1.35;color:#f1eadc;text-shadow:0 1px 5px rgba(0,0,0,.95);opacity:0;transition:opacity .35s;pointer-events:none;');
-    strip.appendChild(bg); strip.appendChild(horizon); strip.appendChild(v); strip.appendChild(say); host.appendChild(strip);
+    strip.appendChild(bg); strip.appendChild(horizon); strip.appendChild(v); strip.appendChild(vb); strip.appendChild(say); host.appendChild(strip);
     requestAnimationFrame(function(){ strip.style.opacity='1'; });
     bg.play().catch(function(){}); v.play().catch(function(){});
     /* entrance: he walks in from beyond the left edge at gait speed, then sits.
@@ -101,7 +104,7 @@
        and the first keyed clip replaces him only when he next moves. */
     (function(){ if(!CLIP.arrive.src){ toIdle(); return; }
       v.style.transition='none'; v.style.transform='translateX(0)'; v.style.opacity='0';
-      var MASK='radial-gradient(115% 105% at 50% 62%, #000 60%, transparent 97%)';
+      var MASK='radial-gradient(125% 115% at 50% 62%, #000 44%, rgba(0,0,0,.8) 64%, transparent 94%)';
       setTimeout(function(){
         try{ cur='entrance'; v.loop=false;
           v.style.webkitMaskImage=MASK; v.style.maskImage=MASK;
@@ -112,7 +115,7 @@
         }catch(e){ toIdle(); return; }
         v.addEventListener('playing', function(){ v.style.opacity='1'; }, {once:true});
         setTimeout(function(){ if(cur==='entrance'&&v.paused){ toIdle(); } }, 3000);
-      },500);
+      },2000);   /* a breath before he arrives — let the place exist first */
     })();
 
     var cur='idle', sleeping=false;
@@ -126,10 +129,30 @@
       if(cur==='entrance'){ setClip._pend=[name,loop,onend]; return true; }
       var meta=clipMeta(name);
       clearEntranceMask();
-      cur=name; v.loop=!!loop&&!meta.freeze;
-      v.onended=meta.freeze?function(){ try{ v.pause(); }catch(e){} }:(onend||null);
-      v.onerror=function(){ toIdle(); };
-      v.src=src; v.play().catch(function(){});
+      cur=name;
+      /* crossfade through the buffer element: the next clip warms up hidden and
+         blurs in over the old one — no hard cut between frames */
+      vb.loop=!!loop&&!meta.freeze;
+      vb.onended=null; vb.onerror=function(){ toIdle(); };
+      vb.style.transition='none'; vb.style.opacity='0'; vb.style.filter=BASEF+' blur(9px)';
+      vb.src=src; vb.play().catch(function(){});
+      (function(){
+        var done=false;
+        function h(){ if(done) return; done=true;
+          vb.style.transition='opacity .3s ease, filter .38s ease';
+          v.style.transition='opacity .3s ease';
+          vb.style.opacity='1'; vb.style.filter=BASEF;
+          v.style.opacity='0';
+          setTimeout(function(){
+            try{ v.pause(); }catch(e){}
+            v.style.transition='none'; vb.style.transition='none';
+            var t=v; v=vb; vb=t;
+            v.onended=meta.freeze?function(){ try{ v.pause(); }catch(e){} }:(onend||null);
+            if(meta.freeze&&v.ended){ try{ v.pause(); }catch(e){} }
+          },340); }
+        vb.addEventListener('playing', h, {once:true});
+        setTimeout(h, 900);  /* slow decode: swap anyway rather than stall */
+      })();
       return true;
     }
     function toIdle(){ cur='idle'; sleeping=false; v.loop=true; v.onended=null;

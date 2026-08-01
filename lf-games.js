@@ -263,8 +263,25 @@
 
       let usable = candidates.filter(c => byId[c.person_id]);
       if (!usable.length) return { status: 'not_enough_data', need: 'a subject that exists in people', seed: seed };
-      /* arriving from a person's page scopes the stories to that person */
-      if (opts && opts.id) { const scoped = usable.filter(c => c.person_id === opts.id); if (scoped.length) usable = scoped; }
+      /* arriving from a person's page: their own stories first; then stories about
+         their direct kin; only then anyone. anyLink counts too — a group photo
+         with them in it is still their story. */
+      if (opts && opts.id) {
+        const mineAll = anyLink.filter(c => c.person_id === opts.id && byId[c.person_id]);
+        let pool = usable.filter(c => c.person_id === opts.id);
+        if (!pool.length && mineAll.length) pool = mineAll;
+        if (!pool.length) {
+          try {
+            const rels = await q(sb.from('relationships').select('from_person,to_person').eq('status','published')
+              .or('from_person.eq.'+opts.id+',to_person.eq.'+opts.id), 'relationships');
+            const kin = {};
+            rels.forEach(r => { if(r.from_person!==opts.id) kin[r.from_person]=1; if(r.to_person!==opts.id) kin[r.to_person]=1; });
+            const kinPool = usable.filter(c => kin[c.person_id]);
+            if (kinPool.length) pool = kinPool;
+          } catch(e){}
+        }
+        if (pool.length) usable = pool;
+      }
       const chosen = pick(usable, rng);
       const art = artById[chosen.artefact_id];
       const correct = byId[chosen.person_id];
