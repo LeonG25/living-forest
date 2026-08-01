@@ -86,13 +86,18 @@
     var sc=document.querySelector('.screen');
     var host=sc?sc.parentElement:document.body;
     var fixed=(host===document.body);
-    if(sc){ sc.style.bottom=STRIP+'px'; sc.style.paddingBottom='0'; }
+    if(sc){ sc.style.bottom=STRIP+'px'; sc.style.paddingBottom='0';
+      /* content dissolves toward the strip instead of being sliced by it */
+      var FADE='linear-gradient(to bottom, #000 calc(100% - 30px), transparent 100%)';
+      sc.style.webkitMaskImage=FADE; sc.style.maskImage=FADE; }
     else { document.body.style.paddingBottom=STRIP+'px'; }
     var strip=mk('div','position:'+(fixed?'fixed':'absolute')+';left:0;right:0;bottom:0;height:'+STRIP+'px;z-index:5;overflow:hidden;cursor:pointer;opacity:0;transition:opacity .8s;');
     var PAGE_FOREST=!!document.querySelector('script[src^="lf-bg"]');
     var bg=vid(FOREST,'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;'); bg.playbackRate=0.6;
     var horizon=mk('div','position:absolute;left:0;right:0;top:0;height:42%;background:linear-gradient(to bottom,#080c14 6%,rgba(8,12,20,.4) 55%,transparent);pointer-events:none;');
     if(PAGE_FOREST){ bg.style.display='none'; bg.removeAttribute('src'); horizon.style.display='none'; }
+    /* her ember light pools beneath her — the warmth around the fox reads as hers */
+    var ember=mk('div','position:absolute;left:-8px;bottom:-10px;width:230px;height:150px;pointer-events:none;background:radial-gradient(60% 72% at 38% 80%, rgba(126,90,46,.34), transparent 72%);');
     var BASEF='drop-shadow(0 4px 8px rgba(0,0,0,.5))';
     var PHASE='pre', PEND=null;            /* pre -> entrance -> live */
     window.__fenlog=[]; function flog(x){ try{ window.__fenlog.push(Date.now()%100000+' '+x); }catch(e){} }
@@ -101,7 +106,7 @@
     var vb=vid(clipSrc('idle'),'position:absolute;left:-1%;bottom:0;width:150px;height:150px;filter:'+BASEF+';pointer-events:none;opacity:0;');
     try{ vb.autoplay=false; vb.pause(); }catch(e){}
     var say=mk('div','position:absolute;left:41%;right:5%;top:50%;transform:translateY(-50%);font-family:Georgia,serif;font-style:italic;font-size:15px;line-height:1.35;color:#f1eadc;text-shadow:0 1px 5px rgba(0,0,0,.95);opacity:0;transition:opacity .35s;pointer-events:none;');
-    strip.appendChild(bg); strip.appendChild(horizon); strip.appendChild(v); strip.appendChild(vb); strip.appendChild(say); host.appendChild(strip);
+    strip.appendChild(bg); strip.appendChild(horizon); strip.appendChild(ember); strip.appendChild(v); strip.appendChild(vb); strip.appendChild(say); host.appendChild(strip);
     requestAnimationFrame(function(){ strip.style.opacity='1'; });
     bg.play().catch(function(){}); v.play().catch(function(){});
     /* entrance: he walks in from beyond the left edge at gait speed, then sits.
@@ -121,6 +126,7 @@
         try{
           cur='entrance'; v.loop=false;
           v.style.webkitMaskImage=MASK; v.style.maskImage=MASK;
+          v.style.filter=BASEF+' brightness(.72) saturate(.95)';
           v.onended=function(){ flog('entrance-ended'); try{ v.pause(); }catch(e){} cur='entrance-held'; goLive(); };
           v.onerror=function(){ flog('entrance-error'); goLive(); };
           v.src=CLIP.arrive.src; v.play().catch(function(){ flog('entrance-playfail'); goLive(); });
@@ -132,7 +138,7 @@
     })();
 
     var cur='idle', sleeping=false;
-    function clearEntranceMask(){ if(v.style.maskImage||v.style.webkitMaskImage){ v.style.webkitMaskImage=''; v.style.maskImage=''; } }
+    function clearEntranceMask(){ if(v.style.maskImage||v.style.webkitMaskImage){ v.style.webkitMaskImage=''; v.style.maskImage=''; v.style.filter=BASEF; } }
     function setClip(name, loop, onend){
       var src=clipSrc(name); if(!src) return false;
       var real = (src!==CLIP.idle.src) || name==='idle';
