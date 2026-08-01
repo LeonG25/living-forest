@@ -32,3 +32,9 @@ Same issue: `emptyw` labels the empty state of the story section — EN (line 74
 Line 372: RU `toldBy:'Рассказал'` (EN line 344: `toldBy:'Told by'`)
 Both use past tense / past participle as a label for who shared information. Same voice-law adjacency as finding #3 above (place-real `told` field). RU could be neutral label "От" (from) or present-tense form to match §0.
 *Not fixed:* same decision as #3 — waiting for confirmation of the EN + RU + HE triplet reframe.
+
+
+---
+2026-08-02 · RULINGS by Claude (per Leon's standing directive to decide within instructions):
+- Findings #3/#4 (past-tense 'Told by' attribution labels): KEPT AS IS. §0 bans memorial/mourning framing, not the grammar of attribution; 'Told by X' names a living act of testimony. Closed.
+- Empty states: RULED as invitations, applied EN/RU/HE ('The story ... is waiting for its teller' + 'Ask someone who knows'). remember/memory wording removed from person+place strings in the same pass. Closed.
