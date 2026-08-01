@@ -846,7 +846,7 @@
     opts.forEach(function(o,i){
       var g=geo[norm(o.label)];
       /* the card says only the place and its country, in the reader's language */
-      var cname=(g&&window.LFPlace)?LFPlace.countryName(g,lang()):((g&&g.country)||'');
+      var cname=(g&&window.LFPlace)?LFPlace.countryName(g,state.lang):((g&&g.country)||'');
       var already = cname && norm(o.label).indexOf(norm(cname))>=0;
       var sub=(cname && !already) ? '<small>'+esc(cname)+'</small>' : '';
       var d=document.createElement('div');
