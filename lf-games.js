@@ -295,6 +295,7 @@
         seed: seed,
         prompt: {
           memory_text: bodyText(art),
+          artefact_id: art.id,
           has_photo: !!art.storage_path,
           storage_path: art.storage_path || null,   // play screen resolves a signed URL
           question: 'Whose story is this? Who is it about?'

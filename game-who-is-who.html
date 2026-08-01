@@ -11,7 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="lf-progress.js?v=1"></script>
-<script src="lf-games.js?v=12"></script>
+<script src="lf-games.js?v=13"></script>
 <style>
   /* ============================================================
      Foreground reproduced verbatim from the delivered design:
@@ -271,7 +271,7 @@
   /* ---------- i18n (EN / RU / HE) — content shown once, in the chosen language ---------- */
   const T={
     en:{ dir:'ltr', native:'English', label:'English',
-      tk:'Story · a game', tn:'Whose Story Is This?',
+      tk:'Story · a game', tn:'Whose Story Is This?', trBadge:'translated by the forest', trOrig:'see the original', trBack:'read in English',
       cluesEye:'The clue',
       clueK:'Story · a person told us',
       qQ:'So — who is this?', qS:'Tap the name you’re sure of.',
@@ -291,7 +291,7 @@
       errK:'Something’s tangled', errH:'The faces are out of reach', errB:'The game couldn’t gather the memories just now. Give it another moment.', retry:'Try again',
       langtitle:'Language', langsub:'Titles, prompts and the whole game follow the language you choose.' },
     ru:{ dir:'ltr', native:'Русский', label:'Russian',
-      tk:'История · игра', tn:'Чья это история?',
+      tk:'История · игра', tn:'Чья это история?', trBadge:'перевод леса', trOrig:'показать оригинал', trBack:'читать по-русски',
       cluesEye:'Подсказка',
       clueK:'История · рассказал человек',
       qQ:'Итак — кто это?', qS:'Нажмите имя, в котором уверены.',
@@ -311,7 +311,7 @@
       errK:'Что-то запуталось', errH:'Лица недоступны', errB:'Игра не смогла собрать воспоминания сейчас. Попробуйте ещё раз.', retry:'Ещё раз',
       langtitle:'Язык', langsub:'Заголовки, вопросы и вся игра — на выбранном языке.' },
     he:{ dir:'rtl', native:'עברית', label:'Hebrew',
-      tk:'סיפור · משחק', tn:'של מי הסיפור?',
+      tk:'סיפור · משחק', tn:'של מי הסיפור?', trBadge:'תורגם על ידי היער', trOrig:'הצגת המקור', trBack:'לקרוא בעברית',
       cluesEye:'הרמז',
       clueK:'סיפור · מישהו סיפר לנו',
       qQ:'אז — מי זה?', qS:'הקישו על השם שאתם בטוחים בו.',
@@ -413,7 +413,7 @@
     const clue=`
       <div class="clue">
         <div class="ci">${sv(I.book)}</div>
-        <div class="ct"><div class="ck"><span class="sd"></span>${esc(L.clueK)}</div><div class="cv">${esc(memory)}</div></div>
+        <div class="ct"><div class="ck"><span class="sd"></span>${esc(L.clueK)}</div><div class="cv" id="clueBody">${esc(memory)}</div><div class="trrow" id="trRow" style="display:none;margin-top:8px;font-size:11px;color:var(--cool-hi)"><span id="trBadge"></span> · <a href="#" id="trToggle" style="color:inherit"></a></div></div>
       </div>`;
     const optCards=round.options.map((o,i)=>`
       <button class="opt" type="button" data-i="${i}" data-id="${esc(o.id)}">
@@ -535,6 +535,38 @@
     LFFace.resolve(ids).then(function(fm){ els.forEach(function(el){
       var f=fm[el.getAttribute('data-face')]; if(f&&f.path) LFFace.into(el,{path:f.path,box:f.box,size:96,keep:true}); }); });
   }catch(e){} }
+  /* the story re-presented in the reader's tongue — translation sits on top,
+     never instead (Rule 3): the original stays one tap away, and the label says
+     plainly that the forest, not the teller, made these words */
+  async function translateClue(round){
+    try{
+      const body=(round.prompt&&round.prompt.memory_text)||'';
+      const ref=round.prompt&&round.prompt.artefact_id;
+      if(!body||!ref) return;
+      const lang=state.lang||'en';
+      const hasHe=/[\u0590-\u05FF]/.test(body), hasCy=/[\u0400-\u04FF]/.test(body);
+      const bodyLang=hasHe?'he':(hasCy?'ru':'en');
+      if(bodyLang===lang) return;
+      let text=null;
+      try{ const {data:c}=await sb.from('translations').select('text').eq('kind','artefact_body').eq('ref',ref).eq('target_lang',lang).maybeSingle();
+        text=c&&c.text||null; }catch(e){}
+      if(!text){
+        try{ const {data,error}=await sb.functions.invoke('translate',{body:{target_lang:lang,items:[{kind:'artefact_body',ref:ref,text:body}]}});
+          if(!error&&data&&data.results&&data.results[0]) text=data.results[0].text||null; }catch(e){}
+      }
+      if(!text) return;
+      const el=document.getElementById('clueBody'), row=document.getElementById('trRow');
+      if(!el||!row) return;
+      const L=d(); let showing='tr';
+      function paint(){ el.textContent=(showing==='tr')?text:body;
+        el.setAttribute('dir', (showing==='tr'?(lang==='he'?'rtl':'ltr'):(bodyLang==='he'?'rtl':'ltr')));
+        document.getElementById('trBadge').textContent=L.trBadge;
+        document.getElementById('trToggle').textContent=(showing==='tr')?L.trOrig:L.trBack; }
+      row.style.display='block';
+      document.getElementById('trToggle').onclick=function(ev){ ev.preventDefault(); showing=(showing==='tr')?'orig':'tr'; paint(); };
+      paint();
+    }catch(e){}
+  }
   /* ---------- load a round (ENGINE) ---------- */
   async function loadRound(seed){
     state.seed=seed; state.done=false; state.firstTry=true; state.round=null;
@@ -542,7 +574,7 @@
     try{ res=await window.LFGames.whoseMemory(sb,{ id:PERSON_ID, seed:seed }); }
     catch(e){ res={status:'error', message:(e&&e.message)||String(e)}; }
     if(res && res.status==='ok'){
-      state.round=res; renderPlay(res); show('play'); hydrateFaces();
+      state.round=res; renderPlay(res); show('play'); hydrateFaces(); translateClue(res);
     } else if(res && res.status==='not_enough_data'){
       renderLocked(res); show('locked');
     } else {
