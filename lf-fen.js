@@ -20,7 +20,6 @@
     stretch: {src:A+"fen-stretch.webm"},
     wave:    {src:A+"fen-wave.webm"},
     walk:    {src:A+"fen-walk.webm"},
-    arrive:  {src:A+"fen-entrance.mp4"},   /* walks in and settles, own forest bg, unkeyed */
     /* pending — add src when baked */
     stumble: {src:A+"fen-earperk.webm", fb:'idle'},  /* surprised ear-perk stands in for stumble: kind "oh!", never shaming (approved 2026-07-31) */
     entrance:{fb:'walk'},
@@ -115,25 +114,28 @@
        PRE (2s of just the forest) -> ENTRANCE (the walk-in clip, whole) -> LIVE.
        Cues raised during PRE/ENTRANCE wait; the last one plays after she settles. */
     (function(){
-      function goLive(){ PHASE='live'; flog('live');
+      function goLive(){ if(PHASE==='live') return; PHASE='live'; flog('live');
         var p=PEND; PEND=null;
-        if(p){ setTimeout(function(){ setClip(p[0],p[1],p[2]); },350); }
-        else if(cur!=='entrance-held'){ toIdle(); } }
-      if(!CLIP.arrive.src){ flog('no-arrive'); PHASE='live'; toIdle(); return; }
-      var MASK='radial-gradient(125% 115% at 50% 62%, #000 44%, rgba(0,0,0,.8) 64%, transparent 94%)';
+        if(p){ setTimeout(function(){ setClip(p[0],p[1],p[2]); },300); }
+        else { toIdle(); } }
+      if(!CLIP.walk.src){ flog('no-walk'); PHASE='live'; toIdle(); return; }
       setTimeout(function(){
         PHASE='entrance'; flog('entrance-start');
         try{
-          cur='entrance'; v.loop=false;
-          v.style.webkitMaskImage=MASK; v.style.maskImage=MASK;
-          v.style.filter=BASEF+' brightness(.72) saturate(.95)';
-          v.onended=function(){ flog('entrance-ended'); try{ v.pause(); }catch(e){} cur='entrance-held'; goLive(); };
+          cur='entrance'; v.loop=true; v.onended=null;
+          v.style.transition='none'; v.style.transform='translateX(-240px)';
           v.onerror=function(){ flog('entrance-error'); goLive(); };
-          v.src=CLIP.arrive.src; v.play().catch(function(){ flog('entrance-playfail'); goLive(); });
+          v.src=CLIP.walk.src; v.play().catch(function(){ flog('entrance-playfail'); goLive(); });
         }catch(e){ flog('entrance-throw'); goLive(); return; }
-        v.addEventListener('playing', function(){ flog('entrance-playing'); v.style.opacity='1'; }, {once:true});
-        setTimeout(function(){ if(PHASE==='entrance'&&v.paused){ flog('entrance-stall'); goLive(); } }, 3500);
-        setTimeout(function(){ if(PHASE==='entrance'){ flog('entrance-overrun'); goLive(); } }, 12000);
+        v.addEventListener('playing', function(){
+          flog('entrance-playing'); v.style.opacity='1';
+          requestAnimationFrame(function(){ requestAnimationFrame(function(){
+            v.style.transition='transform 2.6s linear'; v.style.transform='translateX(0)';
+            setTimeout(function(){ v.style.transition='none'; flog('entrance-ended'); goLive(); },2650);
+          }); });
+        }, {once:true});
+        setTimeout(function(){ if(PHASE==='entrance'&&v.paused){ flog('entrance-stall'); v.style.transform='translateX(0)'; goLive(); } }, 3500);
+        setTimeout(function(){ if(PHASE==='entrance'){ flog('entrance-overrun'); v.style.transform='translateX(0)'; goLive(); } }, 9000);
       },2000);
     })();
 
