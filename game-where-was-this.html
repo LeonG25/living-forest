@@ -815,7 +815,7 @@
       var g=geo[norm(o.label)];
       if(g&&g.lat!=null&&g.lng!=null){ tracked.push({el:b,lat:+g.lat,lng:+g.lng}); }
       else { b.style.left='calc(50% + '+Math.round(pos[i].x)+'px)'; b.style.top='calc(52% + '+Math.round(pos[i].y)+'px)'; }
-      b.innerHTML='<span class="dot"></span><span class="lb serif">'+esc(showPlace(o.label))+'</span>';
+      b.innerHTML='<span class="dot"></span><span class="lb serif">'+esc(showPlaceIn(o.label, opts.map(function(x){return x.label;})))+'</span>';
       b.addEventListener('click', function(){ choose(i); });
       globe.appendChild(b);
     });
@@ -844,6 +844,11 @@
     function showPlace(raw){ var g=geo[norm(raw)];
       if(g&&window.LFPlace){ var nm=LFPlace.display(g,state.lang); if(nm) return nm; }
       return raw; }
+    /* two stored places may share one localized name (a street in Yavne, and Yavne):
+       identical-looking options would break the guessing - collisions keep their raw names */
+    function showPlaceIn(raw, all){ var nm=showPlace(raw);
+      var same=(all||[]).filter(function(x){ return norm(showPlace(x))===norm(nm); });
+      return same.length>1 ? raw : nm; }
     // the same answer, finger-sized
     var box=$('opts'); box.innerHTML='';
     opts.forEach(function(o,i){
@@ -851,13 +856,13 @@
       /* the card says only the place and its country, in the reader's language */
       var cname=(g&&window.LFPlace)?LFPlace.countryName(g,state.lang):((g&&g.country)||'');
       var cEn=(g&&g.country)||'';
-      var shown=showPlace(o.label);
+      var shown=showPlaceIn(o.label, opts.map(function(x){return x.label;}));
       var already = (cname && norm(shown).indexOf(norm(cname))>=0) || (cEn && norm(shown).indexOf(norm(cEn))>=0);
       var sub=(cname && !already) ? '<small>'+esc(cname)+'</small>' : '';
       var d=document.createElement('div');
       d.className='opt'; d.dataset.i=String(i);
       d.setAttribute('role','button'); d.setAttribute('tabindex','0');
-      d.innerHTML='<span class="pin">'+PINSVG+'</span><span class="nm serif">'+esc(showPlace(o.label))+sub+'</span>';
+      d.innerHTML='<span class="pin">'+PINSVG+'</span><span class="nm serif">'+esc(showPlaceIn(o.label, opts.map(function(x){return x.label;})))+sub+'</span>';
       d.addEventListener('click', function(){ choose(i); });
       d.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); choose(i); } });
       box.appendChild(d);
