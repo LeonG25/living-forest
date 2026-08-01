@@ -431,7 +431,7 @@
     </div>
   </div>
 
-<script src="lf-place.js?v=2"></script>
+<script src="lf-place.js?v=3"></script>
 <script src="lf-games.js?v=12"></script>
 <script>
 'use strict';
@@ -625,10 +625,10 @@
   // ---- geography (real rows only; never invented) ------------------------
   function loadGeo(){
     if(geoCache) return Promise.resolve(geoCache);
-    return sb.from('place_geo').select('name,lat,lng,label,country,country_code').then(function(r){
+    return sb.from('place_geo').select('name,lat,lng,label,country,country_code,name_en,name_ru,name_he').then(function(r){
       geoCache={};
       (r&&r.data||[]).forEach(function(g){
-        if(g && g.lat!=null && g.lng!=null) geoCache[norm(g.name)]={ lat:+g.lat, lng:+g.lng, label:g.label||'', country_code:g.country_code||'', country:g.country||'' };
+        if(g && g.lat!=null && g.lng!=null) geoCache[norm(g.name)]={ lat:+g.lat, lng:+g.lng, label:g.label||'', country_code:g.country_code||'', country:g.country||'', name_en:g.name_en||'', name_ru:g.name_ru||'', name_he:g.name_he||'' };
       });
       return geoCache;
     }, function(){ geoCache={}; return geoCache; });
@@ -815,7 +815,7 @@
       var g=geo[norm(o.label)];
       if(g&&g.lat!=null&&g.lng!=null){ tracked.push({el:b,lat:+g.lat,lng:+g.lng}); }
       else { b.style.left='calc(50% + '+Math.round(pos[i].x)+'px)'; b.style.top='calc(52% + '+Math.round(pos[i].y)+'px)'; }
-      b.innerHTML='<span class="dot"></span><span class="lb serif">'+esc(o.label)+'</span>';
+      b.innerHTML='<span class="dot"></span><span class="lb serif">'+esc(showPlace(o.label))+'</span>';
       b.addEventListener('click', function(){ choose(i); });
       globe.appendChild(b);
     });
@@ -841,6 +841,9 @@
       });
     })();
 
+    function showPlace(raw){ var g=geo[norm(raw)];
+      if(g&&window.LFPlace){ var nm=LFPlace.display(g,state.lang); if(nm) return nm; }
+      return raw; }
     // the same answer, finger-sized
     var box=$('opts'); box.innerHTML='';
     opts.forEach(function(o,i){
@@ -848,12 +851,13 @@
       /* the card says only the place and its country, in the reader's language */
       var cname=(g&&window.LFPlace)?LFPlace.countryName(g,state.lang):((g&&g.country)||'');
       var cEn=(g&&g.country)||'';
-      var already = (cname && norm(o.label).indexOf(norm(cname))>=0) || (cEn && norm(o.label).indexOf(norm(cEn))>=0);
+      var shown=showPlace(o.label);
+      var already = (cname && norm(shown).indexOf(norm(cname))>=0) || (cEn && norm(shown).indexOf(norm(cEn))>=0);
       var sub=(cname && !already) ? '<small>'+esc(cname)+'</small>' : '';
       var d=document.createElement('div');
       d.className='opt'; d.dataset.i=String(i);
       d.setAttribute('role','button'); d.setAttribute('tabindex','0');
-      d.innerHTML='<span class="pin">'+PINSVG+'</span><span class="nm serif">'+esc(o.label)+sub+'</span>';
+      d.innerHTML='<span class="pin">'+PINSVG+'</span><span class="nm serif">'+esc(showPlace(o.label))+sub+'</span>';
       d.addEventListener('click', function(){ choose(i); });
       d.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); choose(i); } });
       box.appendChild(d);
@@ -936,7 +940,7 @@
   function reveal(instant, lost){
     var L=T[state.lang], res=round, p=res.prompt||{};
     $('revK').textContent = lost ? L.revKLost : L.revK;
-    $('revName').innerHTML = L.revName(esc(res.answer_label||''), p.year?esc(String(p.year)):'');
+    $('revName').innerHTML = L.revName(esc(showPlace(res.answer_label||'')), p.year?esc(String(p.year)):'');
     var n=extra&&typeof extra.sameHere==='number' ? extra.sameHere : null;
     if(n===null){ $('revSub').textContent=''; $('revSub').hidden=true; }
     else { $('revSub').hidden=false; $('revSub').textContent = n>1 ? L.revMore(n-1) : L.revOnly; }

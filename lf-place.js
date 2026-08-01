@@ -21,11 +21,29 @@
         const row={name:name, lat:+hit.lat, lng:+hit.lon, label:hit.display_name||null,
                    country:(hit.address&&hit.address.country)||null,
                    country_code:(hit.address&&hit.address.country_code||'').toUpperCase()||null};
+        /* the place learns its name in all three tongues, once, from its coordinates */
+        try{
+          const locs={en:'name_en',ru:'name_ru',he:'name_he'};
+          for(const l of ['en','ru','he']){
+            try{
+              const rr=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=13&lat='+row.lat+'&lon='+row.lng+'&accept-language='+l);
+              const jj=await rr.json(); const a=(jj&&jj.address)||{};
+              row[locs[l]]=a.city||a.town||a.village||a.hamlet||a.municipality||a.suburb||((jj&&jj.display_name)||'').split(',')[0].trim()||null;
+            }catch(e){}
+            await new Promise(z=>setTimeout(z,1100));
+          }
+        }catch(e){}
         try{ sb.from('place_geo').insert(row).then(()=>{},()=>{}); }catch(e){}
         return row;
       }catch(e){ return null; }
     },
     /* the country's name in the reader's language, from its ISO code (native Intl) */
+    /* the place's own name in the reader's language (stored name as the last word) */
+    display: function(row, lang){
+      if(!row) return '';
+      const k={en:'name_en',ru:'name_ru',he:'name_he'}[lang]||'name_en';
+      return row[k]||row.name_en||row.name||'';
+    },
     countryName: function(codeOrRow, lang){
       try{
         const code=(typeof codeOrRow==='string'?codeOrRow:(codeOrRow&&codeOrRow.country_code))||'';
