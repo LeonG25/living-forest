@@ -94,7 +94,10 @@
     var horizon=mk('div','position:absolute;left:0;right:0;top:0;height:42%;background:linear-gradient(to bottom,#080c14 6%,rgba(8,12,20,.4) 55%,transparent);pointer-events:none;');
     if(PAGE_FOREST){ bg.style.display='none'; bg.removeAttribute('src'); horizon.style.display='none'; }
     var BASEF='drop-shadow(0 4px 8px rgba(0,0,0,.5))';
-    var v=vid(clipSrc('idle'),'position:absolute;left:-1%;bottom:0;width:150px;height:150px;filter:'+BASEF+';pointer-events:none;');
+    var PHASE='pre', PEND=null;            /* pre -> entrance -> live */
+    window.__fenlog=[]; function flog(x){ try{ window.__fenlog.push(Date.now()%100000+' '+x); }catch(e){} }
+    var v=vid(clipSrc('idle'),'position:absolute;left:-1%;bottom:0;width:150px;height:150px;filter:'+BASEF+';pointer-events:none;opacity:0;');
+    try{ v.autoplay=false; v.pause(); v.removeAttribute('src'); }catch(e){}
     var vb=vid(clipSrc('idle'),'position:absolute;left:-1%;bottom:0;width:150px;height:150px;filter:'+BASEF+';pointer-events:none;opacity:0;');
     try{ vb.autoplay=false; vb.pause(); }catch(e){}
     var say=mk('div','position:absolute;left:41%;right:5%;top:50%;transform:translateY(-50%);font-family:Georgia,serif;font-style:italic;font-size:15px;line-height:1.35;color:#f1eadc;text-shadow:0 1px 5px rgba(0,0,0,.95);opacity:0;transition:opacity .35s;pointer-events:none;');
@@ -103,23 +106,29 @@
     bg.play().catch(function(){}); v.play().catch(function(){});
     /* entrance: he walks in from beyond the left edge at gait speed, then sits.
        Linear timing — easing makes his feet slide. Starts after the strip has faded in. */
-    /* entrance: the real walk-in clip, played in place — no sliding, no fakery.
-       Soft radial mask melts its edges; when he settles, we hold his last frame,
-       and the first keyed clip replaces him only when he next moves. */
-    (function(){ if(!CLIP.arrive.src){ toIdle(); return; }
-      v.style.transition='none'; v.style.transform='translateX(0)'; v.style.opacity='0';
+    /* The opening is a strict phase machine:
+       PRE (2s of just the forest) -> ENTRANCE (the walk-in clip, whole) -> LIVE.
+       Cues raised during PRE/ENTRANCE wait; the last one plays after she settles. */
+    (function(){
+      function goLive(){ PHASE='live'; flog('live');
+        var p=PEND; PEND=null;
+        if(p){ setTimeout(function(){ setClip(p[0],p[1],p[2]); },350); }
+        else if(cur!=='entrance-held'){ toIdle(); } }
+      if(!CLIP.arrive.src){ flog('no-arrive'); PHASE='live'; toIdle(); return; }
       var MASK='radial-gradient(125% 115% at 50% 62%, #000 44%, rgba(0,0,0,.8) 64%, transparent 94%)';
       setTimeout(function(){
-        try{ cur='entrance'; v.loop=false;
+        PHASE='entrance'; flog('entrance-start');
+        try{
+          cur='entrance'; v.loop=false;
           v.style.webkitMaskImage=MASK; v.style.maskImage=MASK;
-          v.onended=function(){ try{ v.pause(); }catch(e){} cur='entrance-held';
-            var p=setClip._pend; setClip._pend=null;
-            if(p) setTimeout(function(){ setClip(p[0],p[1],p[2]); },250); };
-          v.src=CLIP.arrive.src; v.play().catch(function(){ toIdle(); });
-        }catch(e){ toIdle(); return; }
-        v.addEventListener('playing', function(){ v.style.opacity='1'; }, {once:true});
-        setTimeout(function(){ if(cur==='entrance'&&v.paused){ toIdle(); } }, 3000);
-      },2000);   /* a breath before he arrives — let the place exist first */
+          v.onended=function(){ flog('entrance-ended'); try{ v.pause(); }catch(e){} cur='entrance-held'; goLive(); };
+          v.onerror=function(){ flog('entrance-error'); goLive(); };
+          v.src=CLIP.arrive.src; v.play().catch(function(){ flog('entrance-playfail'); goLive(); });
+        }catch(e){ flog('entrance-throw'); goLive(); return; }
+        v.addEventListener('playing', function(){ flog('entrance-playing'); v.style.opacity='1'; }, {once:true});
+        setTimeout(function(){ if(PHASE==='entrance'&&v.paused){ flog('entrance-stall'); goLive(); } }, 3500);
+        setTimeout(function(){ if(PHASE==='entrance'){ flog('entrance-overrun'); goLive(); } }, 12000);
+      },2000);
     })();
 
     var cur='idle', sleeping=false;
@@ -127,10 +136,10 @@
     function setClip(name, loop, onend){
       var src=clipSrc(name); if(!src) return false;
       var real = (src!==CLIP.idle.src) || name==='idle';
-      if(!real){ /* fallback resolves to idle — leave idle running */ if(cur!=='idle'){ toIdle(); } return false; }
+      if(!real){ if(PHASE==='live'&&cur!=='idle'){ toIdle(); } return false; }
+      /* before she has settled, every request waits at the door (last one wins) */
+      if(PHASE!=='live'){ PEND=[name,loop,onend]; flog('pend '+name); return true; }
       if(v.src.indexOf(src)>=0 && loop) return true;
-      /* never cut the arrival: requests during the entrance wait at the door */
-      if(cur==='entrance'){ setClip._pend=[name,loop,onend]; return true; }
       var meta=clipMeta(name);
       clearEntranceMask();
       cur=name;
@@ -138,7 +147,7 @@
       return true;
     }
     /* the single doorway: every clip change blurs in through the buffer */
-    function xfade(src, loop, onend, freeze){
+    function xfade(src, loop, onend, freeze){ flog('xfade '+src.split('/').pop());
       vb.loop=loop;
       vb.onended=null; vb.onerror=function(){ if(src!==CLIP.idle.src) toIdle(); };
       vb.style.transition='none'; vb.style.opacity='0'; vb.style.filter=BASEF+' blur(9px)';
