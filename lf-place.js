@@ -19,10 +19,22 @@
         const resp=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&accept-language='+lg+'&q='+encodeURIComponent(name));
         const j=await resp.json(); const hit=j&&j[0]; if(!hit) return null;
         const row={name:name, lat:+hit.lat, lng:+hit.lon, label:hit.display_name||null,
-                   country:(hit.address&&hit.address.country)||null};
+                   country:(hit.address&&hit.address.country)||null,
+                   country_code:(hit.address&&hit.address.country_code||'').toUpperCase()||null};
         try{ sb.from('place_geo').insert(row).then(()=>{},()=>{}); }catch(e){}
         return row;
       }catch(e){ return null; }
+    },
+    /* the country's name in the reader's language, from its ISO code (native Intl) */
+    countryName: function(codeOrRow, lang){
+      try{
+        const code=(typeof codeOrRow==='string'?codeOrRow:(codeOrRow&&codeOrRow.country_code))||'';
+        if(code&&window.Intl&&Intl.DisplayNames){
+          const dn=new Intl.DisplayNames([{en:'en',ru:'ru',he:'he'}[lang]||'en'],{type:'region'});
+          const nm=dn.of(code.toUpperCase()); if(nm&&nm!==code.toUpperCase()) return nm;
+        }
+      }catch(e){}
+      return (codeOrRow&&codeOrRow.country)||'';
     },
     country: async function(name, lang, sb){
       const r=await window.LFPlace.ensure(name, lang, sb); return r&&r.country||null;

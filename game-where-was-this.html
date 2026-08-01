@@ -431,6 +431,7 @@
     </div>
   </div>
 
+<script src="lf-place.js?v=2"></script>
 <script src="lf-games.js?v=12"></script>
 <script>
 'use strict';
@@ -624,10 +625,10 @@
   // ---- geography (real rows only; never invented) ------------------------
   function loadGeo(){
     if(geoCache) return Promise.resolve(geoCache);
-    return sb.from('place_geo').select('name,lat,lng,label').then(function(r){
+    return sb.from('place_geo').select('name,lat,lng,label,country,country_code').then(function(r){
       geoCache={};
       (r&&r.data||[]).forEach(function(g){
-        if(g && g.lat!=null && g.lng!=null) geoCache[norm(g.name)]={ lat:+g.lat, lng:+g.lng, label:g.label||'' };
+        if(g && g.lat!=null && g.lng!=null) geoCache[norm(g.name)]={ lat:+g.lat, lng:+g.lng, label:g.label||'', cc:g.country_code||'', country:g.country||'' };
       });
       return geoCache;
     }, function(){ geoCache={}; return geoCache; });
@@ -844,7 +845,10 @@
     var box=$('opts'); box.innerHTML='';
     opts.forEach(function(o,i){
       var g=geo[norm(o.label)];
-      var sub=(g && g.label && norm(g.label)!==norm(o.label)) ? '<small>'+esc(g.label)+'</small>' : '';
+      /* the card says only the place and its country, in the reader's language */
+      var cname=(g&&window.LFPlace)?LFPlace.countryName(g,lang()):((g&&g.country)||'');
+      var already = cname && norm(o.label).indexOf(norm(cname))>=0;
+      var sub=(cname && !already) ? '<small>'+esc(cname)+'</small>' : '';
       var d=document.createElement('div');
       d.className='opt'; d.dataset.i=String(i);
       d.setAttribute('role','button'); d.setAttribute('tabindex','0');
