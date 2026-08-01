@@ -98,7 +98,10 @@
     /* her ember light pools beneath her — the warmth around the fox reads as hers */
     var ember=mk('div','position:absolute;left:-8px;bottom:-10px;width:230px;height:150px;pointer-events:none;background:radial-gradient(60% 72% at 38% 80%, rgba(126,90,46,.34), transparent 72%);');
     var BASEF='drop-shadow(0 4px 8px rgba(0,0,0,.5))';
-    var PHASE='pre', PEND=null;            /* pre -> entrance -> live */
+    var PHASE='pre', PEND=null;
+    function tween(ms,fn,done){ var t0=performance.now();
+      (function st(){ var k=Math.min(1,(performance.now()-t0)/ms);
+        fn(k); if(k<1) requestAnimationFrame(st); else if(done) done(); })(); }            /* pre -> entrance -> live */
     window.__fenlog=[]; function flog(x){ try{ window.__fenlog.push(Date.now()%100000+' '+x); }catch(e){} }
     var v=vid(clipSrc('idle'),'position:absolute;left:-1%;bottom:0;width:150px;height:150px;filter:'+BASEF+';pointer-events:none;opacity:0;');
     try{ v.autoplay=false; v.pause(); v.removeAttribute('src'); }catch(e){}
@@ -129,10 +132,11 @@
         }catch(e){ flog('entrance-throw'); goLive(); return; }
         v.addEventListener('playing', function(){
           flog('entrance-playing'); v.style.opacity='1';
-          requestAnimationFrame(function(){ requestAnimationFrame(function(){
-            v.style.transition='transform 2.6s linear'; v.style.transform='translateX(0)';
-            setTimeout(function(){ v.style.transition='none'; flog('entrance-ended'); goLive(); },2650);
-          }); });
+          var half=false;
+          tween(2600, function(k){
+            v.style.transform='translateX('+Math.round(-240*(1-k))+'px)';
+            if(!half&&k>=0.5){ half=true; flog('slide-mid'); }
+          }, function(){ flog('entrance-ended'); goLive(); });
         }, {once:true});
         setTimeout(function(){ if(PHASE==='entrance'&&v.paused){ flog('entrance-stall'); v.style.transform='translateX(0)'; goLive(); } }, 3500);
         setTimeout(function(){ if(PHASE==='entrance'){ flog('entrance-overrun'); v.style.transform='translateX(0)'; goLive(); } }, 9000);
@@ -162,17 +166,16 @@
       vb.src=src; vb.play().catch(function(){});
       var done=false;
       function h(){ if(done) return; done=true;
-        vb.style.transition='opacity .3s ease, filter .38s ease';
-        v.style.transition='opacity .3s ease';
-        vb.style.opacity='1'; vb.style.filter=BASEF;
-        v.style.opacity='0';
-        setTimeout(function(){
+        tween(340, function(k){
+          vb.style.opacity=String(k);
+          vb.style.filter=BASEF+' blur('+(9*(1-k)).toFixed(1)+'px)';
+          v.style.opacity=String(1-k);
+        }, function(){
           try{ v.pause(); }catch(e){}
-          v.style.transition='none'; vb.style.transition='none';
           var t=v; v=vb; vb=t;
           v.onended=freeze?function(){ try{ v.pause(); }catch(e){} }:(onend||null);
           if(freeze&&v.ended){ try{ v.pause(); }catch(e){} }
-        },340); }
+        }); }
       vb.addEventListener('playing', h, {once:true});
       setTimeout(h, 900);
     }
