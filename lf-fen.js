@@ -23,7 +23,8 @@
     /* pending — add src when baked */
     stumble: {src:A+"fen-earperk.webm", fb:'idle'},  /* surprised ear-perk stands in for stumble: kind "oh!", never shaming (approved 2026-07-31) */
     entrance:{fb:'walk'},
-    walkaway:{fb:'walk'}
+    walkaway:{fb:'walk'},
+    walkoff: {src:A+"fen-walkoff.webm", fb:'walk'}   /* gets up and walks right */
   };
   function clipSrc(n){ var c=CLIP[n], g=0; while(c && !c.src && c.fb && g++<5) c=CLIP[c.fb];
     if(!c||!c.src) return null; var s=c.src;
@@ -223,13 +224,37 @@
       say:function(t){ alive(); play('talking'); speak(t); },
       react:function(n){ alive(); var m={delight:'delight',jump:'jump',stumble:'stumble'}; play(m[n]||n); },
       idle:toIdle,
-      leave:function(cb){ speak(line('leave')); play('wave');
-        setTimeout(function(){
-          if(CLIP.walk.src){ cur='walkaway'; v.loop=true; v.onended=null; v.src=CLIP.walk.src; v.play().catch(function(){});
-            v.style.transition='transform 3.2s linear'; v.style.transform='translateX(120vw)'; }
-          setTimeout(function(){ strip.style.opacity='0'; if(cb)setTimeout(cb,850); },1600);
-        },2200); }
+      leave:function(cb){
+        if(PHASE!=='live'){ if(cb)cb(); return; }
+        PHASE='leaving'; flog('leave-start'); speak(line('leave'));
+        var W=Math.max(window.innerWidth,360);
+        function farewell(){
+          /* 2: treadmill carried right until she is fully gone */
+          flog('leave-tread');
+          xfade(clipSrc('walk'), true, null, false);
+          setTimeout(function(){
+            tween(1700, function(k){ v.style.transform='translateX('+Math.round(k*(W*0.7+200))+'px)'; },
+              function(){ flog('leave-gone'); fade(); });
+          },380);
+        }
+        function fade(){ tween(650, function(k){ strip.style.opacity=String(1-k); },
+          function(){ if(cb)cb(); }); }
+        /* 1: she gets up and walks right, whole */
+        var offSrc=CLIP.walkoff&&CLIP.walkoff.src?CLIP.walkoff.src:null;
+        if(offSrc){ xfade(offSrc, false, farewell, false);
+          setTimeout(function(){ if(PHASE==='leaving'&&flogHas('leave-tread')===false){ farewell(); } }, 6000); }
+        else farewell();
+      }
     };
+    function flogHas(x){ try{ return (window.__fenlog||[]).some(function(l){ return l.indexOf(x)>=0; }); }catch(e){ return false; } }
+    /* walking away from the page: the back control waits for her departure */
+    document.addEventListener('click', function(e){
+      var b=e.target&&e.target.closest&&e.target.closest('[data-act="back"]');
+      if(!b||window.__fenLeft) return;
+      if(PHASE!=='live'){ return; }          /* mid-entrance: leave without ceremony */
+      e.preventDefault(); e.stopImmediatePropagation();
+      window.Fen.leave(function(){ window.__fenLeft=1; b.click(); });
+    }, true);
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start); else start();
 })();
