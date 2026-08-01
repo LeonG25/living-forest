@@ -978,7 +978,7 @@ function buildCards(){
       (isYou?`<span class="youtag">${esc(state.lang==='he'?'זה אתה':state.lang==='ru'?'это вы':'this is you')}</span>`:'')+
       (pend?`<span class="pendpin">${svg(I.clock,2)}</span>`:'')+
       `<span class="por" data-face="${esc(id)}"></span>`+
-      (fa?`<span class="opic" data-open-moment="${esc(fa)}" role="button" aria-label="${esc((L().openPhoto)||'Open this photograph')}" title="${esc((L().openPhoto)||'Open this photograph')}" tabindex="0">${svg(I.photo,2)}</span>`:'')+
+      /* photo badge retired per keeper 2026-08-01: the source photograph is reachable from the Person page */
       `<span class="pnm serif">${esc(firstName(id))}</span>`+
       `<span class="phint">${esc(lifeHint(id))}</span>`+
       `<span class="conn" data-conn="${esc(id)}" role="button" aria-label="connect" tabindex="0">${svg(I.plus,2.2)}</span>`;
