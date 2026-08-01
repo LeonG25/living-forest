@@ -94,6 +94,7 @@
     else { document.body.style.paddingBottom=STRIP+'px'; }
     var strip=mk('div','position:'+(fixed?'fixed':'absolute')+';left:0;right:0;bottom:0;height:'+STRIP+'px;z-index:5;overflow:hidden;cursor:pointer;opacity:0;transition:opacity .8s;');
     strip.id='lfFenStrip';
+    try{ document.body.classList.add('lf-fen-on'); }catch(e){}
     var PAGE_FOREST=!!document.querySelector('script[src^="lf-bg"]');
     var bg=vid(FOREST,'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;'); bg.playbackRate=0.6;
     var horizon=mk('div','position:absolute;left:0;right:0;top:0;height:42%;background:linear-gradient(to bottom,#080c14 6%,rgba(8,12,20,.4) 55%,transparent);pointer-events:none;');

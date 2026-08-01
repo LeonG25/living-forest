@@ -53,7 +53,7 @@
       var bud=document.getElementById('lfBud'); if(bud) bud.style.display='none';
       try{
         if(!window.LFInvite) await loadScript('lf-invite.js?v=1');
-        if(!window.Fen) await loadScript('lf-fen.js?v=18');
+        if(!window.Fen) await loadScript('lf-fen.js?v=19');
         /* our own client: the lib global is on every data page; the session rides localStorage */
         var sb=null;
         try{ if(window.supabase&&window.supabase.createClient)
@@ -69,7 +69,8 @@
                 if(yes){ location.href=inv.go; }
                 else { window.Fen.cue('leave',{quiet:true}); window.Fen.leave(function(){
                         busy=false; var b2=document.getElementById('lfBud'); if(b2) b2.style.display='grid';
-                        window.__lfFenMounted=0; var s2=document.getElementById('lfFenStrip'); if(s2) s2.remove(); }); } }); };
+                        window.__lfFenMounted=0; var s2=document.getElementById('lfFenStrip'); if(s2) s2.remove();
+                        try{ document.body.classList.remove('lf-fen-on'); }catch(e){} }); } }); };
             if(sb&&uid&&window.LFInvite){ window.LFInvite.next(sb, uid, lang).then(function(r){ inv=r; setTimeout(ask, 6200); }); }
             else { inv={line:'Come and know your family.',yes:'Come along',no:'Not now',go:'game-who-is-who.html'}; setTimeout(ask, 6200); }
           } else if(tries<40){ setTimeout(when,150); } })();
@@ -79,7 +80,8 @@
   })();
 
   /* floating "lenses" menu so every screen reaches the others */
-  var css = '#lfnav{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:45;display:flex;flex-direction:column;align-items:flex-end;gap:10px;font-family:\'Hanken Grotesk\',system-ui,sans-serif;}'
+  var css = 'body.lf-fen-on #lfnav{bottom:calc(14px + 151px + env(safe-area-inset-bottom))!important;}'
+  + '#lfnav{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:45;display:flex;flex-direction:column;align-items:flex-end;gap:10px;font-family:\'Hanken Grotesk\',system-ui,sans-serif;}'
   + '#lfnavPanel{display:none;position:absolute;bottom:calc(100% + 10px);right:0;flex-direction:column;gap:4px;max-height:min(68vh,520px);overflow-y:auto;overscroll-behavior:contain;background:rgba(9,16,30,.94);border:1px solid rgba(180,205,235,.18);border-radius:14px;padding:8px;min-width:168px;box-shadow:0 10px 34px rgba(0,0,0,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);}'  + '#lfnavPanel.lf-left{right:auto;left:0;}'  + '#lfnavPanel.lf-down{bottom:auto;top:calc(100% + 10px);}'
   + '#lfnav.open #lfnavPanel{display:flex;}'
   + '#lfnavPanel a{display:flex;gap:10px;align-items:center;color:#e8eef8;text-decoration:none;font-size:14.5px;padding:10px 12px;border-radius:10px;line-height:1;}'
