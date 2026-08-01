@@ -11,21 +11,22 @@
   if(window.__fen) return; window.__fen=1;
   var A="assets/fen/";
   var CLIP={
-    idle:    {src:A+"fen-idle.webm"},
-    delight: {src:[A+"fen-delight.webm",A+"fen-nod-big.webm"]},
-    jump:    {src:A+"fen-jump.webm"},
-    talking: {src:A+"fen-nod-small.webm"},
-    earperk: {src:A+"fen-earperk.webm"},
-    sleep:   {src:A+"fen-sleep.webm",freeze:1},
-    stretch: {src:A+"fen-stretch.webm"},
-    wave:    {src:A+"fen-wave.webm"},
-    walk:    {src:A+"fen-walk.webm"},
-    /* pending — add src when baked */
-    stumble: {src:A+"fen-earperk.webm", fb:'idle'},  /* surprised ear-perk stands in for stumble: kind "oh!", never shaming (approved 2026-07-31) */
-    entrance:{fb:'walk'},
-    walkaway:{fb:'walk'},
-    walkoff: {src:A+"fen-walkoff.webm", fb:'walk'}   /* gets up and walks right */
+    idle:     {src:A+"fen-idle-new.webm",      fb:null},
+    idleB:    {src:A+"fen-light-delight.webm", fb:'idle'},
+    yawn:     {src:A+"fen-yawn-stretch.webm",  fb:'idle'},
+    sleep:    {src:A+"fen-sleep.webm",         fb:'idle', freeze:1},
+    entrance: {src:A+"fen-entrance.webm",      fb:'idle'},
+    nodBig:   {src:A+"fen-nod-big.webm",       fb:'idle'},
+    nodSmall: {src:A+"fen-nod-small.webm",     fb:'idle'},
+    jump:     {src:A+"fen-jump.webm",          fb:'idle'},
+    lightDelight:{src:A+"fen-light-delight.webm", fb:'idle'},
+    surprised:{src:A+"fen-surprised.webm",     fb:'idle'},
+    notCorrect:{src:A+"fen-not-correct.webm",  fb:'idle'},
+    talking:  {src:A+"fen-talking.webm",       fb:'idle'},
+    waveWalk: {src:A+"fen-wave-walk.webm",     fb:null}
   };
+  var POOL_RIGHT=['nodBig','jump','lightDelight','nodSmall'];
+  var POOL_WRONG=['surprised','notCorrect','talking'];
   function clipSrc(n){ var c=CLIP[n], g=0; while(c && !c.src && c.fb && g++<5) c=CLIP[c.fb];
     if(!c||!c.src) return null; var s=c.src;
     if(Object.prototype.toString.call(s)==='[object Array]') s=s[Math.floor(Math.random()*s.length)];
@@ -73,7 +74,7 @@
       leave:["\u05ea\u05d7\u05d6\u05e8\u05d5 \u05d1\u05e7\u05e8\u05d5\u05d1. \u05d4\u05dd \u05d9\u05d7\u05db\u05d5.","\u05dc\u05db\u05d5. \u05d0\u05e0\u05d9 \u05db\u05d0\u05df."]
     }
   };
-  var CUE={greeting:'talking',question:'earperk',clue:'talking',right:'delight',wrong:'stumble',streak:'jump',win:'jump',leave:'wave'};
+  var CUE={greeting:'talking',question:'surprised',clue:'talking',right:'RIGHT',wrong:'WRONG',streak:'jump',win:'jump',leave:'talking'};
   var CHANCE={question:0.33,clue:0.5};
 
   function lang(){ try{ var l=localStorage.getItem('lf_lang'); if(l&&D[l])return l; }catch(e){} return 'en'; }
@@ -122,48 +123,51 @@
         var p=PEND; PEND=null;
         if(p){ setTimeout(function(){ setClip(p[0],p[1],p[2]); },300); }
         else { toIdle(); } }
-      if(!CLIP.walk.src){ flog('no-walk'); PHASE='live'; toIdle(); return; }
+      if(!clipSrc('entrance')){ flog('no-entrance'); PHASE='live'; toIdle(); return; }
       setTimeout(function(){
         PHASE='entrance'; flog('entrance-start');
         try{
-          cur='entrance'; v.loop=true; v.onended=null;
-          v.style.transition='none'; v.style.transform='translateX(-240px)';
+          cur='entrance'; v.loop=false;
+          v.onended=function(){ flog('entrance-ended'); goLive(); };
           v.onerror=function(){ flog('entrance-error'); goLive(); };
-          v.src=CLIP.walk.src; v.play().catch(function(){ flog('entrance-playfail'); goLive(); });
+          v.src=clipSrc('entrance'); v.play().catch(function(){ flog('entrance-playfail'); goLive(); });
         }catch(e){ flog('entrance-throw'); goLive(); return; }
-        v.addEventListener('playing', function(){
-          flog('entrance-playing'); v.style.opacity='1';
-          var half=false;
-          tween(2600, function(k){
-            v.style.transform='translateX('+Math.round(-240*(1-k))+'px)';
-            if(!half&&k>=0.5){ half=true; flog('slide-mid'); }
-          }, function(){ flog('entrance-ended'); goLive(); });
-        }, {once:true});
-        setTimeout(function(){ if(PHASE==='entrance'&&v.paused){ flog('entrance-stall'); v.style.transform='translateX(0)'; goLive(); } }, 3500);
-        setTimeout(function(){ if(PHASE==='entrance'){ flog('entrance-overrun'); v.style.transform='translateX(0)'; goLive(); } }, 9000);
+        v.addEventListener('playing', function(){ flog('entrance-playing'); v.style.opacity='1'; }, {once:true});
+        setTimeout(function(){ if(PHASE==='entrance'&&v.paused){ flog('entrance-stall'); goLive(); } }, 3500);
+        setTimeout(function(){ if(PHASE==='entrance'){ flog('entrance-overrun'); goLive(); } }, 12000);
       },2000);
     })();
 
-    var cur='idle', sleeping=false;
+    var cur='idle', sleeping=false, BUSY=false, QUE=null;
+    var lastPick={};
+    function pickFrom(pool){ var c=pool.filter(function(n){ return n!==lastPick[pool[0]]; });
+      var n=c[Math.floor(Math.random()*c.length)]||pool[0]; lastPick[pool[0]]=n; return n; }
     function clearEntranceMask(){ if(v.style.maskImage||v.style.webkitMaskImage){ v.style.webkitMaskImage=''; v.style.maskImage=''; v.style.filter=BASEF; } }
-    function setClip(name, loop, onend){
+
+    /* every clip plays whole. idle clips are interruptible by reactions;
+       reaction/entrance/farewell clips are not — later requests wait, last one wins. */
+    function setClip(name, loop, onend, uninterruptible){
       var src=clipSrc(name); if(!src) return false;
-      var real = (src!==CLIP.idle.src) || name==='idle';
-      if(!real){ if(PHASE==='live'&&cur!=='idle'){ toIdle(); } return false; }
-      /* before she has settled, every request waits at the door (last one wins) */
-      if(PHASE!=='live'){ PEND=[name,loop,onend]; flog('pend '+name); return true; }
-      if(v.src.indexOf(src)>=0 && loop) return true;
+      if(PHASE!=='live'){ PEND=[name,loop,onend,uninterruptible]; flog('pend '+name); return true; }
+      if(BUSY){ QUE=[name,loop,onend,uninterruptible]; flog('queue '+name); return true; }
       var meta=clipMeta(name);
       clearEntranceMask();
       cur=name;
-      xfade(src, !!loop&&!meta.freeze, onend, meta.freeze);
+      if(uninterruptible){ BUSY=true; }
+      xfade(src, !!loop&&!meta.freeze, function(){
+        if(uninterruptible){ BUSY=false; }
+        var q=QUE; QUE=null;
+        if(q){ setClip(q[0],q[1],q[2],q[3]); }
+        else if(onend){ onend(); }
+      }, meta.freeze);
       return true;
     }
+
     /* the single doorway: every clip change blurs in through the buffer */
     function xfade(src, loop, onend, freeze){ flog('xfade '+src.split('/').pop());
       vb.loop=loop;
-      vb.onended=null; vb.onerror=function(){ if(src!==CLIP.idle.src) toIdle(); };
-      vb.style.transition='none'; vb.style.opacity='0'; vb.style.filter=BASEF+' blur(9px)';
+      vb.onended=null; vb.onerror=function(){ if(src!==clipSrc('idle')) toIdle(); };
+      vb.style.opacity='0'; vb.style.filter=BASEF+' blur(9px)';
       vb.src=src; vb.play().catch(function(){});
       var done=false;
       function h(){ if(done) return; done=true;
@@ -180,10 +184,16 @@
       vb.addEventListener('playing', h, {once:true});
       setTimeout(h, 900);
     }
-    function toIdle(){ sleeping=false;
-      if(cur==='idle' && v.src.indexOf(CLIP.idle.src)>=0){ v.play().catch(function(){}); return; }
-      xfade(CLIP.idle.src, true, null, false); cur='idle'; }
-    function play(name){ setClip(name,false,toIdle); }
+    /* IDLE ROTATION per spec: idle(new) then light delight, alternating, full length each */
+    var rotFlip=false;
+    function rotate(){ if(BUSY||sleeping||PHASE!=='live') return;
+      rotFlip=!rotFlip;
+      var name=rotFlip?'idle':'idleB';
+      cur=name;
+      xfade(clipSrc(name), false, function(){ if(cur===name&&!BUSY&&!sleeping) rotate(); }, false);
+    }
+    function toIdle(){ sleeping=false; BUSY=false; rotate(); }
+    function play(name){ setClip(name,false,toIdle,true); }
 
     var st;
     function speak(t){ if(!t) return; var l=lang();
@@ -195,16 +205,19 @@
     function line(cat){ var l=lang(), arr=(D[l]&&D[l][cat])||D.en[cat]; if(!arr||!arr.length) return null;
       ix[cat]=((ix[cat]==null?-1:ix[cat])+1)%arr.length; return arr[ix[cat]]; }
 
-    /* inactivity lifecycle: 10s -> stretch, 20s -> sleep (only with real clips) */
+    /* inactivity per spec: 12s -> yawn+stretch (whole), 24s -> sleep (held) */
     var t1,t2;
     function alive(){ clearTimeout(t1); clearTimeout(t2);
-      if(sleeping){ toIdle(); if(clipSrc('sleep')!==clipSrc('idle')) speak(line('wake')); }
-      t1=setTimeout(function(){ if(cur==='idle') play('stretch'); },10000);
-      t2=setTimeout(function(){ if(cur==='idle'||cur==='stretch'){ if(setClip('sleep',true)) sleeping=true; } },20000);
+      if(sleeping){ sleeping=false; toIdle(); if(clipSrc('sleep')!==clipSrc('idle')) speak(line('wake')); }
+      t1=setTimeout(function(){ if(!BUSY&&!sleeping){ setClip('yawn',false,toIdle,true); } },12000);
+      t2=setTimeout(function(){ if(!BUSY||cur==='yawn'){ BUSY=false; if(setClip('sleep',true,null,false)) sleeping=true; } },24000);
     }
 
     function cue(name,o){ o=o||{}; alive();
-      var c=CUE[name]||'talking'; play(c);
+      var c=CUE[name]||'talking';
+      if(c==='RIGHT') c=pickFrom(POOL_RIGHT);
+      else if(c==='WRONG') c=pickFrom(POOL_WRONG);
+      play(c);
       if(o.quiet) return;
       if(o.say){ speak(o.say); return; }
       var p=CHANCE[name]; if(p!=null && Math.random()>p) return;
@@ -222,28 +235,17 @@
     window.Fen={
       cue:cue,
       say:function(t){ alive(); play('talking'); speak(t); },
-      react:function(n){ alive(); var m={delight:'delight',jump:'jump',stumble:'stumble'}; play(m[n]||n); },
+      react:function(n){ alive(); var m={delight:'lightDelight',jump:'jump',stumble:'notCorrect',stretch:'yawn'}; play(m[n]||n); },
       idle:toIdle,
       leave:function(cb){
         if(PHASE!=='live'){ if(cb)cb(); return; }
         PHASE='leaving'; flog('leave-start'); speak(line('leave'));
-        var W=Math.max(window.innerWidth,360);
-        function farewell(){
-          /* 2: treadmill carried right until she is fully gone */
-          flog('leave-tread');
-          xfade(clipSrc('walk'), true, null, false);
-          setTimeout(function(){
-            tween(1700, function(k){ v.style.transform='translateX('+Math.round(k*(W*0.7+200))+'px)'; },
-              function(){ flog('leave-gone'); fade(); });
-          },380);
-        }
-        function fade(){ tween(650, function(k){ strip.style.opacity=String(1-k); },
-          function(){ if(cb)cb(); }); }
-        /* 1: she gets up and walks right, whole */
-        var offSrc=CLIP.walkoff&&CLIP.walkoff.src?CLIP.walkoff.src:null;
-        if(offSrc){ xfade(offSrc, false, farewell, false);
-          setTimeout(function(){ if(PHASE==='leaving'&&flogHas('leave-tread')===false){ farewell(); } }, 6000); }
-        else farewell();
+        var src=clipSrc('waveWalk');
+        function fade(){ flog('leave-gone');
+          tween(650, function(k){ strip.style.opacity=String(1-k); }, function(){ if(cb)cb(); }); }
+        if(!src){ fade(); return; }
+        xfade(src, false, fade, false);
+        setTimeout(function(){ if(PHASE==='leaving'){ flog('leave-overrun'); fade(); } }, 9000);
       }
     };
     function flogHas(x){ try{ return (window.__fenlog||[]).some(function(l){ return l.indexOf(x)>=0; }); }catch(e){ return false; } }
