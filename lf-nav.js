@@ -23,6 +23,61 @@
   window.addEventListener('popstate', goBack);
   arm();
 
+  /* Fen's Play-bud: on the quiet home surfaces (tree, person, the globe) a small
+     ember disc breathes lower-left. Tap: Fen arrives with ONE data-drawn invitation.
+     "Come along" walks into the seeded game; "Not now" and she waves out, bud returns.
+     No strip, no companion, until asked. (Approved design 2026-07-31--fen-guidance--v1) */
+  (function(){
+    var page=(location.pathname.split('/').pop()||'index.html');
+    if(!/^(tree-real|person-real|index)\.html$/.test(page)) return;
+    if(document.querySelector('script[src^="lf-fen"]')) return;
+    function mkBud(){
+      if(document.getElementById('lfBud')) return;
+      var b=document.createElement('button');
+      b.id='lfBud'; b.setAttribute('aria-label','Play with Fen');
+      b.style.cssText='position:fixed;left:16px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:44;width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;'+
+        'background:radial-gradient(circle at 35% 30%, #f5b57e, #b65f2e 70%);box-shadow:0 0 18px rgba(232,149,92,.55), inset 0 0 8px rgba(255,255,255,.25);'+
+        'display:grid;place-items:center;animation:lfBudP 3.4s ease-in-out infinite;';
+      b.innerHTML='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3a1c08" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6l10 6-10 6z"/></svg>';
+      var st=document.createElement('style');
+      st.textContent='@keyframes lfBudP{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}'+
+        '@media (prefers-reduced-motion: reduce){#lfBud{animation:none}}';
+      document.head.appendChild(st); document.body.appendChild(b);
+      b.onclick=summon;
+    }
+    function loadScript(src){ return new Promise(function(res,rej){
+      var sc=document.createElement('script'); sc.src=src; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); }); }
+    var busy=false;
+    async function summon(){
+      if(busy) return; busy=true;
+      var bud=document.getElementById('lfBud'); if(bud) bud.style.display='none';
+      try{
+        if(!window.LFInvite) await loadScript('lf-invite.js?v=1');
+        if(!window.Fen) await loadScript('lf-fen.js?v=18');
+        /* our own client: the lib global is on every data page; the session rides localStorage */
+        var sb=null;
+        try{ if(window.supabase&&window.supabase.createClient)
+          sb=window.supabase.createClient('https://oabcdrktuikifbormjip.supabase.co','sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC'); }catch(e){}
+        var uid=null;
+        try{ var raw=localStorage.getItem('sb-oabcdrktuikifbormjip-auth-token'); if(raw){ uid=(JSON.parse(raw).user||{}).id||null; } }catch(e){}
+        var lang='en'; try{ lang=localStorage.getItem('lf_lang')||'en'; }catch(e){}
+        /* wait for her to settle, then the one invitation */
+        var tries=0;
+        (function when(){ if(window.Fen&&tries++<40){
+            var inv=null;
+            var ask=function(){ window.Fen.offer(inv.line, inv.yes, inv.no, function(yes){
+                if(yes){ location.href=inv.go; }
+                else { window.Fen.cue('leave',{quiet:true}); window.Fen.leave(function(){
+                        busy=false; var b2=document.getElementById('lfBud'); if(b2) b2.style.display='grid';
+                        window.__lfFenMounted=0; var s2=document.getElementById('lfFenStrip'); if(s2) s2.remove(); }); } }); };
+            if(sb&&uid&&window.LFInvite){ window.LFInvite.next(sb, uid, lang).then(function(r){ inv=r; setTimeout(ask, 6200); }); }
+            else { inv={line:'Come and know your family.',yes:'Come along',no:'Not now',go:'game-who-is-who.html'}; setTimeout(ask, 6200); }
+          } else if(tries<40){ setTimeout(when,150); } })();
+      }catch(e){ busy=false; var b3=document.getElementById('lfBud'); if(b3) b3.style.display='grid'; }
+    }
+    if(document.body) mkBud(); else document.addEventListener('DOMContentLoaded', mkBud);
+  })();
+
   /* floating "lenses" menu so every screen reaches the others */
   var css = '#lfnav{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:45;display:flex;flex-direction:column;align-items:flex-end;gap:10px;font-family:\'Hanken Grotesk\',system-ui,sans-serif;}'
   + '#lfnavPanel{display:none;position:absolute;bottom:calc(100% + 10px);right:0;flex-direction:column;gap:4px;max-height:min(68vh,520px);overflow-y:auto;overscroll-behavior:contain;background:rgba(9,16,30,.94);border:1px solid rgba(180,205,235,.18);border-radius:14px;padding:8px;min-width:168px;box-shadow:0 10px 34px rgba(0,0,0,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);}'  + '#lfnavPanel.lf-left{right:auto;left:0;}'  + '#lfnavPanel.lf-down{bottom:auto;top:calc(100% + 10px);}'

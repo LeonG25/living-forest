@@ -93,6 +93,7 @@
       sc.style.webkitMaskImage=FADE; sc.style.maskImage=FADE; }
     else { document.body.style.paddingBottom=STRIP+'px'; }
     var strip=mk('div','position:'+(fixed?'fixed':'absolute')+';left:0;right:0;bottom:0;height:'+STRIP+'px;z-index:5;overflow:hidden;cursor:pointer;opacity:0;transition:opacity .8s;');
+    strip.id='lfFenStrip';
     var PAGE_FOREST=!!document.querySelector('script[src^="lf-bg"]');
     var bg=vid(FOREST,'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;'); bg.playbackRate=0.6;
     var horizon=mk('div','position:absolute;left:0;right:0;top:0;height:42%;background:linear-gradient(to bottom,#080c14 6%,rgba(8,12,20,.4) 55%,transparent);pointer-events:none;');
@@ -237,6 +238,21 @@
       say:function(t){ alive(); play('talking'); speak(t); },
       react:function(n){ alive(); var m={delight:'lightDelight',jump:'jump',stumble:'notCorrect',stretch:'yawn'}; play(m[n]||n); },
       idle:toIdle,
+      offer:function(text, yesLabel, noLabel, cb){ alive(); play('talking'); speak(text);
+        var old=document.getElementById('lfFenOffer'); if(old) old.remove();
+        var box=mk('div','position:absolute;left:41%;bottom:10px;display:flex;gap:8px;z-index:7;');
+        box.id='lfFenOffer';
+        function chip(label,primary){ var b=document.createElement('button');
+          b.textContent=label;
+          b.style.cssText='border-radius:999px;padding:7px 15px;font-size:13px;cursor:pointer;font-family:inherit;'+
+            (primary?'border:1px solid #e8955c;color:#ffd9b8;background:rgba(232,149,92,.16);'
+                    :'border:1px solid rgba(143,163,184,.5);color:#8fa3b8;background:none;');
+          return b; }
+        var y=chip(yesLabel||'Come along',true), n2=chip(noLabel||'Not now',false);
+        y.onclick=function(){ box.remove(); if(cb) cb(true); };
+        n2.onclick=function(){ box.remove(); if(cb) cb(false); };
+        box.appendChild(y); box.appendChild(n2); strip.appendChild(box);
+      },
       leave:function(cb){
         if(PHASE!=='live'){ if(cb)cb(); return; }
         PHASE='leaving'; flog('leave-start'); speak(line('leave'));
