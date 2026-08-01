@@ -461,7 +461,7 @@ const STR={
     sibling2:'Siblings', sibsub:'share the same bar', documented:'Documented', remembered:'Remembered', uncertain:'Uncertain',
     pending:'Waiting for the keeper', apppath:'A path the app worked out',
     fitmsg:'The whole family', tracePick:'Pick a person, then trace how they reach you', traceoff:'Trace off', openPhoto:'Open this photograph',
-    noYou:'We don’t know yet which person is you. Ask the keeper to link your account.', noPath:'No family path found between them and you yet.',
+    noYou:'We don’t know yet which person is you. Ask the keeper to link your account.', whoTtl:'Who are you in the family?', whoSub:'Type your name — the forest will look for you.', whoMe:'This is me', whoNone:'No one found by that name yet — the keeper can add you.', whoDone:(n)=>`Welcome — you are ${n}. The keeper will confirm it.`, noPath:'No family path found between them and you yet.',
     homeToast:'Back to the globe →', born:'b. {y}', child_of:'child of {n}',
     /* connect */
     connectTitle:'Connect this person', connectSub:'to another relative — the app makes sure it’s right',
@@ -489,7 +489,7 @@ const STR={
     sibling2:'Братья и сёстры', sibsub:'на общей перекладине', documented:'Задокументировано', remembered:'По памяти', uncertain:'Неточно',
     pending:'Ждёт хранителя', apppath:'Путь, вычисленный приложением',
     fitmsg:'Вся семья', tracePick:'Выберите человека, чтобы проследить путь к вам', traceoff:'Трасса выкл', openPhoto:'Открыть фотографию',
-    noYou:'Мы пока не знаем, кто из людей — это вы. Попросите хранителя связать ваш аккаунт.', noPath:'Пока не найден семейный путь между ними и вами.',
+    noYou:'Мы пока не знаем, кто из людей — это вы. Попросите хранителя связать ваш аккаунт.', whoTtl:'Кто вы в семье?', whoSub:'Введите своё имя — лес поищет вас.', whoMe:'Это я', whoNone:'Пока никого с таким именем — хранитель может добавить вас.', whoDone:(n)=>`Добро пожаловать — вы ${n}. Хранитель подтвердит это.`, noPath:'Пока не найден семейный путь между ними и вами.',
     homeToast:'К глобусу →', born:'р. {y}', child_of:'ребёнок: {n}',
     connectTitle:'Связать этого человека', connectSub:'с другим родственником — приложение проверит',
     s1:'Кто второй человек?', s2:'Кем они приходятся?', s3:'Насколько вы уверены?',
@@ -516,7 +516,7 @@ const STR={
     sibling2:'אחים ואחיות', sibsub:'חולקים אותו מוט', documented:'מתועד', remembered:'מהזיכרון', uncertain:'לא בטוח',
     pending:'ממתין לשומר', apppath:'נתיב שהאפליקציה חישבה',
     fitmsg:'כל המשפחה', tracePick:'בחר אדם, ועקוב איך הוא מגיע אליך', traceoff:'מעקב כבוי', openPhoto:'פתח את התצלום',
-    noYou:'עדיין לא ידוע מי מהאנשים הוא אתה. בקשו מהשומר לקשר את החשבון.', noPath:'עדיין לא נמצא נתיב משפחתי בינם ובינך.',
+    noYou:'עדיין לא ידוע מי מהאנשים הוא אתה. בקשו מהשומר לקשר את החשבון.', whoTtl:'מי אתם במשפחה?', whoSub:'הקלידו את שמכם — היער יחפש אתכם.', whoMe:'זה אני', whoNone:'לא נמצא אף אחד בשם הזה — השומר יכול להוסיף אתכם.', whoDone:(n)=>`ברוכים הבאים — אתם ${n}. השומר יאשר זאת.`, noPath:'עדיין לא נמצא נתיב משפחתי בינם ובינך.',
     homeToast:'חזרה לגלובוס →', born:'נ׳ {y}', child_of:'ילד/ה של {n}',
     connectTitle:'לחבר את האדם הזה', connectSub:'לקרוב אחר — האפליקציה מוודאת שזה נכון',
     s1:'מי האדם השני?', s2:'מה הקשר ביניהם?', s3:'עד כמה אתה בטוח?',
@@ -1375,6 +1375,54 @@ function zoomAt(f,cx,cy){ const r=vp.getBoundingClientRect(); const px=(cx-r.lef
   const ns=Math.min(ZMAX,Math.max(ZMIN,state.scale*f)); state.tx-=px*(ns-state.scale); state.ty-=py*(ns-state.scale); state.scale=ns; apply(); }
 function vpCenter(){ const r=vp.getBoundingClientRect(); return {x:r.left+r.width/2, y:r.top+r.height/2}; }
 
+/* self-service identity: "the process" (keeper's direction 2026-08-01) — a signed-in
+   member with no link claims who they are; token-overlap match suggests the nearest
+   names (Zoya Golnick finds Zoya Golnick-Gurvich); the claim is an anchor, marked for
+   the keeper to confirm. The forest asks — it never assumes. */
+function openWhoAmI(){
+  const st=STR[state.lang];
+  const old=document.getElementById('whoami'); if(old) old.remove();
+  const w=document.createElement('div'); w.id='whoami';
+  w.style.cssText='position:fixed;inset:0;z-index:80;background:rgba(4,8,14,.82);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center;';
+  w.innerHTML=`<div style="width:min(560px,100%);background:rgba(10,18,30,.97);border:1px solid rgba(180,205,235,.2);border-radius:22px 22px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom));" ${state.lang==='he'?'dir="rtl"':''}>
+    <div class="serif" style="font-size:20px;margin-bottom:4px">${esc(st.whoTtl)}</div>
+    <div style="font-size:13px;color:#8fa3b8;margin-bottom:12px">${esc(st.whoSub)}</div>
+    <input id="whoQ" class="inpq" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(127,180,216,.35);background:rgba(6,12,20,.9);color:#f4ecdb;font-size:16px;${state.lang==='he'?'direction:rtl;text-align:right;':''}" autocomplete="off">
+    <div id="whoList" style="margin-top:10px;display:flex;flex-direction:column;gap:8px;max-height:44vh;overflow:auto"></div>
+  </div>`;
+  w.addEventListener('click',e=>{ if(e.target===w) w.remove(); });
+  document.body.appendChild(w);
+  const q=w.querySelector('#whoQ'), list=w.querySelector('#whoList');
+  function score(person, toks){ const hay=(person.display_name||'').toLowerCase();
+    let sc=0; toks.forEach(t=>{ if(!t) return; if(hay.includes(t)) sc+=t.length>2?2:1;
+      else { for(const part of hay.split(/[\s\-]+/)) if(part.startsWith(t)) { sc+=1; break; } } });
+    return sc; }
+  function render(){
+    const toks=q.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    if(!toks.length){ list.innerHTML=''; return; }
+    const ranked=people.map(p=>({p,sc:score(p,toks)})).filter(x=>x.sc>0)
+      .sort((a,b)=>b.sc-a.sc).slice(0,5);
+    if(!ranked.length){ list.innerHTML=`<div style="font-size:13px;color:#8fa3b8;padding:8px 2px">${esc(st.whoNone)}</div>`; return; }
+    list.innerHTML=ranked.map(x=>`
+      <button data-claim="${esc(x.p.id)}" style="display:flex;align-items:center;gap:12px;text-align:${state.lang==='he'?'right':'left'};padding:10px 12px;border-radius:14px;border:1px solid rgba(143,214,160,.35);background:rgba(143,214,160,.07);color:#f4ecdb;cursor:pointer;font-family:inherit;">
+        <span class="por" data-face="${esc(x.p.id)}" style="width:44px;height:44px;border-radius:50%;flex:0 0 auto;display:block;overflow:hidden;background:#182436"></span>
+        <span style="flex:1"><span class="serif" style="font-size:16px;display:block">${esc(x.p.display_name||'')}</span></span>
+        <span style="font-size:12px;color:#8fd6a0;border:1px solid rgba(143,214,160,.5);border-radius:99px;padding:5px 11px;white-space:nowrap">${esc(st.whoMe)}</span>
+      </button>`).join('');
+    try{ hydrateFaces(list); }catch(e){}
+    list.querySelectorAll('[data-claim]').forEach(b=>b.onclick=async ()=>{
+      const pid=b.getAttribute('data-claim');
+      try{
+        await sb.from('player_anchors').upsert({user_id:user.id, person_id:pid, status:'claimed'},{onConflict:'user_id'});
+        viewerPersonId=pid; buildCards();
+        const nm=(people.find(p=>p.id===pid)||{}).display_name||'';
+        toast(st.whoDone(nm)); w.remove();
+        if(pos[pid]) centerOn(pid, Math.max(state.scale,1.0));
+      }catch(e){ toast(s.noYou); }
+    });
+  }
+  q.addEventListener('input',render); setTimeout(()=>q.focus(),150);
+}
 function onCardTap(id){ if(state.trace){ state.sel=(state.sel===id?null:id); buildCards(); buildLinks(); if(state.sel&&viewerPersonId&&state.sel!==viewerPersonId) centerOn(state.sel,state.scale); return; }
   location.href='person-real.html?id='+encodeURIComponent(id); }
 
@@ -1395,7 +1443,7 @@ document.body.addEventListener('click',e=>{
   else if(a==='zout'){ stopInertia(); zoomAt(1/1.14, vpCenter().x, vpCenter().y); }
   else if(a==='zreset'){ stopInertia(); zoomAt(1/state.scale, vpCenter().x, vpCenter().y); }
   else if(a==='fit'){ stopInertia(); fitAll(); toast(s.fitmsg); }
-  else if(a==='me'){ stopInertia(); if(viewerPersonId&&pos[viewerPersonId]){ centerOn(viewerPersonId, Math.max(state.scale,1.0)); } else { toast(s.noYou); } }
+  else if(a==='me'){ stopInertia(); if(viewerPersonId&&pos[viewerPersonId]){ centerOn(viewerPersonId, Math.max(state.scale,1.0)); } else if(user){ openWhoAmI(); } else { toast(s.noYou); } }
   else if(a==='trace'){ state.trace=!state.trace; $('#traceBtn').classList.toggle('on',state.trace);
     if(!state.trace){ state.sel=null; buildCards(); buildLinks(); toast(s.traceoff); }
     else if(!viewerPersonId){ toast(s.noYou); }
@@ -1509,6 +1557,8 @@ async function boot(){
   user=session.user;
   try{ const {data:pr}=await sb.from('profiles').select('is_keeper,preferred_lang,person_id').eq('id',user.id).maybeSingle();
     if(pr){ state.keeper=!!pr.is_keeper; if(pr.person_id) viewerPersonId=pr.person_id; if(pr.preferred_lang&&!stored&&STR[pr.preferred_lang]) state.lang=pr.preferred_lang; }
+    if(!viewerPersonId){ try{ const {data:an}=await sb.from('player_anchors').select('person_id,status').eq('user_id',user.id).maybeSingle();
+      if(an&&an.person_id){ viewerPersonId=an.person_id; } }catch(e){} }
   }catch(e){ try{ const {data:pr2}=await sb.from('profiles').select('is_keeper,preferred_lang').eq('id',user.id).maybeSingle(); if(pr2){ state.keeper=!!pr2.is_keeper; if(pr2.preferred_lang&&!stored&&STR[pr2.preferred_lang]) state.lang=pr2.preferred_lang; } }catch(e2){} }
   await loadData();
   $('#loading').style.display='none';
