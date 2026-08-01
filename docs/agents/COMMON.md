@@ -24,3 +24,9 @@ Stay under 20 tool-use turns. If the queue is bigger than the budget, fix the to
 ## Canon — read-and-obey order for every agent, every run
 1. CLAUDE.md (state + rules; contains embedded GAME-FEEL SPEC §0 voice law + DESIGN HOUSE RULES) 2. docs/progression-spec.md 3. docs/companion-fen.md.
 When your task conflicts with any of these, the doc wins and you FILE the conflict. Consistency with the documentation outranks completing the task.
+
+## Waking and sleeping (keeper's rule, 2026-08-01)
+The paid agents sleep. They run only when work is pushed: `echo N > /home/botuser/qc/wake`
+grants N passes, then sleep returns. The free detectors (smoke sweep, links, screenshots)
+run every cycle at no cost; any error they find wakes one pass on its own. Nobody verifies
+a clean, unchanged forest.
