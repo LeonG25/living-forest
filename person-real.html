@@ -1254,7 +1254,10 @@
         if(f.field==='face'){ try{ await sb.from('person_facts').delete().eq('person_id',PERSON_ID).eq('field','face').neq('id',id); }catch(e){} }
         try{ await sb.from('person_facts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){} } }
     else if(kind==='nv'){ try{ await sb.from('name_variants').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){} }
-    else if(kind==='group'){ for(const ff of facts.filter(x=>x.group_id===id&&x.status!=='published')) { try{ await sb.from('person_facts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',ff.id); }catch(e){} } }
+    else if(kind==='group'){ const NP2=['given','family','patronymic','maiden','called','honorific'];
+      for(const ff of facts.filter(x=>x.group_id===id&&x.status!=='published')) {
+        if(NP2.includes(ff.field)){ try{ await sb.from('person_facts').delete().eq('person_id',PERSON_ID).eq('lang',ff.lang).eq('field',ff.field).eq('status','published').neq('id',ff.id); }catch(e){} }
+        try{ await sb.from('person_facts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',ff.id); }catch(e){} } }
     else if(kind==='artefact'){ try{ await sb.from('artefacts').update({pub_status:'published',reviewed_by:user.id}).eq('id',id); }catch(e){} }
     await reload(); toast(d().approve+' ✓'); }
   async function declineRef(ref){ const [kind,id]=ref.split(':');

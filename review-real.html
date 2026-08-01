@@ -340,7 +340,7 @@
       all:'All', groups:{ newcomers:'Newcomers', names:'Names', memories:'Memories', facts:'Facts', connections:'Connections' },
       cntNew:'proposed people', cntNames:'name parts', cntMem:'waiting', cntFacts:'waiting', cntConn:'waiting',
       connSo:'so', removeReq:'Remove this connection',
-      waiting:'Waiting', approve:'Approve', decline:'Decline', approved:'Welcomed — it lives in the forest now', declined:'Set aside',
+      waiting:'Waiting', approve:'Approve', decline:'Decline', approved:'Welcomed — it lives in the forest now', declined:'Set aside', approveFail:'The forest could not take it — try once more',
       toapprove:'Approve and it joins the forest in <span class="g">gold</span>, for the family.',
       suggestedBy:'Suggested by', toldBy:'Told by', uploadedBy:'uploaded by', someone:'a family member', ago:'',
       newcomerFor:'Someone the forest doesn’t hold yet', forWhom:'for',
@@ -368,7 +368,7 @@
       all:'Всё', groups:{ newcomers:'Новые', names:'Имена', memories:'Воспоминания', facts:'Факты', connections:'Связи' },
       cntNew:'новых людей', cntNames:'частей имени', cntMem:'ждёт', cntFacts:'ждёт', cntConn:'ждёт',
       connSo:'значит', removeReq:'Удалить эту связь',
-      waiting:'Ожидает', approve:'Одобрить', decline:'Отклонить', approved:'Принято — теперь это в лесу', declined:'Отложено',
+      waiting:'Ожидает', approve:'Одобрить', decline:'Отклонить', approved:'Принято — теперь это в лесу', declined:'Отложено', approveFail:'Не получилось принять — попробуйте ещё раз',
       toapprove:'Одобрите — и это войдёт в лес <span class="g">золотом</span>, для семьи.',
       suggestedBy:'Предложил', toldBy:'Рассказал', uploadedBy:'загрузил', someone:'член семьи', ago:'',
       newcomerFor:'Тот, кого лес ещё не знает', forWhom:'для',
@@ -396,7 +396,7 @@
       all:'הכל', groups:{ newcomers:'חדשים', names:'שמות', memories:'זכרונות', facts:'עובדות', connections:'קשרים' },
       cntNew:'אנשים מוצעים', cntNames:'חלקי שם', cntMem:'ממתינים', cntFacts:'ממתינות', cntConn:'ממתינים',
       connSo:'אז', removeReq:'הסר את הקשר הזה',
-      waiting:'ממתין', approve:'אשר', decline:'דחה', approved:'התקבל — כעת זה ביער', declined:'הונח בצד',
+      waiting:'ממתין', approve:'אשר', decline:'דחה', approved:'התקבל — כעת זה ביער', declined:'הונח בצד', approveFail:'לא הצלחנו לקבל — נסו שוב',
       toapprove:'אשר וזה יצטרף ליער ב<span class="g">זהב</span>, למשפחה.',
       suggestedBy:'הוצע על ידי', toldBy:'סופר על ידי', uploadedBy:'הועלה על ידי', someone:'בן משפחה', ago:'',
       newcomerFor:'מישהו שהיער עדיין לא מכיר', forWhom:'עבור',
@@ -757,8 +757,19 @@
           /* one portrait per person: supersede older published crops and stale pending suggestions */
           try{ await sb.from('person_facts').delete().eq('person_id',f.person_id).eq('field','face').neq('id',id); }catch(e){} }
         if(Object.keys(patch).length && f.person_id){ try{ await sb.from('people').update(patch).eq('id',f.person_id); }catch(e){} }
-        try{ await sb.from('person_facts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){} } }
-    else if(kind==='group'){ for(const ff of (pending.facts||[]).filter(x=>x.group_id===id&&x.status!=='published')){ try{ await sb.from('person_facts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',ff.id); }catch(e){} } }
+        /* one published part per (person,lang,field): supersede the old one first,
+           else person_facts_one_published_name_part rejects the publish (the silent
+           root of every stubborn approval). The new value is already stored. */
+        const NAMEPARTS=['given','family','patronymic','maiden','called','honorific'];
+        if(NAMEPARTS.includes(f.field)){ try{ await sb.from('person_facts').delete().eq('person_id',f.person_id).eq('lang',f.lang).eq('field',f.field).eq('status','published').neq('id',id); }catch(e){} }
+        const u=await sb.from('person_facts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id);
+        if(u.error){ console.error('approve fact',u.error); await reload(); toast(d().approveFail,false); return; } } }
+    else if(kind==='group'){
+      const NAMEPARTS2=['given','family','patronymic','maiden','called','honorific'];
+      for(const ff of (pending.facts||[]).filter(x=>x.group_id===id&&x.status!=='published')){
+        if(NAMEPARTS2.includes(ff.field)){ try{ await sb.from('person_facts').delete().eq('person_id',ff.person_id).eq('lang',ff.lang).eq('field',ff.field).eq('status','published').neq('id',ff.id); }catch(e){} }
+        const u2=await sb.from('person_facts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',ff.id);
+        if(u2.error){ console.error('approve group',u2.error); await reload(); toast(d().approveFail,false); return; } } }
     else if(kind==='nv'){ try{ await sb.from('name_variants').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){} }
     else if(kind==='artefact'){ try{ await sb.from('artefacts').update({pub_status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){ try{ await sb.from('artefacts').update({pub_status:'published',reviewed_by:user.id}).eq('id',id); }catch(e2){} } }
     else if(kind==='person'){ try{ await sb.from('people').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){ try{ await sb.from('people').update({status:'published'}).eq('id',id); }catch(e2){} } }
