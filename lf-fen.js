@@ -105,7 +105,9 @@
       setTimeout(function(){
         try{ cur='entrance'; v.loop=false;
           v.style.webkitMaskImage=MASK; v.style.maskImage=MASK;
-          v.onended=function(){ try{ v.pause(); }catch(e){} cur='entrance-held'; };
+          v.onended=function(){ try{ v.pause(); }catch(e){} cur='entrance-held';
+            var p=setClip._pend; setClip._pend=null;
+            if(p) setTimeout(function(){ setClip(p[0],p[1],p[2]); },250); };
           v.src=CLIP.arrive.src; v.play().catch(function(){ toIdle(); });
         }catch(e){ toIdle(); return; }
         v.addEventListener('playing', function(){ v.style.opacity='1'; }, {once:true});
@@ -120,6 +122,8 @@
       var real = (src!==CLIP.idle.src) || name==='idle';
       if(!real){ /* fallback resolves to idle — leave idle running */ if(cur!=='idle'){ toIdle(); } return false; }
       if(v.src.indexOf(src)>=0 && loop) return true;
+      /* never cut the arrival: requests during the entrance wait at the door */
+      if(cur==='entrance'){ setClip._pend=[name,loop,onend]; return true; }
       var meta=clipMeta(name);
       clearEntranceMask();
       cur=name; v.loop=!!loop&&!meta.freeze;
