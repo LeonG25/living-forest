@@ -30,6 +30,28 @@
       return (p&&(p.called_name||p.display_name))||''; }catch(e){ return ''; }
   }
   window.LFInvite={
+    /* three standing invitations for the clearing: meet, story, place */
+    trio: async function(sb, uid, lang){
+      lang=lang||'en';
+      const out={};
+      try{ out.meet=await window.LFInvite.next(sb, uid, lang); }catch(e){}
+      try{
+        const {data:subs}=await sb.from('artefact_subjects').select('person_id');
+        const cnt={}; (subs||[]).forEach(x=>{ cnt[x.person_id]=(cnt[x.person_id]||0)+1; });
+        const ids=Object.keys(cnt).filter(id=>!(out.meet&&out.meet.person_id===id)).sort((a,b)=>cnt[b]-cnt[a]);
+        if(ids.length){ const pid=ids[Math.floor(Math.random()*Math.min(3,ids.length))];
+          const nm=await nameFor(sb,pid,lang)||'';
+          out.story={ kind:'story', person_id:pid, line:t(lang,'story',nm),
+                      go:'game-who-is-who.html?id='+encodeURIComponent(pid) }; }
+      }catch(e){}
+      try{
+        const {data:pg}=await sb.from('place_geo').select('name,country').limit(40);
+        const pick=(pg||[])[Math.floor(Math.random()*Math.max(1,(pg||[]).length))];
+        out.place={ kind:'place', place:pick&&pick.name||null,
+                    line:t(lang,'place'), go:'game-where-was-this.html' };
+      }catch(e){ out.place={kind:'place', line:t(lang,'place'), go:'game-where-was-this.html'}; }
+      return out;
+    },
     next: async function(sb, uid, lang){
       lang=lang||'en';
       try{

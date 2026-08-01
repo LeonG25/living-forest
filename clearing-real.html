@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>The clearing · The Living Forest</title>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&family=Hanken+Grotesk:wght@300..600&family=Azeret+Mono:wght@300..500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="lf-place.js?v=1"></script>
+<script src="lf-invite.js?v=2"></script>
+<script src="lf-bg.js?v=2" defer></script>
+<style>
+:root{ --ink:#fbf5e8; --muted:#8fa3b8; --gold:#f3cd84; --cool:#7fb4d8; --ember:#e8955c; }
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{ background:#050a10; color:var(--ink); font-family:'Hanken Grotesk',sans-serif; overflow:hidden; }
+.moon{ position:fixed; top:34px; inset-inline-end:34px; width:38px; height:38px; border-radius:50%; z-index:1;
+  background:radial-gradient(circle at 35% 35%, #fff7e0, #d9c79a); box-shadow:0 0 30px rgba(255,240,200,.4); }
+.fly{ position:fixed; width:4px; height:4px; border-radius:50%; background:#ffe9b0; z-index:1;
+  box-shadow:0 0 10px 3px rgba(255,233,176,.5); opacity:.7; animation:fl 11s ease-in-out infinite; }
+@keyframes fl{0%,100%{transform:translate(0,0);opacity:.25}50%{transform:translate(26px,-40px);opacity:.85}}
+@media (prefers-reduced-motion: reduce){ .fly{animation:none} }
+.hd{ position:fixed; top:0; left:0; right:0; z-index:6; display:flex; align-items:center; gap:12px; padding:14px 16px;
+  background:linear-gradient(rgba(5,10,16,.85), transparent); }
+.hd .back{ width:44px; height:44px; border-radius:12px; border:1px solid rgba(180,205,235,.2); background:rgba(9,16,30,.7);
+  color:var(--ink); display:grid; place-items:center; cursor:pointer; font-size:18px; }
+.hd .tk{ font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.3em; color:var(--ember); text-transform:uppercase; }
+.hd .tn{ font-family:'Newsreader',serif; font-weight:300; font-size:22px; margin-top:1px; }
+.lants{ position:fixed; inset:76px 0 190px 0; z-index:5; padding:8px 14px; display:flex; flex-direction:column;
+  gap:14px; justify-content:center; max-width:520px; margin:0 auto; }
+.lant{ position:relative; border-radius:16px; padding:13px 15px 13px 17px; background:rgba(10,18,28,.82);
+  backdrop-filter:blur(6px); cursor:pointer; border:1px solid rgba(127,180,216,.4); transition:transform .2s, border-color .2s; }
+.lant:active{ transform:scale(.985); }
+.lant.story{ border-color:rgba(243,205,132,.55); }
+.lant b{ display:block; font-family:'Newsreader',serif; font-weight:400; font-size:15.5px; margin-bottom:3px; }
+.lant.meet b, .lant.place b{ color:var(--cool); } .lant.story b{ color:var(--gold); }
+.lant p{ font-size:13.5px; line-height:1.45; color:#dfe8f0; }
+.lant::before{ content:''; position:absolute; top:-13px; inset-inline-start:18px; width:8px; height:8px; border-radius:50%;
+  background:#ffe9b0; box-shadow:0 0 12px 4px rgba(255,233,176,.55); }
+.reroll{ position:fixed; bottom:196px; left:0; right:0; z-index:5; text-align:center; }
+.reroll button{ border:none; background:none; color:var(--muted); font-size:12.5px; cursor:pointer; font-family:inherit;
+  padding:8px 14px; }
+.quiet{ position:fixed; top:76px; inset-inline-end:14px; z-index:6; display:flex; align-items:center; gap:8px;
+  font-size:11.5px; color:var(--muted); background:rgba(9,16,30,.7); border:1px solid rgba(180,205,235,.16);
+  border-radius:99px; padding:7px 12px; cursor:pointer; }
+.quiet .dot{ width:10px; height:10px; border-radius:50%; background:var(--ember); box-shadow:0 0 8px rgba(232,149,92,.6); }
+.quiet.off .dot{ background:#39465a; box-shadow:none; }
+[dir=rtl] .hd{ direction:rtl }
+</style></head>
+<body>
+<div class="moon"></div>
+<div class="fly" style="left:16%;top:32%"></div><div class="fly" style="left:74%;top:24%;animation-delay:3s"></div>
+<div class="fly" style="left:58%;top:56%;animation-delay:6s"></div><div class="fly" style="left:30%;top:64%;animation-delay:9s"></div>
+<div class="hd">
+  <button class="back" data-act="back" aria-label="Back">‹</button>
+  <div><div class="tk" data-t="tk">FEN · THE CLEARING</div><div class="tn" data-t="tn">The clearing</div></div>
+</div>
+<button class="quiet" id="quietT" style="display:none"><span class="dot"></span><span id="quietL"></span></button>
+<div class="lants" id="lants"></div>
+<div class="reroll"><button id="reroll" style="display:none"></button></div>
+<script src="lf-fen.js?v=19"></script>
+<script src="lf-nav.js?v=10" data-here="clearing" data-parent="index.html"></script>
+<script>
+const SB_URL='https://oabcdrktuikifbormjip.supabase.co';
+const SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
+const sb=window.supabase.createClient(SB_URL,SB_KEY);
+const T={
+ en:{ tk:'FEN · THE CLEARING', tn:'The clearing',
+      meetT:'Someone to meet', storyT:'A story missing its teller? Not here — a story waiting for you', placeT:'A place to walk',
+      storyT2:'A story to hear', reroll:'show me other paths ›',
+      quietOn:'Fen speaks on her own', quietOff:'Fen speaks only here',
+      empty:'The lanterns are lighting…' },
+ ru:{ tk:'ФЕН · ПОЛЯНА', tn:'Поляна',
+      meetT:'С кем познакомиться', storyT2:'История, которую стоит услышать', placeT:'Куда пройтись',
+      reroll:'покажи другие тропинки ›',
+      quietOn:'Фен заговаривает сама', quietOff:'Фен говорит только здесь',
+      empty:'Фонарики зажигаются…' },
+ he:{ tk:'פן · קרחת היער', tn:'קרחת היער',
+      meetT:'מישהו להכיר', storyT2:'סיפור לשמוע', placeT:'מקום ללכת אליו',
+      reroll:'הראי לי שבילים אחרים ›',
+      quietOn:'פן מדברת בעצמה', quietOff:'פן מדברת רק כאן',
+      empty:'הפנסים נדלקים…' } };
+function lang(){ try{ return localStorage.getItem('lf_lang')||'en'; }catch(e){ return 'en'; } }
+function d(){ return T[lang()]||T.en; }
+function applyLang(){ const L=d();
+  document.documentElement.dir=(lang()==='he')?'rtl':'ltr';
+  document.querySelector('[data-t=tk]').textContent=L.tk;
+  document.querySelector('[data-t=tn]').textContent=L.tn;
+  document.getElementById('reroll').textContent=L.reroll;
+  syncQuiet(); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+/* the whisper voice toggle lives here (design: the clearing owns Fen's voice settings) */
+const QK='lf_fen_quiet';
+function syncQuiet(){ const q=localStorage.getItem(QK)==='1'; const el=document.getElementById('quietT');
+  el.style.display='flex'; el.classList.toggle('off',q);
+  document.getElementById('quietL').textContent=q?d().quietOff:d().quietOn; }
+document.getElementById('quietT').onclick=()=>{ localStorage.setItem(QK, localStorage.getItem(QK)==='1'?'0':'1'); syncQuiet(); };
+async function uid(){ try{ const {data}=await sb.auth.getSession(); return data&&data.session&&data.session.user.id||null; }catch(e){ return null; } }
+let SHOWN=0;
+async function light(){
+  const L=d(); const box=document.getElementById('lants');
+  box.innerHTML='<div style="text-align:center;color:#8fa3b8;font-size:13px">'+esc(L.empty)+'</div>';
+  const u=await uid();
+  if(!u){ location.href='index.html'; return; }
+  const trio=await LFInvite.trio(sb,u,lang());
+  const cards=[];
+  if(trio.meet&&trio.meet.kind==='meet') cards.push(['meet',L.meetT,trio.meet.line,trio.meet.go]);
+  if(trio.story) cards.push(['story',L.storyT2,trio.story.line,trio.story.go]);
+  if(trio.place) cards.push(['place',L.placeT,trio.place.line,trio.place.go]);
+  box.innerHTML=cards.map(c=>`<div class="lant ${c[0]}" data-go="${esc(c[3])}"><b>${esc(c[1])}</b><p>${esc(c[2])}</p></div>`).join('');
+  box.querySelectorAll('.lant').forEach(el=>el.onclick=()=>{ const go=el.getAttribute('data-go');
+    if(window.Fen){ Fen.leave(()=>location.href=go); } else location.href=go; });
+  document.getElementById('reroll').style.display= SHOWN++<1 ? 'inline' : 'none';
+}
+document.getElementById('reroll').onclick=light;
+applyLang(); light();
+window.addEventListener('storage',e=>{ if(e.key==='lf_lang'){ applyLang(); light(); } });
+</script>
+</body></html>

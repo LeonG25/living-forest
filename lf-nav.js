@@ -52,7 +52,7 @@
       if(busy) return; busy=true;
       var bud=document.getElementById('lfBud'); if(bud) bud.style.display='none';
       try{
-        if(!window.LFInvite) await loadScript('lf-invite.js?v=1');
+        if(!window.LFInvite) await loadScript('lf-invite.js?v=2');
         if(!window.Fen) await loadScript('lf-fen.js?v=19');
         /* our own client: the lib global is on every data page; the session rides localStorage */
         var sb=null;
@@ -99,7 +99,8 @@
              ['play','❂','Find them in a crowd','crowd-real.html'],
              ['when','◷','The timeline','timeline-real.html'],
              ['add','✎','Contribute','contribute-real.html'],
-             ['journal','❦','My journal','journal-real.html']];
+             ['journal','❦','My journal','journal-real.html'],
+             ['clearing','🦊','The clearing','clearing-real.html']];
   var wrap=document.createElement('div'); wrap.id='lfnav';
   var panel=document.createElement('div'); panel.id='lfnavPanel';
   items.forEach(function(it){
