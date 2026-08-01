@@ -894,6 +894,31 @@
   })();
   function placeDatalist(){ return `<datalist id="placelist">${placeSuggestions().map(s=>`<option value="${esc(s)}"></option>`).join('')}</datalist>`; }
   function placesAppLine(n){ const t={ en:`Tied to ${n} place${n===1?'':'s'}; the route between them is drawn by the app.`, ru:`Связана с ${n} мест${n===1?'ом':'ами'}; маршрут строит приложение.`, he:`קשורה ל-${n} מקומות; המסלול משורטט על ידי האפליקציה.` }; return t[state.lang]||t.en; }
+  /* a place carries its country: entering the home fills the country field beside it
+     (place_geo first, nominatim once for strangers - answer persisted for everyone) */
+  async function countryFor(place){
+    place=String(place||'').trim(); if(!place) return null;
+    try{ const {data:r}=await sb.from('place_geo').select('country,label,lat,lng').eq('name',place).maybeSingle();
+      if(r){ if(r.country) return r.country;
+        if(r.label){ const c=r.label.split(',').pop().trim(); if(c){ try{ sb.from('place_geo').update({country:c}).eq('name',place).then(()=>{},()=>{}); }catch(e){} return c; } } } }catch(e){}
+    try{
+      const lg={en:'en',ru:'ru',he:'he'}[state.lang]||'en';
+      const resp=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&accept-language='+lg+'&q='+encodeURIComponent(place));
+      const j=await resp.json(); const hit=j&&j[0]; if(!hit) return null;
+      const c=(hit.address&&hit.address.country)||null;
+      try{ sb.from('place_geo').insert({name:place,lat:+hit.lat,lng:+hit.lon,label:hit.display_name||null,country:c}).then(()=>{},()=>{}); }catch(e){}
+      return c;
+    }catch(e){ return null; }
+  }
+  function wireCountryTie(root){
+    const ph=root.querySelector('[data-newhome]'), pc=root.querySelector('[data-newcountry]');
+    if(!ph||!pc||ph._tied) return; ph._tied=1;
+    let manual=false;
+    pc.addEventListener('input',()=>{ manual=!!pc.value.trim(); });
+    async function tie(){ const val=ph.value.trim(); if(!val||manual||pc.value.trim()) return;
+      const c=await countryFor(val); if(c&&!pc.value.trim()&&!manual){ pc.value=c; pc.dispatchEvent(new Event('input',{bubbles:true})); } }
+    ph.addEventListener('change',tie); ph.addEventListener('blur',tie);
+  }
   /* "add a home": the home place AND a country field (Item D), each a place typeahead (Item E) */
   function livedBlock(){ const L=d(); const pubs=pubList('lived','und'); const pends=pendList('lived','und');
     const pubc=pubs.map(r=>`<span class="chip cool"><span class="ord">${String((r.ord||0)+1).padStart(2,'0')}</span>${esc(r.value)}<span class="x" data-del="${r.id}">${sv(I.x,2)}</span></span>`).join('');
@@ -1302,7 +1327,7 @@
       if(act==='watch'){ const q=(person&&person.id)?('?id='+encodeURIComponent(person.id)):''; location.href='reel-real.html'+q; return; }
       if(act==='addmemory'){ location.href='contribute-add-real.html'; return; }
       if(act==='addhome'){ const card=$('.facet[data-facet="places"]'); const box=card&&card.querySelector('[data-homeadd]');
-        if(box){ box.style.display='block'; const i=box.querySelector('[data-newhome]'); if(i) i.focus(); } return; }
+        if(box){ box.style.display='block'; wireCountryTie(box); const i=box.querySelector('[data-newhome]'); if(i) i.focus(); } return; }
       if(act==='homecancel'){ const box=$('.facet[data-facet="places"] [data-homeadd]'); if(box) box.style.display='none'; return; }
       if(act==='homesend'){ const card=$('.facet[data-facet="places"]'); if(!card) return;
         const hi=card.querySelector('[data-newhome]'), ci=card.querySelector('[data-newcountry]');
