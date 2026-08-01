@@ -628,7 +628,7 @@
     return sb.from('place_geo').select('name,lat,lng,label,country,country_code').then(function(r){
       geoCache={};
       (r&&r.data||[]).forEach(function(g){
-        if(g && g.lat!=null && g.lng!=null) geoCache[norm(g.name)]={ lat:+g.lat, lng:+g.lng, label:g.label||'', cc:g.country_code||'', country:g.country||'' };
+        if(g && g.lat!=null && g.lng!=null) geoCache[norm(g.name)]={ lat:+g.lat, lng:+g.lng, label:g.label||'', country_code:g.country_code||'', country:g.country||'' };
       });
       return geoCache;
     }, function(){ geoCache={}; return geoCache; });
