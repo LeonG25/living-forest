@@ -23,7 +23,7 @@
       dev.prepend(shade); dev.prepend(v); v.play().catch(function(){});
     } else {
       css('html{background:#04070e!important} body{background:transparent!important}');
-      var v2=video('position:fixed;inset:0;width:100vw;height:100vh;z-index:-2;opacity:.5');
+      var v2=video('position:fixed;inset:0;width:100vw;height:100dvh;z-index:-2;opacity:.5');
       var shade2=document.createElement('div');
       shade2.style.cssText='position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(130% 95% at 50% 0%, rgba(4,7,14,.30), rgba(4,7,14,.74) 78%)';
       document.body.prepend(shade2); document.body.prepend(v2); v2.play().catch(function(){});
