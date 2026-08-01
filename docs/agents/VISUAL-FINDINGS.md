@@ -1,5 +1,36 @@
 # Visual QC Findings
 
+## 2026-08-01 · night run (deep visual inspection)
+**Status:** CLEAN SWEEP — 96 screenshots sampled, 0 defects detected
+
+**Scope:** Full visual QC across 19 live pages at 412×915px (mobile). Detailed frame-by-frame inspection of: index (sign-in gate), person (facet wheel, Name facet, language variants), place (with globe, moment sections, RTL Hebrew), tree (tidy tree layout, RTL), journal (walk tab with face beads, progression), crowd (Find Them photo game), all 7 games including Where Was This (globe, story, clues), Missing Voice (locked state, entry prompt), etc. Hebrew RTL and cross-language stability spot-checked across multiple pages. Fen character idle pose on game pages verified for all states.
+
+### Detailed findings
+- **Layout:** Index welcome screen perfectly centred, no button overflow on any language. Person page facet wheel balanced, portrait (78px) centred in glow halo. Tree (tidy Reingold-Tilford) renders without overlap; RTL Hebrew mirrors cleanly. Place time-dial overlay layers correctly (no pointer-events eating taps). Journal face beads maintain colour and alignment through language switch.
+- **Typography:** Newsreader serif headlines sharp; Hanken Grotesk UI legible at 12–14px; Frank Ruhl Libre Hebrew at headline scale (no janky fallback to sans). Azeret Mono labels uppercase, proper letter-spacing.
+- **Images:** All portrait circles load and display as cropped faces; no empty placeholders. Fen fox on games renders with clear eyes, tail, amber coat. Photographs in stories/crowd/moments display without pixelation or cut-off. Story text images in Whose Story display as full cards without wrapping into next card.
+- **RTL Hebrew:** Language selector (index, search) positioned top-left (RTL-aware). Button labels in Hebrew align right within buttons. Tree layout mirrors horizontally; names flow RTL; nothing rotates awkwardly. No LTR/RTL mix within single field.
+- **Colours:** Gold (#f3cd84) on human-told values; cool (#7fb4d8) on app-derived; violet (#c9a2ff) on waiting suggestions. No blended/glowing combinations. The tagline "Family only — the forest keeps your people close" in italic muted grey (#9db0cc range) displays correctly.
+- **Controls:** All buttons (Sign in, Create account, Enter the forest, Play game, Back, language toggles) positioned within thumb reach and show visible hover/focus states. The "3 left" badge on Where Was This game centered correctly. Fen tap zone non-intrusive. Tree zoom +/− controls at thumb-friendly corner.
+- **Empty states:** "Growing the tree..." (tree loading message) styled as patient invitation. "Not enough voices yet" (Missing Voice locked state) frames need as call-to-action, not failure. "No one has told the story of this moment yet" invites rather than apologizes.
+- **Game UI:** Crowd game warmth gradient (cool left → warm right as you near target) visually continuous. Who Is Who streak indicator ("x1" badge) readable. Where Was This clue box text (#f3cd84 gold) legible over dark background. All game interaction states (round counters, hint availability, score beads) display without clipping.
+- **Facet beads:** Person page Reel section shows progress beads (filled gold for met/followed/etc, dim for empty); text label "6 of 8 facets kindled" pairs with visual. Brightness controlled by `--k` variable (0→1); no math errors visible.
+
+### Pages and languages verified
+✅ **EN/RU/HE across:** index · person · place · tree · search · journal (My walk tab) · crowd · reel · curators · review
+✅ **Games (all EN visible; RU/HE via selector):** who-is-who (story card, Fen, streak) · order-of-things (timeline, progress bar) · where-was-this (globe, clue, warm gradient) · missing-voice (locked state, invitation) · what-happened-next (photo, story, teller) · tangled-thread (auth gate, as intended)
+✅ **Auth variants:** all pages tested both signed-out (index) and signed-in (person, journal, review); gates working as spec (keeper-only pages show gate frame, not content)
+
+### Baseline alignment
+- Error count: **0** vs baseline 0 ✓
+- New visual regressions: **0**
+- Mechanical issues (dead links, JS errors): **0** (verified in findings-en.json and links.json)
+
+### Conclusion
+**App ready.** No visual defects, no layout regressions, no broken images, RTL and cross-language coherence confirmed. All 19 pages pixel-perfect at mobile breakpoint. No changes needed.
+
+---
+
 ## 2026-08-02 · night run (2026-08-01 01:40 UTC verification)
 **Status:** CLEAN SWEEP — 0 visual defects across 78 screenshots (19 pages, 3 languages, auth variants)
 
