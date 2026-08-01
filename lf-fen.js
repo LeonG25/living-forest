@@ -87,8 +87,10 @@
     if(sc){ sc.style.bottom=STRIP+'px'; sc.style.paddingBottom='0'; }
     else { document.body.style.paddingBottom=STRIP+'px'; }
     var strip=mk('div','position:'+(fixed?'fixed':'absolute')+';left:0;right:0;bottom:0;height:'+STRIP+'px;z-index:5;overflow:hidden;cursor:pointer;opacity:0;transition:opacity .8s;');
+    var PAGE_FOREST=!!document.querySelector('script[src^="lf-bg"]');
     var bg=vid(FOREST,'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;'); bg.playbackRate=0.6;
     var horizon=mk('div','position:absolute;left:0;right:0;top:0;height:42%;background:linear-gradient(to bottom,#080c14 6%,rgba(8,12,20,.4) 55%,transparent);pointer-events:none;');
+    if(PAGE_FOREST){ bg.style.display='none'; bg.removeAttribute('src'); horizon.style.display='none'; }
     var BASEF='drop-shadow(0 4px 8px rgba(0,0,0,.5))';
     var v=vid(clipSrc('idle'),'position:absolute;left:-1%;bottom:0;width:150px;height:150px;filter:'+BASEF+';pointer-events:none;');
     var vb=vid(clipSrc('idle'),'position:absolute;left:-1%;bottom:0;width:150px;height:150px;filter:'+BASEF+';pointer-events:none;opacity:0;');
@@ -130,33 +132,34 @@
       var meta=clipMeta(name);
       clearEntranceMask();
       cur=name;
-      /* crossfade through the buffer element: the next clip warms up hidden and
-         blurs in over the old one — no hard cut between frames */
-      vb.loop=!!loop&&!meta.freeze;
-      vb.onended=null; vb.onerror=function(){ toIdle(); };
-      vb.style.transition='none'; vb.style.opacity='0'; vb.style.filter=BASEF+' blur(9px)';
-      vb.src=src; vb.play().catch(function(){});
-      (function(){
-        var done=false;
-        function h(){ if(done) return; done=true;
-          vb.style.transition='opacity .3s ease, filter .38s ease';
-          v.style.transition='opacity .3s ease';
-          vb.style.opacity='1'; vb.style.filter=BASEF;
-          v.style.opacity='0';
-          setTimeout(function(){
-            try{ v.pause(); }catch(e){}
-            v.style.transition='none'; vb.style.transition='none';
-            var t=v; v=vb; vb=t;
-            v.onended=meta.freeze?function(){ try{ v.pause(); }catch(e){} }:(onend||null);
-            if(meta.freeze&&v.ended){ try{ v.pause(); }catch(e){} }
-          },340); }
-        vb.addEventListener('playing', h, {once:true});
-        setTimeout(h, 900);  /* slow decode: swap anyway rather than stall */
-      })();
+      xfade(src, !!loop&&!meta.freeze, onend, meta.freeze);
       return true;
     }
-    function toIdle(){ cur='idle'; sleeping=false; v.loop=true; v.onended=null;
-      var s=CLIP.idle.src; if(v.src.indexOf(s)<0) v.src=s; v.play().catch(function(){}); }
+    /* the single doorway: every clip change blurs in through the buffer */
+    function xfade(src, loop, onend, freeze){
+      vb.loop=loop;
+      vb.onended=null; vb.onerror=function(){ if(src!==CLIP.idle.src) toIdle(); };
+      vb.style.transition='none'; vb.style.opacity='0'; vb.style.filter=BASEF+' blur(9px)';
+      vb.src=src; vb.play().catch(function(){});
+      var done=false;
+      function h(){ if(done) return; done=true;
+        vb.style.transition='opacity .3s ease, filter .38s ease';
+        v.style.transition='opacity .3s ease';
+        vb.style.opacity='1'; vb.style.filter=BASEF;
+        v.style.opacity='0';
+        setTimeout(function(){
+          try{ v.pause(); }catch(e){}
+          v.style.transition='none'; vb.style.transition='none';
+          var t=v; v=vb; vb=t;
+          v.onended=freeze?function(){ try{ v.pause(); }catch(e){} }:(onend||null);
+          if(freeze&&v.ended){ try{ v.pause(); }catch(e){} }
+        },340); }
+      vb.addEventListener('playing', h, {once:true});
+      setTimeout(h, 900);
+    }
+    function toIdle(){ sleeping=false;
+      if(cur==='idle' && v.src.indexOf(CLIP.idle.src)>=0){ v.play().catch(function(){}); return; }
+      xfade(CLIP.idle.src, true, null, false); cur='idle'; }
     function play(name){ setClip(name,false,toIdle); }
 
     var st;

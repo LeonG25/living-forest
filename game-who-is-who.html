@@ -279,7 +279,7 @@
       nqB:'Not them.', nqRest:'Read the memory again — the details point to one person.',
       revEye:'Yes — that’s them', revKindled:'You kindled their Face',
       whyH:'What gave them away',
-      chipMemory:'In this memory',
+      chipMemory:'In this story',
       photos:n=>`${n} ${n===1?'photograph':'photographs'}`,
       kindleL:'How lit up are they', kindleR:(n)=>`${wordNum(n,'en')} of eight kindled`,
       another:'Another face', reel:'Go to their Reel',
@@ -299,7 +299,7 @@
       nqB:'Не он.', nqRest:'Прочтите воспоминание ещё раз — детали указывают на одного человека.',
       revEye:'Да — это он', revKindled:'Вы зажгли его Лицо',
       whyH:'Что его выдало',
-      chipMemory:'В этом воспоминании',
+      chipMemory:'В этой истории',
       photos:n=>`${n} фото`,
       kindleL:'Насколько он озарён', kindleR:(n)=>`${wordNum(n,'ru')} из восьми зажжено`,
       another:'Ещё лицо', reel:'К его Плёнке',
@@ -319,7 +319,7 @@
       nqB:'לא הם.', nqRest:'קראו את הזיכרון שוב — הפרטים מצביעים על אדם אחד.',
       revEye:'כן — זה הם', revKindled:'הארתם את הפנים שלהם',
       whyH:'מה הסגיר אותם',
-      chipMemory:'בזיכרון הזה',
+      chipMemory:'בסיפור הזה',
       photos:n=>`${n} תצלומים`,
       kindleL:'כמה הם מוארים', kindleR:(n)=>`${wordNum(n,'he')} מתוך שמונה`,
       another:'פנים נוספות', reel:'אל הסרט שלהם',
@@ -439,9 +439,15 @@
     const chips=[`<span class="pchip"><span class="d"></span><span class="tx">${esc(L.chipMemory)}</span></span>`];
     if(nPhotos>0) chips.push(`<span class="pchip cool"><span class="d"></span><span class="tx">${esc(L.photos(nPhotos))}</span></span>`);
     const rev=$('#reveal');
+    setTimeout(()=>{ try{ if(window.LFFace&&round.answer_id){
+      if(!renderReveal._i){ LFFace.init(sb); renderReveal._i=1; }
+      const el=document.querySelector('#reveal .revface');
+      LFFace.resolve([round.answer_id]).then(fm=>{ const f=fm[round.answer_id];
+        if(el&&f&&f.path) LFFace.into(el,{path:f.path,box:f.box,size:300,keep:true}); });
+    } }catch(e){} },60);
     rev.innerHTML=`
       <div class="eye serif" style="margin-top:24px">${esc(L.revEye)}</div>
-      <div class="revface"><i></i></div>
+      <div class="revface" data-face="${esc(round.answer_id||'')}"><i></i></div>
       <div class="revname">
         <div class="rk">${esc(L.revKindled)}</div>
         <div class="rn serif">${esc(correct.label||'—')}</div>
@@ -612,6 +618,6 @@
   atmosphere($('#dev .atmo')); wire(); boot();
 })();
 </script>
-<script src="lf-fen.js?v=10"></script>
+<script src="lf-fen.js?v=11"></script>
 <script src="lf-nav.js" data-here="" data-parent="person-real.html"></script>
 </body></html>
