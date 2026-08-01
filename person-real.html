@@ -10,6 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="lf-face.js?v=1"></script>
+<script src="lf-place.js?v=1"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
   html,body{ background:#04070e; }
@@ -895,21 +896,8 @@
   function placeDatalist(){ return `<datalist id="placelist">${placeSuggestions().map(s=>`<option value="${esc(s)}"></option>`).join('')}</datalist>`; }
   function placesAppLine(n){ const t={ en:`Tied to ${n} place${n===1?'':'s'}; the route between them is drawn by the app.`, ru:`Связана с ${n} мест${n===1?'ом':'ами'}; маршрут строит приложение.`, he:`קשורה ל-${n} מקומות; המסלול משורטט על ידי האפליקציה.` }; return t[state.lang]||t.en; }
   /* a place carries its country: entering the home fills the country field beside it
-     (place_geo first, nominatim once for strangers - answer persisted for everyone) */
-  async function countryFor(place){
-    place=String(place||'').trim(); if(!place) return null;
-    try{ const {data:r}=await sb.from('place_geo').select('country,label,lat,lng').eq('name',place).maybeSingle();
-      if(r){ if(r.country) return r.country;
-        if(r.label){ const c=r.label.split(',').pop().trim(); if(c){ try{ sb.from('place_geo').update({country:c}).eq('name',place).then(()=>{},()=>{}); }catch(e){} return c; } } } }catch(e){}
-    try{
-      const lg={en:'en',ru:'ru',he:'he'}[state.lang]||'en';
-      const resp=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&accept-language='+lg+'&q='+encodeURIComponent(place));
-      const j=await resp.json(); const hit=j&&j[0]; if(!hit) return null;
-      const c=(hit.address&&hit.address.country)||null;
-      try{ sb.from('place_geo').insert({name:place,lat:+hit.lat,lng:+hit.lon,label:hit.display_name||null,country:c}).then(()=>{},()=>{}); }catch(e){}
-      return c;
-    }catch(e){ return null; }
-  }
+     (delegates to LFPlace.country which uses place_geo first, nominatim for strangers) */
+  async function countryFor(place){ return await window.LFPlace.country(place, state.lang, sb); }
   function wireCountryTie(root){
     const ph=root.querySelector('[data-newhome]'), pc=root.querySelector('[data-newcountry]');
     if(!ph||!pc||ph._tied) return; ph._tied=1;
