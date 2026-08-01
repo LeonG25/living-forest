@@ -5,6 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>A Moment — The Living Forest</title>
+<script src="lf-place.js?v=1"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500&display=swap" rel="stylesheet">
@@ -1077,7 +1078,8 @@
       </div>
       <div class="ed-note">${sv(ICON.info,1.7)} <span>${esc(d.keeperNote)}</span></div>`;
     const inp=sheet.querySelector('#plSearch'); inp.oninput=()=>renderPlace(inp.value); setTimeout(()=>inp.focus(),340);
-    sheet.querySelectorAll('[data-place]').forEach(b=>b.onclick=async()=>{ const val=b.dataset.place; hide(); await saveMeta('where', val, whereText(), 'where'); });
+    sheet.querySelectorAll('[data-place]').forEach(b=>b.onclick=async()=>{ const val=b.dataset.place; hide(); await saveMeta('where', val, whereText(), 'where');
+      try{ if(window.LFPlace) LFPlace.ensure(val, (typeof lang==='function'?lang():(window.state&&state.lang)||'en'), sb); }catch(e){} });
   }
 
   /* ---------- editor sheet (story / photo / details) ---------- */
