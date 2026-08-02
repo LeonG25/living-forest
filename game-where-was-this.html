@@ -823,21 +823,18 @@
       globe.appendChild(b);
     });
     trackPins(tracked);
-    /* self-heal: any option place_geo doesn't know yet gets geocoded once and saved */
+    /* self-heal: any option place_geo doesn't know yet gets geocoded once and saved via LFPlace.ensure */
     (function(){
       var missing=opts.filter(function(o){ var g2=geo[norm(o.label)]; return !(g2&&g2.lat!=null); });
       if(!missing.length) return;
       var chain=Promise.resolve();
       missing.forEach(function(o){
         chain=chain.then(function(){
-          return fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(o.label))
-            .then(function(r){ return r.json(); })
-            .then(function(j){ var hit=j&&j[0]; if(!hit) return;
-              var lat=+hit.lat, lng=+hit.lon;
-              geo[norm(o.label)]={lat:lat,lng:lng,label:o.label};
-              try{ sb.from('place_geo').insert({name:o.label,lat:lat,lng:lng}).then(function(){},function(){}); }catch(e){}
+          return LFPlace.ensure(o.label, state.lang, sb)
+            .then(function(g){ if(!g) return;
+              geo[norm(o.label)]={lat:g.lat,lng:g.lng,label:o.label,country:g.country};
               var i=opts.indexOf(o), pn=byI('#globe .gpin',i);
-              if(pn){ tracked.push({el:pn,lat:lat,lng:lng}); trackPins(tracked); }
+              if(pn){ tracked.push({el:pn,lat:g.lat,lng:g.lng}); trackPins(tracked); }
             }).catch(function(){})
             .then(function(){ return new Promise(function(res){ setTimeout(res,1100); }); }); /* nominatim: 1 req/s */
         });
