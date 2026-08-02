@@ -156,6 +156,8 @@ NEXT (full build order is in the FEN section below): regenerate the remaining mo
 
 **2026-07-31 · VERSION CORRECTION — lf-fen.js.** The entries above claim v=5 (line 129) and v=4 (line 131); live pages now carry **v=8**. Timeline: v4 (b9b2de9, full clip set + rotation arrays), v5 (c0750a7, entrance at gait speed after fade), v6 (b68dfab, stumble registry), v7 (a489329, entrance event-waits), v8 (01c9caa, fen-entrance.mp4 real clip). All 8 Fen pages (who-is-who, order-of-things, where-was-this, missing-voice, what-happened-next, tangled-thread, crowd-real, journal-real) verified at ?v=8. No functional issues; the documentation lag is noted here for future reference.
 
+**2026-08-02 · FURTHER UPDATE — lf-fen.js now at v=21.** Live pages carry **v=21** (verified in game-who-is-who.html, index.html loads via lf-nav v=10). The v8-to-v21 timeline is not documented here; commits post-2026-08-02 likely cover the progression. The v=8 snapshot above remains accurate for that point in time.
+
 ---
 
 # The Living Forest — agent rules & source of truth
@@ -265,8 +267,8 @@ be visibly mid-construction if Leon peeks early — accepted.
   editable **in place**; the portrait has a camera control on the image itself.
   `person-edit-real.html` is retired (404).
 - **Person is reached from** globe, home, moment, place (×2), crowd (6 inbound, no orphans).
-- ⊕ menu today = 7 items (`lf-nav.js:39–45`): The globe → `index.html` · Search →
-  `search-real.html` · The tree → `tree-real.html` · Find them in a crowd → `crowd-real.html` · The timeline → `timeline-real.html` · Contribute → `contribute-real.html` · My journal → `journal-real.html`. Keeper-only: Review + Keepers (inserted above the sign-out). **2026-07-31 correction:** The sky was removed from the menu (parked per §Parked ideas); all 7 pages parent to the globe (`data-parent="index.html"`).
+- ⊕ menu today = 8 items (`lf-nav.js:95–103`): The globe → `index.html` · Search →
+  `search-real.html` · The tree → `tree-real.html` · Find them in a crowd → `crowd-real.html` · The timeline → `timeline-real.html` · Contribute → `contribute-real.html` · My journal → `journal-real.html` · **The clearing** → `clearing-real.html` *(Fen's invitation page, ship date 2026-07-31 per CURRENT STATE)*. Keeper-only: Review + Keepers (inserted above the sign-out). **2026-07-31 correction (now stale):** The sky was removed from the menu (parked per §Parked ideas); all 7 pages parent to the globe (`data-parent="index.html"`). **2026-08-02 update:** The clearing was added 2026-07-31 as the eighth menu item (not sky); menu count is now 8.
 - **All 7 games live** (2026-07-28 onward): Who Is Who?, Find Them in the Crowd, Put Their Life in Order,
   Where Was This?, What Happened Next?, The Missing Voice, The Tangled Thread.
   [**2026-07-31 correction:** Missing Voice and Tangled Thread shipped 2026-07-28; this section was written before then. See CURRENT STATE above for the real timeline.]
@@ -446,12 +448,13 @@ signature motion — do not clone one page's motion onto another.
 
 ---
 
-## 8. Auth & entry (Leon's #1 — TO BUILD)
+## 8. Auth & entry (Leon's #1 — BUILT)
 
-- **Baseline today:** Supabase Auth, **1 auth user** (Leon, keeper), **1 profile**,
-  **0 curators**. No registration flow for family members exists.
-- **Target:** a real entry URL → log in **or register (open)** → land on the globe
-  (`index.html`). Every family member gets their own account.
+- **Status:** SHIPPED 2026-07-18 22:27 (`dcb92b4`). Open registration on the globe — sign-in gate includes create-account + auto-profile ensure. Index gate routes signed-in users forward after anchor selection. See CURRENT STATE above (commit `1a1499c`, designed login/register screen).
+- **Baseline (2026-07-18):** Supabase Auth, **1 auth user** (Leon, keeper), **1 profile**,
+  **0 curators**. No registration flow for family members existed.
+- **Target (2026-07-18):** a real entry URL → log in **or register (open)** → land on the globe
+  (`index.html`). Every family member gets their own account. ✅ **DELIVERED.**
 - **Child-safety + keeper gate still apply** to everything a new account can then do.
 - The person↔user identity link ("you are in this photo") is an open schema gap (§9) and
   is needed for Idea 3; the auth build should lay groundwork toward it where natural.
