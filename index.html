@@ -795,6 +795,10 @@ function wireMode(mode){ const s=gscreen();
  s.querySelectorAll('[data-langbtn]').forEach(b=>b.onclick=openLangSheet);
  s.querySelectorAll('[data-forgot]').forEach(b=>b.onclick=doForgot);
  const go=s.querySelector('#gGo'); if(go) go.onclick=(mode==='up'?doRegister:doSignIn);
+ /* the keyboard's Go key IS the button: Enter in any gate field submits the current mode
+    (on phones the real button often hides beneath the keyboard - typing must be enough) */
+ s.querySelectorAll('input').forEach(inp=>{ inp.addEventListener('keydown', ev=>{
+   if(ev.key==='Enter'){ ev.preventDefault(); if(go) go.click(); } }); });
  s.querySelectorAll('input').forEach(inp=>inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); go&&go.click(); } }));
 }
 
