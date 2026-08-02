@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>The Tree — The Living Forest</title>
+<script src="lf-auth.js?v=1"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -461,7 +462,7 @@ const STR={
     sibling2:'Siblings', sibsub:'share the same bar', documented:'Documented', remembered:'Remembered', uncertain:'Uncertain',
     pending:'Waiting for the keeper', apppath:'A path the app worked out',
     fitmsg:'The whole family', tracePick:'Pick a person, then trace how they reach you', traceoff:'Trace off', openPhoto:'Open this photograph',
-    noYou:'We don’t know yet which person is you. Ask the keeper to link your account.', whoTtl:'Who are you in the family?', whoSub:'Type your name — the forest will look for you.', whoMe:'This is me', whoNone:'No one found by that name yet — the keeper can add you.', whoDone:(n)=>`Welcome — you are ${n}. The keeper will confirm it.`, noPath:'No family path found between them and you yet.',
+    noYou:'We don’t know yet which person is you. Ask the keeper to link your account.', whoTtl:'Who are you in the family?', whoSub:'Type your name — the forest will look for you.', whoMe:'This is me', whoNone:'No one found by that name yet — the keeper can add you.', whoDone:(n)=>`Welcome — you are ${n}. The keeper will confirm it.`, whoFail:'Could not save who you are — check the connection and try once more.', noPath:'No family path found between them and you yet.',
     homeToast:'Back to the globe →', born:'b. {y}', child_of:'child of {n}',
     /* connect */
     connectTitle:'Connect this person', connectSub:'to another relative — the app makes sure it’s right',
@@ -489,7 +490,7 @@ const STR={
     sibling2:'Братья и сёстры', sibsub:'на общей перекладине', documented:'Задокументировано', remembered:'По памяти', uncertain:'Неточно',
     pending:'Ждёт хранителя', apppath:'Путь, вычисленный приложением',
     fitmsg:'Вся семья', tracePick:'Выберите человека, чтобы проследить путь к вам', traceoff:'Трасса выкл', openPhoto:'Открыть фотографию',
-    noYou:'Мы пока не знаем, кто из людей — это вы. Попросите хранителя связать ваш аккаунт.', whoTtl:'Кто вы в семье?', whoSub:'Введите своё имя — лес поищет вас.', whoMe:'Это я', whoNone:'Пока никого с таким именем — хранитель может добавить вас.', whoDone:(n)=>`Добро пожаловать — вы ${n}. Хранитель подтвердит это.`, noPath:'Пока не найден семейный путь между ними и вами.',
+    noYou:'Мы пока не знаем, кто из людей — это вы. Попросите хранителя связать ваш аккаунт.', whoTtl:'Кто вы в семье?', whoSub:'Введите своё имя — лес поищет вас.', whoMe:'Это я', whoNone:'Пока никого с таким именем — хранитель может добавить вас.', whoDone:(n)=>`Добро пожаловать — вы ${n}. Хранитель подтвердит это.`, whoFail:'Не удалось сохранить, кто вы — проверьте связь и попробуйте ещё раз.', noPath:'Пока не найден семейный путь между ними и вами.',
     homeToast:'К глобусу →', born:'р. {y}', child_of:'ребёнок: {n}',
     connectTitle:'Связать этого человека', connectSub:'с другим родственником — приложение проверит',
     s1:'Кто второй человек?', s2:'Кем они приходятся?', s3:'Насколько вы уверены?',
@@ -516,7 +517,7 @@ const STR={
     sibling2:'אחים ואחיות', sibsub:'חולקים אותו מוט', documented:'מתועד', remembered:'מהזיכרון', uncertain:'לא בטוח',
     pending:'ממתין לשומר', apppath:'נתיב שהאפליקציה חישבה',
     fitmsg:'כל המשפחה', tracePick:'בחר אדם, ועקוב איך הוא מגיע אליך', traceoff:'מעקב כבוי', openPhoto:'פתח את התצלום',
-    noYou:'עדיין לא ידוע מי מהאנשים הוא אתה. בקשו מהשומר לקשר את החשבון.', whoTtl:'מי אתם במשפחה?', whoSub:'הקלידו את שמכם — היער יחפש אתכם.', whoMe:'זה אני', whoNone:'לא נמצא אף אחד בשם הזה — השומר יכול להוסיף אתכם.', whoDone:(n)=>`ברוכים הבאים — אתם ${n}. השומר יאשר זאת.`, noPath:'עדיין לא נמצא נתיב משפחתי בינם ובינך.',
+    noYou:'עדיין לא ידוע מי מהאנשים הוא אתה. בקשו מהשומר לקשר את החשבון.', whoTtl:'מי אתם במשפחה?', whoSub:'הקלידו את שמכם — היער יחפש אתכם.', whoMe:'זה אני', whoNone:'לא נמצא אף אחד בשם הזה — השומר יכול להוסיף אתכם.', whoDone:(n)=>`ברוכים הבאים — אתם ${n}. השומר יאשר זאת.`, whoFail:'לא הצלחנו לשמור מי אתם — בדקו את החיבור ונסו שוב.', noPath:'עדיין לא נמצא נתיב משפחתי בינם ובינך.',
     homeToast:'חזרה לגלובוס →', born:'נ׳ {y}', child_of:'ילד/ה של {n}',
     connectTitle:'לחבר את האדם הזה', connectSub:'לקרוב אחר — האפליקציה מוודאת שזה נכון',
     s1:'מי האדם השני?', s2:'מה הקשר ביניהם?', s3:'עד כמה אתה בטוח?',
@@ -1427,12 +1428,12 @@ function openWhoAmI(){
       const pid=b.getAttribute('data-claim');
       try{
         const u=await sb.from('player_anchors').upsert({user_id:user.id, person_id:pid, status:'active'},{onConflict:'user_id'});
-        if(u.error){ console.error('anchor claim', u.error); toast(s.noYou); return; }
+        if(u.error){ console.error('anchor claim', u.error); toast(STR[state.lang].whoFail); return; }
         viewerPersonId=pid; buildCards();
         const nm=((people||{})[pid]||{}).display_name||'';
         toast(st.whoDone(nm)); w.remove();
         if(pos[pid]) centerOn(pid, Math.max(state.scale,1.0));
-      }catch(e){ toast(s.noYou); }
+      }catch(e){ console.error('anchor claim throw', e); toast(STR[state.lang].whoFail); }
     });
   }
   q.addEventListener('input',render); setTimeout(()=>q.focus(),150);
@@ -1566,15 +1567,14 @@ async function boot(){
   auroraVines($('#atmo'));
   const stored=localStorage.getItem('lf_lang'); if(stored&&STR[stored]) state.lang=stored; else { const dl=(navigator.language||'en').slice(0,2); if(STR[dl]) state.lang=dl; }
   applyText(); setIcons(); buildLegend();
+  const auth=await LFAuth.ensure(sb);
+  if(auth.ok!=='in'){ location.href='index.html'; return; }   /* out, broken and waiting all resolve at the gate */
   const {data:{session}}=await sb.auth.getSession();
-  if(!session){ location.href='index.html'; return; }
   user=session.user;
-  try{ const {data:pr}=await sb.from('profiles').select('is_keeper,preferred_lang,person_id').eq('id',user.id).maybeSingle();
-    if(pr){ state.keeper=!!pr.is_keeper; if(pr.person_id) viewerPersonId=pr.person_id; if(pr.preferred_lang&&!stored&&STR[pr.preferred_lang]) state.lang=pr.preferred_lang; }
-    if(!viewerPersonId){ try{ const {data:an}=await sb.from('player_anchors').select('person_id,status').eq('user_id',user.id).maybeSingle();
-      if(an&&an.person_id){ viewerPersonId=an.person_id; } }catch(e){} }
-    setTimeout(maybeAutoChoose, 600);
-  }catch(e){ try{ const {data:pr2}=await sb.from('profiles').select('is_keeper,preferred_lang').eq('id',user.id).maybeSingle(); if(pr2){ state.keeper=!!pr2.is_keeper; if(pr2.preferred_lang&&!stored&&STR[pr2.preferred_lang]) state.lang=pr2.preferred_lang; } }catch(e2){} }
+  state.keeper=!!auth.profile.is_keeper;
+  viewerPersonId=auth.profile.person_id || (auth.anchor&&auth.anchor.person_id) || null;
+  if(auth.profile.preferred_lang&&!stored&&STR[auth.profile.preferred_lang]) state.lang=auth.profile.preferred_lang;
+  setTimeout(maybeAutoChoose, 600);
   await loadData();
   $('#loading').style.display='none';
   fullRender();

@@ -9,6 +9,7 @@
 <meta name="theme-color" content="#04070e" />
 <link rel="icon" href="data:," />
 <title>The Living Forest — the Living Globe</title>
+<script src="lf-auth.js?v=1"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -812,10 +813,12 @@ const GATE_WAIT={
  en:{ ttl:'You are at the gate', body:(k)=>`The forest is a family circle. ${k} — the keeper — has been told you are here; everything opens the moment you are welcomed in.`, again:'Knock again', out:'Sign out' },
  ru:{ ttl:'Вы у ворот', body:(k)=>`Лес — это семейный круг. ${k} — хранитель — уже знает, что вы здесь; всё откроется, как только вас впустят.`, again:'Постучать ещё раз', out:'Выйти' },
  he:{ ttl:'אתם בשער', body:(k)=>`היער הוא מעגל משפחתי. ${k} — השומר — כבר יודע שאתם כאן; הכול ייפתח ברגע שתתקבלו פנימה.`, again:'לדפוק שוב', out:'התנתקות' } };
+const SESSION_LOST={en:'Your session went stale — please sign in again.',ru:'Сессия устарела — войдите ещё раз.',he:'החיבור התיישן — נא להתחבר שוב.'};
 async function funnelGate(){ try{
- const {data:u}=await sb.auth.getUser(); const uid=u&&u.user&&u.user.id; if(!uid) return false;
- const {data:pr}=await sb.from('profiles').select('is_keeper,is_member').eq('id',uid).maybeSingle();
- if(!pr || (!pr.is_keeper && !pr.is_member)){
+ const st=await LFAuth.ensure(sb);
+ if(st.ok==='out') return false;
+ if(st.ok==='broken'){ renderGate('signin'); try{ fieldError(SESSION_LOST[GLANG]||SESSION_LOST.en); }catch(e){} return true; }
+ if(st.ok==='waiting'){
    const L=GATE_WAIT[GLANG]||GATE_WAIT.en;
    $('#gate').style.display=''; $('#gate').classList.remove('loading');
    gscreen().innerHTML=`<div class="gmid" ${GLANG==='he'?'dir="rtl"':''} style="text-align:center">
@@ -830,8 +833,7 @@ async function funnelGate(){ try{
    const o=document.getElementById('gOut'); if(o) o.onclick=async()=>{ await sb.auth.signOut(); location.reload(); };
    return true;
  }
- const {data:a}=await sb.from('player_anchors').select('status').eq('user_id',uid).maybeSingle();
- if(!a||a.status==='declined'){ location.href='tree-real.html?choose=1'; return true; }
+ if(!st.profile.person_id && (!st.anchor || st.anchor.status==='declined')){ location.href='tree-real.html?choose=1'; return true; }
 }catch(e){} return false; }
 async function anchorGate(){ return funnelGate(); }
 /* iPhone keyboards cover the lower gate: any focused field scrolls itself into view */
