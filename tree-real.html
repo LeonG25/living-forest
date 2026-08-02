@@ -1379,7 +1379,17 @@ function vpCenter(){ const r=vp.getBoundingClientRect(); return {x:r.left+r.widt
    member with no link claims who they are; token-overlap match suggests the nearest
    names (Zoya Golnick finds Zoya Golnick-Gurvich); the claim is an anchor, marked for
    the keeper to confirm. The forest asks — it never assumes. */
+function maybeAutoChoose(){
+  try{
+    if(!/[?&]choose=1/.test(location.search)) return;
+    if(viewerPersonId||!user) return;
+    if(!people||!people.length){ setTimeout(maybeAutoChoose, 400); return; }
+    openWhoAmI();
+    history.replaceState(null,'',location.pathname);
+  }catch(e){}
+}
 function openWhoAmI(){
+  if(!people||!people.length){ toast(STR[state.lang].noYou); return; }
   const st=STR[state.lang];
   const old=document.getElementById('whoami'); if(old) old.remove();
   const w=document.createElement('div'); w.id='whoami';
@@ -1559,6 +1569,7 @@ async function boot(){
     if(pr){ state.keeper=!!pr.is_keeper; if(pr.person_id) viewerPersonId=pr.person_id; if(pr.preferred_lang&&!stored&&STR[pr.preferred_lang]) state.lang=pr.preferred_lang; }
     if(!viewerPersonId){ try{ const {data:an}=await sb.from('player_anchors').select('person_id,status').eq('user_id',user.id).maybeSingle();
       if(an&&an.person_id){ viewerPersonId=an.person_id; } }catch(e){} }
+    setTimeout(maybeAutoChoose, 600);
   }catch(e){ try{ const {data:pr2}=await sb.from('profiles').select('is_keeper,preferred_lang').eq('id',user.id).maybeSingle(); if(pr2){ state.keeper=!!pr2.is_keeper; if(pr2.preferred_lang&&!stored&&STR[pr2.preferred_lang]) state.lang=pr2.preferred_lang; } }catch(e2){} }
   await loadData();
   $('#loading').style.display='none';
