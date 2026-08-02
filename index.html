@@ -416,10 +416,12 @@ const tiesGroup=new THREE.Group(); globe.add(tiesGroup); const flow=[];
 const dialSvg=$('#dial svg'), handleEl=$('#handle'), ticksEl=$('#ticks');
 
 /* ---- load real data ---- */
+function diag(note){ try{ sb.auth.getUser().then(u=>{ sb.from('client_diag').insert({uid:u&&u.data&&u.data.user&&u.data.user.id, page:'index', note:String(note).slice(0,900)}).then(()=>{}); }); }catch(e){} }
+let loadTries=0;
 async function load(){
   const { data:{ session } } = await sb.auth.getSession();
   if(!session){ showSignIn(); return; }
-  await ensureProfile(session.user);
+  try{ await ensureProfile(session.user); }catch(e){ diag('ensureProfile threw: '+(e&&e.message)); }
   try{
     const [ppl, rels, arts, subs] = await Promise.all([
       sb.from('people').select('id,display_name,called_name'),
@@ -427,6 +429,15 @@ async function load(){
       sb.from('artefacts').select('id,body,certainty,metadata,storage_path,contributor_id').eq('status','published'),
       sb.from('artefact_subjects').select('artefact_id,person_id,detail'),
     ]);
+    const errs=[ppl,rels,arts,subs].map((r,i)=>r.error?(['people','rels','arts','subs'][i]+':'+r.error.message):null).filter(Boolean);
+    if(errs.length) throw new Error(errs.join(' | '));
+    if(!(ppl.data||[]).length){
+      /* a member can never truly see an empty forest — this is a failure wearing
+         success's clothes. Report it, retry once, then say so out loud. */
+      diag('EMPTY-200 people=0 rels='+(rels.data||[]).length+' arts='+(arts.data||[]).length+' token_exp='+((session&&session.expires_at)||'?')+' now='+Math.floor(Date.now()/1000));
+      if(loadTries++<2){ try{ await sb.auth.refreshSession(); }catch(e){} setTimeout(load, 1800); return; }
+      throw new Error('The forest answered empty — please try again.');
+    }
     if(ppl.error) throw ppl.error;
     // the teller is a person (contributor_id), never the uploading account
     const provName = {}; (ppl.data||[]).forEach(p=> provName[p.id]=p.display_name);
@@ -480,7 +491,7 @@ async function load(){
     buildScene();
     clearTimeout(readingWatch);
     $('#gate').style.display='none';
-  }catch(err){ gateError(err.message||'Could not read the forest.'); }
+  }catch(err){ diag('load failed: '+(err&&err.message)); gateError(err.message||'Could not read the forest.'); }
 }
 
 /* ---- build scene from PEOPLE/TIES ---- */
