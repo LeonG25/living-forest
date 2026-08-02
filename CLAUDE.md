@@ -714,7 +714,7 @@ Implemented in lf-fen.js (played as transparent webm; version the script ref to 
 ## 2. Situations -> movement clips
 Lifecycle: arrive: strip fades in -> entrance (walk in) -> idle. present: idle loop; ~10s calm -> stretch; ~20s -> sleep (wake on touch). leave: wave -> walk-away -> strip dissolves [NEW CLIP NEEDED: walk-away].
 Reactions: new question->ear-perk; clue/between->talking; right->delight (alt light-delight); wrong->stumble; streak/win->jump; tap him/strip->talking; idle 10/20s->stretch/sleep.
-Clips: LIVE (baked webm): idle, delight, jump, talking, earperk, sleep, stretch, wave, walk, arrive (video mp4). Wiring: ALL cues wired in all 7 games via lf-fen.js (v8 live, see VERSION CORRECTION below). Fallback entries: stumble→earperk (kind "oh!" approved 2026-07-31), entrance→walk, walkaway→walk. **2026-08-01 update:** clip inventory now complete except walk-away (reserved clip slot). delight includes rotation array [fen-delight.webm, fen-nod-big.webm]; talking uses fen-nod-small.webm.
+Clips: LIVE (baked webm): idle, delight, jump, talking, earperk, sleep, stretch, wave, walk, arrive (video mp4). Wiring: ALL cues wired in all 7 games via lf-fen.js (**v=21 live as of 2026-08-02**, see VERSION CORRECTION below). Fallback entries: stumble→earperk (kind "oh!" approved 2026-07-31), entrance→walk, walkaway→walk. **2026-08-01 update:** clip inventory now complete except walk-away (reserved clip slot). delight includes rotation array [fen-delight.webm, fen-nod-big.webm]; talking uses fen-nod-small.webm.
 
 ## 3. Speech dictionary
 Voice law (§0): present tense; meet/know/be-with; never remember/preserve/nostalgia. Dry, warm, patient, short. Goal: EN+RU+HE, then data-aware.
