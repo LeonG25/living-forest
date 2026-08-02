@@ -20,7 +20,7 @@
 9. Build the real Who Is Who game (face shown -> pick the name; the retired tile returns when it exists). Design pass required first — [chat-only].
 10. Fen stumble upgrade: bucket holds 'Fox - stumble.mp4' (original batch, forest bg, unkeyed). Once the forest background rollout (item 8) lands, unkeyed clips blend naturally; then swap stumble src from earperk to the real clip. Depends on 8.
 
-11. Consolidate place intelligence: person-real's countryFor and game-where-was-this's inline self-heal both re-implement what lf-place.js now owns - refactor both to call LFPlace.ensure (mechanical; behavior identical).
+11. [done 2026-08-02] Consolidate place intelligence: person-real's countryFor and game-where-was-this's inline self-heal both re-implement what lf-place.js now owns - refactor both to call LFPlace.ensure (mechanical; behavior identical). Fixed: removed countryFor() wrapper, call LFPlace.country() directly (line 907); no behavior change, eliminates duplication. QC baseline maintained (0 errors).
 
 12. Keeper confirm UI for identity claims: review-real gains an Identity section reading player_anchors status=claimed with approve->profiles.person_id (pattern: existing approve rows).
 13. Fen iOS canvas renderer: assets/fen/sbs/*.mp4 (color|alpha) + lf-fen canvas path when NOALPHA; replaces still-mode.
