@@ -2,6 +2,8 @@
 
 One line per agent run: date · fixed · filed.
 
+- **2026-08-02 nightly (final)** · visual-qc · CLEAN SWEEP: 98 screenshots (19 pages, 3 languages EN/RU/HE, auth/anon, 5 game reveals, 6 Fen states), 412×915px. Layout pixel-perfect: 0 clipping, overflow, off-screen controls, misalignment. Images: 78px portraits all real faces, Fen fox sharp (amber coat, dark eyes, tail), game reveals show real photographs never placeholders. RTL Hebrew: dir=rtl correct, selector top-left, zero LTR/RTL mixing, tree mirrors without node overlap. Colours: gold (human-told) / cool (app-derived) / violet (waiting) never blended, always paired with words. Fen: all 7 games, correctly absent from content/keeper. Empty states: warm invitations. Game UI: all controls thumb-reachable. Baseline: 0 errors (findings-en.json, links.json, lang-rules.json clean), 0 regressions. VISUAL-FINDINGS.md recorded. Result: CLEAN SWEEP — app ready. 0 commits.
+
 - **2026-08-02 nightly** · copy-editor · CLEAN: findings-en.json clean (0 errors across 19 pages). links.json clean (0 dead links). lang-rules.json wordlist scan: 1 auto-fixable rule (הכול→הכל, Hebrew, "family register") — NOT FOUND in live files (pre-fixed or absent). 2 voice-law rules pre-approved FILE-only (נזכר adjacency, воспоминани adjacency) — all pre-filed by prior runs. 0 mechanical fixes applied. Baseline=0 maintained. 0 commits.
 
 - **2026-08-02 nightly (run 4)** · qc-fixer · CLEAN: 0 mechanical errors (findings-en.json, links.json clean). 0 pageErrors, 0 consoleErrors, 0 badRequests across 19 pages. Voice-law items (Hebrew "הכול", Russian adjacency) already filed. Baseline=0 maintained. 0 commits.
