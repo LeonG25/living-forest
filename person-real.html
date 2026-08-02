@@ -898,16 +898,13 @@
   })();
   function placeDatalist(){ return `<datalist id="placelist">${placeSuggestions().map(s=>`<option value="${esc(s)}"></option>`).join('')}</datalist>`; }
   function placesAppLine(n){ const t={ en:`Tied to ${n} place${n===1?'':'s'}; the route between them is drawn by the app.`, ru:`Связана с ${n} мест${n===1?'ом':'ами'}; маршрут строит приложение.`, he:`קשורה ל-${n} מקומות; המסלול משורטט על ידי האפליקציה.` }; return t[state.lang]||t.en; }
-  /* a place carries its country: entering the home fills the country field beside it
-     (delegates to LFPlace.country which uses place_geo first, nominatim for strangers) */
-  async function countryFor(place){ return await window.LFPlace.country(place, state.lang, sb); }
   function wireCountryTie(root){
     const ph=root.querySelector('[data-newhome]'), pc=root.querySelector('[data-newcountry]');
     if(!ph||!pc||ph._tied) return; ph._tied=1;
     let manual=false;
     pc.addEventListener('input',()=>{ manual=!!pc.value.trim(); });
     async function tie(){ const val=ph.value.trim(); if(!val||manual||pc.value.trim()) return;
-      const c=await countryFor(val); if(c&&!pc.value.trim()&&!manual){ pc.value=c; pc.dispatchEvent(new Event('input',{bubbles:true})); } }
+      const c=await window.LFPlace.country(val, state.lang, sb); if(c&&!pc.value.trim()&&!manual){ pc.value=c; pc.dispatchEvent(new Event('input',{bubbles:true})); } }
     ph.addEventListener('change',tie); ph.addEventListener('blur',tie);
   }
   /* "add a home": the home place AND a country field (Item D), each a place typeahead (Item E) */
