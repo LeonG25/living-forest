@@ -38,3 +38,16 @@ Both use past tense / past participle as a label for who shared information. Sam
 2026-08-02 · RULINGS by Claude (per Leon's standing directive to decide within instructions):
 - Findings #3/#4 (past-tense 'Told by' attribution labels): KEPT AS IS. §0 bans memorial/mourning framing, not the grammar of attribution; 'Told by X' names a living act of testimony. Closed.
 - Empty states: RULED as invitations, applied EN/RU/HE ('The story ... is waiting for its teller' + 'Ask someone who knows'). remember/memory wording removed from person+place strings in the same pass. Closed.
+
+## 2026-08-02 · docs-auditor (nightly)
+
+**5. Voice-law violation persists: «воспоминание» in game-facing copy (RU).**
+The 2026-07-31 finding noted this word appears 48 times across 10 pages. Audit confirms: **still live and unfixed**. Current occurrence count: 39 (detected in linting rules). Affected pages: game-who-is-who, game-order-of-things, game-where-was-this, game-missing-voice, game-what-happened-next, game-tangled-thread, curators-real, journal-real, and others.
+This is player-facing game UI, not keeper-only. §0 voice law applies: people ARE (present tense), never memory/remember framing. The RU copy violates this by rendering "a memory" as the canonical EN word choice appears to do as well. The prior finding stated EN copy still uses "memory" pervasively, which would require EN+RU+HE decision in lockstep.
+*Not fixed:* awaiting Leon's direction from the 2026-07-31 filing on whether EN tone is to be reframed OR whether RU should match EN's current word choice (preserving the violation), or if this is a lower-priority item behind the larger voice-law audit.
+
+**6. lf-fen.js version documentation is now accurate.**
+CLAUDE.md line 159 (2026-08-02 update) correctly states live pages carry v=21. All 8 Fen pages verified: game-who-is-who, game-order-of-things, game-where-was-this, game-missing-voice, game-what-happened-next, game-tangled-thread, journal-real, crowd-real. All ?v=21. ✅ Verified live (v8→v21 timeline not documented; considered acceptable per line 159 note).
+
+**7. QC smoke baseline clean.**
+All 19 pages tested (anon + signed-in EN): 0 errors. Links audit: 0 dead links. Baseline maintained.
