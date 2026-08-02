@@ -814,7 +814,7 @@ const GATE_WAIT={
 async function funnelGate(){ try{
  const {data:u}=await sb.auth.getUser(); const uid=u&&u.user&&u.user.id; if(!uid) return false;
  const {data:pr}=await sb.from('profiles').select('is_keeper,is_member').eq('id',uid).maybeSingle();
- if(pr && !pr.is_keeper && !pr.is_member){
+ if(!pr || (!pr.is_keeper && !pr.is_member)){
    const L=GATE_WAIT[GLANG]||GATE_WAIT.en;
    $('#gate').style.display=''; $('#gate').classList.remove('loading');
    gscreen().innerHTML=`<div class="gmid" ${GLANG==='he'?'dir="rtl"':''} style="text-align:center">
