@@ -1426,7 +1426,8 @@ function openWhoAmI(){
     list.querySelectorAll('[data-claim]').forEach(b=>b.onclick=async ()=>{
       const pid=b.getAttribute('data-claim');
       try{
-        await sb.from('player_anchors').upsert({user_id:user.id, person_id:pid, status:'claimed'},{onConflict:'user_id'});
+        const u=await sb.from('player_anchors').upsert({user_id:user.id, person_id:pid, status:'active'},{onConflict:'user_id'});
+        if(u.error){ console.error('anchor claim', u.error); toast(s.noYou); return; }
         viewerPersonId=pid; buildCards();
         const nm=((people||{})[pid]||{}).display_name||'';
         toast(st.whoDone(nm)); w.remove();
