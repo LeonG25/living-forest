@@ -10,7 +10,7 @@
   - [5. Progression — half-settled](#5-progression-half-settled)
   - [6. Roadmap notes](#6-roadmap-notes)
   - [7. Design](#7-design)
-  - [8. Auth & entry (Leon's #1 — TO BUILD)](#8-auth-entry-leons-1-to-build)
+  - [8. Auth & entry (Leon's #1 — SHIPPED)](#8-auth-entry-leons-1-shipped)
   - [9. Backend / schema](#9-backend-schema)
   - [10. Frontend](#10-frontend)
   - [11. i18n](#11-i18n)
@@ -448,7 +448,7 @@ signature motion — do not clone one page's motion onto another.
 
 ---
 
-## 8. Auth & entry (Leon's #1 — BUILT)
+## 8. Auth & entry (Leon's #1 — SHIPPED)
 
 - **Status:** SHIPPED 2026-07-18 22:27 (`dcb92b4`). Open registration on the globe — sign-in gate includes create-account + auto-profile ensure. Index gate routes signed-in users forward after anchor selection. See CURRENT STATE above (commit `1a1499c`, designed login/register screen).
 - **Baseline (2026-07-18):** Supabase Auth, **1 auth user** (Leon, keeper), **1 profile**,
