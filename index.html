@@ -477,6 +477,7 @@ async function load(){
         fy: Math.max(byId[r.from_person].born||Y_MIN, byId[r.to_person].born||Y_MIN)}));
     PEOPLE._prov=provName;
     buildScene();
+    clearTimeout(readingWatch);
     $('#gate').style.display='none';
   }catch(err){ gateError(err.message||'Could not read the forest.'); }
 }
@@ -880,7 +881,22 @@ function plantingHTML(kind){ const t=T[GLANG];
    +'<div class="foot"><div class="l">'+t.footPlant+'</div></div></div>';
 }
 function pauseWorld(on){ try{ document.querySelectorAll('video').forEach(v=>{ if(on){ v.pause(); } else { v.play().catch(()=>{}); } }); }catch(e){} }
-function showPlanting(kind){ pauseWorld(true); gateView=kind==='reading'?'reading':'plant'; ensureAtmosphere(); $('#gate').style.display=''; $('#gate').classList.add('loading'); gscreen().innerHTML=plantingHTML(kind); applyDir(); }
+/* no loading screen may hold anyone hostage: after 12s of Reading, offer the way out */
+let readingWatch=null;
+function armReadingWatch(){ clearTimeout(readingWatch);
+  readingWatch=setTimeout(()=>{ try{
+    const g=document.getElementById('gate');
+    if(!g||g.style.display==='none') return;
+    if(document.getElementById('gRetry')) return;
+    const M={en:['The forest is taking long…','Try again'],ru:['Лес что-то долго…','Попробовать снова'],he:['היער מתעכב…','לנסות שוב']}[GLANG]||['The forest is taking long…','Try again'];
+    const d=document.createElement('div');
+    d.style.cssText='position:absolute;left:0;right:0;bottom:calc(90px + env(safe-area-inset-bottom));text-align:center;z-index:9';
+    d.innerHTML=`<div style="font-size:13px;color:#8fa3b8;margin-bottom:8px">${M[0]}</div>
+      <button id="gRetry" style="padding:11px 20px;border-radius:12px;border:1px solid rgba(243,205,132,.5);background:rgba(243,205,132,.12);color:#f3cd84;cursor:pointer;font-family:inherit">${M[1]}</button>`;
+    g.appendChild(d);
+    document.getElementById('gRetry').onclick=()=>location.reload();
+  }catch(e){} }, 12000); }
+function showPlanting(kind){ pauseWorld(true); armReadingWatch(); gateView=kind==='reading'?'reading':'plant'; ensureAtmosphere(); $('#gate').style.display=''; $('#gate').classList.add('loading'); gscreen().innerHTML=plantingHTML(kind); applyDir(); }
 
 /* language bottom sheet (EN/RU/HE; choice persists to localStorage + profiles) */
 function buildSheet(){ const t=T[GLANG]; const sheet=document.getElementById('gateSheet'); if(!sheet) return;
