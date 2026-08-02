@@ -638,6 +638,7 @@ $('#cardX').onclick=closeCard;
 const tmp=new THREE.Vector3();
 addEventListener('resize', ()=>{ W=mount.clientWidth; H=mount.clientHeight; camera.aspect=W/H; camera.updateProjectionMatrix(); renderer.setSize(W,H); });
 function tick(){ requestAnimationFrame(tick);
+  if(document.getElementById('gate') && document.getElementById('gate').style.display!=='none') return; /* the world holds its breath behind the gate */
   if(returning){ vy*=0.94; vx*=0.90; globe.rotation.x+=vx+(homeX-globe.rotation.x)*0.05; globe.rotation.x=Math.max(-1.25,Math.min(1.25,globe.rotation.x)); globe.rotation.y+=vy+idle;
     if(Math.abs(vx)<0.0006&&Math.abs(vy)<0.0006&&Math.abs(globe.rotation.x-homeX)<0.01){ returning=false; spin=true; vx=0; vy=0; } }
   else if(spin&&!dragging){ globe.rotation.y+=idle; globe.rotation.x+=(homeX-globe.rotation.x)*0.02; }
@@ -806,9 +807,32 @@ function fieldError(text){ const box=document.getElementById('gErr'); if(box) bo
 function infoMsg(text){ const box=document.getElementById('gErr'); if(box) box.innerHTML='<div class="infoline">'+text+'</div>'; const fin=document.getElementById('gPwFin'); if(fin) fin.classList.remove('wrong'); }
 function clearErr(){ const box=document.getElementById('gErr'); if(box) box.innerHTML=''; const fin=document.getElementById('gPwFin'); if(fin) fin.classList.remove('wrong'); }
 
-async function anchorGate(){ try{ const {data:u}=await sb.auth.getUser(); const uid=u&&u.user&&u.user.id; if(!uid) return false;
+const GATE_WAIT={
+ en:{ ttl:'You are at the gate', body:(k)=>`The forest is a family circle. ${k} — the keeper — has been told you are here; everything opens the moment you are welcomed in.`, again:'Knock again', out:'Sign out' },
+ ru:{ ttl:'Вы у ворот', body:(k)=>`Лес — это семейный круг. ${k} — хранитель — уже знает, что вы здесь; всё откроется, как только вас впустят.`, again:'Постучать ещё раз', out:'Выйти' },
+ he:{ ttl:'אתם בשער', body:(k)=>`היער הוא מעגל משפחתי. ${k} — השומר — כבר יודע שאתם כאן; הכול ייפתח ברגע שתתקבלו פנימה.`, again:'לדפוק שוב', out:'התנתקות' } };
+async function funnelGate(){ try{
+ const {data:u}=await sb.auth.getUser(); const uid=u&&u.user&&u.user.id; if(!uid) return false;
+ const {data:pr}=await sb.from('profiles').select('is_keeper,is_member').eq('id',uid).maybeSingle();
+ if(pr && !pr.is_keeper && !pr.is_member){
+   const L=GATE_WAIT[GLANG]||GATE_WAIT.en;
+   $('#gate').style.display=''; $('#gate').classList.remove('loading');
+   gscreen().innerHTML=`<div class="gmid" ${GLANG==='he'?'dir="rtl"':''} style="text-align:center">
+     <div class="serif" style="font-size:26px">${L.ttl}</div>
+     <div style="font-size:14.5px;line-height:1.6;color:#b8c6d4;max-width:340px;margin:0 auto">${L.body('Leon')}</div>
+     <div style="display:flex;gap:10px;justify-content:center;margin-top:14px">
+       <button id="gKnock" class="btn" style="padding:11px 18px;border-radius:12px;border:1px solid rgba(243,205,132,.5);background:rgba(243,205,132,.12);color:#f3cd84;cursor:pointer;font-family:inherit">${L.again}</button>
+       <button id="gOut" style="padding:11px 18px;border-radius:12px;border:1px solid rgba(143,163,184,.4);background:none;color:#8fa3b8;cursor:pointer;font-family:inherit">${L.out}</button>
+     </div></div>`;
+   applyDir();
+   const k=document.getElementById('gKnock'); if(k) k.onclick=async()=>{ location.reload(); };
+   const o=document.getElementById('gOut'); if(o) o.onclick=async()=>{ await sb.auth.signOut(); location.reload(); };
+   return true;
+ }
  const {data:a}=await sb.from('player_anchors').select('status').eq('user_id',uid).maybeSingle();
- if(!a||a.status==='declined'){ location.href='tree-real.html?choose=1'; return true; } }catch(e){} return false; }
+ if(!a||a.status==='declined'){ location.href='tree-real.html?choose=1'; return true; }
+}catch(e){} return false; }
+async function anchorGate(){ return funnelGate(); }
 /* iPhone keyboards cover the lower gate: any focused field scrolls itself into view */
 document.addEventListener('focusin', function(e){
   if(e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName) && e.target.closest && e.target.closest('#gate')){
@@ -855,7 +879,8 @@ function plantingHTML(kind){ const t=T[GLANG];
    +'</div></div></div>'
    +'<div class="foot"><div class="l">'+t.footPlant+'</div></div></div>';
 }
-function showPlanting(kind){ gateView=kind==='reading'?'reading':'plant'; ensureAtmosphere(); $('#gate').style.display=''; $('#gate').classList.add('loading'); gscreen().innerHTML=plantingHTML(kind); applyDir(); }
+function pauseWorld(on){ try{ document.querySelectorAll('video').forEach(v=>{ if(on){ v.pause(); } else { v.play().catch(()=>{}); } }); }catch(e){} }
+function showPlanting(kind){ pauseWorld(true); gateView=kind==='reading'?'reading':'plant'; ensureAtmosphere(); $('#gate').style.display=''; $('#gate').classList.add('loading'); gscreen().innerHTML=plantingHTML(kind); applyDir(); }
 
 /* language bottom sheet (EN/RU/HE; choice persists to localStorage + profiles) */
 function buildSheet(){ const t=T[GLANG]; const sheet=document.getElementById('gateSheet'); if(!sheet) return;
