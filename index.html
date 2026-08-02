@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#04070e" />
 <link rel="icon" href="data:," />
 <title>The Living Forest — the Living Globe</title>
-<script src="lf-auth.js?v=1"></script>
+<script src="lf-auth.js?v=2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -788,7 +788,7 @@ function modeHTML(mode){
  +'</div>';
 }
 
-function renderGate(mode){ gateView='form'; curMode=mode; $('#gate').classList.remove('loading'); $('#gate').style.display=''; ensureAtmosphere(); gscreen().innerHTML=modeHTML(mode); applyDir(); wireMode(mode); }
+function renderGate(mode){ gateView='form'; curMode=mode; pauseWorld(true); $('#gate').classList.remove('loading'); $('#gate').style.display=''; ensureAtmosphere(); gscreen().innerHTML=modeHTML(mode); applyDir(); wireMode(mode); }
 function showSignIn(){ renderGate('in'); }
 
 function wireMode(mode){ const s=gscreen();
@@ -818,6 +818,7 @@ async function funnelGate(){ try{
  const st=await LFAuth.ensure(sb);
  if(st.ok==='out') return false;
  if(st.ok==='broken'){ renderGate('signin'); try{ fieldError(SESSION_LOST[GLANG]||SESSION_LOST.en); }catch(e){} return true; }
+ if(st.ok==='slow'){ return false; }  /* proceed; loads retry; the watchdog offers the way out */
  if(st.ok==='waiting'){
    const L=GATE_WAIT[GLANG]||GATE_WAIT.en;
    $('#gate').style.display=''; $('#gate').classList.remove('loading');
