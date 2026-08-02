@@ -1379,17 +1379,20 @@ function vpCenter(){ const r=vp.getBoundingClientRect(); return {x:r.left+r.widt
    member with no link claims who they are; token-overlap match suggests the nearest
    names (Zoya Golnick finds Zoya Golnick-Gurvich); the claim is an anchor, marked for
    the keeper to confirm. The forest asks — it never assumes. */
+/* the tree's `people` is a map keyed by id — the sheet works on the list view of it
+   (the original array assumption crashed the matcher silently: Zoya's stuck screen) */
+function peopleList(){ try{ return Object.values(people||{}); }catch(e){ return []; } }
 function maybeAutoChoose(){
   try{
     if(!/[?&]choose=1/.test(location.search)) return;
     if(viewerPersonId||!user) return;
-    if(!people||!people.length){ setTimeout(maybeAutoChoose, 400); return; }
+    if(!peopleList().length){ setTimeout(maybeAutoChoose, 400); return; }
     openWhoAmI();
     history.replaceState(null,'',location.pathname);
   }catch(e){}
 }
 function openWhoAmI(){
-  if(!people||!people.length){ toast(STR[state.lang].noYou); return; }
+  if(!peopleList().length){ toast(STR[state.lang].noYou); return; }
   const st=STR[state.lang];
   const old=document.getElementById('whoami'); if(old) old.remove();
   const w=document.createElement('div'); w.id='whoami';
@@ -1410,7 +1413,7 @@ function openWhoAmI(){
   function render(){
     const toks=q.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
     if(!toks.length){ list.innerHTML=''; return; }
-    const ranked=people.map(p=>({p,sc:score(p,toks)})).filter(x=>x.sc>0)
+    const ranked=peopleList().map(p=>({p,sc:score(p,toks)})).filter(x=>x.sc>0)
       .sort((a,b)=>b.sc-a.sc).slice(0,5);
     if(!ranked.length){ list.innerHTML=`<div style="font-size:13px;color:#8fa3b8;padding:8px 2px">${esc(st.whoNone)}</div>`; return; }
     list.innerHTML=ranked.map(x=>`
@@ -1425,7 +1428,7 @@ function openWhoAmI(){
       try{
         await sb.from('player_anchors').upsert({user_id:user.id, person_id:pid, status:'claimed'},{onConflict:'user_id'});
         viewerPersonId=pid; buildCards();
-        const nm=(people.find(p=>p.id===pid)||{}).display_name||'';
+        const nm=((people||{})[pid]||{}).display_name||'';
         toast(st.whoDone(nm)); w.remove();
         if(pos[pid]) centerOn(pid, Math.max(state.scale,1.0));
       }catch(e){ toast(s.noYou); }
