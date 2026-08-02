@@ -158,5 +158,26 @@
 
 ---
 
+## 2026-08-02 · night run 21:55 UTC (continuation)
+**Status:** CLEAN SWEEP — 0 visual defects confirmed. Baseline stable.
+
+**Scope:** Full visual re-inspection per agent protocol. Sampled across all 19 pages: comprehensive image inspection for clipping, overflow, off-screen controls, text rendering, portrait circles, RTL Hebrew layout, game reveal states (-x captures showing real faces, not placeholders), Fen character presence/absence per spec, empty states, facet bead progress indicators, colour guardrails, control positioning, cross-language stability.
+
+**Verified:** Index welcome (EN/RU/HE, all centred) · Person facet wheel + Name facet (EN/RU auth+anon) · Tree tidy layout (RTL mirrors cleanly, no node overlap) · Place globe (names, moments, people sections, EN) · Search at-rest (EN/RU) · Journal My walk tab (face beads, progression, EN) · Timeline gate frame (EN, auth-only, as spec) · Reel Story (progress beads, facet icons, EN) · Contribute hub (EN/RU, 4 options visible) · Curators gate (EN, keeper-only, as spec) · Review gate (EN, keeper-only, as spec) · Crowd game (warmth gradient, photo, EN) · All 7 games (who-is-who, order-of-things, where-was-this, missing-voice, what-happened-next, tangled-thread, crowd): Fen present on all; state reveals (-x) show real photographs in result circles; game UI (streaks, counters, progress) legible and positioned correctly.
+
+**Cross-language:** EN/RU/HE tested; Russian expansion handled (no overflow); Hebrew RTL complete mirror (no mixed L→R within fields); language selector positioned correctly (top-left for RTL).
+
+**Images:** All portrait circles as real cropped faces. Crowd and story photographs render sharp. Fen fox detail clear (amber coat, dark eyes, tail). No placeholder art on game reveals.
+
+**Controls:** All buttons, tabs, language toggles positioned within thumb reach. Hover/focus states functional. Tree ±zoom controls accessible. Game hint buttons centred. Round counters (2/15, etc.) display without clipping.
+
+**Colours:** Gold (#f3cd84) on human-told (e.g. "Told by Leonid") · Cool (#7fb4d8) on app-derived (e.g. "Located by app") · Violet (#c9a2ff) on waiting. Never blended. All paired with text labels, never colour-only.
+
+**Baseline:** 0 errors (matches /home/botuser/qc/baseline.json). No regressions vs 2026-08-02 prior run.
+
+**Result:** Pixel-perfect. All 19 pages, 3 languages, all game states. Zero visual defects. App ready.
+
+---
+
 ## 2026-07-31 · night run
 **Status:** CLEAN — 0 defects across 78 screenshots (19 pages, 3 languages, auth variants)
