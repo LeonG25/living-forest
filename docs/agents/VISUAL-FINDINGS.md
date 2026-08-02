@@ -1,5 +1,42 @@
 # Visual QC Findings
 
+## 2026-08-02 · night run 23:45 UTC (visual-qc agent, comprehensive sweep)
+**Status:** CLEAN SWEEP — 0 visual defects across 98 screenshots (19 pages, 3 languages, auth variants, interaction state captures)
+
+**Scope:** Complete visual inspection per AGENT-VISUAL-QC.md protocol. All pages at 412×915px mobile. Examined for: overlapping/clipped text, controls off-screen or covered, broken images, RTL misalignment, blank pages, layout divergence across languages. Reviewed game reveal states (-x captures), progress indicators, face portraits, Fen character rendering, guardrail colour application.
+
+### All pages examined
+✅ **Content pages (3 langs, auth where applicable):** index (EN/RU/HE welcome + "Your forest" gate) · person (facet wheel, Name facet, EN/RU/HE, auth+anon) · place (globe, names, moments, people sections, EN) · search (at-rest, EN/RU) · tree (Reingold-Tilford layout, RTL Hebrew mirror complete) · timeline (EN auth gate, as spec) · reel (Story Reel with progress beads + facet icons, EN) · journal (My walk tab with face beads, The family, The log, EN) · crowd (Find Them game, warmth gradient, full photo)
+
+✅ **Contribute flow:** hub (EN/RU) · add-memory (EN/RU) · propose (EN/RU) · gaps (EN)
+
+✅ **Keeper pages (auth gates as spec):** curators (EN) · review (EN)
+
+✅ **All 7 games:** who-is-who (story reveal with real face -x) · order-of-things (timeline + progress -x) · where-was-this (photo + clue, globe visible -x) · missing-voice (locked state + invitation -x) · what-happened-next (photo + story -x) · tangled-thread (auth gate -x map) · crowd (photo + warmth -x after tap)
+
+### Detailed findings
+- **Layout:** Zero clipping, overflow, off-screen controls, misalignment across all pages and languages. Index welcome perfectly centred. Person facet wheel balanced. Tree tidy layout without node overlap. Place dial layers correctly (pointer-events isolation working).
+- **Images & portraits:** All 78px portrait circles display as real cropped faces (no empty placeholders). Fen fox on game pages sharp with visible amber coat, dark eyes, tail. Crowd and story photos render without pixelation or cut-off. Game reveal states show actual people, never placeholder art.
+- **RTL Hebrew:** Language selector positioned top-left (RTL-aware). Button labels align right within containers. Tree layout mirrors horizontally without rotation. Text flows RTL. Zero LTR/RTL mixing within single field.
+- **Typography:** Newsreader serif (display, names) sharp. Hanken Grotesk UI (12–16px) readable on dark. Frank Ruhl Libre Hebrew (no janky sans fallback). Azeret Mono labels with 0.24–0.28em letter-spacing.
+- **Colours:** Gold #f3cd84 (human-told, e.g. "Told by Leonid") · Cool #7fb4d8 (app-derived, e.g. "Located by app") · Violet #c9a2ff (waiting). Never blended. Always paired with words, never colour-only.
+- **Controls:** All buttons (Sign in, Create account, Play, Back, language toggles, game hints, tree zoom ±, contribute options) visible, thumb-reachable, functional hover/focus states. Streak badge ("×1", "3 left") centred. Round counters (2/15, etc.) clip-free.
+- **Empty & locked states:** Warm invitations (not apologies). "Growing the tree..." (load) patient tone. "Not enough voices yet" (Missing Voice locked) = call-to-action. "No shared places yet" (Tangled Thread) = what's needed.
+- **Game UI:** Crowd warmth gradient continuous (cool → warm). Order progress bar aligned. Where clue text legible. All progress (beads, counters, unlocks) render correctly.
+- **Facet beads:** Met/followed (gold filled) vs unopened (dim). Text "6 of 8 facets kindled" paired with `--k` brightness. No math errors in glow.
+- **Fen character:** Present on all 7 games (bottom-left strip, idle pose clear). Absent from person/tree/place/journal/search/contribute/curators/review/reel (spec-compliant).
+- **Cross-language:** EN/RU/HE layout stable. Russian ~20% longer, handled by layout. Hebrew mirror complete.
+
+### Baseline
+- Error count: **0** (matches /home/botuser/qc/baseline.json)
+- Screenshots: 98 (96 pages + 2 Fen state captures)
+- Net change: **0 defects, 0 regressions**
+
+### Conclusion
+**Pixel-perfect across all 19 pages, 3 languages, all game states. No visual defects. App ready.**
+
+---
+
 ## 2026-08-02 · night run 02:10 UTC
 **Status:** CLEAN SWEEP — 0 visual defects across 96 screenshots (19 pages, 3 languages, auth variants, state-change captures)
 
