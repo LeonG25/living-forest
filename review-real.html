@@ -343,7 +343,7 @@
       all:'All', groups:{ newcomers:'Newcomers', names:'Names', memories:'Memories', facts:'Facts', connections:'Connections' },
       cntNew:'proposed people', cntNames:'name parts', cntMem:'waiting', cntFacts:'waiting', cntConn:'waiting',
       connSo:'so', removeReq:'Remove this connection',
-      waiting:'Waiting', approve:'Approve', decline:'Decline', approved:'Welcomed — it lives in the forest now', declined:'Set aside', approveFail:'The forest could not take it — try once more',
+      waiting:'Waiting', approve:'Approve', decline:'Decline', approved:'Welcomed — it lives in the forest now', declined:'Set aside', approveFail:'The forest could not take it — try once more', gateT:'At the gate', gateSub:(n)=>`${n===1?'Someone is':n+' people are'} waiting to be welcomed into the family circle.`, welcome:'Welcome in', welcomed:(n)=>`${n} is inside — the forest is open to them now`,
       toapprove:'Approve and it joins the forest in <span class="g">gold</span>, for the family.',
       suggestedBy:'Suggested by', toldBy:'Told by', uploadedBy:'uploaded by', someone:'a family member', ago:'',
       newcomerFor:'Someone the forest doesn’t hold yet', forWhom:'for',
@@ -371,7 +371,7 @@
       all:'Всё', groups:{ newcomers:'Новые', names:'Имена', memories:'Воспоминания', facts:'Факты', connections:'Связи' },
       cntNew:'новых людей', cntNames:'частей имени', cntMem:'ждёт', cntFacts:'ждёт', cntConn:'ждёт',
       connSo:'значит', removeReq:'Удалить эту связь',
-      waiting:'Ожидает', approve:'Одобрить', decline:'Отклонить', approved:'Принято — теперь это в лесу', declined:'Отложено', approveFail:'Не получилось принять — попробуйте ещё раз',
+      waiting:'Ожидает', approve:'Одобрить', decline:'Отклонить', approved:'Принято — теперь это в лесу', declined:'Отложено', approveFail:'Не получилось принять — попробуйте ещё раз', gateT:'У ворот', gateSub:(n)=>`${n===1?'Один человек ждёт':n+' чел. ждут'} приглашения в семейный круг.`, welcome:'Впустить', welcomed:(n)=>`${n} внутри — лес для них открыт`,
       toapprove:'Одобрите — и это войдёт в лес <span class="g">золотом</span>, для семьи.',
       suggestedBy:'Предложил', toldBy:'Рассказал', uploadedBy:'загрузил', someone:'член семьи', ago:'',
       newcomerFor:'Тот, кого лес ещё не знает', forWhom:'для',
@@ -399,7 +399,7 @@
       all:'הכל', groups:{ newcomers:'חדשים', names:'שמות', memories:'זכרונות', facts:'עובדות', connections:'קשרים' },
       cntNew:'אנשים מוצעים', cntNames:'חלקי שם', cntMem:'ממתינים', cntFacts:'ממתינות', cntConn:'ממתינים',
       connSo:'אז', removeReq:'הסר את הקשר הזה',
-      waiting:'ממתין', approve:'אשר', decline:'דחה', approved:'התקבל — כעת זה ביער', declined:'הונח בצד', approveFail:'לא הצלחנו לקבל — נסו שוב',
+      waiting:'ממתין', approve:'אשר', decline:'דחה', approved:'התקבל — כעת זה ביער', declined:'הונח בצד', approveFail:'לא הצלחנו לקבל — נסו שוב', gateT:'בשער', gateSub:(n)=>`${n===1?'מישהו ממתין':n+' ממתינים'} להתקבל אל מעגל המשפחה.`, welcome:'להכניס', welcomed:(n)=>`${n} בפנים — היער פתוח עבורם`,
       toapprove:'אשר וזה יצטרף ליער ב<span class="g">זהב</span>, למשפחה.',
       suggestedBy:'הוצע על ידי', toldBy:'סופר על ידי', uploadedBy:'הועלה על ידי', someone:'בן משפחה', ago:'',
       newcomerFor:'מישהו שהיער עדיין לא מכיר', forWhom:'עבור',
@@ -694,7 +694,7 @@
     const counts={ newcomers:items.newcomers.length, names:items.names.length, connections:items.connections.length, memories:items.memories.length, facts:items.facts.length };
     const total=counts.newcomers+counts.names+counts.connections+counts.memories+counts.facts;
 
-    if(total===0){ pad.innerHTML=emptyHTML(); attachThumbs(); return; }
+    if(total===0){ pad.innerHTML=gateSection()+emptyHTML(); wireGate(); attachThumbs(); return; }
 
     let h=`<div class="keeperbar"><span class="kshield">${IC.shield}</span><div class="kt">${L.keeperbar[0]}<b>${L.keeperbar[1]}</b>${L.keeperbar[2]}</div></div>`;
     h+=`<div class="warm">${L.warm(total)}</div><div class="warmsub">${esc(L.warmSub)}</div>`;
@@ -714,7 +714,8 @@
     if(show('memories'))  h+=groupHTML('memories',IC.memory,L.cntMem,items.memories);
     if(show('facts'))     h+=groupHTML('facts',IC.fact,L.cntFacts,items.facts);
     h+=`<div class="foot"><div class="l">${esc(L.foot)}</div></div>`;
-    pad.innerHTML=h;
+    pad.innerHTML=gateSection()+h;
+    wireGate();
     attachThumbs();
   }
 
@@ -832,7 +833,32 @@
   }
 
   /* ---------- gate + boot ---------- */
-  async function reload(){ await loadData(); render(); }
+  /* At the gate: signed-up family waiting for the keeper's welcome (is_member=false).
+     One tap opens the whole forest to them — the funnel's other half. */
+  let atGate=[];
+  async function loadGate(){ try{
+      const {data}=await sb.from('profiles').select('id,display_name,created_at,is_member,is_keeper');
+      atGate=(data||[]).filter(p=>!p.is_member&&!p.is_keeper);
+    }catch(e){ atGate=[]; } }
+  function gateSection(){ const L=d();
+    if(!atGate.length) return '';
+    return `<div class="sec" style="border:1px solid rgba(243,205,132,.45);border-radius:16px;padding:14px 15px;margin-bottom:16px;background:rgba(243,205,132,.05)">
+      <div style="font-family:'Azeret Mono',monospace;font-size:10px;letter-spacing:.25em;color:var(--gold,#f3cd84);text-transform:uppercase">${esc(L.gateT)}</div>
+      <div style="font-size:13px;color:#b8c6d4;margin:4px 0 10px">${esc(L.gateSub(atGate.length))}</div>
+      ${atGate.map(p=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid rgba(180,205,235,.12)">
+        <span style="flex:1;font-size:15px" class="serif">${esc(p.display_name||'')}</span>
+        <button data-welcome="${esc(p.id)}" style="border-radius:99px;padding:7px 15px;font-size:12.5px;cursor:pointer;font-family:inherit;border:1px solid rgba(143,214,160,.55);color:#8fd6a0;background:rgba(143,214,160,.1)">${esc(L.welcome)}</button>
+      </div>`).join('')}
+    </div>`; }
+  function wireGate(){ document.querySelectorAll('[data-welcome]').forEach(b=>b.onclick=async()=>{
+      const id=b.getAttribute('data-welcome'); const L=d();
+      const nm=(atGate.find(x=>x.id===id)||{}).display_name||'';
+      const u=await sb.from('profiles').update({is_member:true}).eq('id',id);
+      if(u.error){ console.error('welcome',u.error); toast(L.approveFail,false); return; }
+      toast(L.welcomed(nm));
+      await loadGate(); render();
+    }); }
+  async function reload(){ await loadData(); await loadGate(); await loadGate(); render(); }
   function showGate(){ const L=d(); let g=$('#gate'); if(!g){ g=document.createElement('div'); g.id='gate'; g.className='gate'; $('#dev').appendChild(g); }
     g.innerHTML=`<div class="card">
       <h3>${esc(L.gateTitle)}</h3><div class="gsub">${esc(L.gateSub)}</div>
