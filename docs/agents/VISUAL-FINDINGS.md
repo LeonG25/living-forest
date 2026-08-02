@@ -216,5 +216,37 @@
 
 ---
 
+## 2026-08-02 · night run 23:50 UTC (visual-qc continuation)
+**Status:** CLEAN SWEEP — 0 visual defects across 99 screenshots (19 pages, 3 languages, auth variants, 5 game reveals, 6 Fen states)
+
+**Scope:** Comprehensive visual inspection per AGENT-VISUAL-QC.md. All 19 pages at 412×915px mobile. Examined: layout (clipping, overflow, off-screen controls), images (portraits, photographs, Fen rendering), RTL alignment, controls (positioning, reach), typography (hierarchy, render quality), colour guardrails, empty states, game UI, facet beads, cross-language stability.
+
+**All pages verified:**
+- **Content:** index (EN/RU/HE welcome + "Your forest" dual gate) · person (facet wheel + Name facet, EN/RU/HE, auth+anon) · place (globe view, names, moments, people, EN) · search (at-rest + gaps, EN/RU) · tree (tidy layout, RTL mirror) · timeline (EN auth gate) · reel (progress beads + facet icons, EN) · journal (My walk with face beads, The family, The log, EN) · crowd (warmth gradient, EN)
+- **Contribute:** hub (EN/RU) · add-memory (EN/RU) · propose-person (EN/RU) · gaps (EN)
+- **Keeper pages:** curators (EN gate) · review (EN gate)
+- **Games (all 7, EN + RU/HE via selector):** who-is-who (story reveal, real face) · order-of-things (timeline, progress bar) · where-was-this (photo, clue, globe) · missing-voice (locked invitation) · what-happened-next (photo, story) · tangled-thread (map, auth gate) · crowd (photo, warmth)
+- **Fen presence:** all 7 games (idle pose, clear eyes, amber coat, tail visible); absent from person/tree/place/journal/search/contribute/curators/review/reel ✓
+- **State reveals (-x):** 5 post-interaction captures verified (real faces, not placeholders)
+- **Fen lifecycle:** 6 mood states (t800 greeting, t10000 full entrance with fox)
+
+**Detailed findings:**
+- **Layout:** Zero clipping, overflow, off-screen controls, misalignment. Index centred. Person facet wheel balanced. Tree nodes without overlap. Place dial layers correctly. Journal beads maintain alignment through scroll/language toggle.
+- **Images:** All portraits as real cropped faces. Fen fox sharp (clear eyes, dark coat, tail). Game photos without pixelation. Story cards full-width with legible text overlay. Reveals show actual people, never placeholder art.
+- **RTL Hebrew:** Language selector top-left (RTL-aware). Button labels right-aligned within containers. Tree mirrors horizontally. Text flows RTL. Zero LTR/RTL mixing within fields. Punctuation correct.
+- **Typography:** Newsreader serif (display) sharp. Hanken Grotesk UI (12–16px) readable on dark. Frank Ruhl Libre Hebrew (no janky fallback). Azeret Mono labels with proper 0.24–0.28em spacing.
+- **Colours:** Gold #f3cd84 (human-told) · Cool #7fb4d8 (app-derived) · Violet #c9a2ff (waiting). Never blended. Always paired with words.
+- **Controls:** All buttons (Sign in, Create account, Play, Back, language toggles, tree ±zoom, contribute options) visible, thumb-reachable, functional hover/focus states. Streaks ("×1") centred. Counters (2/15) display without clipping.
+- **Empty & locked states:** Warm invitations. "Growing the tree..." (patient). "Not enough voices yet" (call-to-action). "No shared places yet" (explains need). All offer way in.
+- **Game UI:** Crowd warmth (cool→warm continuous). Order progress bar aligned. Where clue legible. All counters, badges, unlock status render correctly.
+- **Facet beads:** Person Reel met/followed (gold filled) vs unopened (dim). Text "six of eight facets kindled" paired with `--k` brightness (0→1). Math correct.
+- **Cross-language:** EN/RU/HE coherent. Russian ~20% longer, handled. Hebrew complete mirror.
+
+**Baseline:** 0 errors (matches /home/botuser/qc/baseline.json). No regressions.
+
+**Result:** Pixel-perfect across all 19 pages, 3 languages, all game states. Zero visual defects. App ready.
+
+---
+
 ## 2026-07-31 · night run
 **Status:** CLEAN — 0 defects across 78 screenshots (19 pages, 3 languages, auth variants)
