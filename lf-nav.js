@@ -88,7 +88,7 @@
   + '#lfnavPanel a:active{background:rgba(243,205,132,.16);}'
   + '#lfnavPanel a.cur{color:#f3cd84;}'
   + '#lfnavPanel a .ic{width:18px;text-align:center;opacity:.9;}'
-  + '#lfnavBtn{touch-action:none;width:48px;height:48px;border-radius:50%;border:1px solid rgba(243,205,132,.5);background:rgba(9,16,30,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#f3cd84;font-size:20px;line-height:1;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;}'
+  + '#lfnavBtn{touch-action:none;width:48px;height:48px;border-radius:50%;border:1px solid rgba(243,205,132,.5);background:rgba(9,16,30,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#f3cd84;font-size:20px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0;box-shadow:0 4px 18px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;}'
   + '#lfnav.open #lfnavBtn{border-color:rgba(243,205,132,.9);}';
   var st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);
 
@@ -177,7 +177,12 @@
     panel.appendChild(so);
   }
   var btn=document.createElement('button'); btn.id='lfnavBtn'; btn.type='button';
-  btn.setAttribute('aria-label','Move between lenses'); btn.textContent='\u2295';
+  btn.setAttribute('aria-label','Move between lenses');
+  /* drawn, not typed: U+2295 is missing from the face iOS falls back to, so the
+     iPad rendered a bare plus where Android shows the ring. */
+  btn.innerHTML='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+    +'stroke-width="1.6" stroke-linecap="round" aria-hidden="true">'
+    +'<circle cx="12" cy="12" r="9"/><path d="M12 7.6v8.8M7.6 12h8.8"/></svg>';
   wrap.appendChild(panel); wrap.appendChild(btn);
   function place(){ (document.body||document.documentElement).appendChild(wrap); }
   if(document.body) place(); else document.addEventListener('DOMContentLoaded', place);
