@@ -13,6 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="lf-db.js?v=1"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
   html,body{ background:#04070e; }
@@ -410,6 +411,7 @@
   const SB_URL='https://oabcdrktuikifbormjip.supabase.co';
   const SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
   const sb=window.supabase.createClient(SB_URL, SB_KEY);
+  LFDB.install(sb,'moment-real');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const $=s=>document.querySelector(s);
   const $$=s=>[...document.querySelectorAll(s)];
@@ -1320,6 +1322,8 @@
     if(document.body.classList.contains('tagging')){ setTagging(false); return true; }
     if(document.body.classList.contains('editing')){ document.body.classList.remove('editing'); const eb=$('#editBtn'); if(eb) eb.classList.remove('on'); return true; }
     return false; };
+  /* a failure may not pass in silence: lf-db speaks through this page's own voice */
+  try{ LFDB.onFailure=function(m){ toast(m,true); }; }catch(e){}
   function toast(msg, err){ $('#toastMsg').textContent=msg; const el=$('#toast'); el.classList.toggle('err',!!err); el.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('show'),2800); }
 
   /* ---------- language assets ---------- */

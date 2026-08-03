@@ -6,6 +6,7 @@
 <title>The clearing · The Living Forest</title>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&family=Hanken+Grotesk:wght@300..600&family=Azeret+Mono:wght@300..500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="lf-db.js?v=1"></script>
 <script src="lf-place.js?v=3"></script>
 <script src="lf-invite.js?v=2"></script>
 <script src="lf-bg.js?v=2" defer></script>
@@ -65,6 +66,7 @@ body{ background:#050a10; color:var(--ink); font-family:'Hanken Grotesk',sans-se
 const SB_URL='https://oabcdrktuikifbormjip.supabase.co';
 const SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
 const sb=window.supabase.createClient(SB_URL,SB_KEY);
+LFDB.install(sb,'clearing-real');
 const T={
  en:{ tk:'FEN · THE CLEARING', tn:'The clearing',
       meetT:'Someone to meet', storyT:'A story missing its teller? Not here — a story waiting for you', placeT:'A place to walk',

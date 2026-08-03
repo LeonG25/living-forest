@@ -17,6 +17,7 @@
 <script src="lf-face.js?v=1"></script>
 <script src="https://unpkg.com/topojson-client@3/dist/topojson-client.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="lf-db.js?v=1"></script>
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   :root{
@@ -367,6 +368,7 @@ const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const SUPABASE_URL = 'https://oabcdrktuikifbormjip.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+LFDB.install(sb,'place-real');
 
 /* ---- known place coordinates (real places from your photos) ---- */
 const GEO = {

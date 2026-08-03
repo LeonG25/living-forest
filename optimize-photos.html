@@ -48,10 +48,12 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="lf-db.js?v=1"></script>
 <script>
 (function(){
   const SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
   const sb=window.supabase.createClient(SB_URL,SB_KEY);
+  LFDB.install(sb,'optimize-photos');
   const $=s=>document.querySelector(s);
   const logEl=$('#log');
   let nOk=0,nSkip=0,nErr=0,saved=0;

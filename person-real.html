@@ -12,6 +12,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="lf-db.js?v=1"></script>
 <script src="lf-face.js?v=1"></script>
 <script src="lf-place.js?v=1"></script>
 <style>
@@ -422,6 +423,7 @@
   'use strict';
   const SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
   const sb=window.supabase.createClient(SB_URL,SB_KEY);
+  LFDB.install(sb,'person-real');
   if(window.LFFace) LFFace.init(sb);
   const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
   const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -1024,6 +1026,8 @@
   const showSheet=name=>{ $('.scrim').classList.add('show'); $(`.sheet[data-sheet="${name}"]`).classList.add('show'); };
   const hideSheets=()=>{ $('.scrim').classList.remove('show'); $$('.sheet').forEach(s=>s.classList.remove('show')); };
   window.__lfClose=()=>{ if($('.sheet.show')){ hideSheets(); return true; } return false; };
+  /* a failure may not pass in silence: lf-db speaks through this page's own voice */
+  try{ LFDB.onFailure=function(m){ toast(m); }; }catch(e){}
   function toast(m){ $('.toastmsg').textContent=m; const el=$('.toast'); el.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('show'),2600); }
 
   function openLang(){ const L=d(); const sh=$('.sheet[data-sheet="lang"]');

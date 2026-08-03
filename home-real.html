@@ -15,6 +15,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300&family=Hanken+Grotesk:wght@400;500;600&family=Azeret+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="lf-db.js?v=1"></script>
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;height:100%;overflow:hidden;background:#04070e;font-family:'Hanken Grotesk',system-ui,sans-serif;color:#e8eef8;user-select:none;-webkit-user-select:none;touch-action:none;}
@@ -133,6 +134,7 @@ const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const SUPABASE_URL='https://oabcdrktuikifbormjip.supabase.co';
 const SUPABASE_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+LFDB.install(sb,'home-real');
 
 const GEO = {
   'tel-aviv jaffo, israel':[32.0663,34.7778],'tel aviv jaffo, israel':[32.0663,34.7778],

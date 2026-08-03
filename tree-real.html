@@ -14,6 +14,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="lf-db.js?v=1"></script>
 <script src="lf-anchor.js?v=1"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
@@ -418,6 +419,7 @@
 'use strict';
 const SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
 const sb=window.supabase.createClient(SB_URL,SB_KEY);
+LFDB.install(sb,'tree-real');
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
@@ -1159,6 +1161,8 @@ function setIcons(){ const put=(sel,ic,w)=>{ const el=$(sel); if(el) el.innerHTM
   put('#pillLegend .ic',I.eye,1.8); put('#pillUnlinked .ic',I.spark,1.7);
   put('#legendPop .x',I.close,1.9); put('#unlinkedPop .x',I.close,1.9); }
 
+/* a failure may not pass in silence: lf-db speaks through this page's own voice */
+try{ LFDB.onFailure=function(m){ toast(m); }; }catch(e){}
 let tT; function toast(m){ $('#toastmsg').textContent=m; toastEl.classList.add('show'); clearTimeout(tT); tT=setTimeout(()=>toastEl.classList.remove('show'),2600); }
 
 /* ---------- data ---------- */
