@@ -24,3 +24,35 @@
 
 12. Keeper confirm UI for identity claims: review-real gains an Identity section reading player_anchors status=claimed with approve->profiles.person_id (pattern: existing approve rows).
 13. Fen iOS canvas renderer: assets/fen/sbs/*.mp4 (color|alpha) + lf-fen canvas path when NOALPHA; replaces still-mode.
+
+
+---
+
+## WORK PLAN — set 2026-08-03 (execute in this order)
+
+**Gate: nothing ships until Leon reports on the settled build.** The deploy freeze exists
+because ~25 deploys in one evening produced symptoms belonging to no single version.
+
+**A · Correctness sweep (no new surfaces)**
+A1. Roll `lf-auth.js` to the remaining 22 pages — replace each page's private session read with
+    `LFAuth.ensure(sb)`; `out`/`broken`/`waiting` all resolve at the gate, `slow` proceeds.
+    Verify each page under both engines before the next.
+A2. Audit every Supabase read in the app for an unchecked `.error` (the class that turned a
+    total failure into "0 people"). Assert: no `select(...)` result used without an error check.
+A3. Connectedness QC: crawl all 24 pages — orphans, dead links, back behaviour, ⊕ menu
+    consistency, empty-state consistency. Report as a table with file+line evidence.
+
+**B · Performance for cold opens (the honest answer to "iOS feels slower")**
+B1. Service worker: cache-first for app shell (HTML/JS/CSS/fonts), network-first for data,
+    versioned by HEAD SHA so a deploy invalidates cleanly.
+B2. Defer the 3D globe until after the gate closes; keep the world paused while any gate view
+    is visible (already true for form + planting — verify no third path exists).
+B3. Measure before/after on a cold load under WebKit; record numbers in RUNLOG.
+
+**C · The remaining human-facing gaps**
+C1. Keeper-confirm UI for identity claims (review-real Identity section).
+C2. Guidance build 3/3 — first-walk welcome, then whispers.
+C3. Journal as a simple log (designer pass first).
+C4. Missing Voice (wire narrator/`contributor_id`), then Tangled Thread (places-lived structure).
+
+**Standing:** free detectors keep patrolling; any error they find wakes one agent pass.

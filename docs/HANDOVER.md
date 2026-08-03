@@ -1,28 +1,107 @@
-# HANDOVER — single source of truth
-*Updated 2026-08-02 09:45 UTC. Supersedes all earlier handovers. Every claim cites evidence.*
+# HANDOVER — The Living Forest
 
-## Deployment
-- Live: https://leong25.github.io/living-forest/ (repo LeonG25/living-forest, branch main, Pages workflow)
-- Droplet: botuser@droplet, repo at /home/botuser/living-forest; Supabase project oabcdrktuikifbormjip.
+*Updated 2026-08-03. HEAD `041bc80`. Supersedes all earlier handovers.
+Every claim here is evidence-backed (commit, file+line, table+rowcount, or probe output).*
 
-## What is true right now
-- **Seven-game front door**: five games live (who-is-who page hosts Whose Story Is This engine; where-was-this with trilingual place names via lf-place.js v3 + place_geo.name_en/ru/he + country_code, ISO-localized countries — probe-cards.js evidence in /tmp on droplet). Missing Voice & Tangled Thread unbuilt (QUEUE #-items).
-- **Fen** (lf-fen.js v20): full choreography per keeper spec (entrance clip whole after 2s; idle rotation idle-new↔light-delight; 12s yawn, 24s sleep held; right/wrong reaction pools random-no-repeat; wave-walk exit on [data-act=back]; frame-driven tweens; phase machine with __fenlog trace). WebKit/iOS: still-mode fallback (fen-still.png) keeps speech+offer+leave functional where alpha-webm can't play. iOS ANIMATION (canvas + side-by-side alpha mp4) IN PROGRESS: sbs bake running (/tmp/bake_sbs.log), renderer next.
-- **Guidance**: lf-invite.js v2 engine (anchor→kin-ring BFS→unmet-first; trio() for the clearing). Play-bud in lf-nav.js v10 on tree/person/globe. clearing-real.html live (lanterns from trio, re-roll, lf_fen_quiet toggle, in ⊕ menu). Remaining: first-walk welcome; whispers (last).
-- **Identity self-service** (tree-real, commit ac90ed0): person button opens "Who are you in the family?" — fuzzy match, claim writes player_anchors(status claimed); you-badge honors anchor; keeper confirm UI still TODO (claims visible via SQL).
-- **Keeper account**: profiles.person_id linked (Leon→Leonid Golnick). Wife signed up (la.lutine78@gmail.com, confirmed, signed in); Supabase Site URL fix pending on Leon (dashboard → auth/url-configuration).
-- **Approve bug class KILLED** (commit ba728c1): name-part publish now supersedes old published rows in ALL four approve paths (review fact+group, person single+group; constraint person_facts_one_published_name_part was the silent 23505); approve errors surface as red toast. Root cause proven by RLS-simulated repro.
-- **Translation**: framework Rule 3 sanctioned; v0 Edge Function 'translate' + translations table (354 rows) ALIVE; wired into Whose-Story clue (lf-games v13 carries artefact_id; cache-first then invoke; labelled + original toggle). Was blocked on API credit — credit added 2026-08-02; VERIFY on next Hebrew/Russian story view. Extend to moment/reel later.
-- **iOS wave-1** (f8982e9): head kit on 24 pages (touch icon, web-app meta, viewport-fit), dvh fixes, Fen still-mode.
-- **Places brain**: lf-place.js v3 (ensure→geo+label+country+code+3 names at birth; display(); countryName() via Intl). Consumers: person bead country-tie, moment picker, where-was-this (showPlace door, collision guard). QUEUE: route person bead display + place page through the same door.
+---
 
-## The rig (QC)
-- Chrome probes as before (~/qc/probe-*.js). **NEW: real WebKit engine** (~/qc/pw/webkit22, ubuntu-22.04 build) with deps in ~/qc/wklibs; env recipe lives inside ~/qc/wk-sweep.js (LD path from ~/qc/ldpath.txt; mesa surfaceless llvmpipe; GIO TLS modules; GSettings schemas; GST plugin path + fakesink rank — the audio-sink NULL was the page-crash cause). Sweep-mode blocks .mp4/.webm (2GB box cannot CPU-decode; rig-only limitation). **13/13 pages CLEAN under iPhone-UA WebKit** (/home/botuser/qc/report/webkit-sweep.log pattern; run wksweep5 2026-08-02).
-- nightly.sh: free detectors every cycle; **webkit sweep gated on HEAD change**; **paid agents PUSH-DRIVEN** (keeper's rule): sleep until `echo N > ~/qc/wake` or a detector finds errors (which writes wake itself). No clock anywhere.
+## 1 · Orientation for the next session
 
-## Open threads (priority order)
-1. Zoya's iPhone blank tree/globe: NOT reproduced under WebKit 13/13-clean → suspect stale Safari cache from the ~20-deploy day or old iOS. Awaiting cache-clear verdict + iOS version.
-2. Fen iOS animation v2: sbs mp4s baking → canvas renderer in lf-fen (detect → draw color half keyed by alpha half).
-3. Keeper confirm UI for identity claims (review page section).
-4. First-walk welcome; whispers (guidance builds 3/3).
-5. Missing Voice + Tangled Thread games; Site URL fix (Leon).
+**Read in this order:** this file → `CLAUDE.md` §0 (orientation table) → `docs/agents/QUEUE.md`.
+`CLAUDE.md` is the canon: rules, schema, design law, Fen's clip map, voice law. This file is
+the snapshot. The queue is the plan.
+
+**Addresses**
+- Live app: `https://leong25.github.io/living-forest/` (globe = `index.html` is home)
+- Repo: `LeonG25/living-forest`, branch `main`, deployed by GitHub Pages (~85–90s)
+- Droplet: `botuser@droplet` — repo `/home/botuser/living-forest`, rig `/home/botuser/qc`
+- Supabase project: `oabcdrktuikifbormjip`
+- PAT: `/home/botuser/.gh_token` (push via full HTTPS URL with token; the local
+  `origin/main` ref stays stale even after a successful push — verify with `git ls-remote`)
+
+**Who is who**
+- Leon — keeper. uid `e7035e2f-…d6` ↔ person *Leonid Golnick* `bff9e2b7-…7e`; anchor active.
+- Zoya — wife. uid `b7bb09ab-…5a`, confirmed, `is_member=true` (set by keeper action);
+  person *Zoya Golnick-Gurvich* not yet claimed — she claims it herself via the sheet.
+- QC rig — `qc-rig@livingforest.test`, uid `17fb171e-…9e`, member, deliberately anchor-less.
+
+**Working method (non-negotiable)**
+1. **Reproduce first.** Never patch a report you have not reproduced.
+2. **Verify computationally.** `view` returns placeholders; assert row counts, file sizes, SHAs.
+3. **Read before writing.** Never write docs from memory — read the source first.
+4. **Design before engineering.** Every new page goes through Claude Design first.
+5. **`node --check` every inline script** before push.
+6. **Serialize droplet git ops**; never rerun a failed Pages job — push an empty commit instead.
+
+---
+
+## 2 · What shipped this session (2026-08-02 → 03)
+
+**The entry chain, rebuilt.** This was the session's spine: a family member could sign up and
+still see nothing, with no way forward and no explanation. Now:
+
+| Stage | Behaviour | Evidence |
+|---|---|---|
+| Sign in | Enter key submits; fields scroll above the iOS keyboard; world pauses behind the gate | `e8ddba1`, `5a2c2a5`; `probe-gate.js` — form alive, typing echoes, wrong password answered |
+| Not yet welcomed | Warm *"You are at the gate"* panel, trilingual, Knock again / Sign out | `8cf1b38`, `29c1f87`; probe as non-member saw the panel |
+| Keeper welcomes | `review-real.html` opens with *"At the gate"*, one tap sets `is_member` | `06d76f9` |
+| Identity | *"Who are you in the family?"* — fuzzy match, portraits, one tap claims | `ac90ed0`, `e96ab6a`, `7a4da62`; `probe-zoya.js` — 5 suggestions, claim row written |
+| Loading | 12s watchdog → trilingual **Try again** | `1299da5` |
+| Session health | `lf-auth.js` — out / broken / slow / in | `b90c692`, `5a2c2a5`; `probe-ghost.js` — token purged, honest gate |
+
+**Four faults found behind one symptom ("nothing happens when I tap my name"):** no Enter
+wiring; `?choose=1` ignored by the tree; the matcher assuming an array when `people` is a map;
+and `status:'claimed'` rejected by a check constraint that allows only `active`/`declined`.
+
+**The zeros mystery, solved.** Ghost sessions (expired, unrefreshable tokens) made the app look
+signed-in while every read returned empty. Then my own repair made it worse: a `keeper_profiles_*`
+policy referencing `profiles` from within `profiles` caused **infinite recursion**, and the SQL
+that fixed it shared a block with a `rollback`, silently undoing itself. Both dead now
+(`public.is_keeper()` security-definer + policies committed separately and read back), and
+`041bc80` makes an empty answer to a member impossible to mistake for success.
+
+**iPhone adaptation.** iOS head kit on all 24 pages (`f8982e9`), dvh fixes, Fen's canvas keyer
+with 12 side-by-side clips (`d42ba53`), and a **real WebKit engine** in the rig — 13/13 pages
+clean under iPhone UA.
+
+**Agents.** Push-driven: they sleep until `echo N > ~/qc/wake` or a free detector finds an error.
+
+---
+
+## 3 · Known-open, in priority order
+
+1. **Leon + Zoya verdict on the settled build** (deploy freeze holds until then).
+2. **Site URL dashboard fix** — Leon only:
+   `https://supabase.com/dashboard/project/oabcdrktuikifbormjip/auth/url-configuration`.
+3. **Performance pass for cold opens** — service worker (download once) + defer the 3D world
+   until after the gate. Measured cause, not a guess: ~600KB re-downloaded per open plus iOS
+   shader compilation; Safari evicts caches far more aggressively than Android Chrome.
+4. **Roll `lf-auth` to the remaining 22 pages** — mechanical, high value.
+5. **Fen on real Apple glass** — one family iPhone, one game, one report.
+6. **Keeper-confirm UI** for identity claims (`review-real.html` Identity section).
+7. **Guidance 3/3** — first-walk welcome, then whispers.
+8. **Missing Voice** (narrator/`contributor_id`) and **Tangled Thread** (places-lived).
+9. **Connectedness QC** — orphan pages, dead links, back behaviour, ⊕ menu, empty states.
+10. **Journal as a simple log**, designer first.
+
+**Deferred by decision (do not build unasked):** keeper hierarchy, age-appropriate restrictions,
+maiden-name work (0 rows across 45 people), `place_facts` rows with validity ranges,
+per-player progression axis, Profile / who's-playing.
+
+---
+
+## 4 · The rig
+
+- **Chrome probes:** `~/qc/probe-*.js` (19 of them; the named ones are listed in `CLAUDE.md` §1).
+- **WebKit:** `~/qc/pw/webkit22` + `~/qc/wklibs`; env recipe inside `~/qc/wk-sweep.js`.
+  Required: `LD_LIBRARY_PATH` from `~/qc/ldpath.txt`, `XDG_RUNTIME_DIR=/tmp/xdg`,
+  EGL surfaceless llvmpipe, `GIO_MODULE_DIR`, `GSETTINGS_SCHEMA_DIR`,
+  `GST_PLUGIN_SYSTEM_PATH_1_0` + scanner + `GST_PLUGIN_FEATURE_RANK=fakesink:MAX`.
+  Python's `zipfile` flattens symlinks — the extraction repair pass is required after any reinstall.
+- **Cost governor:** free detectors always; paid agents only on pushed work.
+
+## 5 · Script versions live now
+
+`lf-auth v2` · `lf-fen v21` · `lf-nav v10` · `lf-games v13` · `lf-place v3` · `lf-invite v2` ·
+`lf-bg v2` · `lf-face v1` · `lf-progress v1`. Bump the `?v=` when a shared script changes —
+unversioned refs caused a phantom-cache class of bug.

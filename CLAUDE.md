@@ -126,6 +126,135 @@
 
 # CURRENT STATE — session handover (read me first)
 
+*Rewritten 2026-08-03. Everything above the Archive line is current; the Archive below is
+chronological history kept for provenance, not for orientation.*
+
+## 0 · ORIENTATION — where to look for what (start here, every session)
+
+| You need… | Look here |
+|---|---|
+| Rules, specs, design law, schema, the whole canon | **this file** (`CLAUDE.md`, root of the repo) — table of contents at the top |
+| A short, evidence-cited status snapshot | `docs/HANDOVER.md` |
+| What to build next, in order | `docs/agents/QUEUE.md` |
+| Progression / the walk / levels of knowing | `docs/progression-spec.md` |
+| Fen's clip mapping + speech dictionary | the FEN sections in this file (they supersede any `docs/fen-*.md`) |
+| Every design delivery, dated and immutable | `docs/designs/INDEX.md` |
+| Agent rules, waking policy | `docs/agents/COMMON.md`; per-agent briefs `docs/agents/AGENT-*.md` |
+| What the agents actually did | `docs/agents/RUNLOG.md`, `docs/agents/VISUAL-FINDINGS.md` |
+| Logic worth porting, never reinventing | `/home/botuser/prototype-reference.html` on the droplet (122KB, the retired prototype) |
+
+**The four tools and what each is for**
+- **LG Maker MCP `exec_bash`** — shell on the droplet as `botuser`; repo at `/home/botuser/living-forest`, QC rig at `/home/botuser/qc`. Drops intermittently: re-find it with `tool_search`. Default timeout 30s (`timeout_s=290` for ffmpeg/sweeps); 8192-char output cap; long jobs via `nohup … &` + polling.
+- **Supabase MCP `execute_sql`** — project `oabcdrktuikifbormjip`. Returns only the LAST statement's rows, so put the query you care about last. **Never mix a fix and a `rollback` in one block** — that is how a policy repair silently undid itself on 2026-08-02.
+- **Sandbox `bash_tool`** — clone at `/home/claude/repo`; fast, but blocked from `supabase.co`. Binaries are fetched on the droplet, never here.
+- **Claude Design MCP** — the designer. Every new visual surface goes through it before it is built.
+
+**Verify-before-claiming** is canon: a status claim needs evidence (file+line, table+rowcount, commit hash, or probe output). The `view` tool returns placeholders — verify computationally.
+
+## 1 · WHAT IS TRUE RIGHT NOW (2026-08-03, HEAD `041bc80`)
+
+**Live:** https://leong25.github.io/living-forest/ · 24 pages · repo `LeonG25/living-forest` (branch `main`, GitHub Pages).
+
+**Entry & identity — rebuilt this session, this is the big change.**
+`lf-auth.js` (v2) is now **THE identity process** — one module, one answer, identical on
+iOS and Android by construction. `LFAuth.ensure(sb)` returns exactly one of four verdicts:
+- `out` — no session → the gate.
+- `broken` — a session that a **definitive** 401/403/JWT verdict proves dead → clean sign-out, gate says *"Your session went stale — please sign in again."*
+- `slow` — the read did not finish in 15s → **session kept**, page proceeds/retries. Slowness may never sign anyone out (this rule exists because v1 did exactly that and locked Leon out on his iPad).
+- `in` — `{uid, profile, anchor}`; the system knows who this is.
+Consumers so far: `index.html`, `tree-real.html` (their private duplicate logic was deleted).
+**Rolling it to the remaining pages is queue item #1 and is mechanical.**
+
+**The funnel (Leon's law: resumable, single process, never stuck).**
+register → confirm → sign in (Enter submits; fields scroll above the iOS keyboard) →
+**not yet welcomed?** the warm *"You are at the gate"* panel (Knock again / Sign out, trilingual;
+a missing profile row waits too) → **keeper welcomes** in `review-real.html` → *"At the gate"*
+section, one tap `Welcome in` sets `is_member` → next entry asks **"Who are you in the family?"**
+(fuzzy token match over `peopleList()`, portrait suggestions, one tap claims
+`player_anchors` **status `active`**) → anchored, badged, and Fen's invitations rank from there.
+Loading itself obeys the law: after 12s of *Reading your forest* a trilingual **Try again** appears.
+
+**Membership circle (the thing that made new users see nothing).** A RESTRICTIVE policy
+`members_only = is_member()` on `people` and friends returns *zero rows* to non-members.
+Correct design, but it had no voice — hence Zoya's blank tree and Leon's 0/0/0 globe.
+The funnel above is its voice. `is_member()` = profiles `is_keeper OR is_member`.
+
+**Zeros may never lie again.** All four globe reads are error-checked; an empty answer to a
+member is treated as failure — diagnosed to `client_diag`, token refreshed, retried twice,
+then said out loud. `client_diag` (uid, page, note) gives remote eyes on family devices.
+
+**Fen** — `lf-fen.js` v21. Full choreography per the FEN sections. Alpha-WebM path on
+Chrome/Android; **iOS path** = canvas keyer reuniting side-by-side colour|alpha H.264
+(`assets/fen/sbs/*.mp4`, 12 clips) per frame, with `fen-still.png` as the fallback that keeps
+speech/offer/leave working. Rig-verified error-free; **not yet seen moving on real Apple glass.**
+
+**Also live:** five games (Who Is Who, Crowd, Order of Things, Whose Memory, Where Was This);
+guidance engine `lf-invite.js` v2 + Play-bud in `lf-nav.js` v10 + `clearing-real.html`;
+place brain `lf-place.js` v3 (trilingual names, country codes); story auto-translation wired
+into the Whose-Story clue (Edge Function `translate` + `translations` cache, 354 rows);
+approve-bug class killed (supersede-first in all four approve paths).
+
+**The QC rig — two engines.** Chrome probes plus a **real WebKit engine** at
+`~/qc/pw/webkit22` (ubuntu-22.04 build; deps in `~/qc/wklibs`; the full env recipe lives inside
+`~/qc/wk-sweep.js` — LD path from `~/qc/ldpath.txt`, mesa surfaceless llvmpipe, GIO TLS modules,
+GSettings schemas, GST plugin path with `fakesink:MAX`, which was the fix for the audio-sink
+crash). **13/13 pages clean under iPhone UA** (`~/qc/report/webkit-sweep.log`). Sweep-mode
+blocks `.mp4/.webm` — the 2GB droplet cannot CPU-decode them; a rig limit, not a site bug.
+Named probes worth knowing: `probe-zoya.js` (full UI login → choose → claim),
+`probe-ghost.js` (broken-session eviction), `probe-gate.js` (cold form interactivity),
+`probe-fresh.js`, `probe-reading.js`, `probe-tree.js`, `probe-fen-ios.js`.
+
+**Agents — push-driven (keeper's rule).** The paid agents SLEEP. Work is pushed with
+`echo N > /home/botuser/qc/wake` (N passes, then sleep). Free detectors run every cycle and
+any error they find writes `wake` itself. The WebKit sweep is a free detector gated on HEAD
+change. Currently `wake` = 0. Canon in `docs/agents/COMMON.md`.
+
+## 2 · OPEN PROBLEMS (in priority order)
+
+1. **Leon's and Zoya's verdict on the settled build.** Every fix below landed during a storm of
+   ~25 deploys; their last attempts hit mid-flight versions. Nothing new ships until they report
+   on one stable build. (Deploy freeze was declared for exactly this reason.)
+2. **Supabase Site URL — needs Leon, one dashboard tap.**
+   `https://supabase.com/dashboard/project/oabcdrktuikifbormjip/auth/url-configuration`
+   → Site URL `https://leong25.github.io/living-forest/` + same under Redirect URLs.
+   Until then every confirmation email lands on a 404 after successfully verifying.
+3. **Performance on cold/weak devices.** Measured: the globe page is ~600KB, not heavy — but it
+   re-downloads on every open (Safari evicts aggressively) and pays an iOS shader-compile tax.
+   Planned: a service worker so the app is downloaded once, and deferring the 3D world until
+   after the gate. This is the honest answer to "why is iOS slower", not "weak device".
+4. **`lf-auth` on the remaining 22 pages** — mechanical, but until it is done those pages can
+   still show a ghost session's emptiness.
+5. **Fen on real Apple glass** — needs one family iPhone to open a game and report whether she moves.
+6. **Keeper-confirm UI for identity claims** (`review-real.html` Identity section: read
+   `player_anchors`, approve → `profiles.person_id`). Claims currently stand as `active` unconfirmed.
+7. **Guidance build 3/3** — first-walk welcome, then whispers (max 1/session, obeys `lf_fen_quiet`).
+8. **Two unbuilt games** — Missing Voice (needs narrator/`contributor_id` wired), Tangled Thread
+   (needs per-person places-lived structure).
+9. **Connectedness QC** — no orphan pages, every link lands somewhere real, back always works,
+   ⊕ menu consistent, empty states consistent. The main risk of parallel multi-agent building.
+10. **Journal as a simple LOG** (as in the prototype), through the designer first.
+
+## 3 · THE HARD-WON LESSONS OF 2026-08-02 (do not relearn these)
+
+- **A fix and a `rollback` in one SQL block cancel the fix.** A recursive-policy repair undid
+  itself this way and poisoned every read for an hour, appearing as innocent zeros.
+- **Never let a policy reference its own table.** Use a `security definer` function
+  (`public.is_keeper()`), as `is_member()` already did.
+- **Check every read's `.error`.** A single unchecked query turned a total failure into "0 people".
+- **Slowness is not a verdict.** Only a definitive auth answer may end a session.
+- **Reproduce as the actual user, not as the rig.** The QC account was quietly a member, so it
+  could never see what outsiders saw. Fresh-state probes now exist for this.
+- **The tree's `people` is a MAP keyed by id**, not an array — assuming otherwise crashed the
+  identity matcher silently.
+- **RLS check constraints reject invented vocabulary silently** — `player_anchors.status` is
+  `active` | `declined` only.
+- **Rapid deploys are their own bug.** A caching phone plus ~25 pushes an hour produces symptoms
+  that belong to no version. Freeze, then let the user test one build.
+
+---
+
+## Archive — earlier session notes (chronological, kept for provenance)
+
 **2026-07-29 · QC round 1 fixes (Leon's walkthrough).** (1) Place inputs on Person: Android's <datalist> is unreliable inside sheets and only prefix-matches — a visible substring-match typeahead now rides on top (tap to fill); data was always there (places table + place facts). (2) Fen entrance rebuilt: starts AFTER the strip fades (700ms), from -260px, 2.6s LINEAR (easing made his feet slide), then sits; walk-away also linear. lf-fen.js → ?v=5 on all 8 pages. (3) whereWasThis engine now HONOURS opts.id — when scoped to a person it draws only from moments that person is in (subject join), falling back to the corpus only if they have none; result gains `subject_ids` + `scoped_to`, and the game records 'followed' knowledge for the moment's people (closes half the deferred recording item — order-of-things still pending). (4) NEW `lf-globe.js`: the front door's WebGL globe (same ocean/atmosphere/graticule/outline recipe, three.js+topojson) as a reusable component; where-was-this orb's decorative innards replaced with it (sweep, rim, pins, badge untouched).
 
 **2026-07-29 · commits `b9b2de9`+next — FEN FULL CLIP SET.** Nine green clips baked via `/home/botuser/bake_fen.py` (script now PERSISTED on the droplet; adaptive-threshold pipeline as documented). Mapping: idle→"idle (new)", jump→"jump (not very slow)" (headroom fixed), delight→ROTATION [old light-delight, big nod], talking→small nod, earperk→"surprised", sleep→sleep (plays once then FREEZES on last frame — CLIP.freeze flag), stretch→yawn+stretch, wave→first 2.05s of "wave and threadmill walk", walk→"walking to the right" (treadmill, stays centered). lf-fen.js v4: rotation arrays in registry, freeze flag, onerror→idle, REAL entrance (walk loop slides in from left edge, 2.4s ease-out, then sits) and leave() = wave → walk out through the right edge. All 8 Fen pages bumped to ?v=4. Contact-sheet QC of raw clips + baked-frame QC both passed (clean edges, solid eyes, ember tail preserved); temp QC images committed then removed. STILL MISSING: **stumble** (wrong-answer clip: ears drooping, sad head-tilt) — wrong currently falls back to idle+voice line. Optional nice-to-have: a dedicated talking loop (small nod stands in).
