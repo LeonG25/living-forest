@@ -1,0 +1,1321 @@
+{
+ "journal": [
+  {
+   "sel": "button.ibtn",
+   "text": "Back",
+   "tag": "button",
+   "effect": "nav:index.html",
+   "errors": []
+  },
+  {
+   "sel": "button.langpill",
+   "text": "EN",
+   "tag": "button",
+   "effect": "mutation:2",
+   "errors": []
+  },
+  {
+   "sel": "button.tab.on",
+   "text": "My walk",
+   "tag": "button",
+   "effect": "mutation:20",
+   "errors": []
+  },
+  {
+   "sel": "button.tab:nth-1",
+   "text": "The family",
+   "tag": "button",
+   "effect": "mutation:6",
+   "errors": []
+  },
+  {
+   "sel": "button.tab:nth-2",
+   "text": "The log",
+   "tag": "button",
+   "effect": "mutation:3",
+   "errors": []
+  },
+  {
+   "sel": "a.cta",
+   "text": "Choose who you are in this forest",
+   "tag": "a",
+   "effect": "nav:tree-real.html?choose=1",
+   "errors": []
+  },
+  {
+   "sel": "a:nth-1",
+   "text": "יבגני מיטלמן",
+   "tag": "a",
+   "effect": "nav:person-real.html?id=d847f45e-d551-4afe-8251-97e31ed5b59a",
+   "errors": []
+  },
+  {
+   "sel": "a:nth-2",
+   "text": "Gary Golub",
+   "tag": "a",
+   "effect": "nav:person-real.html?id=2cde0b32-75ad-40fd-a0fd-91c843a4a818",
+   "errors": []
+  },
+  {
+   "sel": "a:nth-3",
+   "text": "Jacob Levin",
+   "tag": "a",
+   "effect": "nav:person-real.html?id=5804de56-368b-42bb-b294-c441d361c488",
+   "errors": []
+  },
+  {
+   "sel": "a:nth-4",
+   "text": "Marina Golub",
+   "tag": "a",
+   "effect": "nav:person-real.html?id=8a75add7-7ff3-4624-9f18-4d3817fa33f3",
+   "errors": []
+  },
+  {
+   "sel": "a:nth-5",
+   "text": "Close by stands [Wife of Shay] Ruah — go",
+   "tag": "a",
+   "effect": "NONE",
+   "errors": []
+  },
+  {
+   "sel": "a:nth-6",
+   "text": "Close by stands Amma Levin — go and meet",
+   "tag": "a",
+   "effect": "NONE",
+   "errors": []
+  },
+  {
+   "sel": "a:nth-7",
+   "text": "Close by stands Andrey Belyakov — go and",
+   "tag": "a",
+   "effect": "NONE",
+   "errors": []
+  },
+  {
+   "sel": "button.lang-opt.on",
+   "text": "English\nEnglish",
+   "tag": "button",
+   "effect": "mutation:25",
+   "errors": []
+  },
+  {
+   "sel": "button.lang-opt:nth-1",
+   "text": "Русский\nRussian",
+   "tag": "button",
+   "effect": "mutation:26",
+   "errors": []
+  },
+  {
+   "sel": "button.lang-opt:nth-2",
+   "text": "עברית\nHebrew",
+   "tag": "button",
+   "effect": "mutation:27",
+   "errors": []
+  },
+  {
+   "sel": "#lfnavBtn",
+   "text": "⊕",
+   "tag": "button",
+   "effect": "mutation:1",
+   "errors": []
+  }
+ ],
+ "search": [
+  {
+   "sel": "#backBtn",
+   "text": "Back",
+   "tag": "button",
+   "effect": "nav:index.html",
+   "errors": []
+  },
+  {
+   "sel": "#langBtn",
+   "text": "EN",
+   "tag": "button",
+   "effect": "mutation:2",
+   "errors": []
+  },
+  {
+   "sel": "#q",
+   "text": "",
+   "tag": "input",
+   "effect": "typed",
+   "errors": []
+  },
+  {
+   "sel": "div.rec",
+   "text": "[Wife",
+   "tag": "div",
+   "effect": "nav:person-real.html?id=aa0e0374-2a0c-41a0-96da-f544e8688a70",
+   "errors": []
+  },
+  {
+   "sel": "div.rec:nth-1",
+   "text": "Hanna",
+   "tag": "div",
+   "effect": "gone",
+   "errors": []
+  },
+  {
+   "sel": "div.rec:nth-2",
+   "text": "Andrey",
+   "tag": "div",
+   "effect": "gone",
+   "errors": []
+  },
+  {
+   "sel": "div.rec:nth-3",
+   "text": "אנה",
+   "tag": "div",
+   "effect": "gone",
+   "errors": []
+  },
+  {
+   "sel": "div.rec:nth-4",
+   "text": "Aunt",
+   "tag": "div",
+   "effect": "gone",
+   "errors": []
+  },
+  {
+   "sel": "div.rec:nth-5",
+   "text": "Basya",
+   "tag": "div",
+   "effect": "gone",
+   "errors": []
+  },
+  {
+   "sel": "div.rec:nth-6",
+   "text": "Berenika",
+   "tag": "div",
+   "effect": "gone",
+   "errors": []
+  },
+  {
+   "sel": "div.rec:nth-7",
+   "text": "Boris",
+   "tag": "div",
+   "effect": "gone",
+   "errors": []
+  },
+  {
+   "sel": "div.invite",
+   "text": "A GAP YOU COULD FILL\nWhere did Andrey Be",
+   "tag": "div",
+   "effect": "nav:person-real.html?id=4f86d811-5e7b-4148-8b96-1a1811019aa4",
+   "errors": []
+  },
+  {
+   "sel": "button.lang-opt.on",
+   "text": "English\nEnglish",
+   "tag": "button",
+   "effect": "mutation:14",
+   "errors": []
+  },
+  {
+   "sel": "button.lang-opt:nth-1",
+   "text": "Русский\nRussian",
+   "tag": "button",
+   "effect": "mutation:14",
+   "errors": []
+  },
+  {
+   "sel": "button.lang-opt:nth-2",
+   "text": "עברית\nHebrew",
+   "tag": "button",
+   "effect": "mutation:14",
+   "errors": []
+  },
+  {
+   "sel": "#lfnavBtn",
+   "text": "⊕",
+   "tag": "button",
+   "effect": "mutation:1",
+   "errors": []
+  }
+ ],
+ "contribute": [
+  {
+   "sel": "#back",
+   "text": "Back",
+   "tag": "button",
+   "effect": "nav:index.html",
+   "errors": []
+  },
+  {
+   "sel": "#lang",
+   "text": "EN",
+   "tag": "button",
+   "effect": "mutation:2",
+   "errors": []
+  },
+  {
+   "sel": "button.way",
+   "text": "Add\nA photograph, a moment, something th",
+   "tag": "button",
+   "effect": "nav:contribute-add-real.html",
+   "errors": []
+  },
+  {
+   "sel": "button.way:nth-1",
+   "text": "Propose a person\nSomeone the forest does",
+   "tag": "button",
+   "effect": "mutation:2",
+   "errors": []
+  },
+  {
+   "sel": "button.way.voice",
+   "text": "Record a voice\nThe one thing that outliv",
+   "tag": "button",
+   "effect": "mutation:2",
+   "errors": []
+  },
+  {
+   "sel": "button.way:nth-3",
+   "text": "Fill a gap\nAnswer something only you mig",
+   "tag": "button",
+   "effect": "mutation:2",
+   "errors": []
+  },
+  {
+   "sel": "#lfnavBtn",
+   "text": "⊕",
+   "tag": "button",
+   "effect": "mutation:1",
+   "errors": []
+  }
+ ],
+ "contribute-add": [
+  {
+   "sel": "#backBtn",
+   "text": "Back",
+   "tag": "button",
+   "effect": "nav:contribute-real.html",
+   "errors": []
+  },
+  {
+   "sel": "#langPill",
+   "text": "EN",
+   "tag": "button",
+   "effect": "mutation:1",
+   "errors": []
+  },
+  {
+   "sel": "#lfnavBtn",
+   "text": "⊕",
+   "tag": "button",
+   "effect": "mutation:1",
+   "errors": []
+  }
+ ],
+ "person": [
+  {
+   "sel": "button.ibtn",
+   "text": "Back",
+   "tag": "button",
+   "effect": "nav:index.html",
+   "errors": []
+  },
+  {
+   "sel": "button.ibtn:nth-1",
+   "text": "Language",
+   "tag": "button",
+   "effect": "mutation:3",
+   "errors": []
+  },
+  {
+   "sel": "#faceHost",
+   "text": "Open this photograph",
+   "tag": "div",
+   "effect": "nav:moment-real.html?id=6fb394e1-b2bf-44ee-9a92-8d53e8639faa",
+   "errors": []
+  },
+  {
+   "sel": "button.changef",
+   "text": "Change the face",
+   "tag": "button",
+   "effect": "mutation:6",
+   "errors": []
+  },
+  {
+   "sel": "button.cat.sel",
+   "text": "NAME",
+   "tag": "button",
+   "effect": "mutation:24",
+   "errors": []
+  },
+  {
+   "sel": "button.cat:nth-1",
+   "text": "FACE",
+   "tag": "button",
+   "effect": "mutation:27",
+   "errors": []
+  },
+  {
+   "sel": "button.cat:nth-2",
+   "text": "LIFE",
+   "tag": "button",
+   "effect": "mutation:27",
+   "errors": []
+  },
+  {
+   "sel": "button.cat.cool",
+   "text": "PLACES",
+   "tag": "button",
+   "effect": "mutation:27",
+   "errors": []
+  },
+  {
+   "sel": "button.cat:nth-4",
+   "text": "STORY",
+   "tag": "button",
+   "effect": "mutation:27",
+   "errors": []
+  },
+  {
+   "sel": "button.cat:nth-5",
+   "text": "KIN",
+   "tag": "button",
+   "effect": "mutation:27",
+   "errors": []
+  },
+  {
+   "sel": "button.cat.cool:nth-1",
+   "text": "REEL",
+   "tag": "button",
+   "effect": "mutation:27",
+   "errors": []
+  },
+  {
+   "sel": "button.cat:nth-7",
+   "text": "MORE",
+   "tag": "button",
+   "effect": "mutation:27",
+   "errors": []
+  },
+  {
+   "sel": "button.np-ctl",
+   "text": "EDIT",
+   "tag": "button",
+   "effect": "mutation:26",
+   "errors": []
+  },
+  {
+   "sel": "button.np-ctl:nth-1",
+   "text": "OTHER LANGUAGES",
+   "tag": "button",
+   "effect": "mutation:2",
+   "errors": []
+  },
+  {
+   "sel": "button.np-ctl.add",
+   "text": "ADD A NAME PART",
+   "tag": "button",
+   "effect": "mutation:2",
+   "errors": []
+  },
+  {
+   "sel": "#lfnavBtn",
+   "text": "⊕",
+   "tag": "button",
+   "effect": "mutation:1",
+   "errors": []
+  }
+ ],
+ "place": [
+  {
+   "sel": "#cMeet",
+   "text": "meet them →",
+   "tag": "a",
+   "effect": "mutation:3",
+   "errors": []
+  },
+  {
+   "sel": "#pBack",
+   "text": "Back",
+   "tag": "button",
+   "effect": "nav:index.html",
+   "errors": []
+  },
+  {
+   "sel": "button.on",
+   "text": "EN",
+   "tag": "button",
+   "effect": "NONE",
+   "errors": []
+  },
+  {
+   "sel": "button:nth-2",
+   "text": "RU",
+   "tag": "button",
+   "effect": "mutation:19",
+   "errors": []
+  },
+  {
+   "sel": "button:nth-3",
+   "text": "HE",
+   "tag": "button",
+   "effect": "mutation:19",
+   "errors": []
+  },
+  {
+   "sel": "#lfnavBtn",
+   "text": "⊕",
+   "tag": "button",
+   "effect": "mutation:1",
+   "errors": []
+  }
+ ],
+ "g-whois": [
+  {
+   "sel": "button.ibtn",
+   "text": "Back",
+   "tag": "button",
+   "effect": "nav:person-real.html",
+   "errors": []
+  },
+  {
+   "sel": "button.ibtn:nth-1",
+   "text": "Language",
+   "tag": "button",
+   "effect": "mutation:3",
+   "errors": []
+  },
+  {
+   "sel": "button.opt",
+   "text": "Boris [Kustanovich?]",
+   "tag": "button",
+   "effect": "mutation:7",
+   "errors": []
+  },
+  {
+   "sel": "button.opt:nth-1",
+   "text": "Elizaveta Solomonovna",
+   "tag": "button",
+   "effect": "mutation:23",
+   "errors": []
+  },
+  {
+   "sel": "button.opt:nth-2",
+   "text": "יבגני מיטלמן",
+   "tag": "button",
+   "effect": "mutation:7",
+   "errors": []
+  },
+  {
+   "sel": "button.opt:nth-3",
+   "text": "Anna Karanov",
+   "tag": "button",
+   "effect": "mutation:7",
+   "errors": []
+  },
+  {
+   "sel": "#lfnavBtn",
+   "text": "⊕",
+   "tag": "button",
+   "effect": "mutation:1",
+   "errors": []
+  }
+ ],
+ "g-where": [
+  {
+   "sel": "#backBtn",
+   "text": "Back",
+   "tag": "div",
+   "effect": "nav:person-real.html",
+   "errors": []
+  },
+  {
+   "sel": "button.on",
+   "text": "EN",
+   "tag": "button",
+   "effect": "mutation:80",
+   "errors": []
+  },
+  {
+   "sel": "button:nth-1",
+   "text": "RU",
+   "tag": "button",
+   "effect": "mutation:79",
+   "errors": []
+  },
+  {
+   "sel": "button:nth-2",
+   "text": "עב",
+   "tag": "button",
+   "effect": "mutation:82",
+   "errors": []
+  },
+  {
+   "sel": "button.gpin",
+   "text": "Rishon Le-Tsion",
+   "tag": "button",
+   "effect": "NONE",
+   "errors": []
+  },
+  {
+   "sel": "button.gpin:nth-1",
+   "text": "Holon, Israel",
+   "tag": "button",
+   "effect": "mutation:17",
+   "errors": []
+  },
+  {
+   "sel": "button.gpin:nth-2",
+   "text": "Pardes Hana, Israel",
+   "tag": "button",
+   "effect": "NONE",
+   "errors": []
+  },
+  {
+   "sel": "button.gpin:nth-3",
+   "text": "Morschach, Switzerland",
+   "tag": "button",
+   "effect": "NONE",
+   "errors": []
+  },
+  {
+   "sel": "div.opt",
+   "text": "Rishon Le-Tsion\nRishon LeZion, Israel",
+   "tag": "div",
+   "effect": "mutation:16",
+   "errors": []
+  },
+  {
+   "sel": "div.opt:nth-1",
+   "text": "Holon, Israel",
+   "tag": "div",
+   "effect": "mutation:17",
+   "errors": []
+  },
+  {
+   "sel": "div.opt:nth-2",
+   "text": "Pardes Hana, Israel\nTrek, HaGalil, Parde",
+   "tag": "div",
+   "effect": "mutation:17",
+   "errors": []
+  },
+  {
+   "sel": "div.opt:nth-3",
+   "text": "Morschach, Switzerland",
+   "tag": "div",
+   "effect": "mutation:19",
+   "errors": []
+  },
+  {
+   "sel": "#lfnavBtn",
+   "text": "⊕",
+   "tag": "button",
+   "effect": "mutation:4",
+   "errors": []
+  }
+ ],
+ "g-voice": [
+  {
+   "sel": "button.ibtn",
+   "text": "Back",
+   "tag": "button",
+   "effect": "nav:person-real.html",
+   "errors": []
+  },
+  {
+   "sel": "button.ibtn:nth-1",
+   "text": "Language",
+   "tag": "button",
+   "effect": "mutation:3",
+   "errors": []
+  },
+  {
+   "sel": "a.invite-cta.serif",
+   "text": "Record a memory in another voice",
+   "tag": "a",
+   "effect": "nav:contribute-real.html",
+   "errors": []
+  },
+  {
+   "sel": "#lfnavBtn",
+   "text": "⊕",
+   "tag": "button",
+   "effect": "mutation:1",
+   "errors": []
+  }
+ ],
+ "g-thread": [
+  {
+   "sel": "#backBtn",
+   "text": "Back",
+   "tag": "div",
+   "effect": "nav:person-real.html",
+   "errors": []
+  },
+  {
+   "sel": "button.on",
+   "text": "EN",
+   "tag": "button",
+   "effect": "mutation:30",
+   "errors": []
+  },
+  {
+   "sel": "button:nth-1",
+   "text": "RU",
+   "tag": "button",
+   "effect": "mutation:32",
+   "errors": []
+  },
+  {
+   "sel": "button:nth-2",
+   "text": "עב",
+   "tag": "button",
+   "effect": "mutation:32",
+   "errors": []
+  },
+  {
+   "sel": "#lfnavBtn",
+   "text": "⊕",
+   "tag": "button",
+   "effect": "mutation:1",
+   "errors": []
+  }
+ ],
+ "g-next": [
+  {
+   "sel": "button.ibtn",
+   "text": "Back",
+   "tag": "button",
+   "effect": "nav:person-real.html",
+   "errors": []
+  },
+  {
+   "sel": "button.ibtn:nth-1",
+   "text": "Language",
+   "tag": "button",
+   "effect": "mutation:3",
+   "errors": []
+  },
+  {
+   "sel": "button.opt",
+   "text": "This photo is from the wedding of Ira Sh",
+   "tag": "button",
+   "effect": "mutation:33",
+   "errors": []
+  },
+  {
+   "sel": "button.opt:nth-1",
+   "text": "Yavne, Israel\nTold by Leonid Golnick",
+   "tag": "button",
+   "effect": "mutation:8",
+   "errors": []
+  },
+  {
+   "sel": "button.opt:nth-2",
+   "text": "Grisha and Ida Tserlin in a party, possi",
+   "tag": "button",
+   "effect": "mutation:11",
+   "errors": []
+  },
+  {
+   "sel": "button.opt:nth-3",
+   "text": "Toyota Rosa came from the US to a family",
+   "tag": "button",
+   "effect": "mutation:8",
+   "errors": []
+  },
+  {
+   "sel": "#lfnavBtn",
+   "text": "⊕",
+   "tag": "button",
+   "effect": "mutation:1",
+   "errors": []
+  }
+ ],
+ "g-order": [
+  {
+   "sel": "button.ibtn",
+   "text": "Back",
+   "tag": "button",
+   "effect": "nav:person-real.html",
+   "errors": []
+  },
+  {
+   "sel": "button.ibtn:nth-1",
+   "text": "Language",
+   "tag": "button",
+   "effect": "mutation:3",
+   "errors": []
+  },
+  {
+   "sel": "button:nth-2",
+   "text": "Move earlier",
+   "tag": "button",
+   "effect": "mutation:2",
+   "errors": []
+  },
+  {
+   "sel": "button:nth-3",
+   "text": "Move later",
+   "tag": "button",
+   "effect": "mutation:4",
+   "errors": []
+  },
+  {
+   "sel": "button:nth-4",
+   "text": "Move earlier",
+   "tag": "button",
+   "effect": "mutation:4",
+   "errors": []
+  },
+  {
+   "sel": "button:nth-5",
+   "text": "Move later",
+   "tag": "button",
+   "effect": "mutation:4",
+   "errors": []
+  },
+  {
+   "sel": "button:nth-6",
+   "text": "Move earlier",
+   "tag": "button",
+   "effect": "mutation:4",
+   "errors": []
+  },
+  {
+   "sel": "button:nth-7",
+   "text": "Move later",
+   "tag": "button",
+   "effect": "mutation:4",
+   "errors": []
+  },
+  {
+   "sel": "button:nth-8",
+   "text": "Move earlier",
+   "tag": "button",
+   "effect": "mutation:34",
+   "errors": []
+  },
+  {
+   "sel": "button:nth-9",
+   "text": "Move later",
+   "tag": "button",
+   "effect": "mutation:2",
+   "errors": []
+  },
+  {
+   "sel": "#cta",
+   "text": "Set them in order",
+   "tag": "button",
+   "effect": "mutation:34",
+   "errors": []
+  },
+  {
+   "sel": "#lfnavBtn",
+   "text": "⊕",
+   "tag": "button",
+   "effect": "mutation:1",
+   "errors": []
+  }
+ ],
+ "crowd": [
+  {
+   "sel": "#back",
+   "text": "‹ THE GLOBE",
+   "tag": "a",
+   "effect": "nav:index.html",
+   "errors": []
+  },
+  {
+   "sel": "#openMoment",
+   "text": "this photograph",
+   "tag": "a",
+   "effect": "mutation:61",
+   "errors": []
+  },
+  {
+   "sel": "#zIn",
+   "text": "+",
+   "tag": "button",
+   "effect": "mutation:1",
+   "errors": []
+  },
+  {
+   "sel": "#zOut",
+   "text": "−",
+   "tag": "button",
+   "effect": "mutation:1",
+   "errors": []
+  },
+  {
+   "sel": "#hintBtn",
+   "text": "SHOW ME WHERE",
+   "tag": "button",
+   "effect": "mutation:161",
+   "errors": []
+  },
+  {
+   "sel": "#nextBtn",
+   "text": "ANOTHER GATHERING →",
+   "tag": "button",
+   "effect": "mutation:23",
+   "errors": []
+  },
+  {
+   "sel": "#lfnavBtn",
+   "text": "⊕",
+   "tag": "button",
+   "effect": "mutation:1",
+   "errors": []
+  }
+ ],
+ "review": [
+  {
+   "sel": "button.ibtn",
+   "text": "Back",
+   "tag": "button",
+   "effect": "nav:index.html",
+   "errors": []
+  },
+  {
+   "sel": "#langpill",
+   "text": "EN",
+   "tag": "button",
+   "effect": "mutation:3",
+   "errors": []
+  },
+  {
+   "sel": "button.nback",
+   "text": "Back to the forest",
+   "tag": "button",
+   "effect": "nav:index.html",
+   "errors": []
+  },
+  {
+   "sel": "#lfnavBtn",
+   "text": "⊕",
+   "tag": "button",
+   "effect": "mutation:1",
+   "errors": []
+  }
+ ],
+ "tree": [
+  {
+   "sel": "button.ibtn.back",
+   "text": "Back to the globe",
+   "tag": "button",
+   "effect": "nav:index.html",
+   "errors": []
+  },
+  {
+   "sel": "button.ibtn:nth-1",
+   "text": "EN",
+   "tag": "button",
+   "effect": "mutation:300",
+   "errors": []
+  },
+  {
+   "sel": "button.pcard",
+   "text": "Sasha\nchild of Ida",
+   "tag": "button",
+   "effect": "NONE",
+   "errors": []
+  },
+  {
+   "sel": "span.opic",
+   "text": "Open this photograph",
+   "tag": "span",
+   "effect": "NONE",
+   "errors": []
+  },
+  {
+   "sel": "span.conn",
+   "text": "connect",
+   "tag": "span",
+   "effect": "NONE",
+   "errors": []
+  },
+  {
+   "sel": "button.pcard:nth-1",
+   "text": "Ida\nchild of Amma",
+   "tag": "button",
+   "effect": "NONE",
+   "errors": []
+  },
+  {
+   "sel": "span.opic:nth-1",
+   "text": "Open this photograph",
+   "tag": "span",
+   "effect": "NONE",
+   "errors": []
+  },
+  {
+   "sel": "span.conn:nth-1",
+   "text": "connect",
+   "tag": "span",
+   "effect": "NONE",
+   "errors": []
+  },
+  {
+   "sel": "button.pcard:nth-2",
+   "text": "Amma",
+   "tag": "button",
+   "effect": "NONE",
+   "errors": []
+  },
+  {
+   "sel": "span.opic:nth-2",
+   "text": "Open this photograph",
+   "tag": "span",
+   "effect": "NONE",
+   "errors": []
+  },
+  {
+   "sel": "span.conn:nth-2",
+   "text": "connect",
+   "tag": "span",
+   "effect": "NONE",
+   "errors": []
+  },
+  {
+   "sel": "button.pcard:nth-3",
+   "text": "Sofa\nchild of Amma",
+   "tag": "button",
+   "effect": "NONE",
+   "errors": []
+  },
+  {
+   "sel": "span.opic:nth-3",
+   "text": "Open this photograph",
+   "tag": "span",
+   "effect": "NONE",
+   "errors": []
+  },
+  {
+   "sel": "span.conn:nth-3",
+   "text": "connect",
+   "tag": "span",
+   "effect": "NONE",
+   "errors": []
+  },
+  {
+   "sel": "button.pcard:nth-4",
+   "text": "Marina\nchild of Sofa",
+   "tag": "button",
+   "effect": "NONE",
+   "errors": []
+  },
+  {
+   "sel": "span.opic:nth-4",
+   "text": "Open this photograph",
+   "tag": "span",
+   "effect": "NONE",
+   "errors": []
+  },
+  {
+   "sel": "span.conn:nth-4",
+   "text": "connect",
+   "tag": "span",
+   "effect": "NONE",
+   "errors": []
+  },
+  {
+   "sel": "button.pcard:nth-5",
+   "text": "Leeya\nchild of Dudi",
+   "tag": "button",
+   "effect": "nav:person-real.html?id=e07dcc88-e67d-4228-ac67-71e6a9547cda",
+   "errors": []
+  },
+  {
+   "sel": "span.opic:nth-5",
+   "text": "Open this photograph",
+   "tag": "span",
+   "effect": "nav:moment-real.html?id=6fb394e1-b2bf-44ee-9a92-8d53e8639faa",
+   "errors": []
+  },
+  {
+   "sel": "span.conn:nth-5",
+   "text": "connect",
+   "tag": "span",
+   "effect": "mutation:127",
+   "errors": []
+  },
+  {
+   "sel": "button.pcard:nth-6",
+   "text": "Michael\nchild of Leon",
+   "tag": "button",
+   "effect": "nav:person-real.html?id=d95a463c-4ccd-4f83-b591-131be76950c0",
+   "errors": []
+  },
+  {
+   "sel": "span.opic:nth-6",
+   "text": "Open this photograph",
+   "tag": "span",
+   "effect": "nav:moment-real.html?id=8ed8c532-44fd-41fd-a5df-8ddcf5a7697c",
+   "errors": []
+  },
+  {
+   "sel": "span.conn:nth-6",
+   "text": "connect",
+   "tag": "span",
+   "effect": "mutation:117",
+   "errors": []
+  },
+  {
+   "sel": "button.pcard:nth-7",
+   "text": "Karni\nchild of Dudi",
+   "tag": "button",
+   "effect": "nav:person-real.html?id=3e0a7711-52de-46ca-ad4e-09a5c4ff438d",
+   "errors": []
+  },
+  {
+   "sel": "span.opic:nth-7",
+   "text": "Open this photograph",
+   "tag": "span",
+   "effect": "nav:moment-real.html?id=6fb394e1-b2bf-44ee-9a92-8d53e8639faa",
+   "errors": []
+  },
+  {
+   "sel": "span.conn:nth-7",
+   "text": "connect",
+   "tag": "span",
+   "effect": "mutation:137",
+   "errors": []
+  },
+  {
+   "sel": "button.pcard:nth-8",
+   "text": "Grisha",
+   "tag": "button",
+   "effect": "NONE",
+   "errors": []
+  },
+  {
+   "sel": "span.opic:nth-8",
+   "text": "Open this photograph",
+   "tag": "span",
+   "effect": "NONE",
+   "errors": []
+  }
+ ],
+ "index": [
+  {
+   "sel": "#cMeet",
+   "text": "meet them →",
+   "tag": "a",
+   "effect": "mutation:3",
+   "errors": []
+  },
+  {
+   "sel": "#lfnavBtn",
+   "text": "⊕",
+   "tag": "button",
+   "effect": "mutation:1",
+   "errors": []
+  }
+ ],
+ "timeline": [
+  {
+   "sel": "#back",
+   "text": "Back to the globe",
+   "tag": "a",
+   "effect": "nav:index.html",
+   "errors": []
+  },
+  {
+   "sel": "div.thumb",
+   "text": "Open this photograph",
+   "tag": "div",
+   "effect": "nav:moment-real.html?id=9a0127c4-e5e2-40cc-977d-eee1ab929fd7",
+   "errors": []
+  },
+  {
+   "sel": "div.thumb:nth-1",
+   "text": "Open this photograph",
+   "tag": "div",
+   "effect": "nav:moment-real.html?id=23e2d0aa-9b56-4c19-8377-8e6562c86e67",
+   "errors": []
+  },
+  {
+   "sel": "div.thumb:nth-2",
+   "text": "Open this photograph",
+   "tag": "div",
+   "effect": "nav:moment-real.html?id=10474b31-507a-4216-991e-086fd70de8b9",
+   "errors": []
+  },
+  {
+   "sel": "div.thumb:nth-3",
+   "text": "Open this photograph",
+   "tag": "div",
+   "effect": "nav:moment-real.html?id=d0d37cbc-bd4c-4988-b2e3-82a4b245089a",
+   "errors": []
+  },
+  {
+   "sel": "div.thumb:nth-4",
+   "text": "Open this photograph",
+   "tag": "div",
+   "effect": "nav:moment-real.html?id=a466d6e0-9262-4627-b49c-025793550c03",
+   "errors": []
+  },
+  {
+   "sel": "div.thumb:nth-5",
+   "text": "Open this photograph",
+   "tag": "div",
+   "effect": "nav:moment-real.html?id=9c205f47-291b-4997-8e54-b14dee6893b1",
+   "errors": []
+  },
+  {
+   "sel": "div.thumb:nth-6",
+   "text": "Open this photograph",
+   "tag": "div",
+   "effect": "nav:moment-real.html?id=5716c8fc-5c46-4795-90f5-1f83cd2cddc0",
+   "errors": []
+  },
+  {
+   "sel": "div.thumb:nth-7",
+   "text": "Open this photograph",
+   "tag": "div",
+   "effect": "nav:moment-real.html?id=492c6ed8-b259-4f40-994b-c1551e69ac3a",
+   "errors": []
+  },
+  {
+   "sel": "div.thumb:nth-8",
+   "text": "Open this photograph",
+   "tag": "div",
+   "effect": "nav:moment-real.html?id=ba9d2a52-2a99-466b-9e94-03c3f70827ff",
+   "errors": []
+  },
+  {
+   "sel": "div.thumb:nth-9",
+   "text": "Open this photograph",
+   "tag": "div",
+   "effect": "nav:moment-real.html?id=090340f7-ac42-4b24-b665-d54b0d6e919f",
+   "errors": []
+  },
+  {
+   "sel": "div.thumb:nth-10",
+   "text": "Open this photograph",
+   "tag": "div",
+   "effect": "nav:moment-real.html?id=89932676-9923-401b-9c99-bb78aa1ce69f",
+   "errors": []
+  },
+  {
+   "sel": "div.thumb:nth-11",
+   "text": "Open this photograph",
+   "tag": "div",
+   "effect": "nav:moment-real.html?id=6d1860b6-407f-468d-9ab0-8e937f09a4a0",
+   "errors": []
+  },
+  {
+   "sel": "div.thumb:nth-12",
+   "text": "Open this photograph",
+   "tag": "div",
+   "effect": "nav:moment-real.html?id=01a67a56-e3c0-4522-8060-42818e610799",
+   "errors": []
+  },
+  {
+   "sel": "div.thumb:nth-13",
+   "text": "Open this photograph",
+   "tag": "div",
+   "effect": "nav:moment-real.html?id=04b8e78e-a719-48ab-89e6-2fee14cd4117",
+   "errors": []
+  },
+  {
+   "sel": "div.thumb:nth-14",
+   "text": "Open this photograph",
+   "tag": "div",
+   "effect": "nav:moment-real.html?id=6fb394e1-b2bf-44ee-9a92-8d53e8639faa",
+   "errors": []
+  },
+  {
+   "sel": "div.thumb:nth-15",
+   "text": "Open this photograph",
+   "tag": "div",
+   "effect": "nav:moment-real.html?id=8ed8c532-44fd-41fd-a5df-8ddcf5a7697c",
+   "errors": []
+  },
+  {
+   "sel": "div.thumb:nth-16",
+   "text": "Open this photograph",
+   "tag": "div",
+   "effect": "nav:moment-real.html?id=f7394ce6-df50-41a9-9ff8-cba92e940c76",
+   "errors": []
+  },
+  {
+   "sel": "#lfnavBtn",
+   "text": "⊕",
+   "tag": "button",
+   "effect": "mutation:1",
+   "errors": []
+  }
+ ],
+ "reel": [
+  {
+   "sel": "button.ibtn",
+   "text": "Back",
+   "tag": "button",
+   "effect": "nav:person-real.html",
+   "errors": []
+  },
+  {
+   "sel": "button.langpill",
+   "text": "EN",
+   "tag": "button",
+   "effect": "mutation:14",
+   "errors": []
+  },
+  {
+   "sel": "button.tb",
+   "text": "Previous scene",
+   "tag": "button",
+   "effect": "mutation:12",
+   "errors": []
+  },
+  {
+   "sel": "button.tb.play",
+   "text": "Pause",
+   "tag": "button",
+   "effect": "mutation:11",
+   "errors": []
+  },
+  {
+   "sel": "button.tb:nth-2",
+   "text": "Next scene",
+   "tag": "button",
+   "effect": "mutation:12",
+   "errors": []
+  },
+  {
+   "sel": "#lfnavBtn",
+   "text": "⊕",
+   "tag": "button",
+   "effect": "mutation:13",
+   "errors": []
+  }
+ ],
+ "curators": [
+  {
+   "sel": "#backBtn",
+   "text": "Back",
+   "tag": "button",
+   "effect": "nav:index.html",
+   "errors": []
+  },
+  {
+   "sel": "#langBtn",
+   "text": "EN",
+   "tag": "button",
+   "effect": "mutation:4",
+   "errors": []
+  },
+  {
+   "sel": "#gateBack",
+   "text": "Back to the globe",
+   "tag": "button",
+   "effect": "nav:index.html",
+   "errors": []
+  },
+  {
+   "sel": "#lfnavBtn",
+   "text": "⊕",
+   "tag": "button",
+   "effect": "mutation:1",
+   "errors": []
+  }
+ ]
+}
