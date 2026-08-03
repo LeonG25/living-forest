@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="lf-db.js?v=1"></script>
-<script src="lf-face.js?v=1"></script>
+<script src="lf-face.js?v=2"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
   html,body{ background:#04070e; }
@@ -249,7 +249,7 @@
   .stagewrap{ gap:0; width:100%; }
   .device{ width:100vw!important; height:100dvh!important; max-width:none!important; border-radius:0!important; border:none!important; box-shadow:none!important; }
 </style>
-<script src="lf-bg.js?v=2" defer></script>
+<script src="lf-bg.js?v=3" defer></script>
 </head>
 <body>
   <div class="stagewrap">
@@ -444,23 +444,29 @@
   async function loadData(){
     const out={ people:[], newcomers:[], facts:[], nvs:[], arts:[], rels:[], pubRels:[], peopleMap:{}, profMap:{}, personRow:{},
                 pub:[], pubNvs:[], pubIdx:{}, pubAny:{}, pubGroup:{} };
-    // all people -> name map + newcomers (+ the whole row: primary_asset is the OLD portrait)
-    try{ const {data}=await sb.from('people').select('*'); (data||[]).forEach(p=>{ out.peopleMap[p.id]=p.display_name||p.name||''; out.personRow[p.id]=p; if(p.status&&p.status!=='published') out.newcomers.push(p); }); }catch(e){}
-    // pending person_facts
-    try{ const {data}=await sb.from('person_facts').select('id,person_id,group_id,field,lang,value,ord,status,created_by,created_at').not('status','eq','published'); out.facts=data||[]; }catch(e){ out.facts=[]; }
-    // pending name_variants (being retired, but read defensively)
-    try{ const {data}=await sb.from('name_variants').select('*').not('status','eq','published'); out.nvs=data||[]; }catch(e){ out.nvs=[]; }
-    // pending artefacts (photo/voice)
-    try{ const {data}=await sb.from('artefacts').select('*').not('status','eq','published'); out.arts=(data||[]).filter(a=>a.kind==='photo'||a.kind==='voice'); }catch(e){ out.arts=[]; }
-    // relationships: pending (in_review) go to the queue as connections; published ones are
-    // needed to recognise a pending row that mirrors a live tie (= a removal request).
-    try{ const {data,error}=await sb.from('relationships').select('id,from_person,to_person,kind,certainty,note,status,created_by,created_at'); if(error) throw error;
-      const all=data||[]; out.rels=all.filter(r=>r.status&&r.status!=='published'&&r.status!=='rejected'&&r.status!=='declined'); out.pubRels=all.filter(r=>!r.status||r.status==='published');
-    }catch(e){ try{ const {data}=await sb.from('relationships').select('id,from_person,to_person,kind,status'); const all=data||[];
-        out.rels=all.filter(r=>r.status&&r.status!=='published'); out.pubRels=all.filter(r=>!r.status||r.status==='published'); }catch(e2){ out.rels=[]; out.pubRels=[]; } }
-    // PUBLISHED rows -> the OLD value standing behind each pending one (newest published wins)
-    try{ const {data}=await sb.from('person_facts').select('id,person_id,group_id,field,lang,value,ord,status,published_at,created_at').eq('status','published'); out.pub=data||[]; }catch(e){ out.pub=[]; }
-    try{ const {data}=await sb.from('name_variants').select('*').eq('status','published'); out.pubNvs=data||[]; }catch(e){ out.pubNvs=[]; }
+    /* Seven independent reads. They used to run one after another - seven
+       round-trips deep - which is why the keeper sat watching a loading line.
+       They are asked for together now; the page waits for the slowest, not the sum. */
+    const [rPeople,rFacts,rNvs,rArts,rRels,rPub,rPubNvs] = await Promise.all([
+      sb.from('people').select('*'),
+      sb.from('person_facts').select('id,person_id,group_id,field,lang,value,ord,status,created_by,created_at').not('status','eq','published'),
+      sb.from('name_variants').select('*').not('status','eq','published'),
+      sb.from('artefacts').select('*').not('status','eq','published'),
+      sb.from('relationships').select('id,from_person,to_person,kind,certainty,note,status,created_by,created_at'),
+      sb.from('person_facts').select('id,person_id,group_id,field,lang,value,ord,status,published_at,created_at').eq('status','published'),
+      sb.from('name_variants').select('*').eq('status','published')
+    ]);
+    (rPeople.data||[]).forEach(p=>{ out.peopleMap[p.id]=p.display_name||p.name||''; out.personRow[p.id]=p;
+      if(p.status&&p.status!=='published') out.newcomers.push(p); });
+    out.facts=rFacts.data||[];
+    out.nvs=rNvs.data||[];
+    out.arts=(rArts.data||[]).filter(a=>a.kind==='photo'||a.kind==='voice');
+    let relRows=rRels.data||[];
+    if(rRels.error){ const r2=await sb.from('relationships').select('id,from_person,to_person,kind,status'); relRows=r2.data||[]; }
+    out.rels=relRows.filter(r=>r.status&&r.status!=='published'&&r.status!=='rejected'&&r.status!=='declined');
+    out.pubRels=relRows.filter(r=>!r.status||r.status==='published');
+    out.pub=rPub.data||[];
+    out.pubNvs=rPubNvs.data||[];
     const ts=r=>Date.parse(r.published_at||r.created_at||'')||0;
     const put=(m,k,r)=>{ if(!m[k]||ts(r)>=ts(m[k])) m[k]=r; };
     out.pub.forEach(r=>{ put(out.pubIdx, r.person_id+'|'+r.field+'|'+(r.lang||''), r); put(out.pubAny, r.person_id+'|'+r.field, r);

@@ -81,7 +81,11 @@
         resolve({dataUrl:dataUrl,canvas:c}); };
       img.src=u; }); }
 
-  async function loadCrop(path,box,size){ var u=await url(path,900); var r=await cropImage(u,box,size);
+  async function loadCrop(path,box,size){
+    /* the source only has to beat the crop, not the original: a 220px circle asked
+       for 900px and paid for it four times over on the keeper's page. */
+    var want=Math.min(900,Math.max(320,Math.round((size||160)*2.4)));
+    var u=await url(path,want); var r=await cropImage(u,box,size);
     if(!r){ var u2=await url(path); if(u2&&u2!==u) r=await cropImage(u2,box,size); }
     return r; }
 
