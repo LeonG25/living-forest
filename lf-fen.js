@@ -158,10 +158,10 @@
     strip.appendChild(img); strip.appendChild(cv); strip.appendChild(vv); strip.appendChild(say); host.appendChild(strip);
     setTimeout(function(){ strip.style.opacity='1'; },1600);
     var st;
-    function speak(t){ if(!t) return; var l=lang();
+    function speak(t,hold){ if(!t) return; var l=lang();
       say.dir=(l==='he')?'rtl':'ltr'; say.style.textAlign=(l==='he')?'right':'left';
       say.textContent=t; say.style.opacity='1';
-      clearTimeout(st); st=setTimeout(function(){ say.style.opacity='0'; },4600); }
+      clearTimeout(st); if(!hold) st=setTimeout(function(){ say.style.opacity='0'; },4600); }
     var ix={};
     function line(cat){ var l=lang(), arr=(D[l]&&D[l][cat])||D.en[cat]; if(!arr||!arr.length) return null;
       ix[cat]=((ix[cat]==null?-1:ix[cat])+1)%arr.length; return arr[ix[cat]]; }
@@ -177,7 +177,7 @@
       say:function(t){ speak(t); },
       react:function(n){ alive2(); if(CANVAS_ON){ var m={delight:'lightDelight',jump:'jump',stumble:'notCorrect',stretch:'yawn'}; cplay(m[n]||'nodSmall',false,toIdle2); } },
       idle:function(){ if(CANVAS_ON) toIdle2(); },
-      offer:function(text,yesLabel,noLabel,cb){ speak(text);
+      offer:function(text,yesLabel,noLabel,cb){ speak(text,true);
         var old=document.getElementById('lfFenOffer'); if(old) old.remove();
         var box=mk('div','position:absolute;left:41%;bottom:10px;display:flex;gap:8px;z-index:7;'); box.id='lfFenOffer';
         function chip(label,primary){ var b=document.createElement('button'); b.textContent=label;
@@ -185,8 +185,9 @@
             (primary?'border:1px solid #e8955c;color:#ffd9b8;background:rgba(232,149,92,.16);':'border:1px solid rgba(143,163,184,.5);color:#8fa3b8;background:none;');
           return b; }
         var y=chip(yesLabel||'Come along',true), n2=chip(noLabel||'Not now',false);
-        y.onclick=function(){ box.remove(); if(cb) cb(true); };
-        n2.onclick=function(){ box.remove(); if(cb) cb(false); };
+        var release=function(){ clearTimeout(st); st=setTimeout(function(){ say.style.opacity='0'; },1200); };
+        y.onclick=function(){ box.remove(); release(); if(cb) cb(true); };
+        n2.onclick=function(){ box.remove(); release(); if(cb) cb(false); };
         box.appendChild(y); box.appendChild(n2); strip.appendChild(box); },
       leave:function(cb){ speak(line('leave'));
         function fade(){ strip.style.opacity='0';
@@ -320,10 +321,10 @@
     function play(name){ setClip(name,false,toIdle,true); }
 
     var st;
-    function speak(t){ if(!t) return; var l=lang();
+    function speak(t,hold){ if(!t) return; var l=lang();
       say.dir=(l==='he')?'rtl':'ltr'; say.style.textAlign=(l==='he')?'right':'left';
       say.textContent=t; say.style.opacity='1';
-      clearTimeout(st); st=setTimeout(function(){ say.style.opacity='0'; },4600); }
+      clearTimeout(st); if(!hold) st=setTimeout(function(){ say.style.opacity='0'; },4600); }
 
     var ix={};
     function line(cat){ var l=lang(), arr=(D[l]&&D[l][cat])||D.en[cat]; if(!arr||!arr.length) return null;
@@ -361,7 +362,7 @@
       say:function(t){ alive(); play('talking'); speak(t); },
       react:function(n){ alive(); var m={delight:'lightDelight',jump:'jump',stumble:'notCorrect',stretch:'yawn'}; play(m[n]||n); },
       idle:toIdle,
-      offer:function(text, yesLabel, noLabel, cb){ alive(); play('talking'); speak(text);
+      offer:function(text, yesLabel, noLabel, cb){ alive(); play('talking'); speak(text,true);
         var old=document.getElementById('lfFenOffer'); if(old) old.remove();
         var box=mk('div','position:absolute;left:41%;bottom:10px;display:flex;gap:8px;z-index:7;');
         box.id='lfFenOffer';
@@ -372,8 +373,9 @@
                     :'border:1px solid rgba(143,163,184,.5);color:#8fa3b8;background:none;');
           return b; }
         var y=chip(yesLabel||'Come along',true), n2=chip(noLabel||'Not now',false);
-        y.onclick=function(){ box.remove(); if(cb) cb(true); };
-        n2.onclick=function(){ box.remove(); if(cb) cb(false); };
+        var release=function(){ clearTimeout(st); st=setTimeout(function(){ say.style.opacity='0'; },1200); };
+        y.onclick=function(){ box.remove(); release(); if(cb) cb(true); };
+        n2.onclick=function(){ box.remove(); release(); if(cb) cb(false); };
         box.appendChild(y); box.appendChild(n2); strip.appendChild(box);
       },
       leave:function(cb){
