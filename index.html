@@ -16,7 +16,7 @@
 <script src="https://unpkg.com/three@0.149.0/build/three.min.js"></script>
 <script src="https://unpkg.com/topojson-client@3/dist/topojson-client.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="lf-db.js?v=1"></script>
+<script src="lf-db.js?v=2"></script>
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;height:100%;overflow:hidden;background:#04070e;
@@ -607,7 +607,7 @@ function fmtCoord(lat,lng){ return Math.abs(lat).toFixed(2)+'\u00b0'+(lat>=0?'N'
 async function faceInto(disc, art, box){
   disc.innerHTML='';
   try{
-    const s = await sb.storage.from('family').createSignedUrl(art.storage_path, 3600);
+    const s = await sb.storage.from('family').createSignedUrl(art.storage_path, 3600, LFDB.img(art.storage_path,600));
     const url = s.data && s.data.signedUrl; if(!url){ disc.textContent='photo'; return; }
     const img = new Image(); img.crossOrigin='anonymous';
     img.onload = ()=>{ const cv=document.createElement('canvas'); cv.width=cv.height=128; const g=cv.getContext('2d');

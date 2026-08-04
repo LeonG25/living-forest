@@ -127,7 +127,17 @@
     sb.storage.__lfPatched=true;
   }
 
+  /* Ask the server to shrink a picture before it crosses the wire.
+     Only ever for images - a voice clip handed to the render endpoint 404s -
+     and undefined when in doubt, so a caller can always pass this through. */
+  var IMG=/\.(jpe?g|png|webp|gif|avif|heic|heif)(\?|#|$)/i;
+  function img(path,width){
+    if(!path||!width||!IMG.test(String(path))) return undefined;
+    return {transform:{width:Math.round(width),resize:'contain'}};
+  }
+
   window.LFDB={
+    img:img,
     failures:[],
     last:null,
     onFailure:null,      /* pages with a toast wire it here: LFDB.onFailure=m=>toast(m) */

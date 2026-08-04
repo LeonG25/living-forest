@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="lf-db.js?v=1"></script>
+<script src="lf-db.js?v=2"></script>
 <script src="https://unpkg.com/three@0.149.0/build/three.min.js"></script>
 <script src="https://unpkg.com/topojson-client@3/dist/topojson-client.min.js"></script>
 <script src="lf-globe.js?v=7"></script>
@@ -686,7 +686,7 @@
       artId ? sb.from('artefacts').select('contributor_id').eq('id',artId).maybeSingle() : Promise.resolve(null),
       answer ? sb.from('artefacts').select('id',{count:'exact',head:true}).eq('status','published').ilike('metadata->>where', answer) : Promise.resolve(null),
       scopeId ? loadKindle(scopeId) : Promise.resolve(null),
-      res.prompt&&res.prompt.storage_path ? sb.storage.from('family').createSignedUrl(res.prompt.storage_path,3600) : Promise.resolve(null)
+      res.prompt&&res.prompt.storage_path ? sb.storage.from('family').createSignedUrl(res.prompt.storage_path,3600,LFDB.img(res.prompt.storage_path,1000)) : Promise.resolve(null)
     ];
     return Promise.all(jobs.map(function(p){ return Promise.resolve(p).catch(function(){ return null; }); })).then(function(r){
       var out={ geo:r[0]||{}, teller:null, sameHere:(r[2]&&typeof r[2].count==='number')?r[2].count:null,

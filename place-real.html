@@ -17,7 +17,7 @@
 <script src="lf-face.js?v=2"></script>
 <script src="https://unpkg.com/topojson-client@3/dist/topojson-client.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="lf-db.js?v=1"></script>
+<script src="lf-db.js?v=2"></script>
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   :root{
@@ -625,7 +625,7 @@ function fmtCoord(lat,lng){ return Math.abs(lat).toFixed(2)+'°'+(lat>=0?'N':'S'
 async function faceInto(disc, art, box){
   disc.innerHTML='';
   try{
-    const s = await sb.storage.from('family').createSignedUrl(art.storage_path, 3600);
+    const s = await sb.storage.from('family').createSignedUrl(art.storage_path, 3600, LFDB.img(art.storage_path,1000));
     const url = s.data && s.data.signedUrl; if(!url){ disc.textContent='photo'; return; }
     const img = new Image(); img.crossOrigin='anonymous';
     img.onload = ()=>{ const cv=document.createElement('canvas'); cv.width=cv.height=128; const g=cv.getContext('2d');
@@ -781,7 +781,7 @@ load();
   const py=t=>{const m=String(t||'').match(/\d{4}/);return m?+m[0]:NaN;};
   const joinNames=a=>{a=a.filter(Boolean);if(!a.length)return '';if(a.length===1)return a[0];if(a.length===2)return a[0]+' & '+a[1];return a.slice(0,-1).join(', ')+' & '+a[a.length-1];};
   const isHe=()=>lang==='he';
-  async function signedUrl(path){ try{const s=await sb2.storage.from('family').createSignedUrl(path,3600);return (s.data&&s.data.signedUrl)||'';}catch(e){return '';} }
+  async function signedUrl(path){ try{const s=await sb2.storage.from('family').createSignedUrl(path,3600,LFDB.img(path,1000));return (s.data&&s.data.signedUrl)||'';}catch(e){return '';} }
   async function faceInto(el, path, box){ if(!el||!path) return;
     try{ const u=await signedUrl(path); if(!u) return; const img=new Image(); img.crossOrigin='anonymous';
       img.onload=()=>{ const c=document.createElement('canvas'); c.width=c.height=200; const g=c.getContext('2d');

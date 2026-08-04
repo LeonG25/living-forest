@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="lf-db.js?v=1"></script>
+<script src="lf-db.js?v=2"></script>
 <style>
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html,body{ margin:0; padding:0; }
@@ -150,7 +150,7 @@ function sortYear(t){
 
 async function bgThumb(node, path){
   if(!node || !path) return;
-  try{ const s=await sb.storage.from('family').createSignedUrl(path,3600); const url=s.data&&s.data.signedUrl;
+  try{ const s=await sb.storage.from('family').createSignedUrl(path,3600,LFDB.img(path,500)); const url=s.data&&s.data.signedUrl;
     if(url){ node.style.backgroundImage='url('+url+')'; node.textContent=''; } }catch(e){}
 }
 

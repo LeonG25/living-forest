@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="lf-db.js?v=1"></script>
+<script src="lf-db.js?v=2"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
   html,body{ background:#04070e; }
@@ -425,7 +425,7 @@
 
   /* ---------- portraits (lazy signed urls) ---------- */
   async function signed(path){ if(!path) return ''; if(urlCache[path]!==undefined) return urlCache[path];
-    try{ const r=await sb.storage.from('family').createSignedUrl(path,3600); const u=(r.data&&r.data.signedUrl)||''; urlCache[path]=u; return u; }
+    try{ const r=await sb.storage.from('family').createSignedUrl(path,3600,LFDB.img(path,400)); const u=(r.data&&r.data.signedUrl)||''; urlCache[path]=u; return u; }
     catch(e){ urlCache[path]=''; return ''; } }
   function hydrateFaces(root){
     (root||document).querySelectorAll('[data-fp]').forEach(async el=>{

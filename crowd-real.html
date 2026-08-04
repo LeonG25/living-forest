@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="lf-db.js?v=1"></script>
+<script src="lf-db.js?v=2"></script>
 <script src="lf-progress.js?v=1"></script>
 <style>
 
@@ -334,7 +334,7 @@ async function loadRound(i){
   $('#capAttrib').innerHTML = who? ('\u2014 <b>'+esc(who)+'</b>, who kept this photograph') : ((where||'')+(when?(' \u00b7 '+when):''));
   $('#caption').style.display = (body||who)? '' : 'none';
   let url='';
-  try{ const s=await sb.storage.from('family').createSignedUrl(round.art.storage_path,3600); url=s.data&&s.data.signedUrl||''; }catch(e){}
+  try{ const s=await sb.storage.from('family').createSignedUrl(round.art.storage_path,3600,LFDB.img(round.art.storage_path,1000)); url=s.data&&s.data.signedUrl||''; }catch(e){}
   const img=new Image();
   img.onload=()=>{ W=1200; H=Math.max(400,Math.round(1200*(img.naturalHeight/img.naturalWidth||0.7))); buildScene(url, round); };
   img.onerror=()=>{ W=1200; H=800; buildScene(url, round); };
