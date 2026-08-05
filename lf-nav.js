@@ -47,7 +47,7 @@
     }
     function loadScript(src){ return new Promise(function(res,rej){
       var sc=document.createElement('script'); sc.src=src; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); }); }
-    var busy=false;
+    var busy=false, gen=0;
     function budBack(why){
       busy=false;
       var b=document.getElementById('lfBud'); if(b) b.style.display='grid';
@@ -56,7 +56,7 @@
       try{ if(window.LFDB) LFDB.note('bud: '+why); }catch(e){}
     }
     async function summon(){
-      if(busy) return; busy=true;
+      if(busy) return; busy=true; var myGen=++gen;
       var bud=document.getElementById('lfBud'); if(bud) bud.style.display='none';
       /* if nothing is on screen within 9s, give the bud back rather than leave
          the tap swallowed - and report which step never finished. */
@@ -114,10 +114,12 @@
         /* she is already built from a previous visit - wake her rather than wait
            for a mount that will never happen again */
         var st0=document.getElementById('lfFenStrip');
-        if(st0 && st0.style.display==='none'){
+        if(st0){
+          var wasHidden=(st0.style.display==='none');
           st0.style.display='';
+          var stale=document.getElementById('lfFenOffer'); if(stale) stale.remove();
           try{ document.body.classList.add('lf-fen-on'); }catch(e){}
-          try{ window.Fen.cue('greeting'); }catch(e){}
+          if(wasHidden){ try{ window.Fen.cue('greeting'); }catch(e){} }
         }
         /* our own client: the lib global is on every data page; the session rides localStorage */
         var sb=null;
@@ -134,7 +136,11 @@
                 if(yes){ location.href=inv.go; }
                 else { window.Fen.cue('leave',{quiet:true}); window.Fen.leave(function(){
                         busy=false; var b2=document.getElementById('lfBud'); if(b2) b2.style.display='grid';
-                        /* hide her, never delete her: she cannot be built a second time */
+                        /* An exit animation outlives the tap that started it. Round three
+                           failed because visit two's farewell landed after visit three had
+                           already woken her, and put her straight back to sleep. A farewell
+                           may only close the visit it belongs to. */
+                        if(myGen!==gen) return;
                         var s2=document.getElementById('lfFenStrip'); if(s2) s2.style.display='none';
                         var o2=document.getElementById('lfFenOffer'); if(o2) o2.remove();
                         try{ document.body.classList.remove('lf-fen-on'); }catch(e){} }); } }); };
