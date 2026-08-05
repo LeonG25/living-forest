@@ -61,48 +61,6 @@
       /* if nothing is on screen within 9s, give the bud back rather than leave
          the tap swallowed - and report which step never finished. */
       var arrived=false;
-      /* The rig sees the fox at 10s; Leon's phone reports Fen=true strip=true and
-         shows nothing. So the strip is mounting invisibly on his glass. Measure it
-         there and send the numbers home - twice, before and after the entrance. */
-      function xray(when){
-        try{
-          var st=document.getElementById('lfFenStrip');
-          if(!st){ LFDB.note('xray '+when+': no strip'); return; }
-          var r=st.getBoundingClientRect(), cs=getComputedStyle(st);
-          var v=st.querySelector('video'), c=st.querySelector('canvas'), im=st.querySelector('img');
-          var vs='none';
-          if(v){ vs='rs'+v.readyState+' ns'+v.networkState+' t'+(v.currentTime||0).toFixed(1)
-                   +(v.paused?' PAUSED':' playing')+(v.error?(' ERR'+v.error.code):'')
-                   +' '+Math.round(v.videoWidth)+'x'+Math.round(v.videoHeight)
-                   +' '+(v.currentSrc||'').split('/').pop().slice(0,22); }
-          /* The strip is a 0x0 anchor on BOTH engines, so it says nothing. What
-             matters is where the fox and the question actually land, and whether
-             an ancestor is clipping or shifting them off Leon's 360x639 screen. */
-          var of=document.getElementById('lfFenOffer');
-          var rect=function(e){ if(!e) return 'none'; var q=e.getBoundingClientRect();
-            return Math.round(q.width)+'x'+Math.round(q.height)+'@'+Math.round(q.left)+','+Math.round(q.top)
-              +((q.bottom<0||q.top>window.innerHeight||q.right<0||q.left>window.innerWidth)?' OFFSCREEN':'')
-              +(q.width===0||q.height===0?' ZERO':''); };
-          var chain=function(e){ var out=[],n=0;
-            while(e && e!==document.body && n++<6){ var c=getComputedStyle(e);
-              out.push((e.id||e.tagName)+'['+Math.round(e.getBoundingClientRect().height)+'h '
-                +c.position+' of:'+c.overflow.slice(0,6)+' tr:'+(c.transform==='none'?'-':'yes')
-                +' op'+c.opacity+' z'+c.zIndex+']');
-              e=e.parentElement; }
-            return out.join(' < '); };
-          LFDB.note('xray2 '+when+': video '+rect(v)+' | offer '+rect(of)
-            +' | offerChain '+chain(of) + ' | vh='+window.innerHeight);
-          LFDB.note('xray '+when+': strip '+Math.round(r.width)+'x'+Math.round(r.height)
-            +' @'+Math.round(r.left)+','+Math.round(r.top)
-            +' disp='+cs.display+' vis='+cs.visibility+' op='+cs.opacity+' z='+cs.zIndex
-            +' pos='+cs.position+' | vid='+vs+' canvas='+(c?Math.round(c.getBoundingClientRect().width)+'w':'no')
-            +' img='+(im?'yes':'no')+' offer='+!!document.getElementById('lfFenOffer')
-            +' | vw='+window.innerWidth+' vh='+window.innerHeight+' dpr='+(window.devicePixelRatio||1)
-            +' fenOn='+document.body.classList.contains('lf-fen-on'));
-        }catch(e){ try{ LFDB.note('xray '+when+' threw: '+String(e&&e.message||e).slice(0,80)); }catch(_){ } }
-      }
-      setTimeout(function(){ xray('6s'); }, 6000);
-      setTimeout(function(){ xray('16s'); }, 16000);
       var watchdog=setTimeout(function(){
         if(arrived) return;
         budBack('nothing within 20s (Fen='+(!!window.Fen)+' Invite='+(!!window.LFInvite)
