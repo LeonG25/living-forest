@@ -63,9 +63,9 @@
       var arrived=false;
       var watchdog=setTimeout(function(){
         if(arrived) return;
-        budBack('nothing within 9s (Fen='+(!!window.Fen)+' Invite='+(!!window.LFInvite)
+        budBack('nothing within 20s (Fen='+(!!window.Fen)+' Invite='+(!!window.LFInvite)
                 +' strip='+!!document.getElementById('lfFenStrip')+')');
-      },14000);
+      },20000);
       try{
         if(!window.LFInvite) await loadScript('lf-invite.js?v=2');
         if(!window.Fen) await loadScript('lf-fen.js?v=22');
@@ -93,7 +93,7 @@
                 setTimeout(function(){
                   if(document.getElementById('lfFenOffer')){ arrived=true; clearTimeout(watchdog); }
                 }, 600);
-              }, 6200); };
+              }, 2600); };
             if(sb&&uid&&window.LFInvite){
               var settled=false;
               window.LFInvite.next(sb, uid, lang).then(function(r){ if(!settled){ settled=true; go(r); } },
@@ -275,13 +275,23 @@
     // horizontal: default right-aligned (grows left). Flip to left-aligned only if that keeps it on-screen.
     if(b.right - pw < M && b.left + pw <= window.innerWidth - M) panel.classList.add('lf-left');
     // vertical: default grows up. Flip down if there isn't room above.
-    var down = (b.top - ph < M);
-    if(down) panel.classList.add('lf-down');
-    /* Whichever way it opens, it must END on the screen. Flipping down without
-       capping the height is how the menu ran off the bottom and showed three
-       entries out of eight. The cap makes the rest scrollable instead of lost. */
-    var room = down ? (window.innerHeight - b.bottom - 10 - M) : (b.top - 10 - M);
-    panel.style.maxHeight = Math.max(120, Math.round(room)) + 'px';
+    panel.style.position=''; panel.style.top=''; panel.style.bottom=''; panel.style.maxHeight='';
+    var above = b.top - 10 - M, below = window.innerHeight - b.bottom - 10 - M;
+    if(ph <= above){ /* the usual: it grows upward out of the button */ }
+    else if(ph <= below){ panel.classList.add('lf-down'); }
+    else {
+      /* A keeper's menu is ten entries tall, and on a phone that fits neither
+         above nor below a dock in the middle of the screen. Anchoring it to the
+         button then just pushes most of it off the edge - which is why Leon saw
+         three of ten. When neither side has room the panel stops following the
+         button and takes the height of the screen instead. */
+      var side = (b.left + b.width/2) > window.innerWidth/2;
+      panel.style.position='fixed';
+      panel.style.top=M+'px'; panel.style.bottom=M+'px';
+      panel.style.maxHeight=(window.innerHeight - 2*M)+'px';
+      if(side){ panel.style.right=Math.round(window.innerWidth - b.right)+'px'; panel.style.left='auto'; }
+      else    { panel.style.left=Math.round(b.left)+'px'; panel.style.right='auto'; }
+    }
   }
   btn.addEventListener('click', function(e){ e.stopPropagation(); if(moved){ moved=false; return; }
     var willOpen=!wrap.classList.contains('open'); wrap.classList.toggle('open'); if(willOpen) positionPanel(); });
