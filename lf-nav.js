@@ -111,6 +111,14 @@
       try{
         if(!window.LFInvite) await loadScript('lf-invite.js?v=2');
         if(!window.Fen) await loadScript('lf-fen.js?v=23');
+        /* she is already built from a previous visit - wake her rather than wait
+           for a mount that will never happen again */
+        var st0=document.getElementById('lfFenStrip');
+        if(st0 && st0.style.display==='none'){
+          st0.style.display='';
+          try{ document.body.classList.add('lf-fen-on'); }catch(e){}
+          try{ window.Fen.cue('greeting'); }catch(e){}
+        }
         /* our own client: the lib global is on every data page; the session rides localStorage */
         var sb=null;
         try{ if(window.supabase&&window.supabase.createClient)
@@ -126,7 +134,9 @@
                 if(yes){ location.href=inv.go; }
                 else { window.Fen.cue('leave',{quiet:true}); window.Fen.leave(function(){
                         busy=false; var b2=document.getElementById('lfBud'); if(b2) b2.style.display='grid';
-                        window.__lfFenMounted=0; var s2=document.getElementById('lfFenStrip'); if(s2) s2.remove();
+                        /* hide her, never delete her: she cannot be built a second time */
+                        var s2=document.getElementById('lfFenStrip'); if(s2) s2.style.display='none';
+                        var o2=document.getElementById('lfFenOffer'); if(o2) o2.remove();
                         try{ document.body.classList.remove('lf-fen-on'); }catch(e){} }); } }); };
             var FALLBACK={line:'Come and know your family.',yes:'Come along',no:'Not now',go:'game-who-is-who.html'};
             /* Leon's own device reported "nothing within 9s (Fen=true Invite=true
