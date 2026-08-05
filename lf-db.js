@@ -21,7 +21,7 @@
   if(window.LFDB) return;
 
   var PAGE='(unknown)', client=null, installed=false, diagCount=0;
-  var DIAG_MAX=12, seen=Object.create(null);
+  var DIAG_MAX=24, seen=Object.create(null);
 
   var MSG={
     en:{write:"That didn't save. Please try again.",   read:"The forest didn't answer just now."},
