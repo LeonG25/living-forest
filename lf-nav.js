@@ -48,9 +48,24 @@
     function loadScript(src){ return new Promise(function(res,rej){
       var sc=document.createElement('script'); sc.src=src; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); }); }
     var busy=false;
+    function budBack(why){
+      busy=false;
+      var b=document.getElementById('lfBud'); if(b) b.style.display='grid';
+      try{ console.warn('[bud] '+why); }catch(e){}
+      /* the family's devices are the only place this can be seen from */
+      try{ if(window.LFDB) LFDB.note('bud: '+why); }catch(e){}
+    }
     async function summon(){
       if(busy) return; busy=true;
       var bud=document.getElementById('lfBud'); if(bud) bud.style.display='none';
+      /* if nothing is on screen within 9s, give the bud back rather than leave
+         the tap swallowed - and report which step never finished. */
+      var arrived=false;
+      var watchdog=setTimeout(function(){
+        if(arrived) return;
+        budBack('nothing within 9s (Fen='+(!!window.Fen)+' Invite='+(!!window.LFInvite)
+                +' strip='+!!document.getElementById('lfFenStrip')+')');
+      },9000);
       try{
         if(!window.LFInvite) await loadScript('lf-invite.js?v=2');
         if(!window.Fen) await loadScript('lf-fen.js?v=22');
@@ -71,10 +86,18 @@
                         busy=false; var b2=document.getElementById('lfBud'); if(b2) b2.style.display='grid';
                         window.__lfFenMounted=0; var s2=document.getElementById('lfFenStrip'); if(s2) s2.remove();
                         try{ document.body.classList.remove('lf-fen-on'); }catch(e){} }); } }); };
-            if(sb&&uid&&window.LFInvite){ window.LFInvite.next(sb, uid, lang).then(function(r){ inv=r; setTimeout(ask, 6200); }); }
-            else { inv={line:'Come and know your family.',yes:'Come along',no:'Not now',go:'game-who-is-who.html'}; setTimeout(ask, 6200); }
-          } else if(tries<40){ setTimeout(when,150); } })();
-      }catch(e){ busy=false; var b3=document.getElementById('lfBud'); if(b3) b3.style.display='grid'; }
+            var FALLBACK={line:'Come and know your family.',yes:'Come along',no:'Not now',go:'game-who-is-who.html'};
+            var go=function(r){ arrived=true; clearTimeout(watchdog); inv=(r&&r.line)?r:FALLBACK; setTimeout(ask, 6200); };
+            if(sb&&uid&&window.LFInvite){
+              var settled=false;
+              window.LFInvite.next(sb, uid, lang).then(function(r){ if(!settled){ settled=true; go(r); } },
+                                                       function(e){ if(!settled){ settled=true; go(null); } });
+              setTimeout(function(){ if(!settled){ settled=true; go(null); } }, 6000);  /* never hang on a silent read */
+            }
+            else go(FALLBACK);
+          } else if(tries<40){ setTimeout(when,150); }
+            else { clearTimeout(watchdog); budBack('Fen never defined after 6s - lf-fen.js loaded but did not run'); } })();
+      }catch(e){ clearTimeout(watchdog); budBack('threw: '+String(e&&e.message||e).slice(0,120)); }
     }
     if(document.body) mkBud(); else document.addEventListener('DOMContentLoaded', mkBud);
   })();

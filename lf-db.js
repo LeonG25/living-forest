@@ -136,8 +136,17 @@
     return {transform:{width:Math.round(width),resize:'contain'}};
   }
 
+  /* a way for any page to leave a note on the family's own device, so a fault
+     that only happens on their glass can still be read from here. */
+  function note(text){
+    text=String(text||'').slice(0,900);
+    try{ console.warn('[LFDB note] '+text); }catch(e){}
+    if(diagCount<DIAG_MAX && !seen['note:'+text]){ seen['note:'+text]=1; diagCount++; sendDiag(text); }
+  }
+
   window.LFDB={
     img:img,
+    note:note,
     failures:[],
     last:null,
     onFailure:null,      /* pages with a toast wire it here: LFDB.onFailure=m=>toast(m) */
