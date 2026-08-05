@@ -65,7 +65,7 @@
         if(arrived) return;
         budBack('nothing within 9s (Fen='+(!!window.Fen)+' Invite='+(!!window.LFInvite)
                 +' strip='+!!document.getElementById('lfFenStrip')+')');
-      },9000);
+      },14000);
       try{
         if(!window.LFInvite) await loadScript('lf-invite.js?v=2');
         if(!window.Fen) await loadScript('lf-fen.js?v=22');
@@ -87,7 +87,13 @@
                         window.__lfFenMounted=0; var s2=document.getElementById('lfFenStrip'); if(s2) s2.remove();
                         try{ document.body.classList.remove('lf-fen-on'); }catch(e){} }); } }); };
             var FALLBACK={line:'Come and know your family.',yes:'Come along',no:'Not now',go:'game-who-is-who.html'};
-            var go=function(r){ arrived=true; clearTimeout(watchdog); inv=(r&&r.line)?r:FALLBACK; setTimeout(ask, 6200); };
+            var go=function(r){ inv=(r&&r.line)?r:FALLBACK; setTimeout(function(){
+                /* only a chip actually on the screen counts as arrival */
+                try{ ask(); }catch(e){ clearTimeout(watchdog); budBack('ask threw: '+String(e&&e.message||e).slice(0,90)); return; }
+                setTimeout(function(){
+                  if(document.getElementById('lfFenOffer')){ arrived=true; clearTimeout(watchdog); }
+                }, 600);
+              }, 6200); };
             if(sb&&uid&&window.LFInvite){
               var settled=false;
               window.LFInvite.next(sb, uid, lang).then(function(r){ if(!settled){ settled=true; go(r); } },
@@ -103,7 +109,7 @@
   })();
 
   /* floating "lenses" menu so every screen reaches the others */
-  var css = 'body.lf-fen-on #lfnav{bottom:calc(14px + 151px + env(safe-area-inset-bottom))!important;}'
+  var css = 'body.lf-fen-on #lfnav:not([data-moved]){bottom:calc(14px + 151px + env(safe-area-inset-bottom))!important;}'
   + '#lfnav{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:45;display:flex;flex-direction:column;align-items:flex-end;gap:10px;font-family:\'Hanken Grotesk\',system-ui,sans-serif;}'
   + '#lfnavPanel{display:none;position:absolute;bottom:calc(100% + 10px);right:0;flex-direction:column;gap:4px;max-height:min(68vh,520px);overflow-y:auto;overscroll-behavior:contain;background:rgba(9,16,30,.94);border:1px solid rgba(180,205,235,.18);border-radius:14px;padding:8px;min-width:168px;box-shadow:0 10px 34px rgba(0,0,0,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);}'  + '#lfnavPanel.lf-left{right:auto;left:0;}'  + '#lfnavPanel.lf-down{bottom:auto;top:calc(100% + 10px);}'
   + '#lfnav.open #lfnavPanel{display:flex;}'
@@ -111,7 +117,7 @@
   + '#lfnavPanel a:active{background:rgba(243,205,132,.16);}'
   + '#lfnavPanel a.cur{color:#f3cd84;}'
   + '#lfnavPanel a .ic{width:18px;text-align:center;opacity:.9;}'
-  + '#lfnavBtn{touch-action:none;width:48px;height:48px;border-radius:50%;border:1px solid rgba(243,205,132,.5);background:rgba(9,16,30,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#f3cd84;font-size:20px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0;box-shadow:0 4px 18px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;}'
+  + '#lfnavBtn{touch-action:none;width:48px;height:48px;border-radius:50%;border:1px solid rgba(243,205,132,.5);background:rgba(9,16,30,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#f3cd84;font-size:20px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0;flex:0 0 auto;box-sizing:border-box;box-shadow:0 4px 18px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;}'
   + '#lfnav.open #lfnavBtn{border-color:rgba(243,205,132,.9);}';
   var st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);
 
@@ -203,9 +209,10 @@
   btn.setAttribute('aria-label','Move between lenses');
   /* drawn, not typed: U+2295 is missing from the face iOS falls back to, so the
      iPad rendered a bare plus where Android shows the ring. */
-  btn.innerHTML='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
-    +'stroke-width="1.6" stroke-linecap="round" aria-hidden="true">'
-    +'<circle cx="12" cy="12" r="9"/><path d="M12 7.6v8.8M7.6 12h8.8"/></svg>';
+  btn.innerHTML='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+    +'stroke-width="1.4" aria-hidden="true">'
+    +'<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/>'
+    +'<path d="M12 3c2.6 2.5 4 5.6 4 9s-1.4 6.5-4 9c-2.6-2.5-4-5.6-4-9s1.4-6.5 4-9z"/></svg>';
   wrap.appendChild(panel); wrap.appendChild(btn);
   function place(){ (document.body||document.documentElement).appendChild(wrap); }
   if(document.body) place(); else document.addEventListener('DOMContentLoaded', place);
@@ -213,6 +220,10 @@
   var DRAG_KEY='lf-nav-pos', dragging=false, moved=false, sx=0, sy=0, ox=0, oy=0;
   function applyPos(p){
     if(!p) return;
+    /* a hand-placed dock is anchored by top/left only. The lf-fen-on rule adds
+       bottom with !important, and an element with both stretches - which squeezed
+       the button into an oval once the fox arrived. The marker keeps them apart. */
+    wrap.setAttribute('data-moved','1');
     wrap.style.right='auto'; wrap.style.bottom='auto';
     wrap.style.left=p.x+'px'; wrap.style.top=p.y+'px';
   }
@@ -264,7 +275,13 @@
     // horizontal: default right-aligned (grows left). Flip to left-aligned only if that keeps it on-screen.
     if(b.right - pw < M && b.left + pw <= window.innerWidth - M) panel.classList.add('lf-left');
     // vertical: default grows up. Flip down if there isn't room above.
-    if(b.top - ph < M) panel.classList.add('lf-down');
+    var down = (b.top - ph < M);
+    if(down) panel.classList.add('lf-down');
+    /* Whichever way it opens, it must END on the screen. Flipping down without
+       capping the height is how the menu ran off the bottom and showed three
+       entries out of eight. The cap makes the rest scrollable instead of lost. */
+    var room = down ? (window.innerHeight - b.bottom - 10 - M) : (b.top - 10 - M);
+    panel.style.maxHeight = Math.max(120, Math.round(room)) + 'px';
   }
   btn.addEventListener('click', function(e){ e.stopPropagation(); if(moved){ moved=false; return; }
     var willOpen=!wrap.classList.contains('open'); wrap.classList.toggle('open'); if(willOpen) positionPanel(); });
