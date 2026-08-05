@@ -110,7 +110,7 @@
       },20000);
       try{
         if(!window.LFInvite) await loadScript('lf-invite.js?v=2');
-        if(!window.Fen) await loadScript('lf-fen.js?v=22');
+        if(!window.Fen) await loadScript('lf-fen.js?v=23');
         /* our own client: the lib global is on every data page; the session rides localStorage */
         var sb=null;
         try{ if(window.supabase&&window.supabase.createClient)

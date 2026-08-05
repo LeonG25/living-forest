@@ -8,6 +8,24 @@
      Fen.react(clip)   — legacy: play a clip by name (no speech)
      Fen.idle()        — return to idle */
 (function(){
+  /* The fox needs a box that is actually on the screen. document.querySelector('.screen')
+     returns the FIRST one in the document, and on the globe page the only .screen belongs
+     to the sign-in gate - which collapses to 0 height with overflow:hidden once you are
+     through it. Leon's phone reported the whole chain clipped to nothing:
+       lfFenOffer[0h] < lfFenStrip[0h of:hidden] < gate[0h of:hidden] < stage[639h]
+     - video playing at 640x640 into a box measured 0x0. A taller rig hid this because the
+     gate still had height there. Never trust the first match; take one with room in it. */
+  function pickScreen(){
+    var all=document.querySelectorAll('.screen');
+    for(var i=0;i<all.length;i++){
+      var e=all[i];
+      if(e.closest && e.closest('#gate')) continue;
+      var r=e.getBoundingClientRect();
+      if(r.height>80 && r.width>80) return e;
+    }
+    return null;  /* no usable frame -> mount fixed on the body */
+  }
+
   if(window.__fen) return; window.__fen=1;
   var A="assets/fen/";
   var CLIP={
@@ -87,7 +105,7 @@
     return ios||saf; }catch(e){ return false; } })();
   function startStill(){
     if(window.__lfFenMounted) return; window.__lfFenMounted=1;
-    var sc=document.querySelector('.screen');
+    var sc=pickScreen();
     var host=sc?sc.parentElement:document.body, fixed=!sc;
     if(sc){ sc.style.bottom=STRIP+'px'; sc.style.paddingBottom='0';
       var FADE='linear-gradient(to bottom, #000 calc(100% - 30px), transparent 100%)';
@@ -207,7 +225,7 @@
     if(NOALPHA){ startStill(); return; }
     if(window.__lfFenMounted) return;   /* one fox per page — re-inits never replay the entrance */
     window.__lfFenMounted=1;
-    var sc=document.querySelector('.screen');
+    var sc=pickScreen();
     var host=sc?sc.parentElement:document.body;
     var fixed=(host===document.body);
     if(sc){ sc.style.bottom=STRIP+'px'; sc.style.paddingBottom='0';
