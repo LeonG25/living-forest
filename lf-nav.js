@@ -87,13 +87,17 @@
                         window.__lfFenMounted=0; var s2=document.getElementById('lfFenStrip'); if(s2) s2.remove();
                         try{ document.body.classList.remove('lf-fen-on'); }catch(e){} }); } }); };
             var FALLBACK={line:'Come and know your family.',yes:'Come along',no:'Not now',go:'game-who-is-who.html'};
+            /* Leon's own device reported "nothing within 9s (Fen=true Invite=true
+               strip=true)" four times: everything had loaded and the invitation
+               still had not spoken. The wait was the entrance clip plus a fixed
+               pause. The question goes up as soon as there is something to ask. */
             var go=function(r){ inv=(r&&r.line)?r:FALLBACK; setTimeout(function(){
                 /* only a chip actually on the screen counts as arrival */
                 try{ ask(); }catch(e){ clearTimeout(watchdog); budBack('ask threw: '+String(e&&e.message||e).slice(0,90)); return; }
                 setTimeout(function(){
                   if(document.getElementById('lfFenOffer')){ arrived=true; clearTimeout(watchdog); }
                 }, 600);
-              }, 2600); };
+              }, 400); };
             if(sb&&uid&&window.LFInvite){
               var settled=false;
               window.LFInvite.next(sb, uid, lang).then(function(r){ if(!settled){ settled=true; go(r); } },
@@ -287,7 +291,10 @@
          button and takes the height of the screen instead. */
       var side = (b.left + b.width/2) > window.innerWidth/2;
       panel.style.position='fixed';
-      panel.style.top=M+'px'; panel.style.bottom=M+'px';
+      /* top AND bottom together stretch the box to the full screen and leave a
+         lake of empty panel under the last entry. Anchor the top only and let
+         max-height do the limiting, so it ends where the entries end. */
+      panel.style.top=M+'px'; panel.style.bottom='auto';
       panel.style.maxHeight=(window.innerHeight - 2*M)+'px';
       if(side){ panel.style.right=Math.round(window.innerWidth - b.right)+'px'; panel.style.left='auto'; }
       else    { panel.style.left=Math.round(b.left)+'px'; panel.style.right='auto'; }
