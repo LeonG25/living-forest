@@ -27,6 +27,39 @@
   }
 
   if(window.__fen) return; window.__fen=1;
+  /* A rigid lifecycle. The fox used to be built once, in this IIFE, with no way
+     back - so lf-nav hid and re-woke a stale strip and the third visit came up
+     slow and half-drawn. Now every visit builds her fresh and every farewell
+     tears her down completely. These shims shadow the globals for the whole
+     module, so every timer and frame started anywhere in here is tracked and
+     can be cancelled on the way out. */
+  var _timers=[], _frames=[], _ivals=[];
+  var _sT=window.setTimeout.bind(window), _sI=window.setInterval.bind(window),
+      _rAF=(window.requestAnimationFrame||function(f){return _sT(f,16);}).bind(window);
+  function setTimeout(f,ms){ var id=_sT(f,ms); _timers.push(id); return id; }
+  function setInterval(f,ms){ var id=_sI(f,ms); _ivals.push(id); return id; }
+  function requestAnimationFrame(f){ var id=_rAF(f); _frames.push(id); return id; }
+  function stopEverything(){
+    for(var i=0;i<_timers.length;i++) clearTimeout(_timers[i]);
+    for(var j=0;j<_ivals.length;j++) clearInterval(_ivals[j]);
+    for(var k=0;k<_frames.length;k++){ try{ cancelAnimationFrame(_frames[k]); }catch(e){} }
+    _timers=[]; _ivals=[]; _frames=[];
+  }
+  function destroy(){
+    stopEverything();
+    var st=document.getElementById('lfFenStrip');
+    if(st){
+      var vs=st.querySelectorAll('video');
+      for(var i=0;i<vs.length;i++){ try{ vs[i].pause(); vs[i].removeAttribute('src'); vs[i].load(); }catch(e){} }
+      st.remove();
+    }
+    try{ document.body.classList.remove('lf-fen-on'); }catch(e){}
+    window.__lfFenMounted=0; window.__fenLeft=0;
+    try{ delete window.Fen; }catch(e){ window.Fen=null; }
+  }
+  function open(){ if(window.__lfFenMounted) return false; if(NOALPHA) startStill(); else start(); return true; }
+  window.LFFen={ open:open, destroy:destroy };
+
   var A="assets/fen/";
   var CLIP={
     idle:     {src:A+"fen-idle-new.webm",      fb:null},
@@ -185,6 +218,7 @@
       ix[cat]=((ix[cat]==null?-1:ix[cat])+1)%arr.length; return arr[ix[cat]]; }
     setTimeout(function(){ speak(line('greeting')); },2400);
     window.Fen={
+      destroy:destroy,
       cue:function(name,o){ o=o||{}; alive2();
         if(CANVAS_ON){ var c={greeting:'talking',question:'surprised',clue:'talking',streak:'jump',win:'jump'}[name];
           if(name==='right') c=pick2(['nodBig','jump','lightDelight','nodSmall']);
@@ -376,6 +410,7 @@
     alive();
 
     window.Fen={
+      destroy:destroy,
       cue:cue,
       say:function(t){ alive(); play('talking'); speak(t); },
       react:function(n){ alive(); var m={delight:'lightDelight',jump:'jump',stumble:'notCorrect',stretch:'yawn'}; play(m[n]||n); },
@@ -417,5 +452,8 @@
       window.Fen.leave(function(){ window.__fenLeft=1; b.click(); });
     }, true);
   }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start); else start();
+  /* pages that want her on arrival still get her; lf-nav calls LFFen.open() itself */
+  if(!window.__lfFenManual){
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',open); else open();
+  }
 })();

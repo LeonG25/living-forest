@@ -110,17 +110,12 @@
       },20000);
       try{
         if(!window.LFInvite) await loadScript('lf-invite.js?v=2');
-        if(!window.Fen) await loadScript('lf-fen.js?v=23');
-        /* she is already built from a previous visit - wake her rather than wait
-           for a mount that will never happen again */
-        var st0=document.getElementById('lfFenStrip');
-        if(st0){
-          var wasHidden=(st0.style.display==='none');
-          st0.style.display='';
-          var stale=document.getElementById('lfFenOffer'); if(stale) stale.remove();
-          try{ document.body.classList.add('lf-fen-on'); }catch(e){}
-          if(wasHidden){ try{ window.Fen.cue('greeting'); }catch(e){} }
-        }
+        /* Every visit builds a fresh fox and every farewell tears her down, so the
+           hundredth tap costs exactly what the first did. No hiding, no reviving,
+           no state carried between visits. */
+        window.__lfFenManual=1;
+        if(!window.LFFen) await loadScript('lf-fen.js?v=24');
+        if(!window.Fen && window.LFFen) window.LFFen.open();
         /* our own client: the lib global is on every data page; the session rides localStorage */
         var sb=null;
         try{ if(window.supabase&&window.supabase.createClient)
@@ -141,9 +136,7 @@
                            already woken her, and put her straight back to sleep. A farewell
                            may only close the visit it belongs to. */
                         if(myGen!==gen) return;
-                        var s2=document.getElementById('lfFenStrip'); if(s2) s2.style.display='none';
-                        var o2=document.getElementById('lfFenOffer'); if(o2) o2.remove();
-                        try{ document.body.classList.remove('lf-fen-on'); }catch(e){} }); } }); };
+                        try{ if(window.LFFen) window.LFFen.destroy(); }catch(e){} }); } }); };
             var FALLBACK={line:'Come and know your family.',yes:'Come along',no:'Not now',go:'game-who-is-who.html'};
             /* Leon's own device reported "nothing within 9s (Fen=true Invite=true
                strip=true)" four times: everything had loaded and the invitation
