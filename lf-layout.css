@@ -1,0 +1,55 @@
+/* The one place layout is decided.
+
+   Twenty-four pages each carry their own CSS today, which is why a single
+   hard-coded 390px - the iPhone width - reached twelve of them and pushed the
+   frame off every Android narrower than that. This sheet holds the tokens; the
+   pages will be moved onto it family by family, against the designer's layouts.
+
+   Nothing here restyles anything yet: variables and opt-in utilities only, so it
+   is safe to link before the layouts land. */
+
+:root{
+  /* the shapes a family holds the forest in */
+  --lf-bp-tablet: 600px;
+  --lf-bp-desktop: 1024px;
+  --lf-bp-wide: 1440px;
+
+  /* the phone frame, when a frame is still wanted */
+  --lf-frame-max: 390px;
+
+  /* the ground the device leaves us */
+  --lf-safe-top: env(safe-area-inset-top, 0px);
+  --lf-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --lf-safe-left: env(safe-area-inset-left, 0px);
+  --lf-safe-right: env(safe-area-inset-right, 0px);
+
+  /* Fen's strip: fixed on phones, still to be decided on wide glass */
+  --lf-fen-strip: 151px;
+
+  --lf-gutter: 16px;
+  --lf-rail: 320px;
+}
+
+@media (min-width: 600px){  :root{ --lf-gutter: 24px; } }
+@media (min-width: 1024px){ :root{ --lf-gutter: 32px; } }
+
+/* A frame that fits the glass it is on. Opt in with class="lf-frame";
+   never wider than the screen, never wider than the phone width unless a
+   page's own layout says otherwise. */
+.lf-frame{
+  width: min(var(--lf-frame-max), 100vw);
+  margin-inline: auto;
+  padding-left: var(--lf-safe-left);
+  padding-right: var(--lf-safe-right);
+  box-sizing: border-box;
+}
+
+/* Short landscape is the hard case: a phone turned sideways is ~360 tall and
+   Fen's strip alone claims 151 of it. Pages opting in here get their vertical
+   chrome out of the way rather than scrolling twice the screen height. */
+@media (max-height: 500px) and (orientation: landscape){
+  .lf-frame{ height: auto; min-height: 0; }
+}
+
+/* RTL: a two-column layout must mirror, not merely translate. */
+[dir="rtl"] .lf-frame{ direction: rtl; }
