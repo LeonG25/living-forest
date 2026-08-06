@@ -1,55 +1,68 @@
 /* The one place layout is decided.
 
-   Twenty-four pages each carry their own CSS today, which is why a single
-   hard-coded 390px - the iPhone width - reached twelve of them and pushed the
-   frame off every Android narrower than that. This sheet holds the tokens; the
-   pages will be moved onto it family by family, against the designer's layouts.
+   Twenty-four pages each carried their own CSS, which is why a single hard-coded
+   390px - the iPhone width - reached twelve of them. These are the designer's
+   tokens from "Responsive - the forest on every screen" (design project 4931d7e6,
+   section 09), verbatim, plus the safe-area floors the phone work already needed.
 
-   Nothing here restyles anything yet: variables and opt-in utilities only, so it
-   is safe to link before the layouts land. */
+   Variables and opt-in utilities only: linking this changes nothing until a page
+   asks for it. Pages move onto it family by family, canvas first. */
 
 :root{
-  /* the shapes a family holds the forest in */
-  --lf-bp-tablet: 600px;
-  --lf-bp-desktop: 1024px;
-  --lf-bp-wide: 1440px;
+  /* --- the designer's token set --- */
+  --bp-tablet: 600px;        /* min-width where tablet layouts begin */
+  --bp-desktop: 1024px;      /* min-width where desktop layouts begin */
+  --short: 500px;            /* the short-landscape override fires at (max-height:500px) */
+  --measure: 64ch;           /* max reading-column width for flow/text content */
+  --rail: 300px;             /* fixed side rail width (the canvas-family win) */
+  --inspector: 360px;        /* fixed inspector/detail panel width on subject pages */
+  --stage-max: 900px;        /* max width of the centered stage/content area */
+  --fen-den: 300px;          /* width of Fen's resting den on wide screens */
+  --fen-puck: 72px;          /* collapsed Fen puck size */
+  --chrome: 44px;            /* app chrome / control bar height */
+  --safe-pad: max(20px, env(safe-area-inset-inline, 20px)); /* padding-inline floor, honouring the notch */
+  --unit-h: 100dvh;          /* full height uses dvh, not vh */
 
-  /* the phone frame, when a frame is still wanted */
-  --lf-frame-max: 390px;
-
-  /* the ground the device leaves us */
+  /* --- what the phone work already relies on --- */
   --lf-safe-top: env(safe-area-inset-top, 0px);
   --lf-safe-bottom: env(safe-area-inset-bottom, 0px);
-  --lf-safe-left: env(safe-area-inset-left, 0px);
-  --lf-safe-right: env(safe-area-inset-right, 0px);
-
-  /* Fen's strip: fixed on phones, still to be decided on wide glass */
-  --lf-fen-strip: 151px;
-
+  --lf-fen-strip: 151px;     /* her fixed band on phones; a den or a puck above that */
   --lf-gutter: 16px;
-  --lf-rail: 320px;
 }
-
 @media (min-width: 600px){  :root{ --lf-gutter: 24px; } }
 @media (min-width: 1024px){ :root{ --lf-gutter: 32px; } }
 
-/* A frame that fits the glass it is on. Opt in with class="lf-frame";
-   never wider than the screen, never wider than the phone width unless a
-   page's own layout says otherwise. */
-.lf-frame{
-  width: min(var(--lf-frame-max), 100vw);
-  margin-inline: auto;
-  padding-left: var(--lf-safe-left);
-  padding-right: var(--lf-safe-right);
+/* CANVAS FAMILY - the globe and the tree.
+   The world takes the glass. It does not shrink into a drawing of a phone. */
+.lf-canvas-page{
+  width: 100vw; height: var(--unit-h);
+  overflow: hidden;
+  padding-left: var(--lf-safe-left, 0px);
+  padding-right: var(--lf-safe-right, 0px);
   box-sizing: border-box;
 }
 
-/* Short landscape is the hard case: a phone turned sideways is ~360 tall and
-   Fen's strip alone claims 151 of it. Pages opting in here get their vertical
-   chrome out of the way rather than scrolling twice the screen height. */
-@media (max-height: 500px) and (orientation: landscape){
-  .lf-frame{ height: auto; min-height: 0; }
+/* The rail is the canvas family's win: floating controls collect into one
+   docked column instead of scattering over the world. Opt in per page. */
+@media (min-width: 1024px){
+  .lf-rail{
+    position: fixed; inset-block: 0; inset-inline-start: 0;
+    width: var(--rail);
+    padding: var(--lf-gutter) var(--safe-pad);
+    box-sizing: border-box;
+    display: flex; flex-direction: column; gap: 12px;
+    z-index: 6;
+  }
+  .lf-rail ~ .lf-canvas-page{ padding-inline-start: var(--rail); }
 }
 
-/* RTL: a two-column layout must mirror, not merely translate. */
-[dir="rtl"] .lf-frame{ direction: rtl; }
+/* Short landscape: no element may reserve a horizontal band (designer's rule).
+   A phone turned sideways is ~360 tall and Fen's strip alone claims 151 of it. */
+@media (max-height: 500px) and (orientation: landscape){
+  :root{ --lf-fen-strip: var(--fen-puck); --chrome: 40px; }
+  .lf-rail{ position: static; width: auto; flex-direction: row; }
+}
+
+/* RTL is a logical-properties job, not a per-page fork: inset-inline and
+   padding-inline above already mirror. This exists to make that explicit. */
+[dir="rtl"] .lf-rail{ inset-inline-start: 0; }
