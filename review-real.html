@@ -776,16 +776,17 @@
     /* A connection proposal becomes real here and only here: the named person is
        created if the family has never met them, then the tie itself is written. */
     if(kind==='kin'){
+      const L=d();
       const f=(pending.facts||[]).find(x=>x.id===id); if(!f) return;
       let k=null; try{ k=JSON.parse(f.value); }catch(e){}
-      if(!k||!k.kind){ toast(l.tCannot||'That suggestion could not be read.',false); return; }
+      if(!k||!k.kind){ toast(L.tCannot||'That suggestion could not be read.',false); return; }
       let other=k.other;
       if(!other){
         const nm=String(k.propose||k.other_name||'').trim();
-        if(!nm){ toast(l.tCannot||'That suggestion could not be read.',false); return; }
+        if(!nm){ toast(L.tCannot||'That suggestion could not be read.',false); return; }
         const mk=await sb.from('people').insert({display_name:nm,created_by:f.created_by,status:'published',
                    reviewed_by:user.id,published_at:now}).select('id').single();
-        if(mk.error||!mk.data){ toast(l.tFail||'That did not save.',false); return; }
+        if(mk.error||!mk.data){ toast(L.tFail||'That did not save.',false); return; }
         other=mk.data.id;
       }
       /* from_person = PARENT, to_person = CHILD; every other kind keeps the subject first */
@@ -794,10 +795,10 @@
       const rel=await sb.from('relationships').insert({from_person:from,to_person:to,kind:k.kind,
                   certainty:k.certainty||'documented',note:k.note||'',status:'published',
                   created_by:f.created_by,reviewed_by:user.id});
-      if(rel.error){ toast(l.tFail||'That did not save.',false); return; }
+      if(rel.error){ toast(L.tFail||'That did not save.',false); return; }
       const fin=await sb.from('person_facts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id);
-      if(fin.error){ toast(l.tFail||'That did not save.',false); return; }
-      await reload(); toast(l.tWelcomed||'Welcomed.',true); return;
+      if(fin.error){ toast(L.tFail||'That did not save.',false); return; }
+      await reload(); toast(L.tWelcomed||'Welcomed.',true); return;
     }
     if(kind==='fact'){ const f=(pending.facts||[]).find(x=>x.id===id); if(f){ const patch={};
         /* A year is often all anyone knows. These are DATE columns, so "1897" and
@@ -811,7 +812,7 @@
           else{
             const d=window.LFDate&&LFDate.parse(f.value);
             if(d){ patch[which+'_date']=d.date; patch[which+'_precision']=d.precision; }
-            else { toast(l.tBadDate||('Could not read the date "'+String(f.value).slice(0,20)+'"'),false); return; }
+            else { toast((d().tBadDate)||('Could not read the date "'+String(f.value).slice(0,20)+'"'),false); return; }
           }
         }
         if(f.field==='birth_prec')patch.birth_certainty=f.value||null; if(f.field==='living')patch.is_living=(f.value==='1');
@@ -850,10 +851,10 @@
     await reload(); toast(d().approved,true);
   }
   async function declineRef(ref){
-    { const [k0,i0]=ref.split(':');
+    { const [k0,i0]=ref.split(':'); const L=d();
       if(k0==='kin'){ const r=await sb.from('person_facts').update({status:'declined'}).eq('id',i0);
-        if(r.error){ toast(l.tFail||'That did not save.',false); return; }
-        await reload(); toast(l.tDeclined||'Declined.',false); return; } } if(!user||!state.keeper) return; const [kind,id]=ref.split(':');
+        if(r.error){ toast(L.tFail||'That did not save.',false); return; }
+        await reload(); toast(L.tDeclined||'Declined.',false); return; } } if(!user||!state.keeper) return; const [kind,id]=ref.split(':');
     if(kind==='fact'){ try{ await sb.from('person_facts').delete().eq('id',id); }catch(e){} }
     else if(kind==='group'){ for(const ff of (pending.facts||[]).filter(x=>x.group_id===id)){ try{ await sb.from('person_facts').delete().eq('id',ff.id); }catch(e){} } }
     else if(kind==='nv'){ try{ await sb.from('name_variants').delete().eq('id',id); }catch(e){} }
