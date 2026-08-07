@@ -934,6 +934,22 @@ function computeLayout(){
   // anchor each unit by the blood-line member (one with parents), else first
   units.forEach(u=>{ u.root = u.members.find(m=>parentsOf(m).length>0) ?? u.members.find(m=>siblingsOf(m).some(x=>placedSet.has(x))) ?? u.members[0]; });
   units.forEach(u=>{ const par=parentsOf(u.root)[0]; u.parentUnit=(par!=null&&homeUnit[par])?homeUnit[par]:null; });
+  /* A sibling with no parents of their own belongs BESIDE their sibling, not adrift
+     at the top of the tree. Basya is Sofia's sister by an explicit sibling tie and has
+     no parent edges; when Leon gave Sofia her parents, Sofia dropped under them and
+     Basya stayed a root - so the sibling line ran up and across the whole canvas.
+     The old grouping only joined siblings who were BOTH roots, which is why adding
+     parents to one of a pair tore the pair apart. Repeated so a chain of siblings all
+     find the same family; the guard keeps a unit from ever becoming its own parent. */
+  for(let pass=0; pass<3; pass++){
+    let moved=false;
+    units.forEach(u=>{ if(u.parentUnit) return;
+      const sibs=[].concat(...u.members.map(m=>siblingsOf(m))).filter(x=>P.has(x));
+      for(const sid of sibs){ const su=homeUnit[sid];
+        if(su && su!==u && su.parentUnit && su.parentUnit!==u){ u.parentUnit=su.parentUnit; moved=true; break; } }
+    });
+    if(!moved) break;
+  }
   units.forEach(u=>{ if(u.parentUnit&&u.parentUnit!==u) u.parentUnit.childUnits.push(u); });
   units.forEach(u=>u.childUnits.sort((a,b)=>ord(a.root,b.root)));
   // sibling groups among ROOT units (siblings whose parent isn't placed) via union-find on home units
