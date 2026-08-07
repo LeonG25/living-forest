@@ -451,9 +451,9 @@
        They are asked for together now; the page waits for the slowest, not the sum. */
     const [rPeople,rFacts,rNvs,rArts,rRels,rPub,rPubNvs] = await Promise.all([
       sb.from('people').select('*'),
-      sb.from('person_facts').select('id,person_id,group_id,field,lang,value,ord,status,created_by,created_at').not('status','eq','published'),
-      sb.from('name_variants').select('*').not('status','eq','published'),
-      sb.from('artefacts').select('*').not('status','eq','published'),
+      sb.from('person_facts').select('id,person_id,group_id,field,lang,value,ord,status,created_by,created_at').in('status',['in_review','draft']),
+      sb.from('name_variants').select('*').in('status',['in_review','draft']),
+      sb.from('artefacts').select('*').in('status',['in_review','draft']),
       sb.from('relationships').select('id,from_person,to_person,kind,certainty,note,status,created_by,created_at'),
       sb.from('person_facts').select('id,person_id,group_id,field,lang,value,ord,status,published_at,created_at').eq('status','published'),
       sb.from('name_variants').select('*').eq('status','published')
@@ -465,7 +465,7 @@
     out.arts=(rArts.data||[]).filter(a=>a.kind==='photo'||a.kind==='voice');
     let relRows=rRels.data||[];
     if(rRels.error){ const r2=await sb.from('relationships').select('id,from_person,to_person,kind,status'); relRows=r2.data||[]; }
-    out.rels=relRows.filter(r=>r.status&&r.status!=='published'&&r.status!=='rejected'&&r.status!=='declined');
+    out.rels=relRows.filter(r=>r.status==='in_review'||r.status==='draft');
     out.pubRels=relRows.filter(r=>!r.status||r.status==='published');
     out.pub=rPub.data||[];
     out.pubNvs=rPubNvs.data||[];
@@ -515,10 +515,15 @@
          Anna Tihonov was recorded and never shown to anyone. */
       if(f.field==='kin'){
         let k=null; try{ k=JSON.parse(f.value); }catch(e){}
+        /* Older proposals were stored as loose text ("Sofia's father") and can never
+           become a connection - there is no kind, no direction, no other person. Offering
+           Approve on them only wastes a keeper's tap. They are marked unreadable so the
+           card can say so and show Decline alone. */
+        const unreadable = !(k && k.kind);
         const other = k ? (k.other_name||k.propose||'') : String(f.value||'');
         items.facts.push({ kind:'kin', id:f.id, group:'facts', field:'kin',
           kinKind:(k&&k.kind)||'', kinDir:(k&&k.dir)||'', kinOther:(k&&k.other)||null,
-          kinPropose:(k&&!k.other)?(k.propose||k.other_name||''):'',
+          kinPropose:(k&&!k.other)?(k.propose||k.other_name||''):'', unreadable:unreadable,
           value:other||'—', personId:f.person_id,
           suggester:accountName(f.created_by), created_at:f.created_at });
         return;
@@ -671,7 +676,7 @@
       </div>
       <div class="qacts">
         <button class="decline" data-decline="${esc(ref)}">${IC.no} ${esc(L.decline)}</button>
-        <button class="approve" data-approve="${esc(ref)}">${IC.ok} ${esc(L.approve)}</button>
+        ${it.unreadable ? '' : `<button class="approve" data-approve="${esc(ref)}">${IC.ok} ${esc(L.approve)}</button>`}
       </div>
     </div>`;
   }
@@ -692,7 +697,7 @@
       </div>
       <div class="qacts">
         <button class="decline" data-decline="${esc(ref)}">${IC.no} ${esc(L.decline)}</button>
-        <button class="approve" data-approve="${esc(ref)}">${IC.ok} ${esc(L.approve)}</button>
+        ${it.unreadable ? '' : `<button class="approve" data-approve="${esc(ref)}">${IC.ok} ${esc(L.approve)}</button>`}
       </div>
     </div>`;
   }
