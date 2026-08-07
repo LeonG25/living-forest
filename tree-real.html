@@ -547,20 +547,33 @@ const STR={
 };
 /* relationship nouns, gendered per language */
 const NOUN={
-  parent:{m:{en:'father',ru:'отец',he:'אבא'}, f:{en:'mother',ru:'мать',he:'אמא'}},
-  child:{m:{en:'son',ru:'сын',he:'בן'}, f:{en:'daughter',ru:'дочь',he:'בת'}},
-  spouse:{m:{en:'husband',ru:'муж',he:'בעל'}, f:{en:'wife',ru:'жена',he:'אישה'}},
-  sibling:{m:{en:'sibling',ru:'брат или сестра',he:'אח/אחות'}, f:{en:'sibling',ru:'брат или сестра',he:'אח/אחות'}},
-  friend:{m:{en:'friend',ru:'друг',he:'חבר'}, f:{en:'friend',ru:'подруга',he:'חברה'}},
-  mentor:{m:{en:'mentor',ru:'наставник',he:'מורה דרך'}, f:{en:'mentor',ru:'наставница',he:'מורת דרך'}},
-  mentee:{m:{en:'student',ru:'ученик',he:'תלמיד'}, f:{en:'student',ru:'ученица',he:'תלמידה'}},
-  neighbour:{m:{en:'neighbour',ru:'сосед',he:'שכן'}, f:{en:'neighbour',ru:'соседка',he:'שכנה'}},
-  other:{m:{en:'connected to',ru:'связан с',he:'מקושר ל'}, f:{en:'connected to',ru:'связана с',he:'מקושרת ל'}}
+  parent:{m:{en:'father',ru:'отец',he:'אבא'}, f:{en:'mother',ru:'мать',he:'אמא'},
+          u:{en:'parent',ru:'родитель',he:'הורה'}},
+  child:{m:{en:'son',ru:'сын',he:'בן'}, f:{en:'daughter',ru:'дочь',he:'בת'},
+          u:{en:'child',ru:'ребёнок',he:'בן/בת'}},
+  spouse:{m:{en:'husband',ru:'муж',he:'בעל'}, f:{en:'wife',ru:'жена',he:'אישה'},
+          u:{en:'spouse',ru:'супруг(а)',he:'בן/בת זוג'}},
+  sibling:{m:{en:'sibling',ru:'брат или сестра',he:'אח/אחות'}, f:{en:'sibling',ru:'брат или сестра',he:'אח/אחות'},
+          u:{en:'sibling',ru:'брат или сестра',he:'אח/אחות'}},
+  friend:{m:{en:'friend',ru:'друг',he:'חבר'}, f:{en:'friend',ru:'подруга',he:'חברה'},
+          u:{en:'friend',ru:'друг',he:'חבר/ה'}},
+  mentor:{m:{en:'mentor',ru:'наставник',he:'מורה דרך'}, f:{en:'mentor',ru:'наставница',he:'מורת דרך'},
+          u:{en:'mentor',ru:'наставник',he:'מורה דרך'}},
+  mentee:{m:{en:'student',ru:'ученик',he:'תלמיד'}, f:{en:'student',ru:'ученица',he:'תלמידה'},
+          u:{en:'student',ru:'ученик',he:'תלמיד/ה'}},
+  neighbour:{m:{en:'neighbour',ru:'сосед',he:'שכן'}, f:{en:'neighbour',ru:'соседка',he:'שכנה'},
+          u:{en:'neighbour',ru:'сосед',he:'שכן/ה'}},
+  other:{m:{en:'connected to',ru:'связан с',he:'מקושר ל'}, f:{en:'connected to',ru:'связана с',he:'מקושרת ל'},
+          u:{en:'connected to',ru:'связан(а) с',he:'מקושר/ת ל'}}
 };
 const RECIP={ parent:'child', child:'parent', spouse:'spouse', sibling:'sibling', friend:'friend', mentor:'mentee', neighbour:'neighbour', other:'other' };
 const PRIMARY=['parent','child','spouse','sibling'];
 const SECOND=['friend','mentor','neighbour','other'];
-function noun(rel,sex,lang){ const n=NOUN[rel]||NOUN.other; return (n[sex]||n.m)[lang]; }
+/* When nobody has said whether a person is a man or a woman, the forest says
+   "child", not "son". All 47 people currently have sex=null, so the old fallback
+   to the masculine form told Leon that Sofia was her parents' son. An unknown is
+   an unknown; it is never a man by default. */
+function noun(rel,sex,lang){ const n=NOUN[rel]||NOUN.other; return ((sex&&n[sex])||n.u||n.m)[lang]; }
 function fmt(s,o){ o=o||{}; return String(s==null?'':s).replace(/\{(\w+)\}/g,(m,k)=>o[k]!=null?o[k]:''); }
 
 /* Russian given-name genitive (best-effort, first name only) */
