@@ -509,7 +509,20 @@
     // person_facts -> names / facts ; custom pairs grouped
     const customByGroup={};
     pending.facts.forEach(f=>{
-      if(f.field==='kin') return; // legacy connection channel — connections now live in the relationships table
+      /* Connection proposals from a person page arrive HERE, as kin facts - person-real
+         writes them this way because a proposal may name someone who does not exist yet.
+         This line used to drop them silently ("legacy channel"), so Leon's suggestion of
+         Anna Tihonov was recorded and never shown to anyone. */
+      if(f.field==='kin'){
+        let k=null; try{ k=JSON.parse(f.value); }catch(e){}
+        const other = k ? (k.other_name||k.propose||'') : String(f.value||'');
+        items.facts.push({ kind:'kin', id:f.id, group:'facts', field:'kin',
+          kinKind:(k&&k.kind)||'', kinDir:(k&&k.dir)||'', kinOther:(k&&k.other)||null,
+          kinPropose:(k&&!k.other)?(k.propose||k.other_name||''):'',
+          value:other||'—', personId:f.person_id,
+          suggester:accountName(f.created_by), created_at:f.created_at });
+        return;
+      }
       if(f.field==='custom_label'||f.field==='custom_value'){ const g=f.group_id||f.id; (customByGroup[g]=customByGroup[g]||{group_id:g,rows:[],personId:f.person_id,created_by:f.created_by,created_at:f.created_at}).rows.push(f); return; }
       const grp = NAME_FIELDS.includes(f.field) ? 'names' : 'facts';
       items[grp].push({ kind:'fact', id:f.id, group:grp, field:f.field, lang:f.lang, value:factValue(f), personId:f.person_id, suggester:accountName(f.created_by), created_at:f.created_at, raw:f });
@@ -760,6 +773,32 @@
 
   /* ---------- keeper actions (per-field / per-row, Rule 3) ---------- */
   async function approveRef(ref){ if(!user||!state.keeper) return; const [kind,id]=ref.split(':'); const now=new Date().toISOString();
+    /* A connection proposal becomes real here and only here: the named person is
+       created if the family has never met them, then the tie itself is written. */
+    if(kind==='kin'){
+      const f=(pending.facts||[]).find(x=>x.id===id); if(!f) return;
+      let k=null; try{ k=JSON.parse(f.value); }catch(e){}
+      if(!k||!k.kind){ toast(l.tCannot||'That suggestion could not be read.',false); return; }
+      let other=k.other;
+      if(!other){
+        const nm=String(k.propose||k.other_name||'').trim();
+        if(!nm){ toast(l.tCannot||'That suggestion could not be read.',false); return; }
+        const mk=await sb.from('people').insert({display_name:nm,created_by:f.created_by,status:'published',
+                   reviewed_by:user.id,published_at:now}).select('id').single();
+        if(mk.error||!mk.data){ toast(l.tFail||'That did not save.',false); return; }
+        other=mk.data.id;
+      }
+      /* from_person = PARENT, to_person = CHILD; every other kind keeps the subject first */
+      let from=f.person_id, to=other;
+      if(k.kind==='parent'){ if(k.dir==='in'||k.dir==='from'){ from=other; to=f.person_id; } }
+      const rel=await sb.from('relationships').insert({from_person:from,to_person:to,kind:k.kind,
+                  certainty:k.certainty||'documented',note:k.note||'',status:'published',
+                  created_by:f.created_by,reviewed_by:user.id});
+      if(rel.error){ toast(l.tFail||'That did not save.',false); return; }
+      const fin=await sb.from('person_facts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id);
+      if(fin.error){ toast(l.tFail||'That did not save.',false); return; }
+      await reload(); toast(l.tWelcomed||'Welcomed.',true); return;
+    }
     if(kind==='fact'){ const f=(pending.facts||[]).find(x=>x.id===id); if(f){ const patch={};
         /* A year is often all anyone knows. These are DATE columns, so "1897" and
            "1897-1964" - what a family member actually types - came back 22007 and
@@ -810,7 +849,11 @@
         if(u.error){ u=await sb.from('relationships').update({status:'published',reviewed_by:user.id}).eq('id',id); if(u.error) await sb.from('relationships').update({status:'published'}).eq('id',id); } } }
     await reload(); toast(d().approved,true);
   }
-  async function declineRef(ref){ if(!user||!state.keeper) return; const [kind,id]=ref.split(':');
+  async function declineRef(ref){
+    { const [k0,i0]=ref.split(':');
+      if(k0==='kin'){ const r=await sb.from('person_facts').update({status:'declined'}).eq('id',i0);
+        if(r.error){ toast(l.tFail||'That did not save.',false); return; }
+        await reload(); toast(l.tDeclined||'Declined.',false); return; } } if(!user||!state.keeper) return; const [kind,id]=ref.split(':');
     if(kind==='fact'){ try{ await sb.from('person_facts').delete().eq('id',id); }catch(e){} }
     else if(kind==='group'){ for(const ff of (pending.facts||[]).filter(x=>x.group_id===id)){ try{ await sb.from('person_facts').delete().eq('id',ff.id); }catch(e){} } }
     else if(kind==='nv'){ try{ await sb.from('name_variants').delete().eq('id',id); }catch(e){} }
