@@ -777,16 +777,25 @@
        created if the family has never met them, then the tie itself is written. */
     if(kind==='kin'){
       const L=d();
-      const f=(pending.facts||[]).find(x=>x.id===id); if(!f) return;
+      /* A second tap must never make a second person. Leon's approval of Anna Tihonov
+         ran twice 650ms apart and created her twice, with two sibling ties. The guard
+         is held in memory AND checked against the row, because the row is the only
+         thing that survives a reload. */
+      if(approveRef._busy) return; approveRef._busy=true;
+      try{
+        const still=await sb.from('person_facts').select('status').eq('id',id).single();
+        if(still.error||!still.data||still.data.status!=='in_review'){ await reload(); return; }
+      }catch(e){ approveRef._busy=false; return; }
+      const f=(pending.facts||[]).find(x=>x.id===id); if(!f){ approveRef._busy=false; return; }
       let k=null; try{ k=JSON.parse(f.value); }catch(e){}
-      if(!k||!k.kind){ toast(L.tCannot||'That suggestion could not be read.',false); return; }
+      if(!k||!k.kind){ approveRef._busy=false; toast(L.tCannot||'That suggestion could not be read.',false); return; }
       let other=k.other;
       if(!other){
         const nm=String(k.propose||k.other_name||'').trim();
-        if(!nm){ toast(L.tCannot||'That suggestion could not be read.',false); return; }
+        if(!nm){ approveRef._busy=false; toast(L.tCannot||'That suggestion could not be read.',false); return; }
         const mk=await sb.from('people').insert({display_name:nm,created_by:f.created_by,status:'published',
                    reviewed_by:user.id,published_at:now}).select('id').single();
-        if(mk.error||!mk.data){ toast(L.tFail||'That did not save.',false); return; }
+        if(mk.error||!mk.data){ approveRef._busy=false; toast(L.tFail||'That did not save.',false); return; }
         other=mk.data.id;
       }
       /* from_person = PARENT, to_person = CHILD; every other kind keeps the subject first */
@@ -795,9 +804,10 @@
       const rel=await sb.from('relationships').insert({from_person:from,to_person:to,kind:k.kind,
                   certainty:k.certainty||'documented',note:k.note||'',status:'published',
                   created_by:f.created_by,reviewed_by:user.id});
-      if(rel.error){ toast(L.tFail||'That did not save.',false); return; }
+      if(rel.error){ approveRef._busy=false; toast(L.tFail||'That did not save.',false); return; }
       const fin=await sb.from('person_facts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id);
-      if(fin.error){ toast(L.tFail||'That did not save.',false); return; }
+      if(fin.error){ approveRef._busy=false; toast(L.tFail||'That did not save.',false); return; }
+      approveRef._busy=false;
       await reload(); toast(L.tWelcomed||'Welcomed.',true); return;
     }
     if(kind==='fact'){ const f=(pending.facts||[]).find(x=>x.id===id); if(f){ const patch={};
