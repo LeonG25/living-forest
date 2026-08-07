@@ -830,7 +830,10 @@
     if(found){ sub.id=found.id; return found.id; }
     // proposed newcomer → pending (Rule 3); fall back to published if the status enum rejects it
     let ins=await sb.from('people').insert({display_name:sub.name,created_by:M.user.id,status:'in_review'}).select('id,display_name').single();
-    if(ins.error){ ins=await sb.from('people').insert({display_name:sub.name,created_by:M.user.id,status:'published'}).select('id,display_name').single(); }
+    /* This used to retry as status:'published' when the in_review insert failed -
+       so a contributor's new person walked straight past the keeper. A failure is
+       reported now; nobody enters the forest unseen. */
+    if(ins.error){ toast('That could not be saved. Please try again.'); return null; }
     if(ins.error) throw ins.error;
     M.people.push(ins.data); sub.id=ins.data.id; return ins.data.id;
   }
