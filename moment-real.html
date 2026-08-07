@@ -992,7 +992,8 @@
   async function ensurePerson(name){ name=String(name||'').trim();
     const f=(allPeople||[]).find(p=>String(p.display_name||'').toLowerCase()===name.toLowerCase());
     if(f) return f.id;
-    const {data,error}=await sb.from('people').insert({display_name:name,created_by:user.id,status:'published'}).select('id,display_name,called_name,sex').single();
+    /* a new name met on a photograph waits for the keeper like everything else */
+    const {data,error}=await sb.from('people').insert({display_name:name,created_by:user.id,status:'in_review'}).select('id,display_name,called_name,sex').single();
     if(error) throw error; (allPeople=allPeople||[]).push(data); peopleById[data.id]=data; return data.id; }
 
   async function pickPerson(pid, q){ const tg=TAGS.find(x=>x.id===nameTargetId); if(!tg){ hide(); return; }
@@ -1162,7 +1163,7 @@
       const orig=(art&&art.original_language)||'en';
       let ok;
       if(lang===orig){ ok=await sbWrite(()=>sb.from('artefacts').update({body:val}).eq('id',art.id)); if(ok) art.body=val; }
-      else { ok=await sbWrite(()=>sb.from('artefact_translations').upsert({artefact_id:art.id,lang,body:val,status:'published',reviewed_by:user.id,published_at:new Date().toISOString()},{onConflict:'artefact_id,lang'}));
+      else { ok=await sbWrite(()=>sb.from('artefact_translations').upsert({artefact_id:art.id,lang,body:val,status:'in_review',reviewed_by:user.id,published_at:new Date().toISOString()},{onConflict:'artefact_id,lang'}));
         if(ok){ translations=translations.filter(x=>x.lang!==lang); translations.push({lang,body:val,status:'published'}); } }
       if(ok){ toast(d.saved); buildModel(); render(); }
     } else { const ok=await sbWrite(()=>sb.from('artefact_translations').insert({artefact_id:art.id,lang,body:val,status:'in_review',created_by:user.id}));
@@ -1262,7 +1263,9 @@
     $('#langBtn').onclick=()=>show($('#langSheet'));
     $('#editBtn').onclick=()=>{ const on=!document.body.classList.contains('editing'); document.body.classList.toggle('editing',on); $('#editBtn').classList.toggle('on',on); };
     const done=$('#doneBtn'); if(done) done.onclick=()=>{ document.body.classList.remove('editing'); $('#editBtn').classList.remove('on'); };
-    const ks=$('#keeperStrip'); if(ks) ks.onclick=openReview;
+    /* Approving belongs on the keeper's review page and nowhere else (Leon, 2026-08-07).
+       This strip used to open an approve/decline sheet right here on the moment. */
+    const ks=$('#keeperStrip'); if(ks) ks.onclick=()=>{ location.href='review-real.html'; };
     $('#langSheet').querySelectorAll('[data-lang]').forEach(b=> b.onclick=async()=>{ lang=b.dataset.lang; hide(); try{localStorage.setItem('lf_lang',lang);}catch(e){} if(user){try{await sb.from('profiles').update({preferred_lang:lang}).eq('id',user.id);}catch(e){}} buildModel(); render(); ensureLangAssets(); });
 
     const tagBtn=$('#tagBtn'); if(tagBtn) tagBtn.onclick=()=>setTagging(!document.body.classList.contains('tagging'));

@@ -443,7 +443,7 @@
       display:'Display name', given:'Given name', family:'Family name', maiden:'Maiden name',
       called:'Called', calledHint:'everyday form', patronymic:'Patronymic', honorific:'Honorific',
       addpart:'add a name part', addpartHint:'Adds in this language and sends it to the keeper.', otherlangs:'other languages',
-      nicks:'Nicknames & pet names', nickname:'Nickname / pet name', pendingChip:'waiting', approve:'Approve', decline:'Decline',
+      nicks:'Nicknames & pet names', nickname:'Nickname / pet name', pendingChip:'waiting', toReview:'Open the review page', approve:'Approve', decline:'Decline',
       faceLine:'The photos she appears in. The camera on her portrait chooses the crop that represents her everywhere.', changeface:'Change the face', openPhoto:'Open this photograph',
       noFace:'No photographs are tagged to this person yet.',
       about:'About', occupation:'Occupation', addoccupation:'add her work', langspoken:'Languages spoken',
@@ -483,7 +483,7 @@
       display:'Отображаемое имя', given:'Имя', family:'Фамилия', maiden:'Девичья фамилия',
       called:'Зовут', calledHint:'обиходная форма', patronymic:'Отчество', honorific:'Титул',
       addpart:'добавить часть имени', addpartHint:'Добавит на этом языке и отправит хранителю.', otherlangs:'другие языки',
-      nicks:'Прозвища и ласковые имена', nickname:'Прозвище / ласковое имя', pendingChip:'ожидает', approve:'Одобрить', decline:'Отклонить',
+      nicks:'Прозвища и ласковые имена', nickname:'Прозвище / ласковое имя', toReview:'Открыть страницу проверки', pendingChip:'ожидает', approve:'Одобрить', decline:'Отклонить',
       faceLine:'Фото, где она есть. Камера на портрете выбирает кадр, который представляет её везде.', changeface:'Сменить лицо', openPhoto:'Открыть фотографию',
       noFace:'К этому человеку пока не привязано ни одной фотографии.',
       about:'О человеке', occupation:'Занятие', addoccupation:'добавить занятие', langspoken:'Языки',
@@ -523,7 +523,7 @@
       display:'שם לתצוגה', given:'שם פרטי', family:'שם משפחה', maiden:'שם נעורים',
       called:'קוראים לה', calledHint:'צורה יומיומית', patronymic:'שם האב', honorific:'תואר',
       addpart:'הוספת חלק לשם', addpartHint:'יתווסף בשפה זו ויישלח לשומר.', otherlangs:'שפות נוספות',
-      nicks:'כינויים ושמות חיבה', nickname:'כינוי / שם חיבה', pendingChip:'ממתין', approve:'לאשר', decline:'לדחות',
+      nicks:'כינויים ושמות חיבה', nickname:'כינוי / שם חיבה', pendingChip:'ממתין', toReview:'לעמוד האישורים', approve:'לאשר', decline:'לדחות',
       faceLine:'התמונות שהיא מופיעה בהן. המצלמה שעל הדיוקן בוחרת את החיתוך שמייצג אותה בכל מקום.', changeface:'החלפת התמונה', openPhoto:'פתח את התצלום',
       noFace:'עדיין לא תויגו תמונות לאדם הזה.',
       about:'אודות', occupation:'עיסוק', addoccupation:'הוספת עיסוק', langspoken:'שפות',
@@ -767,7 +767,12 @@
   }
 
   /* ---------- shared view builders ---------- */
-  function keeperInline(id,kind){ const L=d(); return `<div class="keeperbar"><button class="kbtn ok" data-approve="${kind}:${id}">${sv(I.check,2)} ${L.approve}</button><button class="kbtn no" data-decline="${kind}:${id}">${L.decline}</button></div>`; }
+  /* Approving belongs on the keeper's review page and nowhere else (Leon, 2026-08-07).
+     This used to draw Approve/Decline straight onto the person page, so a keeper could
+     wave their own suggestion through the moment they made it, without ever seeing the
+     queue. It says what is waiting and points at the one place that decides. */
+  function keeperInline(id,kind){ const L=d();
+    return `<div class="pending"><span class="sp"></span>${esc(L.pendingChip||'')} · <a href="review-real.html" style="color:var(--edit-hi);text-decoration:underline">${esc(L.toReview||'Review')}</a></div>`; }
   function chipAddBox(field,label){ const L=d(); return `<div class="chipadd" data-for="${field}" style="display:none;margin-top:8px"><input class="inp" placeholder="${esc(label||'')}"><div class="btnrow" style="margin-top:8px"><button class="btn ghost" data-cadd-cancel>${L.cancel}</button><button class="btn violet" data-cadd-ok="${field}">${L.send}</button></div></div>`; }
   function chipsField(field,addLabel,cool){ const L=d(); const pubs=pubList(field,'und'); const pends=pendList(field,'und');
     const pubc=pubs.map(r=>`<span class="chip ${cool?'cool':''}">${(cool&&r.ord!=null)?`<span class="ord">${String((r.ord||0)+1).padStart(2,'0')}</span>`:''}${esc(r.value)}<span class="x" data-del="${r.id}">${sv(I.x,2)}</span></span>`).join('');
@@ -1301,8 +1306,7 @@
       const L=d();
       const om=e.target.closest('[data-open-moment]'); if(om){ const aid=om.getAttribute('data-open-moment'); if(aid) location.href='moment-real.html?id='+encodeURIComponent(aid); return; }
       const jt=e.target.closest('[data-jump]'); if(jt){ selectFacet(jt.dataset.jump); return; }
-      const ap=e.target.closest('[data-approve]'); if(ap){ await approveRef(ap.getAttribute('data-approve')); return; }
-      const dc=e.target.closest('[data-decline]'); if(dc){ await declineRef(dc.getAttribute('data-decline')); return; }
+      /* no approving from here - the review page is the only door */
       const del=e.target.closest('[data-del]'); if(del){ await removeRow(del.getAttribute('data-del')); return; }
       const rd=e.target.closest('[data-rowdel]'); if(rd){ await removeRow(rd.getAttribute('data-rowdel')); return; }
       const dnv=e.target.closest('[data-delnv]'); if(dnv){ const [nid,part]=dnv.getAttribute('data-delnv').split(':');
