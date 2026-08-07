@@ -1356,12 +1356,13 @@ async function commitConnect(){ const a=CF.cur, b=CF.other, rel=CF.rel; if(!a||!
     // keeper writes straight to the tree (published). If the write is rejected, fall back to a
     // pending suggestion so nothing is lost — and toast, never fail silently.
     if(CF.editing&&CF.existing){
-      let r=await sb.from('relationships').update({from_person:ends.from,to_person:ends.to,kind:ends.kind,certainty:CF.cert,note:CF.note||'',status:'published',reviewed_by:user.id}).eq('id',CF.existing.id);
+      let r=await sb.from('relationships').update({from_person:ends.from,to_person:ends.to,kind:ends.kind,certainty:CF.cert,note:CF.note||'',status:'in_review'}).eq('id',CF.existing.id);
       if(r.error) r=await sb.from('relationships').update({from_person:ends.from,to_person:ends.to,kind:ends.kind}).eq('id',CF.existing.id);
       if(r.error){ toast(L().sendFail); return {ok:false}; }
       return {ok:true};
     }
-    const err=await insertRel({from_person:ends.from,to_person:ends.to,kind:ends.kind,certainty:CF.cert,note:CF.note||'',status:'published',created_by:user.id});
+    /* a keeper's own connection goes to the review page like anyone else's */
+    const err=await insertRel({from_person:ends.from,to_person:ends.to,kind:ends.kind,certainty:CF.cert,note:CF.note||'',status:'in_review',created_by:user.id});
     if(err){ const perr=await insertRel({from_person:ends.from,to_person:ends.to,kind:ends.kind,certainty:CF.cert,note:CF.note||'',status:'in_review',created_by:user.id});
       CF.mode='suggest'; toast(L().savedPending); return {ok:!perr, pending:true}; }
     return {ok:true};

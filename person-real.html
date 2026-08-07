@@ -1146,11 +1146,41 @@
     sh._kinSave=async()=>{
       if(mode!=='edit'&&!st.other&&!String(st.propose||'').trim()){ toast(L.pickfirst); return; }
       if(mode==='me'&&st.other) { try{ localStorage.setItem('lf_me',st.other); }catch(e){} }
+      /* "Parent" alone can be read either way round - Leon read the button as saying
+         BASYA was the parent. Say it back as a whole sentence, naming both people and
+         which of them is which, before anything is written. */
+      {
+        const them=st.other?nameOf(st.other):String(st.propose||'').trim();
+        const me=nameOf(PERSON_ID);
+        const line=kinSentence(them, me, st.kind, st.dir, state.lang);
+        if(line && !confirm(line)) return;
+      }
       await saveRel({ relId:st.relId, other:st.other, other_name:st.other?nameOf(st.other):String(st.propose||'').trim(),
         propose:st.other?'':String(st.propose||'').trim(), kind:st.kind, dir:st.dir, certainty:st.certainty, note:st.note, mode });
       hideSheets(); await reload(); selectFacet('kin'); toast(state.keeper?L.saved:L.sent); };
     sh._kinRemove=async()=>{ await removeRel(st.relId); hideSheets(); await reload(); selectFacet('kin'); toast(state.keeper?L.saved:L.sent); };
     draw(); showSheet('kin'); }
+
+  /* Reads back exactly what is about to be recorded. `them` is the person just
+     chosen, `me` is whose page we are on. dir tells us which way the tie runs. */
+  function kinSentence(them, me, kind, dir, lang){
+    if(!them||!me) return '';
+    const K={
+      parent:{en:'{a} is a parent of {b}.',      ru:'{a} — родитель {b}.',        he:'{a} הוא/היא הורה של {b}.'},
+      child:{ en:'{a} is a child of {b}.',       ru:'{a} — ребёнок {b}.',         he:'{a} הוא/היא ילד/ה של {b}.'},
+      spouse:{en:'{a} is married to {b}.',       ru:'{a} — супруг(а) {b}.',       he:'{a} נשוי/אה ל{b}.'},
+      sibling:{en:'{a} and {b} are siblings.',   ru:'{a} и {b} — брат или сестра.', he:'{a} ו{b} הם אחים/אחיות.'},
+      friend:{en:'{a} is a friend of {b}.',      ru:'{a} — друг {b}.',            he:'{a} הוא/היא חבר/ה של {b}.'},
+      mentor:{en:'{a} is a mentor to {b}.',      ru:'{a} — наставник {b}.',       he:'{a} הוא/היא מורה דרך של {b}.'},
+      neighbour:{en:'{a} is a neighbour of {b}.',ru:'{a} — сосед {b}.',           he:'{a} הוא/היא שכן/ה של {b}.'},
+      other:{en:'{a} is connected to {b}.',      ru:'{a} связан(а) с {b}.',       he:'{a} מקושר/ת ל{b}.'}
+    };
+    const ASK={ en:'\n\nIs that right?', ru:'\n\nВсё верно?', he:'\n\nנכון?' };
+    const t=(K[kind]||K.other)[lang]||(K[kind]||K.other).en;
+    /* dir decides who stands first: the chosen person, or the person whose page this is */
+    const a=(dir==='in'||dir==='from')?them:me, b=(a===them)?me:them;
+    return t.replace('{a}',a).replace('{b}',b)+(ASK[lang]||ASK.en);
+  }
 
   function relEnds(other,kind,dir){
     /* from_person = PARENT, to_person = CHILD; other kinds keep this person as from_person */
@@ -1158,8 +1188,12 @@
     return {from:PERSON_ID,to:other}; }
 
   async function saveRel(p){ if(!user) return; const L=d();
-    /* a proposed person is never invented here — it waits for the keeper, even if the keeper wrote it */
-    if(!state.keeper||p.propose){
+    /* EVERY edit waits for the keeper - including a keeper's own (Leon, 2026-08-07).
+       The old fast-path let a keeper write straight into relationships, and that table
+       defaulted status to 'published', so a keeper's connection was live the instant it
+       was made and never appeared on the review page. The default is 'in_review' now too,
+       so no future path can publish by forgetting to say so. */
+    if(true){
       const payload=JSON.stringify({ op:p.relId?'edit':'add', rel_id:p.relId||null, other:p.other||null,
         other_name:p.other_name||'', propose:p.propose||'', kind:p.kind, dir:p.dir, certainty:p.certainty, note:p.note||'', from:p.mode==='me'?'viewer':'facet' });
       try{ await sb.from('person_facts').insert({person_id:PERSON_ID,group_id:uuid(),field:'kin',lang:'und',value:payload,ord:0,status:'in_review',created_by:user.id}); }catch(e){}
