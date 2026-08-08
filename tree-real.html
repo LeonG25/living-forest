@@ -1204,7 +1204,12 @@ async function loadData(){
   try{ const {data:ffs}=await sb.from('person_facts').select('person_id,value,published_at').eq('field','face').eq('status','published').order('published_at',{ascending:false});
     window.__lfFaceFacts={}; (ffs||[]).forEach(r=>{ if(window.__lfFaceFacts[r.person_id]) return; try{ const v=JSON.parse(r.value); if(v&&v.storage_path) window.__lfFaceFacts[r.person_id]=v; }catch(e){} });
   }catch(e){ window.__lfFaceFacts={}; }
-  try{ const {data:pp}=await sb.from('people').select('id,display_name,sex,primary_asset,birth_date,death_date,metadata'); (pp||[]).forEach(p=>{
+  /* Only what the keeper has welcomed belongs in the forest. The tree fetched EVERY
+     person and EVERY relationship regardless of status, so a proposal appeared the
+     instant it was made - and an unapproved tie is not merely early, it is unchecked:
+     Anna is Basya's sibling AND was proposed as Lea's parent, which asks the solver to
+     put her on two levels at once. It cannot, so it flattened every generation. */
+  try{ const {data:pp}=await sb.from('people').select('id,display_name,sex,primary_asset,birth_date,death_date,metadata,status').eq('status','published'); (pp||[]).forEach(p=>{
     people[p.id]={ id:p.id, display_name:p.display_name, sex:p.sex, primary_asset:p.primary_asset,
       birth_year:(p.birth_date?String(p.birth_date).slice(0,4):''), death_year:(p.death_date?String(p.death_date).slice(0,4):''), metadata:p.metadata||{} }; });
   }catch(e){ people={}; }
@@ -1213,11 +1218,14 @@ async function loadData(){
   }catch(e){ nameLoc={}; }
   // relationships — probe columns gracefully
   let rp=null;
-  try{ const r=await sb.from('relationships').select('id,from_person,to_person,kind,certainty,note,status,created_by'); if(r.error) throw r.error; rp=r.data; }catch(e){
+  try{ const r=await sb.from('relationships').select('id,from_person,to_person,kind,certainty,note,status,created_by').eq('status','published'); if(r.error) throw r.error; rp=r.data; }catch(e){
     try{ const r=await sb.from('relationships').select('id,from_person,to_person,kind,certainty,note,status'); if(r.error) throw r.error; rp=r.data; }catch(e2){
       try{ const r=await sb.from('relationships').select('id,from_person,to_person,kind,certainty,note'); if(r.error) throw r.error; rp=r.data; }catch(e3){
         try{ const r=await sb.from('relationships').select('id,from_person,to_person,status'); if(r.error) throw r.error; rp=r.data; }catch(e4){
           try{ const r=await sb.from('relationships').select('id,from_person,to_person'); rp=r.data; }catch(e5){ rp=[]; } } } } }
+  /* the fallback queries may not have asked for status - drop anything that carries one
+     and is not published, so no degraded path can smuggle a proposal onto the tree */
+  rp=(rp||[]).filter(r=>!('status' in r) || r.status==='published');
   // published ties build the tree; in_review ties render as violet "waiting for the keeper".
   edges=(rp||[]).filter(r=>r.status==null||r.status==='published').map(r=>({ id:r.id, from:r.from_person, to:r.to_person, kind:r.kind||'parent', certainty:r.certainty||'remembered', note:r.note||'', status:r.status||null }));
   pendingRels=(rp||[]).filter(r=>r.status&&r.status!=='published'&&r.status!=='rejected'&&r.status!=='declined').map(r=>({ id:r.id, from:r.from_person, to:r.to_person, kind:r.kind||'parent', certainty:r.certainty||'remembered', status:r.status, created_by:r.created_by||null }));
