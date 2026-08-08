@@ -817,9 +817,15 @@
         if(mk.error||!mk.data){ approveRef._busy=false; toast(L.tFail||'That did not save.',false); return; }
         other=mk.data.id;
       }
-      /* from_person = PARENT, to_person = CHILD; every other kind keeps the subject first */
+      /* from_person = PARENT, to_person = CHILD. The direction vocabulary is
+         'other_parent' / 'other_child' - person-real's relEnds() has always said so. I
+         invented 'in'/'from', values that never occur, so every parent tie approved from
+         this queue was written INVERTED: Leon proposed Mote-Laser as Anna's parent and
+         got Anna as Mote-Laser's parent, which made her Basya's grandmother and her
+         sibling at once, and flattened the whole tree. Same rule as relEnds now. */
       let from=f.person_id, to=other;
-      if(k.kind==='parent'){ if(k.dir==='in'||k.dir==='from'){ from=other; to=f.person_id; } }
+      if(k.kind==='parent' && k.dir==='other_parent'){ from=other; to=f.person_id; }
+      if(k.kind==='child'  && k.dir==='other_child'){  from=f.person_id; to=other; }
       const rel=await sb.from('relationships').insert({from_person:from,to_person:to,kind:k.kind,
                   certainty:k.certainty||'documented',note:k.note||'',status:'published',
                   created_by:f.created_by,reviewed_by:user.id});

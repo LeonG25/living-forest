@@ -1190,8 +1190,10 @@
     };
     const ASK={ en:'\n\nIs that right?', ru:'\n\nВсё верно?', he:'\n\nנכון?' };
     const t=(K[kind]||K.other)[lang]||(K[kind]||K.other).en;
-    /* dir decides who stands first: the chosen person, or the person whose page this is */
-    const a=(dir==='in'||dir==='from')?them:me, b=(a===them)?me:them;
+    /* Same vocabulary as relEnds: 'other_parent' means the person just chosen is the
+       parent. The sentence must name them in that order or it says the opposite. */
+    const themFirst = (kind==='parent') ? (dir==='other_parent') : (dir!=='other_child');
+    const a = themFirst ? them : me, b = themFirst ? me : them;
     return t.replace('{a}',a).replace('{b}',b)+(ASK[lang]||ASK.en);
   }
 
