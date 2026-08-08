@@ -524,9 +524,8 @@
         /* The generic fact card prints the raw stored value, and a kin proposal's value is
            JSON - so the keeper was shown {"op":"add","rel_id":null,...}. Build the sentence
            here instead, in the keeper's language. */
-        const kindLabel = k ? (rnoun ? '' : '') : '';
         const otherNm = other || '—';
-        const subjNm = (peopleMap && peopleMap[f.person_id]) || '';
+        const subjNm = personName(f.person_id) || '';
         const KIND={ parent:{en:'parent',ru:'родитель',he:'הורה'}, child:{en:'child',ru:'ребёнок',he:'בן/בת'},
                      spouse:{en:'spouse',ru:'супруг(а)',he:'בן/בת זוג'}, sibling:{en:'sibling',ru:'брат или сестра',he:'אח/אחות'},
                      friend:{en:'friend',ru:'друг',he:'חבר/ה'}, mentor:{en:'mentor',ru:'наставник',he:'מורה דרך'},
