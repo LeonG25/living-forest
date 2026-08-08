@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <link rel="stylesheet" href="lf-layout.css?v=1">
-<script src="lf-bind.js?v=1"></script>
+<script src="lf-bind.js?v=2"></script>
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -768,12 +768,11 @@
   }
 
   /* ---------- shared view builders ---------- */
-  /* Approving belongs on the keeper's review page and nowhere else (Leon, 2026-08-07).
-     This used to draw Approve/Decline straight onto the person page, so a keeper could
-     wave their own suggestion through the moment they made it, without ever seeing the
-     queue. It says what is waiting and points at the one place that decides. */
-  function keeperInline(id,kind){ const L=d();
-    return `<div class="pending"><span class="sp"></span>${esc(L.pendingChip||'')} · <a href="review-real.html" style="color:var(--edit-hi);text-decoration:underline">${esc(L.toReview||'Review')}</a></div>`; }
+  /* Nothing here decides anything - approving lives on the review page alone. And no
+     contributor is pointed at the keeper's door: a keeper knows where the queue is, and
+     nowhere else in the app announces that a change is waiting. Consistency over
+     helpfulness (Leon, 2026-08-07). */
+  function keeperInline(id,kind){ return ''; }
   function chipAddBox(field,label){ const L=d(); return `<div class="chipadd" data-for="${field}" style="display:none;margin-top:8px"><input class="inp" placeholder="${esc(label||'')}"><div class="btnrow" style="margin-top:8px"><button class="btn ghost" data-cadd-cancel>${L.cancel}</button><button class="btn violet" data-cadd-ok="${field}">${L.send}</button></div></div>`; }
   function chipsField(field,addLabel,cool){ const L=d(); const pubs=pubList(field,'und'); const pends=pendList(field,'und');
     const pubc=pubs.map(r=>`<span class="chip ${cool?'cool':''}">${(cool&&r.ord!=null)?`<span class="ord">${String((r.ord||0)+1).padStart(2,'0')}</span>`:''}${esc(r.value)}<span class="x" data-del="${r.id}">${sv(I.x,2)}</span></span>`).join('');
@@ -1157,7 +1156,7 @@
          which of them is which, before anything is written. */
       {
         const them=st.other?nameOf(st.other):String(st.propose||'').trim();
-        const me=nameOf(PERSON_ID);
+        const me=(person&&(person.display_name||person.called_name))||nameOf(PERSON_ID)||'';
         const line=kinSentence(them, me, st.kind, st.dir, state.lang);
         if(line){
           const YES={en:'Yes, tie them',ru:'Да, связать',he:'כן, לקשור'};
