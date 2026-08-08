@@ -521,10 +521,24 @@
            card can say so and show Decline alone. */
         const unreadable = !(k && k.kind);
         const other = k ? (k.other_name||k.propose||'') : String(f.value||'');
-        items.facts.push({ kind:'kin', id:f.id, group:'facts', field:'kin',
+        /* The generic fact card prints the raw stored value, and a kin proposal's value is
+           JSON - so the keeper was shown {"op":"add","rel_id":null,...}. Build the sentence
+           here instead, in the keeper's language. */
+        const kindLabel = k ? (rnoun ? '' : '') : '';
+        const otherNm = other || '—';
+        const subjNm = (peopleMap && peopleMap[f.person_id]) || '';
+        const KIND={ parent:{en:'parent',ru:'родитель',he:'הורה'}, child:{en:'child',ru:'ребёнок',he:'בן/בת'},
+                     spouse:{en:'spouse',ru:'супруг(а)',he:'בן/בת זוג'}, sibling:{en:'sibling',ru:'брат или сестра',he:'אח/אחות'},
+                     friend:{en:'friend',ru:'друг',he:'חבר/ה'}, mentor:{en:'mentor',ru:'наставник',he:'מורה דרך'},
+                     neighbour:{en:'neighbour',ru:'сосед',he:'שכן/ה'}, other:{en:'connected to',ru:'связан(а) с',he:'מקושר/ת ל'} };
+        const kw=((KIND[(k&&k.kind)||'other']||KIND.other)[state.lang])||KIND.other.en;
+        const sentence = (k&&k.kind)
+          ? (otherNm+' · '+kw+((subjNm)?(' — '+subjNm):''))
+          : String(f.value||'').slice(0,60);
+        items.facts.push({ kind:'kin', id:f.id, group:'facts', field:'kin', sentence:sentence,
           kinKind:(k&&k.kind)||'', kinDir:(k&&k.dir)||'', kinOther:(k&&k.other)||null,
           kinPropose:(k&&!k.other)?(k.propose||k.other_name||''):'', unreadable:unreadable,
-          value:other||'—', personId:f.person_id,
+          value:sentence, personId:f.person_id, isNew:true,
           suggester:accountName(f.created_by), created_at:f.created_at });
         return;
       }

@@ -20,23 +20,24 @@
   function el(tag,attrs){ var e=document.createElementNS('http://www.w3.org/2000/svg',tag);
     for(var k in attrs) e.setAttribute(k,attrs[k]); return e; }
 
-  /* one branch: a stem that leans toward the middle, with a few leaves along it */
-  function branch(x0,y0,dir,colour){
-    var g=el('g',{});
-    var x1=x0+dir*54, x2=x0+dir*104, x3=x0+dir*150;
-    var d='M'+x0+','+y0+' C'+x1+','+(y0-26)+' '+x2+','+(y0+22)+' '+x3+','+y0;
-    var stem=el('path',{d:d, fill:'none', stroke:colour, 'stroke-width':2.4,
-      'stroke-linecap':'round', opacity:.95});
-    g.appendChild(stem);
-    for(var i=1;i<=3;i++){
-      var t=i/4, lx=x0+dir*(150*t), ly=y0-14+Math.sin(t*3.1)*10;
-      var leaf=el('path',{d:'M'+lx+','+ly+' q'+(dir*11)+',-8 '+(dir*20)+',1 q-'+(dir*11)+',9 -'+(dir*20)+',-1',
-        fill:colour, opacity:.5});
-      g.appendChild(leaf);
-    }
-    return {g:g, stem:stem};
+  /* THREE strands per side, not one line. Each reaches across the middle and past it, so
+     the two hands overlap and weave: strand 1 of the left passes OVER strand 1 of the
+     right, strand 2 UNDER, strand 3 OVER. That alternation is what reads as woven rather
+     than crossed. Amplitude and phase differ per strand so nothing looks like a diagram. */
+  function strand(dir, i, colour, W, H){
+    var midX=W/2, y=H/2;
+    var reach = midX*0.62 + i*10;          /* how far past the middle it travels */
+    var amp   = 13 + i*7;                  /* how deep it waves */
+    var phase = (i%2? -1 : 1);
+    var x0 = dir>0 ? 6 : W-6;
+    var x3 = midX + dir*reach*0.42;
+    var c1x = x0 + dir*(reach*0.55), c1y = y - phase*amp;
+    var c2x = midX - dir*(reach*0.18), c2y = y + phase*amp*0.8;
+    var d='M'+x0+','+y+' C'+c1x+','+c1y+' '+c2x+','+c2y+' '+x3+','+y;
+    var w = 3.2 - i*0.7;
+    return el('path',{d:d, fill:'none', stroke:colour, 'stroke-width':w,
+      'stroke-linecap':'round', opacity:(0.95 - i*0.18)});
   }
-
   function ask(o){
     o=o||{};
     var colour=HUE[o.kind]||HUE.other;
@@ -54,13 +55,17 @@
       card.style.cssText='max-width:min(420px,92vw);width:100%;text-align:center;'
         +'font-family:inherit;color:#eef1f6;';
 
-      var svg=el('svg',{viewBox:'0 0 340 150', width:'100%', height:'150',
-        'aria-hidden':'true', style:'display:block;margin:0 auto 4px'});
-      var L=branch(20,86,1,colour), R=branch(320,86,-1,colour);
-      /* the knot: where the two become one */
-      var knot=el('circle',{cx:170, cy:86, r:0, fill:colour, opacity:.9});
-      var halo=el('circle',{cx:170, cy:86, r:0, fill:'none', stroke:colour, 'stroke-width':1, opacity:.5});
-      svg.appendChild(L.g); svg.appendChild(R.g); svg.appendChild(halo); svg.appendChild(knot);
+      var W=340, H=170;
+      var svg=el('svg',{viewBox:'0 0 '+W+' '+H, width:'100%', height:'170',
+        'aria-hidden':'true', style:'display:block;margin:0 auto 2px'});
+      /* weave order: L0 under R0, L1 over R1, L2 under R2 - painted in this sequence */
+      var Ls=[], Rs=[];
+      for(var i=0;i<3;i++){ Ls.push(strand( 1,i,colour,W,H)); Rs.push(strand(-1,i,colour,W,H)); }
+      var order=[Rs[0],Ls[0],Ls[1],Rs[1],Rs[2],Ls[2]];
+      order.forEach(function(pth){ svg.appendChild(pth); });
+      var halo=el('circle',{cx:W/2, cy:H/2, r:0, fill:'none', stroke:colour, 'stroke-width':1.2, opacity:.5});
+      var knot=el('ellipse',{cx:W/2, cy:H/2, rx:0, ry:0, fill:colour, opacity:.92});
+      svg.appendChild(halo); svg.appendChild(knot);
 
       var line=document.createElement('p');
       line.textContent=String(o.line||'');
@@ -84,26 +89,35 @@
       scrim.appendChild(card);
       document.body.appendChild(scrim);
 
-      /* grow: each stem draws itself in, then the knot blooms */
-      [L.stem,R.stem].forEach(function(s){
-        var len=0; try{ len=s.getTotalLength(); }catch(e){ len=170; }
-        s.style.strokeDasharray=len; s.style.strokeDashoffset=reduce?0:len;
-        if(!reduce){ s.style.transition='stroke-dashoffset 900ms cubic-bezier(.22,.85,.3,1)'; }
+      /* Each strand draws itself in from its own edge, the two hands meeting in the
+         middle; then the knot cinches - a quick over-shoot and settle, the way a real
+         knot pulls tight rather than fading in. */
+      var all=Ls.concat(Rs);
+      all.forEach(function(pth,idx){
+        var len=0; try{ len=pth.getTotalLength(); }catch(e){ len=200; }
+        pth.style.strokeDasharray=len;
+        pth.style.strokeDashoffset=reduce?0:len;
+        if(!reduce){
+          pth.style.transition='stroke-dashoffset 1050ms cubic-bezier(.2,.75,.25,1) '+(idx%3)*90+'ms';
+        }
       });
       requestAnimationFrame(function(){
         scrim.style.opacity='1';
-        if(reduce){ knot.setAttribute('r',6); halo.setAttribute('r',15); return; }
-        L.stem.style.strokeDashoffset='0'; R.stem.style.strokeDashoffset='0';
+        if(reduce){ knot.setAttribute('rx',7); knot.setAttribute('ry',5.5); halo.setAttribute('r',17); return; }
+        all.forEach(function(pth){ pth.style.strokeDashoffset='0'; });
         setTimeout(function(){
           var t0=performance.now();
-          (function bloom(now){
-            var k=Math.min(1,(now-t0)/520);
-            knot.setAttribute('r', (6*(1-Math.pow(1-k,3))).toFixed(2));
-            halo.setAttribute('r', (6+14*k).toFixed(2));
-            halo.setAttribute('opacity', (0.55*(1-k)).toFixed(3));
-            if(k<1) requestAnimationFrame(bloom);
+          (function cinch(now){
+            var k=Math.min(1,(now-t0)/620);
+            /* overshoot then settle */
+            var e=1-Math.pow(1-k,3), over=Math.sin(k*Math.PI)*0.35;
+            knot.setAttribute('rx', (8*e+over*3).toFixed(2));
+            knot.setAttribute('ry', (6*e).toFixed(2));
+            halo.setAttribute('r', (8+22*e).toFixed(2));
+            halo.setAttribute('opacity', (0.5*(1-e)).toFixed(3));
+            if(k<1) requestAnimationFrame(cinch);
           })(t0);
-        }, 820);
+        }, 1150);
       });
 
       var done=false;
