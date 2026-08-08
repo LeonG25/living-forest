@@ -1209,7 +1209,13 @@
     if(true){
       const payload=JSON.stringify({ op:p.relId?'edit':'add', rel_id:p.relId||null, other:p.other||null,
         other_name:p.other_name||'', propose:p.propose||'', kind:p.kind, dir:p.dir, certainty:p.certainty, note:p.note||'', from:p.mode==='me'?'viewer':'facet' });
-      try{ await sb.from('person_facts').insert({person_id:PERSON_ID,group_id:uuid(),field:'kin',lang:'und',value:payload,ord:0,status:'in_review',created_by:user.id}); }catch(e){}
+      /* The same acknowledgement the rest of the app gives: moment-real says "Sent to the
+         keeper" for exactly this act, and a contributor who is told nothing cannot tell a
+         proposal from a swallowed error. The insert is checked now instead of caught and
+         dropped - if it fails, the family hears so. */
+      const ins=await sb.from('person_facts').insert({person_id:PERSON_ID,group_id:uuid(),field:'kin',lang:'und',value:payload,ord:0,status:'in_review',created_by:user.id});
+      if(ins.error){ toast(L.saveFail||'That could not be sent. Please try again.'); return; }
+      toast(L.sent);
       return; }
     const ends=relEnds(p.other,p.kind,p.dir);
     const row={ kind:p.kind, certainty:p.certainty, note:p.note||'' };
