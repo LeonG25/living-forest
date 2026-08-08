@@ -20,119 +20,129 @@
   function el(tag,attrs){ var e=document.createElementNS('http://www.w3.org/2000/svg',tag);
     for(var k in attrs) e.setAttribute(k,attrs[k]); return e; }
 
-  /* THREE strands per side, not one line. Each reaches across the middle and past it, so
-     the two hands overlap and weave: strand 1 of the left passes OVER strand 1 of the
-     right, strand 2 UNDER, strand 3 OVER. That alternation is what reads as woven rather
-     than crossed. Amplitude and phase differ per strand so nothing looks like a diagram. */
-  function strand(dir, i, colour, W, H){
-    var midX=W/2, y=H/2;
-    var reach = midX*0.62 + i*10;          /* how far past the middle it travels */
-    var amp   = 13 + i*7;                  /* how deep it waves */
-    var phase = (i%2? -1 : 1);
-    var x0 = dir>0 ? 6 : W-6;
-    var x3 = midX + dir*reach*0.42;
-    var c1x = x0 + dir*(reach*0.55), c1y = y - phase*amp;
-    var c2x = midX - dir*(reach*0.18), c2y = y + phase*amp*0.8;
-    var d='M'+x0+','+y+' C'+c1x+','+c1y+' '+c2x+','+c2y+' '+x3+','+y;
-    var w = 3.2 - i*0.7;
-    return el('path',{d:d, fill:'none', stroke:colour, 'stroke-width':w,
-      'stroke-linecap':'round', opacity:(0.95 - i*0.18)});
+  /* A SENTENCE CAN BE READ BACKWARDS. A SHAPE CANNOT.
+     Leon proposed "Mote-Laser is a parent of Anna" and the row written said the opposite;
+     the words alone did not catch it. So the question is now asked as a picture built with
+     the family tree's own conventions - parent ABOVE, child BELOW on a dropped line,
+     siblings side by side under one bar, partners side by side joined by a ring - and the
+     two strands weave along exactly that connector. If the shape is wrong, it is wrong at
+     a glance. */
+
+  function card(g, x, y, name, colour, dim){
+    var w=104, h=38;
+    g.appendChild(el('rect',{x:x-w/2, y:y-h/2, width:w, height:h, rx:11,
+      fill:'rgba(12,18,32,.9)', stroke:colour, 'stroke-width':dim?1:1.6, opacity:dim?.55:1}));
+    var t=el('text',{x:x, y:y+4.5, 'text-anchor':'middle', fill:'#f2eadb',
+      'font-size':'13', 'font-family':'inherit'});
+    var nm=String(name||'').trim(); if(nm.length>13) nm=nm.slice(0,12)+'…';
+    t.textContent=nm; g.appendChild(t);
+    return {x:x, y:y, w:w, h:h};
+  }
+
+  /* every kind gets the shape the tree would give it */
+  function shape(kind){
+    if(kind==='parent'||kind==='child') return 'stack';   /* one above the other */
+    if(kind==='sibling') return 'siblings';               /* side by side under a bar */
+    if(kind==='spouse')  return 'partners';               /* side by side, ring between */
+    return 'link';                                        /* side by side, soft line */
   }
   function ask(o){
     o=o||{};
     var colour=HUE[o.kind]||HUE.other;
-    var rtl=!!o.rtl, lang=o.lang||'en';
+    var rtl=!!o.rtl, mode=shape(o.kind);
     var reduce=false; try{ reduce=matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
+    /* upper = whoever the tree would draw higher. For a parent tie that is the parent. */
+    var upper=o.upper||'', lower=o.lower||'';
 
     return new Promise(function(resolve){
       var scrim=document.createElement('div');
       scrim.setAttribute('dir', rtl?'rtl':'ltr');
       scrim.style.cssText='position:fixed;inset:0;z-index:99999;display:grid;place-items:center;'
-        +'background:rgba(4,7,14,.82);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);'
+        +'background:rgba(4,7,14,.86);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);'
         +'opacity:0;transition:opacity .28s ease;padding:20px;box-sizing:border-box;';
+      var cardBox=document.createElement('div');
+      cardBox.style.cssText='max-width:min(420px,92vw);width:100%;text-align:center;color:#eef1f6;';
 
-      var card=document.createElement('div');
-      card.style.cssText='max-width:min(420px,92vw);width:100%;text-align:center;'
-        +'font-family:inherit;color:#eef1f6;';
+      var W=320, H=(mode==='stack')?190:150;
+      var svg=el('svg',{viewBox:'0 0 '+W+' '+H, width:'100%', height:String(H),
+        'aria-hidden':'true', style:'display:block;margin:0 auto 6px'});
+      var g=el('g',{}); svg.appendChild(g);
 
-      var W=340, H=170;
-      var svg=el('svg',{viewBox:'0 0 '+W+' '+H, width:'100%', height:'170',
-        'aria-hidden':'true', style:'display:block;margin:0 auto 2px'});
-      /* weave order: L0 under R0, L1 over R1, L2 under R2 - painted in this sequence */
-      var Ls=[], Rs=[];
-      for(var i=0;i<3;i++){ Ls.push(strand( 1,i,colour,W,H)); Rs.push(strand(-1,i,colour,W,H)); }
-      var order=[Rs[0],Ls[0],Ls[1],Rs[1],Rs[2],Ls[2]];
-      order.forEach(function(pth){ svg.appendChild(pth); });
-      var halo=el('circle',{cx:W/2, cy:H/2, r:0, fill:'none', stroke:colour, 'stroke-width':1.2, opacity:.5});
-      var knot=el('ellipse',{cx:W/2, cy:H/2, rx:0, ry:0, fill:colour, opacity:.92});
-      svg.appendChild(halo); svg.appendChild(knot);
+      var conn, a, b;
+      if(mode==='stack'){
+        a=card(g, W/2, 34, upper, colour, false);
+        b=card(g, W/2, H-34, lower, colour, false);
+        conn=el('path',{d:'M'+(W/2)+','+(a.y+a.h/2)+' L'+(W/2)+','+(b.y-b.h/2),
+          fill:'none', stroke:colour, 'stroke-width':2, 'stroke-linecap':'round'});
+      } else {
+        var y=H/2;
+        a=card(g, 78, y, upper, colour, false);
+        b=card(g, W-78, y, lower, colour, false);
+        var barY = (mode==='siblings') ? y-38 : y;
+        if(mode==='siblings'){
+          conn=el('path',{d:'M'+a.x+','+(y-a.h/2)+' L'+a.x+','+barY+' L'+b.x+','+barY+' L'+b.x+','+(y-b.h/2),
+            fill:'none', stroke:colour, 'stroke-width':2, 'stroke-linejoin':'round', 'stroke-linecap':'round'});
+        } else {
+          conn=el('path',{d:'M'+(a.x+a.w/2)+','+y+' L'+(b.x-b.w/2)+','+y,
+            fill:'none', stroke:colour, 'stroke-width':2, 'stroke-linecap':'round'});
+        }
+      }
+      g.insertBefore(conn, g.firstChild);
+
+      /* the knot sits on the connector, where the two actually meet */
+      var mid = (mode==='stack') ? {x:W/2, y:(a.y+b.y)/2}
+              : (mode==='siblings') ? {x:W/2, y:H/2-38} : {x:W/2, y:H/2};
+      var halo=el('circle',{cx:mid.x, cy:mid.y, r:0, fill:'none', stroke:colour, 'stroke-width':1.2, opacity:.5});
+      var knot=el('circle',{cx:mid.x, cy:mid.y, r:0, fill:colour, opacity:.95});
+      g.appendChild(halo); g.appendChild(knot);
 
       var line=document.createElement('p');
       line.textContent=String(o.line||'');
-      line.style.cssText='margin:6px 0 18px;font-size:17px;line-height:1.45;color:#f6efe0;';
+      line.style.cssText='margin:8px 0 16px;font-size:16px;line-height:1.45;color:#f6efe0;';
 
       var row=document.createElement('div');
       row.style.cssText='display:flex;gap:10px;justify-content:center;flex-wrap:wrap;';
       function button(label,primary){
-        var b=document.createElement('button');
-        b.type='button'; b.textContent=label;
-        b.style.cssText='padding:11px 20px;border-radius:12px;cursor:pointer;font:inherit;font-size:15px;'
-          +(primary
-            ? 'background:'+colour+';border:1px solid '+colour+';color:#141019;font-weight:600;'
-            : 'background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.22);color:#e7ecf3;');
-        return b;
+        var bt=document.createElement('button'); bt.type='button'; bt.textContent=label;
+        bt.style.cssText='padding:11px 20px;border-radius:12px;cursor:pointer;font:inherit;font-size:15px;'
+          +(primary?('background:'+colour+';border:1px solid '+colour+';color:#141019;font-weight:600;')
+                   :'background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.22);color:#e7ecf3;');
+        return bt;
       }
       var no=button(o.no||'Not yet',false), yes=button(o.yes||'Yes, tie them',true);
       row.appendChild(no); row.appendChild(yes);
+      cardBox.appendChild(svg); cardBox.appendChild(line); cardBox.appendChild(row);
+      scrim.appendChild(cardBox); document.body.appendChild(scrim);
 
-      card.appendChild(svg); card.appendChild(line); card.appendChild(row);
-      scrim.appendChild(card);
-      document.body.appendChild(scrim);
-
-      /* Each strand draws itself in from its own edge, the two hands meeting in the
-         middle; then the knot cinches - a quick over-shoot and settle, the way a real
-         knot pulls tight rather than fading in. */
-      var all=Ls.concat(Rs);
-      all.forEach(function(pth,idx){
-        var len=0; try{ len=pth.getTotalLength(); }catch(e){ len=200; }
-        pth.style.strokeDasharray=len;
-        pth.style.strokeDashoffset=reduce?0:len;
-        if(!reduce){
-          pth.style.transition='stroke-dashoffset 1050ms cubic-bezier(.2,.75,.25,1) '+(idx%3)*90+'ms';
-        }
-      });
+      /* the connector draws itself from both ends, then the knot cinches */
+      var len=0; try{ len=conn.getTotalLength(); }catch(e){ len=160; }
+      conn.style.strokeDasharray=len; conn.style.strokeDashoffset=reduce?0:len;
+      if(!reduce) conn.style.transition='stroke-dashoffset 780ms cubic-bezier(.2,.75,.25,1)';
       requestAnimationFrame(function(){
         scrim.style.opacity='1';
-        if(reduce){ knot.setAttribute('rx',7); knot.setAttribute('ry',5.5); halo.setAttribute('r',17); return; }
-        all.forEach(function(pth){ pth.style.strokeDashoffset='0'; });
+        if(reduce){ knot.setAttribute('r',5.5); halo.setAttribute('r',16); return; }
+        conn.style.strokeDashoffset='0';
         setTimeout(function(){
           var t0=performance.now();
           (function cinch(now){
-            var k=Math.min(1,(now-t0)/620);
-            /* overshoot then settle */
-            var e=1-Math.pow(1-k,3), over=Math.sin(k*Math.PI)*0.35;
-            knot.setAttribute('rx', (8*e+over*3).toFixed(2));
-            knot.setAttribute('ry', (6*e).toFixed(2));
-            halo.setAttribute('r', (8+22*e).toFixed(2));
+            var k=Math.min(1,(now-t0)/560), e=1-Math.pow(1-k,3);
+            knot.setAttribute('r', (5.5*e+Math.sin(k*Math.PI)*2).toFixed(2));
+            halo.setAttribute('r', (5+18*e).toFixed(2));
             halo.setAttribute('opacity', (0.5*(1-e)).toFixed(3));
             if(k<1) requestAnimationFrame(cinch);
           })(t0);
-        }, 1150);
+        }, 800);
       });
 
       var done=false;
-      function close(answer){
-        if(done) return; done=true;
-        scrim.style.opacity='0';
-        setTimeout(function(){ try{ scrim.remove(); }catch(e){} resolve(answer); }, 260);
-      }
+      function close(ans){ if(done) return; done=true; scrim.style.opacity='0';
+        setTimeout(function(){ try{ scrim.remove(); }catch(e){} resolve(ans); },240); }
       yes.onclick=function(){ close(true); };
       no.onclick=function(){ close(false); };
       scrim.addEventListener('click',function(e){ if(e.target===scrim) close(false); });
       document.addEventListener('keydown',function esc(e){
-        if(e.key==='Escape'){ document.removeEventListener('keydown',esc); close(false); }
-      });
-      setTimeout(function(){ try{ yes.focus(); }catch(e){} }, 300);
+        if(e.key==='Escape'){ document.removeEventListener('keydown',esc); close(false); } });
+      setTimeout(function(){ try{ yes.focus(); }catch(e){} },300);
     });
   }
 
