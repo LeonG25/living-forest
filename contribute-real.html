@@ -677,9 +677,14 @@
       const {error:fe}=await sb.from('person_facts').insert(facts);
       if(fe) throw fe;
       const extras=[]; if(g.called&&g.called.trim()) extras.push(g.called.trim()); if(g.kin&&g.kin.trim()) extras.push(g.kin.trim());
-      state.receipt={ kind:'person', name:nm, gave:nm+(extras.length?' · '+extras.join(' · '):'') };
       state.propose={ name:'', open:{}, gifts:{} };
-      go('receipt');
+      /* Leon, 2026-08-07: adding a person must land on an empty PERSON PAGE, fully
+         editable, not a short form with a receipt. The row exists now (status in_review),
+         so hand the contributor the real page for it - every field on that page already
+         writes through the keeper's queue, and the person stays out of the tree until
+         they are welcomed. */
+      location.href='person-real.html?id='+encodeURIComponent(pid)+'&new=1';
+      return;
     }catch(err){ state.msg=t('errSend'); render(); }
   }
   function mkSpin(){ const s=document.createElement('span'); s.className='spin'; return s; }

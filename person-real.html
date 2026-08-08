@@ -433,6 +433,8 @@
   const uuid=()=>(window.crypto&&crypto.randomUUID?crypto.randomUUID():('x'+Math.random().toString(36).slice(2)+Date.now().toString(36)));
   const qs=new URLSearchParams(location.search);
   const PERSON_ID=qs.get('id')||qs.get('person')||'c9aa4593-7670-4305-bc81-28c2dbf189f3';
+  /* someone just met: the page is theirs, and empty, and nothing is in the forest yet */
+  const IS_NEW = qs.get('new')==='1';
   const LANGS=['en','ru','he'];
 
   const T={
@@ -473,7 +475,7 @@
       proposenew:'Someone not in the forest yet', proposehint:'Sends a proposal to the keeper.', proposename:'Their name',
       addconn:'Add a connection', editconn:'Edit the connection', removeconn:'Remove this connection',
       meAsk:'Who are you in the family?', meHint:'Pick your own place in the forest, then say how you connect.',
-      pickfirst:'Choose someone first.', saved:'Saved', proposedPerson:'proposed',
+      pickfirst:'Choose someone first.', saved:'Saved', proposedPerson:'proposed', newPersonNote:'Nothing here is in the forest yet. Add whatever you know — every part waits for the keeper.',
       saveFail:'Couldn’t save — try again', sameDisplay:'Same as the display name',
       foot:'A life, told a little more fully.' },
     ru:{ dir:'ltr', native:'Русский', label:'Russian',
@@ -513,7 +515,7 @@
       proposenew:'Кого-то ещё нет в лесу', proposehint:'Отправит предложение хранителю.', proposename:'Имя',
       addconn:'Добавить связь', editconn:'Изменить связь', removeconn:'Удалить эту связь',
       meAsk:'Кто вы в семье?', meHint:'Выберите себя в лесу, затем укажите связь.',
-      pickfirst:'Сначала выберите человека.', saved:'Сохранено', proposedPerson:'предложен',
+      pickfirst:'Сначала выберите человека.', saved:'Сохранено', proposedPerson:'предложен', newPersonNote:'Здесь пока ничего нет в лесу. Добавьте всё, что знаете — каждая часть ждёт хранителя.',
       saveFail:'Не удалось сохранить — попробуйте ещё раз', sameDisplay:'Как отображаемое имя',
       foot:'Жизнь, рассказанная чуть полнее.' },
     he:{ dir:'rtl', native:'עברית', label:'Hebrew',
@@ -553,7 +555,7 @@
       proposenew:'מישהו שעדיין לא ביער', proposehint:'שולח הצעה לשומר.', proposename:'השם',
       addconn:'הוספת קשר', editconn:'עריכת הקשר', removeconn:'מחיקת הקשר הזה',
       meAsk:'מי אתם במשפחה?', meHint:'בחרו את המקום שלכם ביער, ואז ציינו את הקשר.',
-      pickfirst:'בחרו קודם אדם.', saved:'נשמר', proposedPerson:'הוצע',
+      pickfirst:'בחרו קודם אדם.', saved:'נשמר', proposedPerson:'הוצע', newPersonNote:'עדיין אין כאן דבר ביער. הוסיפו כל מה שידוע לכם — כל פרט ממתין לשומר.',
       saveFail:'לא ניתן היה לשמור — נסו שוב', sameDisplay:'כמו שם התצוגה',
       foot:'חיים, מסופרים מעט יותר במלואם.' }
   };
@@ -780,6 +782,16 @@
      nowhere else in the app announces that a change is waiting. Consistency over
      helpfulness (Leon, 2026-08-07). */
   function keeperInline(id,kind){ return ''; }
+
+  /* The one note a NEW person's page carries: not a badge on a card, but the state of
+     the whole page - they are not in the forest until the keeper welcomes them. */
+  function newPersonBanner(){
+    if(!IS_NEW) return '';
+    const L=d();
+    const msg = L.newPersonNote || 'Nothing here is in the forest yet. Add whatever you know — every part waits for the keeper.';
+    return `<div class="keeper-note" style="margin:10px 14px 4px;padding:11px 13px;border-radius:13px;
+      background:rgba(201,162,255,.10);border:1px solid rgba(201,162,255,.34);color:#e9e2f6;font-size:13.5px;line-height:1.45">${esc(msg)}</div>`;
+  }
   function chipAddBox(field,label){ const L=d(); return `<div class="chipadd" data-for="${field}" style="display:none;margin-top:8px"><input class="inp" placeholder="${esc(label||'')}"><div class="btnrow" style="margin-top:8px"><button class="btn ghost" data-cadd-cancel>${L.cancel}</button><button class="btn violet" data-cadd-ok="${field}">${L.send}</button></div></div>`; }
   function chipsField(field,addLabel,cool){ const L=d(); const pubs=pubList(field,'und'); const pends=pendList(field,'und');
     const pubc=pubs.map(r=>`<span class="chip ${cool?'cool':''}">${(cool&&r.ord!=null)?`<span class="ord">${String((r.ord||0)+1).padStart(2,'0')}</span>`:''}${esc(r.value)}<span class="x" data-del="${r.id}">${sv(I.x,2)}</span></span>`).join('');
@@ -1016,7 +1028,7 @@
       <div class="ttl"><div class="k">${esc(L.eyebrow)}</div><div class="n serif">${esc(NAME.display[state.lang]||NAME.display.en||'')}</div></div>
       <button class="ibtn" data-act="lang" aria-label="${esc(L.langtitle)}">${sv(I.globe,1.5)}</button>`;
     const kn=$('.keeper-note'); if(state.keeper){ kn.style.display='flex'; kn.innerHTML=`${sv(I.keeper,1.5)}<span>${esc(L.keeper)}</span>`; } else { kn.style.display='none'; kn.innerHTML=''; }
-    $('.pad').innerHTML=ringShell();
+    $('.pad').innerHTML=newPersonBanner()+ringShell();
     fillFaces();
   }
   async function fillFaces(){ if(!person) return; const fh=$('#faceHost'); if(fh){ const ff=pubList('face','und').slice().sort((a,b)=>String(b.published_at||b.created_at||'').localeCompare(String(a.published_at||a.created_at||'')))[0]; const fv=ff?(function(){try{return JSON.parse(ff.value);}catch(e){return null;}})():null;
