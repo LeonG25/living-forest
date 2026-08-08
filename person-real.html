@@ -683,7 +683,14 @@
   async function loadData(){
     try{ const {data:p}=await sb.from('people').select('id,display_name,called_name,sex,primary_asset,birth_date,birth_certainty,death_date,death_certainty,is_living,metadata').eq('id',PERSON_ID).maybeSingle(); person=p||{id:PERSON_ID}; }catch(e){ person={id:PERSON_ID}; }
     try{ const {data:nv}=await sb.from('name_variants').select('id,lang,given,family,status,created_by').eq('person_id',PERSON_ID); NV=nv||[]; }catch(e){ NV=[]; }
-    try{ const {data:fs}=await sb.from('person_facts').select('id,group_id,field,lang,value,ord,status,created_by,reviewed_by,created_at,published_at').eq('person_id',PERSON_ID); facts=fs||[]; }catch(e){ facts=[]; }
+    /* A DECLINED proposal is finished, not pending. This fetched every status, so the
+       old text row "Sofia's mother" - declined days ago - still showed on Lea's page as
+       waiting, while the review queue correctly ignored it. A decision anywhere must read
+       as a decision everywhere. */
+    try{ const {data:fs}=await sb.from('person_facts')
+      .select('id,group_id,field,lang,value,ord,status,created_by,reviewed_by,created_at,published_at')
+      .eq('person_id',PERSON_ID).in('status',['published','in_review','draft']);
+      facts=fs||[]; }catch(e){ facts=[]; }
     tagged=[]; contribNames={};
     try{ const {data:subs}=await sb.from('artefact_subjects').select('artefact_id,detail').eq('person_id',PERSON_ID); const ids=(subs||[]).map(s=>s.artefact_id);
       if(ids.length){ let arts=[]; try{ const {data:a}=await sb.from('artefacts').select('id,storage_path,metadata,contributor_id').in('id',ids); arts=a||[]; }
