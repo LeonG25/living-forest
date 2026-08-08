@@ -5,6 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <link rel="stylesheet" href="lf-layout.css?v=1">
+<script src="lf-bind.js?v=1"></script>
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -1158,7 +1159,15 @@
         const them=st.other?nameOf(st.other):String(st.propose||'').trim();
         const me=nameOf(PERSON_ID);
         const line=kinSentence(them, me, st.kind, st.dir, state.lang);
-        if(line && !confirm(line)) return;
+        if(line){
+          const YES={en:'Yes, tie them',ru:'Да, связать',he:'כן, לקשור'};
+          const NO ={en:'Not yet',      ru:'Пока нет',  he:'עוד לא'};
+          const ok = (window.LFBind)
+            ? await LFBind.ask({ line:line.replace(/\n+.*$/,''), kind:st.kind, lang:state.lang,
+                rtl:(state.lang==='he'), yes:YES[state.lang]||YES.en, no:NO[state.lang]||NO.en })
+            : confirm(line);
+          if(!ok) return;
+        }
       }
       await saveRel({ relId:st.relId, other:st.other, other_name:st.other?nameOf(st.other):String(st.propose||'').trim(),
         propose:st.other?'':String(st.propose||'').trim(), kind:st.kind, dir:st.dir, certainty:st.certainty, note:st.note, mode });
