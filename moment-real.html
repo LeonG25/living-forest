@@ -1334,7 +1334,6 @@
     const se=$('.story-editable'); if(se) se.addEventListener('click', e=>{
       if(e.target.closest('[data-rmtell]')) return;
       e.preventDefault(); openEditor('story'); });
-    const se=$('.story-editable'); if(se) se.addEventListener('click', e=>{ if(e.target.closest('[data-rmtell]')) return; if(document.body.classList.contains('editing')){ e.preventDefault(); openEditor('story'); } });
     $$('[data-remove]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const key=b.dataset.remove;
       if(key.indexOf('detail:')===0){ removeDetail(+key.split(':')[1]); } });
   }
