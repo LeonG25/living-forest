@@ -220,7 +220,15 @@ async function load(){
     /* chip → person */
     document.querySelectorAll('.chip').forEach(c=>{ c.addEventListener('click',e=>{ e.stopPropagation(); const id=c.getAttribute('data-id'); if(id) location.href='person-real.html?id='+encodeURIComponent(id); }); });
     /* row → its people's first person (a gentle way in); if none, no-op */
-    document.querySelectorAll('.mem').forEach(row=>{ row.addEventListener('click',()=>{ const chip=row.querySelector('.chip[data-id]'); const id=chip&&chip.getAttribute('data-id'); if(id) location.href='person-real.html?id='+encodeURIComponent(id); }); });
+    /* The row IS a moment and has always carried its own artefact id in data-edit; this
+       handler ignored it and followed the first face tagged in the photograph instead, so
+       tapping a picture of Ida opened Ida rather than the picture. A name chip still opens
+       that person (it stops propagation above) - the rest of the row opens the moment. */
+    document.querySelectorAll('.mem').forEach(row=>{ row.addEventListener('click',()=>{
+      const aid=row.getAttribute('data-edit');
+      if(aid){ location.href='moment-real.html?id='+encodeURIComponent(aid); return; }
+      const chip=row.querySelector('.chip[data-id]'); const id=chip&&chip.getAttribute('data-id');
+      if(id) location.href='person-real.html?id='+encodeURIComponent(id); }); });
 
     $('#content').style.opacity=1;
     $('#gate').style.display='none';

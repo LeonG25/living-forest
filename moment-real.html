@@ -975,8 +975,13 @@
   async function loadAllPeople(){ if(allPeople) return; try{ const {data}=await sb.from('people').select('id,display_name,called_name,sex').order('display_name'); allPeople=data||[]; }catch(e){ allPeople=[]; } }
   async function openNameSheet(tagId, isNew){ nameTargetId=tagId; await loadAllPeople(); renderNameList(''); show($('#nameSheet')); }
   function renderNameList(q){ const d=t(); const sheet=$('#nameSheet'); const ql=q.trim().toLowerCase();
+    /* This rebuilt the WHOLE sheet on every keystroke - including the input being typed
+       into - so the field lost focus and Leon's keyboard shut after each letter. The
+       search box is built once; only the list below it is redrawn. */
+    const existing=sheet.querySelector('#pSearch');
+    const listOnly=!!existing;
     const list=(allPeople||[]).filter(p=>{ if(!ql) return true; return String(p.display_name||'').toLowerCase().includes(ql) || String(p.called_name||'').toLowerCase().includes(ql); }).slice(0,40);
-    sheet.innerHTML = `<div class="grip"></div><h3>${esc(d.whoTitle)}</h3><div class="sub">${esc(d.whoSub)}</div>
+    const HTML = `<div class="grip"></div><h3>${esc(d.whoTitle)}</h3><div class="sub">${esc(d.whoSub)}</div>
       <div class="searchbox">${sv(ICON.search,1.7)}<input id="pSearch" placeholder="${esc(d.searchFamily)}" value="${esc(q)}"></div>
       <div class="plist">
         ${list.map(p=>`<button class="popt" data-pick="${esc(p.id)}">
@@ -986,8 +991,17 @@
           <span class="pc">${sv(ICON.plus,2)}</span>
           <span><span class="pn">${q?esc(q):esc(d.someoneNew)}</span><span class="pr">${esc(d.someoneNew)}</span></span></button>
       </div>`;
-    const inp=sheet.querySelector('#pSearch'); inp.oninput=()=>renderNameList(inp.value);
-    sheet.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>pickPerson(b.dataset.pick, sheet.querySelector('#pSearch').value.trim()));
+    if(listOnly){
+      /* the input keeps its focus, its caret and the keyboard: only the names change */
+      const tmp=document.createElement('div'); tmp.innerHTML=HTML;
+      const fresh=tmp.querySelector('.plist'), cur=sheet.querySelector('.plist');
+      if(fresh&&cur) cur.replaceWith(fresh);
+    } else {
+      sheet.innerHTML = HTML;
+      const inp0=sheet.querySelector('#pSearch');
+      if(inp0){ inp0.oninput=()=>renderNameList(inp0.value); setTimeout(()=>{ try{ inp0.focus(); }catch(e){} },320); }
+    }
+    sheet.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>pickPerson(b.dataset.pick, (sheet.querySelector('#pSearch')||{value:''}).value.trim()));
   }
   async function ensurePerson(name){ name=String(name||'').trim();
     const f=(allPeople||[]).find(p=>String(p.display_name||'').toLowerCase()===name.toLowerCase());
