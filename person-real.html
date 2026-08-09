@@ -472,8 +472,8 @@
       gameSubs:{ whoiswho:'Match the face to the right name.', crowd:'Find them among the gathering.', order:'Set the moments of a life in sequence.', wherewas:'Place the photographs on the map.', thread:'Trace how they connect to the family.', whosememory:'Guess who each story is about.', voice:'Not enough stories yet.', whatnext:'Guess which story came next.' },
       country:'Country', addcountry:'add a country',
       edit:'Edit', remove:'Remove', askremove:'Ask to remove', removeAsked:'Removal waiting for the keeper',
-      relkind:'Kind of connection', certainty:'How sure are we?', relnote:'Note (optional)',
-      relkinds:{ parent:'Parent', spouse:'Spouse', sibling:'Sibling', friend:'Friend', mentor:'Mentor', neighbour:'Neighbour', other:'Other' },
+      relkind:'Kind of connection', relkindWho:'Who is {a} to {b}?', certainty:'How sure are you?', relnote:'Note (optional)',
+      relkinds:{ parent:'Parent', child:'Child', spouse:'Spouse', sibling:'Sibling', friend:'Friend', mentor:'Mentor', neighbour:'Neighbour', other:'Other' },
       certs:{ documented:'Documented', remembered:'Remembered', uncertain:'Uncertain' },
       pickperson:'Who is this?', searchppl:'Search the family', nopeople:'No one to choose from yet.',
       dirq:'Which way round?', dirTheirParent:'…is their parent', dirTheirChild:'…is their child',
@@ -512,8 +512,8 @@
       gameSubs:{ whoiswho:'Сопоставьте лицо и имя.', crowd:'Найдите среди собравшихся.', order:'Расставьте моменты жизни.', wherewas:'Разместите фото на карте.', thread:'Проследите связь с семьёй.', whosememory:'Угадайте, о ком эта история.', voice:'Историй пока мало.', whatnext:'Угадайте, какая история была следующей.' },
       country:'Страна', addcountry:'добавить страну',
       edit:'Изменить', remove:'Удалить', askremove:'Просить удалить', removeAsked:'Удаление ожидает хранителя',
-      relkind:'Вид связи', certainty:'Насколько уверены?', relnote:'Заметка (необязательно)',
-      relkinds:{ parent:'Родитель', spouse:'Супруг(а)', sibling:'Брат/сестра', friend:'Друг', mentor:'Наставник', neighbour:'Сосед', other:'Другое' },
+      relkind:'Вид связи', relkindWho:'Кто {a} для {b}?', certainty:'Насколько вы уверены?', relnote:'Заметка (необязательно)',
+      relkinds:{ parent:'Родитель', child:'Ребёнок', spouse:'Супруг(а)', sibling:'Брат/сестра', friend:'Друг', mentor:'Наставник', neighbour:'Сосед', other:'Другое' },
       certs:{ documented:'Документально', remembered:'По памяти', uncertain:'Неточно' },
       pickperson:'Кто это?', searchppl:'Поиск по семье', nopeople:'Пока не из кого выбирать.',
       dirq:'В какую сторону?', dirTheirParent:'…её родитель', dirTheirChild:'…её ребёнок',
@@ -552,8 +552,8 @@
       gameSubs:{ whoiswho:'התאימו את הפנים לשם הנכון.', crowd:'מצאו אותה בין הנאספים.', order:'סדרו את רגעי החיים.', wherewas:'מקמו את התמונות על המפה.', thread:'עקבו אחר הקשר למשפחה.', whosememory:'נחשו על מי כל סיפור.', voice:'עדיין אין מספיק סיפורים.', whatnext:'נחשו איזה סיפור בא אחר כך.' },
       country:'מדינה', addcountry:'הוספת מדינה',
       edit:'עריכה', remove:'מחיקה', askremove:'בקשה למחוק', removeAsked:'המחיקה ממתינה לשומר',
-      relkind:'סוג הקשר', certainty:'עד כמה בטוח?', relnote:'הערה (לא חובה)',
-      relkinds:{ parent:'הורה', spouse:'בן/בת זוג', sibling:'אח/אחות', friend:'חבר', mentor:'מורה דרך', neighbour:'שכן', other:'אחר' },
+      relkind:'סוג הקשר', relkindWho:'מי {a} עבור {b}?', certainty:'עד כמה אתם בטוחים?', relnote:'הערה (לא חובה)',
+      relkinds:{ parent:'הורה', child:'ילד/ה', spouse:'בן/בת זוג', sibling:'אח/אחות', friend:'חבר', mentor:'מורה דרך', neighbour:'שכן', other:'אחר' },
       certs:{ documented:'מתועד', remembered:'מהזיכרון', uncertain:'לא בטוח' },
       pickperson:'מי זה?', searchppl:'חיפוש במשפחה', nopeople:'עדיין אין ממי לבחור.',
       dirq:'לאיזה כיוון?', dirTheirParent:'…הוא ההורה שלה', dirTheirChild:'…הוא הילד שלה',
@@ -602,7 +602,12 @@
   /* full shape from the first moment — renders before data arrive must never crash */
   let NAME=_emptyN(), NAMEROW=_emptyN(), PEND=_emptyN(), NICKS={en:[],ru:[],he:[]}, PENDNICKS={en:[],ru:[],he:[]};
   let PEOPLE=[], PLACEVALS=[];
-  const REL_KINDS=['parent','spouse','sibling','friend','mentor','neighbour','other'];
+  /* 'child' is a UI kind only: it writes a PARENT row with the direction flipped, because
+     tree-real's isParentEdge() recognises kind==='parent' alone - a stored 'child' row
+     would be invisible to the tree. This is what lets the "which way round?" question go
+     away: asking a contributor to reason about direction is what made Leon stop and think
+     twice, and thinking twice about grammar is not the same as being sure about a family. */
+  const REL_KINDS=['parent','child','spouse','sibling','friend','mentor','neighbour','other'];
   const REL_CERTS=['documented','remembered','uncertain'];
   let S={ life:{bio:{},occupation:{},birth:'',death:'',birth_prec:'',living:false,gender:'',langspoken:[]}, places:{pbirth:'',lived:[],country:{}}, kin:[], more:{custom:[],sources:[]} };
   const d=()=>T[state.lang];
@@ -1176,12 +1181,15 @@
         <div class="hint">${L.proposehint}</div>`}</div>`; }
 
     function draw(){
-      const dirLine=st.kind==='parent'?`<div class="field"><label>${L.dirq}</label><div class="segwrap" data-kingroup="dir">
-          ${[['other_parent',L.dirTheirParent],['other_child',L.dirTheirChild]].map(([v,t])=>`<button data-kinset="dir:${v}" class="${st.dir===v?'on':''}">${esc(t)}</button>`).join('')}</div></div>`:'';
+      const dirLine='';
       const canRemove=mode==='edit';
       sh.innerHTML=`<div class="grip"></div><h3>${esc(title)}</h3>${sub?`<div class="sub">${esc(sub)}</div>`:''}
         ${pickerHTML()}
-        <div class="field"><label>${L.relkind}</label><div class="segwrap" data-kingroup="kind">
+        <div class="field"><label>${(function(){
+            const them=st.other?nameOf(st.other):String(st.propose||'').trim();
+            const me=(person&&(person.display_name||person.called_name))||'';
+            return (them&&me&&L.relkindWho)?L.relkindWho.replace('{a}',them).replace('{b}',me):L.relkind;
+          })()}</label><div class="segwrap" data-kingroup="kind">
           ${REL_KINDS.map(k=>`<button data-kinset="kind:${k}" class="${st.kind===k?'on':''}">${esc(L.relkinds[k])}</button>`).join('')}</div></div>
         ${dirLine}
         <div class="field"><label>${L.certainty}</label><div class="segwrap" data-kingroup="certainty">
@@ -1195,7 +1203,12 @@
       const np=sh.querySelector('[data-kinnote]'); if(np) np.oninput=e=>{ st.note=e.target.value; };
       const pp=sh.querySelector('[data-kinpropose]'); if(pp) pp.oninput=e=>{ st.propose=e.target.value; };
       sh.querySelectorAll('[data-kinpick]').forEach(b=>b.onclick=()=>{ st.other=b.getAttribute('data-kinpick'); st.propose=''; draw(); });
-      sh.querySelectorAll('[data-kinset]').forEach(b=>b.onclick=()=>{ const [k,v]=b.getAttribute('data-kinset').split(':'); st[k]=v; draw(); });
+      sh.querySelectorAll('[data-kinset]').forEach(b=>b.onclick=()=>{ const [k,v]=b.getAttribute('data-kinset').split(':');
+        st[k]=v;
+        /* 'Child' and 'Parent' are the same row seen from two ends: the chip decides the
+           direction so the contributor never has to. */
+        if(k==='kind'){ if(v==='parent') st.dir='other_parent'; else if(v==='child') st.dir='other_child'; }
+        draw(); });
     }
     sh._kinSave=async()=>{
       if(mode!=='edit'&&!st.other&&!String(st.propose||'').trim()){ toast(L.pickfirst); return; }
@@ -1206,18 +1219,20 @@
       {
         const them=st.other?nameOf(st.other):String(st.propose||'').trim();
         const me=(person&&(person.display_name||person.called_name))||nameOf(PERSON_ID)||'';
-        const clash=await kinConflict(st.other, st.kind, st.dir);
+        /* from here on, 'child' IS 'parent' with the direction flipped - the store, the
+         conflict check, the sentence and the mini-tree all speak that one vocabulary */
+      const kindForStore = (st.kind==='child') ? 'parent' : st.kind;
+      const clash=await kinConflict(st.other, kindForStore, st.dir);
         if(clash){ toast((L.clash&&L.clash[clash])||L.clashOther||'That connection cannot be true — the forest already says otherwise.'); return; }
-        const line=kinSentence(them, me, st.kind, st.dir, state.lang);
+        const line=kinSentence(them, me, kindForStore, st.dir, state.lang);
         if(line){
           const YES={en:'Yes, tie them',ru:'Да, связать',he:'כן, לקשור'};
           const NO ={en:'Not yet',      ru:'Пока нет',  he:'עוד לא'};
           /* Who the tree would draw HIGHER, using relEnds' own rule - so the picture and
              the row that gets written cannot disagree. */
-          const themIsUpper = (st.kind==='parent') ? (st.dir==='other_parent')
-                            : (st.kind==='child')  ? (st.dir!=='other_child') : true;
+          const themIsUpper = (kindForStore==='parent') ? (st.dir==='other_parent') : true;
           const ok = (window.LFBind)
-            ? await LFBind.ask({ line:line.replace(/\n+.*$/,''), kind:st.kind, dir:st.dir, lang:state.lang,
+            ? await LFBind.ask({ line:line.replace(/\n+.*$/,''), kind:kindForStore, dir:st.dir, lang:state.lang,
                 upper: themIsUpper?them:me, lower: themIsUpper?me:them,
                 rtl:(state.lang==='he'), yes:YES[state.lang]||YES.en, no:NO[state.lang]||NO.en })
             : confirm(line);
@@ -1225,7 +1240,7 @@
         }
       }
       await saveRel({ relId:st.relId, other:st.other, other_name:st.other?nameOf(st.other):String(st.propose||'').trim(),
-        propose:st.other?'':String(st.propose||'').trim(), kind:st.kind, dir:st.dir, certainty:st.certainty, note:st.note, mode });
+        propose:st.other?'':String(st.propose||'').trim(), kind:kindForStore, dir:st.dir, certainty:st.certainty, note:st.note, mode });
       hideSheets(); await reload(); selectFacet('kin'); toast(state.keeper?L.saved:L.sent); };
     sh._kinRemove=async()=>{ await removeRel(st.relId); hideSheets(); await reload(); selectFacet('kin'); toast(state.keeper?L.saved:L.sent); };
     draw(); showSheet('kin'); }
