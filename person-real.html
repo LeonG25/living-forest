@@ -301,11 +301,14 @@
   .gal .g .tagbox{ position:absolute; border:2px solid var(--gold-hi); border-radius:4px; box-shadow:0 0 0 400px rgba(4,7,14,.4); }
   .cropstage{ position:relative; width:100%; aspect-ratio:1; max-width:250px; margin:0 auto 8px; border-radius:16px; overflow:hidden; background:#0a1120; touch-action:none; }
   .cropstage .cimg{ position:absolute; inset:0; }
-  /* CONTAIN, not cover. 'cover' cropped the photograph to fill the stage before the
-     contributor had touched anything, so the edges were cut off and could never be brought
-     into the ring however they zoomed - which is what Leon hit choosing Sofia's portrait.
-     The whole photograph is shown; the ring decides what becomes the portrait. */
-  .cropstage .cimg svg, .cropstage .cimg img{ width:100%; height:100%; object-fit:contain; }
+  /* COVER, and it must stay cover. lf-face.js composes every portrait with zoomToPx(),
+     which takes a centred square of the image's SHORT side - the same geometry as
+     object-fit:cover. I switched this to 'contain' so the whole photograph would show,
+     and the editor and the renderer immediately disagreed: Leon framed one thing and the
+     review page displayed another part of the same picture. Showing the whole photograph
+     here needs zoomToPx's geometry changed AND the 45 existing face boxes migrated, or
+     every portrait in the forest moves. Until then, what you frame is what you get. */
+  .cropstage .cimg svg, .cropstage .cimg img{ width:100%; height:100%; object-fit:cover; }
   .cropstage .cmask{ position:absolute; inset:0; pointer-events:none; background:radial-gradient(circle at center, transparent 46%, rgba(4,7,14,.72) 47%); }
   .cropstage .cring::after{ content:""; position:absolute; inset:calc(50% - 46%); border-radius:50%; border:1.5px solid rgba(255,244,214,.9); box-shadow:0 0 18px rgba(255,232,180,.5); }
   .zoomrow{ display:flex; align-items:center; gap:10px; margin-bottom:6px; }
@@ -1099,9 +1102,9 @@
     sh.innerHTML=`<div class="grip"></div><h3>${L.changeface}</h3><div class="sub">${L.changefaceSub}</div>
       <div class="gal">${gals||`<div class="sub">${L.noFace}</div>`}</div>
       <div class="cropstage" data-crop><div class="cimg"></div><div class="cmask"></div><div class="cring"></div></div>
-      <div class="zoomrow">${sv(I.zoomout,1.6)}<input type="range" min="100" max="400" value="100" data-zoom>${sv(I.zoomin,1.6)}</div>
+      <div class="zoomrow">${sv(I.zoomout,1.6)}<input type="range" min="100" max="400" value="145" data-zoom>${sv(I.zoomin,1.6)}</div>
       <div class="btnrow"><button class="btn ghost" data-act="close">${L.cancel}</button><button class="btn violet" data-act="facesave">${L.send}</button></div>`;
-    let z=100,px=50,py=50,drag=false,sx,sy,bx,by,chosen=null; const img=sh.querySelector('.cimg'), st=sh.querySelector('[data-crop]');
+    let z=145,px=50,py=44,drag=false,sx,sy,bx,by,chosen=null; const img=sh.querySelector('.cimg'), st=sh.querySelector('[data-crop]');
     const apply=()=>{ img.style.cssText=`position:absolute;left:${px}%;top:${py}%;width:100%;height:100%;transform:translate(-50%,-50%) scale(${z/100});transform-origin:center`; };
     const setImg=g=>{ chosen=g; img.innerHTML=g.url?`<img src="${g.url}" alt="">`:galSVG(g.i); apply(); };
     /* open on the current portrait: same photo, same zoom, same position */
