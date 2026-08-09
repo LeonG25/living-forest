@@ -1439,7 +1439,13 @@
         if(f.field==='birth')patch.birth_date=f.value||null; if(f.field==='death')patch.death_date=f.value||null;
         if(f.field==='birth_prec')patch.birth_certainty=f.value||null; if(f.field==='living')patch.is_living=(f.value==='1');
         if(f.field==='gender')patch.sex=f.value||null; if(f.field==='face'){ try{ const fv=JSON.parse(f.value); patch.primary_asset=fv.storage_path;
-          const fb=fv.box||((fv.zoom!=null)?{zoom:fv.zoom,px:fv.px,py:fv.py}:null);
+          /* A HUMAN'S FRAMING OUTRANKS A DETECTOR'S GUESS. A face fact carries both the
+             tagger's detection box AND the zoom/px/py a person set by hand; this read the
+             box FIRST, so Leon's deliberate framing was thrown away on approval and the
+             person page drew the detector's rectangle while the editor reopened his - the
+             same portrait wrong in one place and right in the other. Gold is human-entered:
+             if someone framed it, that is the portrait. */
+          const fb=((fv.zoom!=null)?{zoom:fv.zoom,px:fv.px,py:fv.py}:null)||fv.box||null;
           if(fb) patch.metadata=Object.assign({},(person&&person.metadata)||{},{face_box:fb}); }catch(e){} }
         if(Object.keys(patch).length){ try{ await sb.from('people').update(patch).eq('id',PERSON_ID); }catch(e){} }
         /* one published part per (person,lang,field): supersede the old one BEFORE publishing this,
