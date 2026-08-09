@@ -788,7 +788,11 @@ function genAssign(placed){
   const siblingPairs=dedupe([].concat(...placed.map(id=>siblingsOf(id).map(s=>[id,s]))));
   const spousePairs =dedupe([].concat(...placed.map(id=>spousesOf(id).map(s=>[id,s]))));
   const pc=[]; edges.forEach(e=>{ if(isParentEdge(e)&&inSet.has(e.from)&&inSet.has(e.to)) pc.push([e.from,e.to]); });
-  /* CONTRADICTIONS MUST NOT FLATTEN THE FOREST.
+  /* NOTE (2026-08-09): genAssign() is DEAD CODE - nothing calls it. Tiers come from the
+     unit walk's recursion depth in place(). I hardened this function first and it changed
+     nothing, which is why the guard reported zero. Left intact rather than deleted, but the
+     working guard is in the unit graph above.
+     CONTRADICTIONS MUST NOT FLATTEN THE FOREST.
      This relaxation only ever raises a tier, so an impossible statement - Anna is Basya's
      sibling AND the parent of Basya's parent - never settles: every level climbs until the
      cap and the whole tree collapses onto one row. That is what Leon saw, and the tree was
@@ -998,6 +1002,29 @@ function computeLayout(){
     });
     if(!moved) break;
   }
+  /* CONTRADICTIONS MUST NOT FLATTEN THE FOREST.
+     Depth here is the recursion depth of the unit walk, so a loop of ancestry - Anna is
+     Basya's sibling AND the parent of Basya's parent - makes a unit its own ancestor. The
+     walk's visited-set stops the recursion, but whole branches then never get placed and
+     fall to the leftover row at maxTier+1: every generation on one line, which is what
+     Leon saw. The tree was right about the data and had no way to say so.
+     So: walk each unit's parent chain, and where it closes on itself, cut the link that
+     closed it. The rest of the forest keeps its shape; the cut ties are left in
+     window.__lfImpossible so the page can mark them disputed rather than pretend. */
+  const impossible=[];
+  units.forEach(u=>{
+    const seen=new Set(); let cur=u;
+    while(cur && cur.parentUnit){
+      if(seen.has(cur)||cur.parentUnit===cur||cur.parentUnit===u){
+        impossible.push({ unit:(cur.members||[]).slice(), why:'loop-of-ancestry' });
+        cur.parentUnit=null; break;
+      }
+      seen.add(cur); cur=cur.parentUnit;
+    }
+  });
+  try{ window.__lfImpossible=impossible; }catch(e){}
+  if(impossible.length){ try{ console.warn('[tree] '+impossible.length+' impossible tie(s) set aside so the generations survive'); }catch(e){} }
+
   units.forEach(u=>{ if(u.parentUnit&&u.parentUnit!==u) u.parentUnit.childUnits.push(u); });
   units.forEach(u=>u.childUnits.sort((a,b)=>ord(a.root,b.root)));
   // sibling groups among ROOT units (siblings whose parent isn't placed) via union-find on home units
