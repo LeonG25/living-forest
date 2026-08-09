@@ -882,7 +882,13 @@
              person page drew the detector's rectangle while the editor reopened his - the
              same portrait wrong in one place and right in the other. Gold is human-entered:
              if someone framed it, that is the portrait. */
-          const fb2=((fv.zoom!=null)?{zoom:fv.zoom,px:fv.px,py:fv.py}:null)||fv.box||null;
+          /* THE EXACT BOX IS THE FRAMING. When the crop stage was rebuilt over the whole
+             photograph, px/py changed meaning - they are fractions of the WHOLE image now,
+             not a position inside its centred square - but this still preferred them, and
+             zoomToPx reads them with the old ruler. So Leon framed correctly, approved, and
+             the page drew somewhere else again. The box carries the human's framing in whole-
+             image fractions; the stage numbers are legacy and only used when there is no box. */
+          const fb2=(fv.box&&(fv.box.w>0))?fv.box:((fv.zoom!=null)?{zoom:fv.zoom,px:fv.px,py:fv.py}:null);
             const per=(pending.personRow&&pending.personRow[f.person_id])||{};
             if(fb2) patch.metadata=Object.assign({},per.metadata||{},{face_box:fb2}); }catch(e){}
           /* one portrait per person: supersede older published crops and stale pending suggestions */
