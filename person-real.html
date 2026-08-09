@@ -794,8 +794,23 @@
     if(!IS_NEW) return '';
     const L=d();
     const msg = L.newPersonNote || 'Nothing here is in the forest yet. Add whatever you know — every part waits for the keeper.';
+    /* If the contributor arrived because of a relationship, say so at the top and do not
+       let them change it here - it was settled on the screen before this one (designer's
+       delivery, 2026-08-07). ?tie=sibling&of=<name> carries it. */
+    let tie='';
+    try{
+      const k=qs.get('tie'), of=qs.get('of');
+      if(k&&of){
+        const KIND={parent:{en:'parent of',ru:'родитель',he:'הורה של'},child:{en:'child of',ru:'ребёнок',he:'ילד/ה של'},
+          sibling:{en:'sibling of',ru:'брат или сестра',he:'אח/אחות של'},spouse:{en:'married to',ru:'супруг(а)',he:'בן/בת זוג של'},
+          friend:{en:'friend of',ru:'друг',he:'חבר/ה של'},other:{en:'connected to',ru:'связан(а) с',he:'מקושר/ת ל'}};
+        const w=((KIND[k]||KIND.other)[state.lang])||(KIND[k]||KIND.other).en;
+        tie=`<div style="margin:10px 14px 0;padding:9px 13px;border-radius:12px;background:rgba(243,205,132,.09);
+          border:1px solid rgba(243,205,132,.32);color:#f6efe0;font-size:13.5px">${esc(w)} <b>${esc(of)}</b></div>`;
+      }
+    }catch(e){}
     return `<div class="keeper-note" style="margin:10px 14px 4px;padding:11px 13px;border-radius:13px;
-      background:rgba(201,162,255,.10);border:1px solid rgba(201,162,255,.34);color:#e9e2f6;font-size:13.5px;line-height:1.45">${esc(msg)}</div>`;
+      background:rgba(201,162,255,.10);border:1px solid rgba(201,162,255,.34);color:#e9e2f6;font-size:13.5px;line-height:1.45">${esc(msg)}</div>`+tie;
   }
   function chipAddBox(field,label){ const L=d(); return `<div class="chipadd" data-for="${field}" style="display:none;margin-top:8px"><input class="inp" placeholder="${esc(label||'')}"><div class="btnrow" style="margin-top:8px"><button class="btn ghost" data-cadd-cancel>${L.cancel}</button><button class="btn violet" data-cadd-ok="${field}">${L.send}</button></div></div>`; }
   function chipsField(field,addLabel,cool){ const L=d(); const pubs=pubList(field,'und'); const pends=pendList(field,'und');
@@ -1308,6 +1323,21 @@
       const ins=await sb.from('person_facts').insert({person_id:PERSON_ID,group_id:uuid(),field:'kin',lang:'und',value:payload,ord:0,status:'in_review',created_by:user.id});
       if(ins.error){ toast(L.saveFail||'That could not be sent. Please try again.'); return; }
       toast(L.sent);
+      /* A NAME IS NOT A PERSON. When a contributor names someone the forest has never met,
+         the proposal is filed and then they are handed that person's own empty page, with
+         the tie stated at the top - so what arrives at the keeper is a life, not a label
+         (Leon, 2026-08-07: "users will use this opportunity to add more details than just
+         a name, which is good for our system"). */
+      if(!p.other && String(p.propose||'').trim()){
+        const nm=String(p.propose).trim();
+        const mk=await sb.from('people').insert({display_name:nm,created_by:user.id,status:'in_review'})
+                   .select('id').single();
+        if(!mk.error && mk.data){
+          setTimeout(()=>{ location.href='person-real.html?id='+encodeURIComponent(mk.data.id)
+            +'&new=1&tie='+encodeURIComponent(p.kind||'other')
+            +'&of='+encodeURIComponent(nameOf(PERSON_ID)||(person&&person.display_name)||''); }, 900);
+        }
+      }
       return; }
     const ends=relEnds(p.other,p.kind,p.dir);
     const row={ kind:p.kind, certainty:p.certainty, note:p.note||'' };
