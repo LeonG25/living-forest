@@ -126,132 +126,101 @@
 
 # CURRENT STATE — session handover (read me first)
 
-*Rewritten 2026-08-03. Everything above the Archive line is current; the Archive below is
-chronological history kept for provenance, not for orientation.*
+*Rewritten 2026-08-09 after the consolidation. This file is now the ONLY text document:
+handover, plan, parking lot, specs and agent canon all live here, in sections below.
+Everything above the Archive line is current; the Archive is history kept for provenance.*
 
 ## 0 · ORIENTATION — where to look for what (start here, every session)
 
-| You need… | Look here |
+| You need… | Section |
 |---|---|
-| Rules, specs, design law, schema, the whole canon | **this file** (`CLAUDE.md`, root of the repo) — table of contents at the top |
-| A short, evidence-cited status snapshot | `docs/HANDOVER.md` |
-| What to build next, in order | `docs/agents/QUEUE.md` |
-| Progression / the walk / levels of knowing | `docs/progression-spec.md` |
-| Fen's clip mapping + speech dictionary | the FEN sections in this file (they supersede any `docs/fen-*.md`) |
-| Every design delivery, dated and immutable | `docs/designs/INDEX.md` |
-| Agent rules, waking policy | `docs/agents/COMMON.md`; per-agent briefs `docs/agents/AGENT-*.md` |
-| What the agents actually did | `docs/agents/RUNLOG.md`, `docs/agents/VISUAL-FINDINGS.md` |
-| Logic worth porting, never reinventing | `/home/botuser/prototype-reference.html` on the droplet (122KB, the retired prototype) |
+| what to build next | §2 WHAT TO FIX NEXT |
+| what is true right now | §1 |
+| the lessons that cost the most | §3 |
+| what Leon has decided and parked | §4 PARKED / §5 DECISIONS |
+| the walk / levels spec | §A PROGRESSION |
+| Fen's clips and moods | §B FEN |
+| design deliveries and the responsive brief | §C DESIGN |
+| how nightly agents worked (all stopped) | §D AGENTS |
+| deploy, rig, commands | §13 and §QC below |
 
-**The four tools and what each is for**
-- **LG Maker MCP `exec_bash`** — shell on the droplet as `botuser`; repo at `/home/botuser/living-forest`, QC rig at `/home/botuser/qc`. Drops intermittently: re-find it with `tool_search`. Default timeout 30s (`timeout_s=290` for ffmpeg/sweeps); 8192-char output cap; long jobs via `nohup … &` + polling.
-- **Supabase MCP `execute_sql`** — project `oabcdrktuikifbormjip`. Returns only the LAST statement's rows, so put the query you care about last. **Never mix a fix and a `rollback` in one block** — that is how a policy repair silently undid itself on 2026-08-02.
-- **Sandbox `bash_tool`** — clone at `/home/claude/repo`; fast, but blocked from `supabase.co`. Binaries are fetched on the droplet, never here.
-- **Claude Design MCP** — the designer. Every new visual surface goes through it before it is built.
+## 1 · WHAT IS TRUE RIGHT NOW (2026-08-09)
 
-**Verify-before-claiming** is canon: a status claim needs evidence (file+line, table+rowcount, commit hash, or probe output). The `view` tool returns placeholders — verify computationally.
+- **All background workers are STOPPED** and the cron that resurrected `qc/worker.sh`
+  every 30 minutes is removed. Nothing runs unattended. An orphaned headless Chrome that
+  had been alive 3 days was killed with it.
+- **Egress**: a QC rig pulling full-size photographs 360×/day burned ~20GB against a 5GB
+  free allowance. Every image request is now capped through `LFDB.img(path,width)`; a
+  seven-page pass fell 9.82MB → 0.51MB (~19×). Cycle resets 30 Aug; restriction only bites
+  3 Sep if still over, which it will not be.
+- **Every edit waits for the keeper**, including a keeper's own. `relationships.status` and
+  `people.status` now default to `in_review`; `artefact_subjects` gained `status` at all.
+  Approve/decline controls exist ONLY on review-real.
+- **The tree survives contradictions**: impossible parent edges are set aside and listed in
+  `window.__lfImpossible`; five generations stood up under a deliberate loop of ancestry.
+- **A contradictory tie is refused before it is asked** (person-real `kinConflict`).
+- **An empty page can no longer be mistaken for an empty forest**: any failed READ raises a
+  dismissible bar, once per page, in all three languages (`lf-db` v5).
+- **Rig fidelity**: `qc/sweep-real.js` runs REAL Chromium at Leon's 360×639 dpr3, keeper
+  account, warm cache, every page twice. WebKit-wearing-an-Android-UA hid three bugs.
 
-## 1 · WHAT IS TRUE RIGHT NOW (2026-08-03, HEAD `041bc80`)
+## 2 · WHAT TO FIX NEXT (in order)
 
-**Live:** https://leong25.github.io/living-forest/ · 24 pages · repo `LeonG25/living-forest` (branch `main`, GitHub Pages).
+**A — verification before more building.** Eighteen fixes from 2026-08-07/09 have not been
+walked on Leon's own phone. Several change how data is written. Verify before stacking more.
 
-**Entry & identity — rebuilt this session, this is the big change.**
-`lf-auth.js` (v2) is now **THE identity process** — one module, one answer, identical on
-iOS and Android by construction. `LFAuth.ensure(sb)` returns exactly one of four verdicts:
-- `out` — no session → the gate.
-- `broken` — a session that a **definitive** 401/403/JWT verdict proves dead → clean sign-out, gate says *"Your session went stale — please sign in again."*
-- `slow` — the read did not finish in 15s → **session kept**, page proceeds/retries. Slowness may never sign anyone out (this rule exists because v1 did exactly that and locked Leon out on his iPad).
-- `in` — `{uid, profile, anchor}`; the system knows who this is.
-Consumers so far: `index.html`, `tree-real.html` (their private duplicate logic was deleted).
-**Rolling it to the remaining pages is queue item #1 and is mechanical.**
+**B — the three structural items still open:**
 
-**The funnel (Leon's law: resumable, single process, never stuck).**
-register → confirm → sign in (Enter submits; fields scroll above the iOS keyboard) →
-**not yet welcomed?** the warm *"You are at the gate"* panel (Knock again / Sign out, trilingual;
-a missing profile row waits too) → **keeper welcomes** in `review-real.html` → *"At the gate"*
-section, one tap `Welcome in` sets `is_member` → next entry asks **"Who are you in the family?"**
-(fuzzy token match over `peopleList()`, portrait suggestions, one tap claims
-`player_anchors` **status `active`**) → anchored, badged, and Fen's invitations rank from there.
-Loading itself obeys the law: after 12s of *Reading your forest* a trilingual **Try again** appears.
+1. **Responsive rollout** — 1 of 15 pages is off the fake 390×820 phone frame (tree only).
+   `person`, `review` and the six games have NO frame and will stretch phone-shaped content
+   across 1920px. The designer's layouts are delivered (§C) and `lf-layout.css` holds the
+   token set, linked everywhere but deliberately inert. Order: canvas → subject → list →
+   flow → games. `qc/matrix.js` is the regression check; baseline in §C.
+2. **`lf-auth` on the remaining pages** — gate field ids still differ between pages
+   (`#gPw`/`#gGo` on index, `#gPass`/`#gBtn` on review). Every probe has to special-case it,
+   which is a sign the drift is real.
+3. **Cold-open performance** — service worker so the app downloads once; defer the 3D world
+   past the gate; measure before and after.
 
-**Membership circle (the thing that made new users see nothing).** A RESTRICTIVE policy
-`members_only = is_member()` on `people` and friends returns *zero rows* to non-members.
-Correct design, but it had no voice — hence Zoya's blank tree and Leon's 0/0/0 globe.
-The funnel above is its voice. `is_member()` = profiles `is_keeper OR is_member`.
+**C — smaller, known, unbuilt:**
 
-**Zeros may never lie again.** All four globe reads are error-checked; an empty answer to a
-member is treated as failure — diagnosed to `client_diag`, token refreshed, retried twice,
-then said out loud. `client_diag` (uid, page, note) gives remote eyes on family devices.
+- The Reel has no "step into this moment" door (its hero photo does open one; the *stories*
+  do not). Person pages now do.
+- The keeper's BUNDLE card: a new person and their tie still arrive as separate queue items.
+  The designer's one-gift receipt and bundle card are specified, not built.
+- `tree-bg-demo.html` is a design preview living in the app directory. Excluded from the
+  sweep; delete it when Leon says so.
+- Nothing warns that a proposal was previously DECLINED (duplicates of *waiting* ones are
+  now refused).
 
-**Fen** — `lf-fen.js` v21. Full choreography per the FEN sections. Alpha-WebM path on
-Chrome/Android; **iOS path** = canvas keyer reuniting side-by-side colour|alpha H.264
-(`assets/fen/sbs/*.mp4`, 12 clips) per frame, with `fen-still.png` as the fallback that keeps
-speech/offer/leave working. Rig-verified error-free; **not yet seen moving on real Apple glass.**
+## 3 · THE HARD-WON LESSONS (do not relearn these)
 
-**Also live:** five games (Who Is Who, Crowd, Order of Things, Whose Memory, Where Was This);
-guidance engine `lf-invite.js` v2 + Play-bud in `lf-nav.js` v10 + `clearing-real.html`;
-place brain `lf-place.js` v3 (trilingual names, country codes); story auto-translation wired
-into the Whose-Story clue (Edge Function `translate` + `translations` cache, 354 rows);
-approve-bug class killed (supersede-first in all four approve paths).
+**The dominant failure of 2026-08-07/09 was writing from memory of how a file works instead
+of reading it.** Four silent failures, all mine, all the same shape:
 
-**The QC rig — two engines.** Chrome probes plus a **real WebKit engine** at
-`~/qc/pw/webkit22` (ubuntu-22.04 build; deps in `~/qc/wklibs`; the full env recipe lives inside
-`~/qc/wk-sweep.js` — LD path from `~/qc/ldpath.txt`, mesa surfaceless llvmpipe, GIO TLS modules,
-GSettings schemas, GST plugin path with `fakesink:MAX`, which was the fix for the audio-sink
-crash). **13/13 pages clean under iPhone UA** (`~/qc/report/webkit-sweep.log`). Sweep-mode
-blocks `.mp4/.webm` — the 2GB droplet cannot CPU-decode them; a rig limit, not a site bug.
-Named probes worth knowing: `probe-zoya.js` (full UI login → choose → claim),
-`probe-ghost.js` (broken-session eviction), `probe-gate.js` (cold form interactivity),
-`probe-fresh.js`, `probe-reading.js`, `probe-tree.js`, `probe-fen-ios.js`.
+- `'in'`/`'from'` invented for a direction vocabulary that is `other_parent`/`other_child` —
+  every parent tie approved from the queue was written INVERTED, which flattened the tree.
+- `l.tFail` when the page's idiom is `const L=d()` — Approve threw ReferenceError and died
+  in silence, on the one page whose job is deciding.
+- `peopleMap` when the map lives on `pending` — the review queue rendered NO cards at all.
+- Hardened `genAssign()` — **dead code nothing calls**. Tiers come from the unit walk's
+  recursion depth. The "fix" changed nothing and reported zero.
 
-**Agents — push-driven (keeper's rule).** The paid agents SLEEP. Work is pushed with
-`echo N > /home/botuser/qc/wake` (N passes, then sleep). Free detectors run every cycle and
-any error they find writes `wake` itself. The WebKit sweep is a free detector gated on HEAD
-change. Currently `wake` = 0. Canon in `docs/agents/COMMON.md`.
+Others worth keeping:
 
-## 2 · OPEN PROBLEMS (in priority order)
-
-1. **Leon's and Zoya's verdict on the settled build.** Every fix below landed during a storm of
-   ~25 deploys; their last attempts hit mid-flight versions. Nothing new ships until they report
-   on one stable build. (Deploy freeze was declared for exactly this reason.)
-2. **Supabase Site URL — needs Leon, one dashboard tap.**
-   `https://supabase.com/dashboard/project/oabcdrktuikifbormjip/auth/url-configuration`
-   → Site URL `https://leong25.github.io/living-forest/` + same under Redirect URLs.
-   Until then every confirmation email lands on a 404 after successfully verifying.
-3. **Performance on cold/weak devices.** Measured: the globe page is ~600KB, not heavy — but it
-   re-downloads on every open (Safari evicts aggressively) and pays an iOS shader-compile tax.
-   Planned: a service worker so the app is downloaded once, and deferring the 3D world until
-   after the gate. This is the honest answer to "why is iOS slower", not "weak device".
-4. **`lf-auth` on the remaining 22 pages** — mechanical, but until it is done those pages can
-   still show a ghost session's emptiness.
-5. **Fen on real Apple glass** — needs one family iPhone to open a game and report whether she moves.
-6. **Keeper-confirm UI for identity claims** (`review-real.html` Identity section: read
-   `player_anchors`, approve → `profiles.person_id`). Claims currently stand as `active` unconfirmed.
-7. **Guidance build 3/3** — first-walk welcome, then whispers (max 1/session, obeys `lf_fen_quiet`).
-8. **Two unbuilt games** — Missing Voice (needs narrator/`contributor_id` wired), Tangled Thread
-   (needs per-person places-lived structure).
-9. **Connectedness QC** — no orphan pages, every link lands somewhere real, back always works,
-   ⊕ menu consistent, empty states consistent. The main risk of parallel multi-agent building.
-10. **Journal as a simple LOG** (as in the prototype), through the designer first.
-
-## 3 · THE HARD-WON LESSONS OF 2026-08-02 (do not relearn these)
-
-- **A fix and a `rollback` in one SQL block cancel the fix.** A recursive-policy repair undid
-  itself this way and poisoned every read for an hour, appearing as innocent zeros.
-- **Never let a policy reference its own table.** Use a `security definer` function
-  (`public.is_keeper()`), as `is_member()` already did.
-- **Check every read's `.error`.** A single unchecked query turned a total failure into "0 people".
-- **Slowness is not a verdict.** Only a definitive auth answer may end a session.
-- **Reproduce as the actual user, not as the rig.** The QC account was quietly a member, so it
-  could never see what outsiders saw. Fresh-state probes now exist for this.
-- **The tree's `people` is a MAP keyed by id**, not an array — assuming otherwise crashed the
-  identity matcher silently.
-- **RLS check constraints reject invented vocabulary silently** — `player_anchors.status` is
-  `active` | `declined` only.
-- **Rapid deploys are their own bug.** A caching phone plus ~25 pushes an hour produces symptoms
-  that belong to no version. Freeze, then let the user test one build.
-
----
+- **A guard that fails open is not a guard.** `if(line){ …confirm… }` meant an empty
+  sentence skipped the question and saved anyway.
+- **Verify on the family's engine, at the family's size, with a warm cache.** A cold rig at
+  412×830 hid: the gate clipping Fen, a stale `lf-nav` cache, the re-summon race.
+- **When a file's contents change, bump that file's OWN version**, not only the versions it
+  points at. A cached `lf-nav.js?v=17` kept requesting `lf-fen.js?v=22` for hours.
+- **Never chain a syntax check and a push with `&&`** — a red check still pushed a page that
+  would not parse.
+- **Silence is the enemy.** supabase-js v2 NEVER throws: `try/catch` around a query is dead
+  code. Everything goes through `lf-db`.
+- **A sentence can be read backwards; a shape cannot.** The binding confirmation draws a
+  mini-tree in the tree's own conventions.
+- **Test data belongs to the family.** Every probe that writes must clean up, by name.
 
 ## Archive — earlier session notes (chronological, kept for provenance)
 
@@ -2066,3 +2035,463 @@ Two people appear in eleven photographs together across forty years and are rela
 
 ## 2026-07-31: continuous mode
 Scheduled cron replaced by ~/qc/worker.sh (flock-guarded loop; cron */30 only respawns it if dead). Cycles run back-to-back (sleep 90s) while QUEUE.md has open items or the rig reports errors; idle heartbeat every 4h otherwise. Kill switch: pkill -f qc/worker.sh + remove the respawn cron line.
+
+
+---
+
+# CONSOLIDATED DOCUMENTS
+
+*Folded into this file on 2026-08-09 at Leon's instruction: one text document, sections
+below. The separate .md files were deleted in the same commit; git history keeps them.*
+
+
+## A · PROGRESSION — the walk (canonical spec)
+
+*(was `docs/progression-spec.md`)*
+
+# The Walk — progression spec (canonical)
+
+Approved by Leon 2026-07-28. Sits beside `game-feel-spec.md`; §0 present-tense voice law applies to every word this system shows.
+
+## The idea
+
+Every player stands somewhere in the forest — they ARE one of the people in it. From their spot the forest opens in three directions: **up** through generations, **wide** across branches (uncles, cousins, second cousins), and **across** into neighbouring trees (the lines that married in). Kin distance is computed from the `relationships` table — the rings around a player are pure data, never hand-authored.
+
+## The anchor (Leon's decision 1)
+
+- The player chooses who they are in the tree. The choice is **active immediately**.
+- The keeper receives it as an approval item and may **decline**. If declined, the player must choose again — first thing after their next login.
+- Table: `player_anchors` (user_id PK, person_id, status active|declined, decided_by/decided_at). RLS: self insert; self-or-keeper update; all authenticated read.
+- The anchor is also the player's identity in the family view: players appear as their person — face and name — not as accounts.
+
+## Levels of knowing (Leon's decision 2)
+
+Four levels, per player × per person: **met** (face and name) → **followed** (the shape of their life) → **heard** (their stories, their voice) → **woven** (their ties to others).
+
+- A level is a level. **No percentages, no fractions of available content, ever.**
+- **Content gating:** a level is only *offered* for a person when the forest holds enough to play it (e.g. no "heard" for someone with no told memory). Never tell a player "you haven't heard her yet" when there is nothing to hear — an unofferable level simply does not appear.
+- One photo is enough to *meet* someone. Small content still grants the full level.
+
+Game → level:
+| Level | Games | Gate (data that must exist) |
+|---|---|---|
+| met | Who Is Who, Find Them in the Crowd | ≥1 photo (portrait or tag) |
+| followed | Put Their Life in Order, Where Was This | ≥2 dated/placed moments |
+| heard | Whose Story Is This, The Missing Voice | ≥1 told story |
+| woven | Tangled Thread | relationships / places-lived |
+
+## Roaming (Leon's decision 3)
+
+Free roam. The path is **suggested, never imposed** — Fen points forward ("her sister stands just up this way"), the player goes wherever they like. No locked rings, no gated regions.
+
+## The Journal (Leon's decision 4)
+
+Two views:
+- **My walk** — detailed: which people this player knows and how deeply, and the edge of the known (nearest people not yet met, only where content exists).
+- **The family** — everyone's knowing, **compact and visual**, an unspoken competition meant to motivate, never to rank loudly. Players shown as their anchored person. Exact form → designer pass; direction: the forest itself as the visual, glow as knowing, one glance tells the story.
+
+## Round generation (future engine work)
+
+Rounds get a scope selector: (region of the forest × level). Difficulty derives from the same data — distractor kin-closeness, cue richness, ring distance. No hard-coded difficulty tables. New data automatically deepens the game (games rule upheld).
+
+## Recording (implemented 2026-07-28)
+
+`knowledge_events` (user_id, person_id, level, game, correct, created_at). `lf-progress.js` → `LFProgress.record(game, level, personIds, correct)` wired at the same answer anchors as Fen's cues. Silent when signed out. Levels are computed from events (first correct answer at that level's game family earns the level — thresholds adjustable later without schema change).
+
+Wired now: who-is-who (met), crowd (met), what-happened-next (followed), missing-voice (heard), tangled-thread (woven).
+Deferred: where-was-this + order-of-things — their engine results don't yet expose subject person ids; add `subject_ids` to those results in lf-games.js, then wire.
+
+## Build order
+
+1. ✅ Schema + RLS + recorder + five games wired
+2. Designer pass: anchor-choosing moment (tree), Journal (both views)
+3. Anchor flow build + keeper decline in review-real (BOTH approval handlers rule applies)
+4. Journal build; levels/gating engine (lf-progress.js grows a `summary()` )
+5. `subject_ids` in whereWasThis/orderOfThings engines → wire remaining two games
+6. Fen data-aware path suggestions
+
+## B · FEN — the companion
+
+*(was `docs/companion-fen.md`)*
+
+## 2026-07-31 — stumble clip decision
+The 'wrong' cue plays **fen-earperk.webm** (the surprised ear-shoot) as the stumble: a kind "oh — not that one," per the never-shaming law. The clip is shared with the 'question' cue; the voice lines differentiate the moments. If a dedicated stumble clip is ever generated, swap the src in lf-fen.js CLIP registry — nothing else changes.
+
+## C · DESIGN — deliveries and the responsive brief
+
+*(was `docs/designs/INDEX.md`)*
+
+# Design deliveries — catalogue
+
+> **Revision:** 2026-07-17 10:24 (UTC+2) · commit `e566a08` · authority: `CLAUDE.md` (root)
+
+**Naming — dated on purpose.** Unlike text documents (which are single, stable-named files — see CLAUDE.md §0), design deliveries **are** dated: they are immutable artefacts, several versions legitimately coexist, and we must always know which one a build was made from.
+
+```
+docs/designs/YYYY-MM-DD--<page>--v<N>.html
+```
+`YYYY-MM-DD` = **date delivered by Claude Design**, not the date we filed it. If the delivery date is unknown, use `undated--<page>--v<N>.html` and say so below. **Never guess a date.**
+
+Every build must cite the exact design file it was made from.
+
+---
+
+## ⚠️ Design #1 is "The Person Page" — NOT "Rita Golnick"
+
+The two names invite exactly one mistake, so it is spelled out here:
+
+| | Design #1 — **the current design** | **v0 — superseded, reference only** |
+|---|---|---|
+| Source in the design project | `The Person Page.html` (project root) | `screens/Person.html` |
+| Filed as | `2026-07-15--person--v1.html` | `2026-07-11--person-rita--v0.html` |
+| Model | **The eight facets** | The old five-light hub |
+| Status | **QC PASSED** — build from this | **Superseded.** Do not build from it |
+
+"Rita Golnick" is the person the v0 mock happens to depict. It is **not** the name of Design #1.
+The design project also holds `Rita Golnick - Person Page (standalone).html` — that is the v0
+bundle, not Design #1, and the resemblance to the Design #1 name is a trap.
+
+---
+
+## Catalogue
+
+| File | Design # | Page | Delivered | Filed | QC | Notes |
+|---|---|---|---|---|---|---|
+| `2026-07-15--person--v1.html` | **1** | Person (8 facets) | **2026-07-15 09:18** ‡ | ✅ **78,814 b, verified** | ✅ **PASSED** 2026-07-15 17:41 | Flat source `The Person Page.html`. Brief: `person-page-brief-for-claude-design.md`. **QC: passes — invents nothing the schema cannot hold** (CLAUDE.md §7). Two follow-ups: patronymic + honorific are specified in the facet model but **not drawn**; the Story facet needs `contributor_id` backfilled or it renders without a narrator. |
+| `2026-07-12--place-tel-aviv--v2.html` | **2** | Place | **2026-07-12 02:28** ‡ | ✅ **42,328 b, verified** | ❌ pending | Flat source `screens/Place v2.html`, 42,328 b. **Design #2 = this file — Leon, 2026-07-17: *"The one with globe."*** The globe is the identifying feature and it is unambiguous: v2 loads `three.min.js` + `topojson-client` (`:10–11`) and renders a live WebGL globe as the page's fixed background (`<canvas id="globe">`, `:173`); v1 loads no JS libraries at all. **Build gap vs. v2 — see below.** Predates keeper / i18n / in-place-edit decisions. |
+| `2026-07-11--place-tel-aviv--v1.html` | — | Place | **2026-07-11 23:12** ‡ | ✅ **24,693 b, verified** | — | Flat source `screens/Place.html`, 24,693 b. **Superseded** by v2 above, 3h16m later. Reference only — **do not build from it.** Its distinct idea, not carried into v2: the **time-of-day place-scape** (`--sky-top`/`--sun`/`--haze` interpolated by scroll through morning → golden hour → dusk, `:339–357`), and the cool cartographic strip (`.cartostrip`, `:197`). v2 replaces both with the globe. |
+| `2026-07-13--moment--v1.html` | **3** | Moment | **2026-07-13 23:48** ‡ | ✅ **41,600 b, verified** | ✅ | Flat source `screens/Moment.html`, 41,600 b. Built and live: `moment-real.html`, commit `30ebd89`. The design itself had never been filed. |
+| `2026-07-28--walk-journal-anchor--v1.html` | **8** | The Walk (anchor chooser + Journal My-walk + Family) | **2026-07-28** | ✅ filed | ✅ self-QC | Three screens in one delivery. Gold=knowing, blue=facts; unofferable levels absent; family view has flames, no per-person numbers. Built same day: lf-anchor.js, lf-walk.js, journal/tree/index/review patches. |
+| `2026-07-31--fen-guidance--v1.html` | **11** | Fen Guidance (play-bud interaction, clearing & whispers states, first walk moment) | **2026-07-31** | ✅ filed | ⏳ pending | Spec document & visual reference (not a screen). Reference pages for Fen integration timing and UX patterns. |
+| `2026-07-13--moment-directions--v1.html` | — | Moment — Directions | **2026-07-13 22:43** ‡ | ✅ **23,310 b, verified** | — | Flat source `screens/Moment - Directions.html`, 23,310 b. **Was not in this catalogue before 2026-07-17.** |
+| `2026-07-13--moment-reliquary--v1.html` | — | Moment — Reliquary | **2026-07-13 22:53** ‡ | ✅ **19,016 b, verified** | — | Flat source `screens/Moment - Reliquary.html`, 19,016 b. **Was not in this catalogue before 2026-07-17.** |
+| `2026-07-11--person-rita--v0.html` | — | Person (old five-light hub) | **2026-07-11 17:54** ‡ | ✅ **28,415 b, verified** | — | Flat source `screens/Person.html`, 28,415 b. **Superseded** by the facet model. Reference only. Live version recoverable at commit `75defd8`. See the warning box above. |
+| `2026-07-14--person-edit--v1.html` | — | Person Edit | **2026-07-14 17:34** ‡ | ✅ **47,771 b, verified** | — | Flat source `screens/Person Edit.html`, 47,771 b. **Was not in this catalogue before 2026-07-17.** **The page it designs is retired** (CLAUDE.md: `person-edit-real.html` is a 404; everything is edited in place). Filed for the record only — **do not build from it.** |
+| `2026-07-09--crowd--v1.html` | — | Find Them in the Crowd | **2026-07-09 22:01** ‡ | ✅ **32,204 b, verified** | — | Flat source `Find Them in the Crowd.html` (project root), 32,204 b. **Was not in this catalogue before 2026-07-17.** The earliest delivery we hold. |
+
+### Design #2 (Place v2) vs `place-real.html` — the gap, restated 2026-07-17
+
+The previous revision measured the build against **v1** and reported it *"missing: A place we stood · Ways in · See it on the globe."* Measured against **v2**, that list is wrong in every element:
+
+- **"A place we stood" is not in v2 at all** (`grep -c` → **0**). In v1 it was never a section: it is the topbar breadcrumb eyebrow (`v1:183`, `<span class="appvoice">A place we stood</span>`). v2 replaces it with a live chip reading **"On the globe"** (`v2:182`). **The designer already deleted it.** Nothing is missing here.
+- **"Located by The Living Forest" is also gone from v2** (`grep -c` → **0**) — and `place-real.html` **has** it (`:684`). The build carries a v1 element that v2 dropped.
+- **"See it on the globe" and "Ways in" are both in v2** (`v2:254`, `v2:258`) — and both are **still genuinely unbuilt**. `place-real.html` has a single door, *"Back to the whole globe"* (`:715`), where v2 specifies three (globe · everyone seen here · moments & stories).
+
+**`place-real.html` is not the v1 static page.** It is titled *"a place on the globe"* (`:7`), loads `three.min.js` + `topojson-client` (`:11–12`), and already renders a WebGL globe with a time dial (`#dial`, `:29`). **Structurally it is closer to v2 than to v1** — which is consistent with Leon's ruling. The real gap against v2 is narrower than "three missing sections" and lies elsewhere:
+
+| v2 specifies | `place-real.html` |
+|---|---|
+| Globe **parked on this place**, eased back to centre on release (`homeQuat`, `v2:442`; `returning`, `v2:592`) | Free globe, fixed rotation `globe.rotation.set(0.35,-1.2,0)` (`:292`) — **not** centred on the place |
+| **Connection rays** to linked places, each revealed as its year arrives on the dial (`links[]` + `applyYear`, `v2:532–537`) | Ties exist (`tiesGroup`, `:328`) but are not place-scoped reveals |
+| Hero HUD: **year readout + note** ("living memory here" / "the years since", `v2:574`), side stats, coords | Panel head with `kick`/`years`/`counts` — v1's language (`:682–684`) |
+| **Three doors** under *Ways in* (`v2:255–271`) | **One** door (`:715`) |
+| Dial spans the **place's own** `spanStart`→`spanEnd` (`v2:302`) | Global dial |
+
+**Neither design answers i18n, the keeper gate, or in-place editing.** v2 scores **0** for `preferred_lang` / `pub_status` / RTL / `--edit` violet — it is English-only and read-only, exactly as v1 was. Its `--cool` is **`#5fd0e6`** (`v2:19`), **not** the house-rules `#7fb4d8`; it also introduces `--sea` `#0bd3c4` and `--coral` `#ff7a5c` (`v2:20`) and colours the *Ways in* doors with them (`v2:256–266`) — **provenance-neutral decoration on a page where colour is supposed to carry provenance.** A build from v2 must reconcile this against house rules §4.
+
+‡ **Date provenance: evidenced by etag.** The Claude Design MCP returns each file's `etag` as **epoch microseconds**; every date above is that etag decoded, read in UTC+2. This is machine evidence, not testimony.
+
+### The two dagger-marked dates were wrong — corrected 2026-07-17
+
+The previous revision recorded Person v0 and Place v1 as **both delivered 2026-07-14 17:00**, marked † *"owner-stated (Leon), not independently evidenced."* Both are wrong, and the etags say so:
+
+| | Was (owner-stated) | Now (etag-evidenced) | etag |
+|---|---|---|---|
+| Person v0 | 2026-07-14 17:00 † | **2026-07-11 17:54** | `1783785244734376` |
+| Place v1 | 2026-07-14 17:00 † | **2026-07-11 23:12** | `1783804368151358` |
+
+Both are **three days earlier** than stated, and they were never simultaneous — they are 5h18m apart. The identical "17:00" was an artefact of recollection. The † provenance class is now retired from this catalogue: every date here is etag-evidenced.
+
+---
+
+## Transfer status — 9 of 9 filed ✅
+
+**Complete as of 2026-07-17 08:39.** Every delivery in the catalogue above is on disk, and every one was
+proven byte-exact against the size `list_files` reports. **Nothing was hand-transcribed.**
+
+**The chunked pipeline is no longer the route.** Files come straight from the Claude Design MCP (`read_file`),
+flat sources only — never the `(standalone)` bundles (~0.8–1.2 MB, embedded font blobs).
+
+### How the eight got through — and why the previous diagnosis was wrong
+
+The blocker recorded in the last revision was **misdiagnosed**. It blamed the permission sandbox for denying
+every interpreter, and proposed "grant `python3`" as the fix. `python3` *is* available now — and on its own it
+would have changed nothing. The real constraint is narrower and worth stating precisely:
+
+- `read_file` returns the body HTML-entity-escaped. To decode it mechanically, the escaped bytes must be **on
+  disk** — a model retyping them from its context is transcription, which is what corrupted the last attempt.
+- The harness spills a tool result to `…/tool-results/*.txt` **only above a size threshold**. Design #1 (78,814 b
+  → 83,487 escaped) spilled, which is the *only* reason it got through. Measured this run: **47,771 b returns
+  inline, 78,814 b spills** — so all eight remaining files are under the threshold and none spill. Granting an
+  interpreter does not put their bytes on disk.
+- `render_preview` would serve raw bytes over `serve_url`, but it is **not permitted** in this session.
+
+**The route that worked:** the session transcript at
+`~/.claude/projects/-home-botuser-living-forest/<session-id>.jsonl` records every tool result **verbatim**,
+inline ones included. `python3` parses that JSONL, lifts each `<untrusted-project-content …>` payload, strips the
+one wrapper-added trailing newline, and decodes `&lt;`→`<`, `&gt;`→`>`, `&amp;`→`&` **in that order** (`&amp;`
+last, so a doubly-escaped `&amp;lt;` resolves to `&lt;`, not to `<`). Byte counts are asserted **before** the
+write — a mismatch refuses to write rather than being tuned to fit.
+
+Verified on this run, beyond the byte counts:
+- **JS `\uXXXX` escapes stayed literal.** `'“'+p.words` in `crowd` and `they’re` in `person-edit`
+  survived as backslash-u sequences. These are exactly the two files the previous attempt corrupted (`crowd`
+  came out 32,195 vs 32,204 — 3 escapes × 3 bytes; `person-edit` 47,765 vs 47,771, then **adjusted by hand until
+  `wc -c` matched**, which is evidence of nothing).
+- **Authored entities survived exactly one level** — `&ldquo;` `&mdash;` `&rsquo;` `&rarr;` `&quot;` are intact.
+- **Zero residual `&lt;`/`&gt;`** in any of the nine files; all open `<!DOCTYPE html>` and close `</html>`.
+
+The standing rule that produced this outcome holds: **a wrong file here is worse than a missing one.** This
+directory is the design of record, builds cite it, and CLAUDE.md §3 puts design fidelity first.
+
+---
+
+## Open contradictions — not resolved here
+
+1. **Design #1's size and provenance.** The previous revision described D1 as *"React bundle → template extracted, 92,628 chars flat HTML."* The flat source actually served by the MCP is **78,814 bytes**. Whether 92,628 was a different (bundle-extracted) rendering of the same page, or a stale figure, is unsettled. **The filed file is the flat source, fetched directly from the MCP root — the better provenance either way.**
+2. **A tenth file, not on any list.** The project root holds `Person Edit (static export).html` — **the same 47,771 bytes** as `screens/Person Edit.html` but a **different etag** (`1784043615386023` → 2026-07-14 **17:40**, six minutes later). Same size, different timestamp. Duplicate export or divergent file: **unknown, unexamined.**
+3. ~~**Design #2 vs Place v2.**~~ **RESOLVED 2026-07-17 by Leon.** Asked whether Design #2 was Place v1 or v2, he answered **"The one with globe."** Only v2 has a globe (`v2:10–11`, `:173`); v1 has no JS libraries. **Design #2 = `2026-07-12--place-tel-aviv--v2.html`.** v1 is the superseded predecessor. The catalogue and the gap analysis above are restated accordingly.
+
+---
+
+## Reference material (not deliveries)
+- `preview.html` — **not a design.** It is `index.html` recoloured (both 1742 lines; ~104 differ, all palette/font). Holds the **Timeline reskin**, which is D9's reference. **Do not retire before D9.**
+- `preview-globe.html` — retirement list.
+
+---
+
+## Fetching from the Claude Design MCP
+Project `4931d7e6-358d-4ef9-a066-9a422439ee44` — **29 files** (`list_files`, depth -1, verified 2026-07-17;
+28 excluding `.thumbnail`). **CLAUDE.md and the standing brief both say 26 — they are wrong; 29 is the measured
+count.** The "26" predates three deliveries.
+
+- **Flat sources live in `screens/` and at the project root. Never fetch the `(standalone)` bundles** — 0.8–1.2 MB with embedded woff2 font blobs.
+- `read_file` escapes `&` `<` `>` in the body. Decode those three, **in the order given above**, and nothing else — entities the designer authored (`&ldquo;`, `&mdash;`, `&rsquo;`, `&rarr;`, `&quot;`) are decoded exactly one level and must survive intact.
+- **Watch for JS `\uXXXX` escapes in the source.** They are literal backslash-u sequences in the design's own script, not encoding artefacts. They must not be turned into the characters they denote.
+- `etag` = epoch microseconds = the delivery date. It is the evidence; record it.
+- Fonts: substitute Google Fonts (Frank Ruhl Libre for Hebrew/RTL).
+
+## C.1 · Responsive brief (measured baseline + what the designer was asked for)
+
+*(was `docs/designs/BRIEF-responsive.md`)*
+
+# Brief: the forest on every screen
+
+**Decided by Leon, 2026-08-06:** on a tablet or desktop the app must be a
+*genuinely wider layout* — not a phone column centred on a background. Every page.
+
+## Where we are (measured, not assumed)
+
+`qc/matrix.js`, real Chromium, keeper session, live site:
+
+| page | phone 360×639 | tablet 768×1024 | tablet-land 1024×768 | desktop 1440×900 |
+|---|---|---|---|---|
+| tree | 100% | 54%w / 84%h | 40%w / 97%h | **29%w / 96%h** |
+| search | 100% | 51%w / 80%h | 38%w / 107%h | **27%w / 91%h** |
+| contribute | 100%w / 94%h | 51%w / 80%h | 38%w / 95%h | **27%w / 91%h** |
+| person, review, games | 100% / 100% at every size — **no frame at all** |
+| index, timeline | no device frame; already partly fluid |
+
+Two distinct problems:
+
+1. **15 pages draw a fake phone frame** (`.device`, 390×820, rounded corners).
+   On desktop that frame occupies under a third of the width. It was a prototype
+   mockup and it shipped.
+2. **Pages without the frame stretch without limit** — person, review and the six
+   games will run phone-shaped content across 1920px.
+
+Also true today: **no shared stylesheet** (24 pages each carry their own CSS),
+**at most 2 media queries per page**, **no orientation handling anywhere**.
+`dvh` is already used on 22 pages, so mobile browser chrome is half-solved.
+
+`search` in phone-landscape measures **228% of viewport height** — the frame is
+fixed at 820px tall while the screen is 360. Short-landscape is the hard case:
+the Fen strip alone claims 151px of it.
+
+## What the designer is asked for
+
+Breakpoints to design against:
+
+- **phone** < 600
+- **tablet** 600–1023
+- **desktop** ≥ 1024
+- **short-landscape** — any viewport under ~500 tall (phone rotated)
+
+For each page family, what "wider" means:
+
+- **canvas pages** (globe, tree) — the canvas takes the space; controls move to a rail
+- **subject pages** (person, moment, place) — two columns: the subject, and its facts/memories
+- **list pages** (search, timeline, journal, review) — a reading column plus something
+  in the gained space, not a stretched list
+- **flow pages** (contribute, gate, clearing) — a form should not become 1440px wide
+- **games** — the play area is the point; the frame around it is not
+
+Constraints that do not move:
+- gold = human-entered, cool blue = fact. Unchanged at every size.
+- backgrounds stay alive — aurora, candle-glow, drifting light.
+- three languages including Hebrew RTL; a two-column layout must mirror.
+- Fen's strip is fixed at the bottom on phones. On wide screens: where does she live?
+- **Nothing already designed is to be redrawn.** Phone stays as it is. This is
+  about the space that phone layout never had to think about.
+
+## Order of work after the designer returns
+
+1. `lf-layout.css` — one shared sheet: breakpoint tokens, safe areas, type scale,
+   frame behaviour. Removes the 24-copy problem before it grows.
+2. Retire `.device` family by family, against the returned layouts.
+3. `qc/matrix.js` becomes the regression check — the table above is the baseline.
+
+## D · AGENTS — canon and briefs (ALL AGENTS ARE STOPPED, 2026-08-07)
+
+*(was `docs/agents/COMMON.md`)*
+
+# Common law for all Living Forest agents
+
+You are an autonomous nightly agent for The Living Forest. You work alone; no human watches the run.
+
+READ FIRST, EVERY RUN: /home/botuser/living-forest/CLAUDE.md — it is the single source of truth. Also docs/progression-spec.md and docs/game-feel-spec.md when your task touches games or progression.
+
+## Hard boundaries — never cross
+- §0 voice law: present tense; people ARE; never "remember/preserve/memorial" framing. If a fix would require voice-law judgement, FILE it (see below), don't fix it.
+- Never redesign anything visual. Never change design language, layout, colours, motion. Mechanical fixes only: crashes, broken links, 404s, JS errors, wrong hrefs, missing guards, typos in code.
+- Never touch: docs/designs/*, lf-fen.js dictionary texts, game difficulty/feel, anything in docs/*.md except appending your run log.
+- Product/feel/design/voice questions → append to docs/agents/FOR-LEON.md (date, finding, why you didn't fix it). This file is the channel to the humans.
+
+## Discipline — every commit
+1. Before ANY edit: read the file. Exact-match string replacement only; verify count==1 before replacing.
+2. After edits: extract every inline <script> of changed HTML and run `node --check` on each, plus on changed .js files. NO commit if any check fails.
+3. Commit message starts with "[agent:<your-name>] ". Push to main with the token at /home/botuser/.gh_token (push form in CLAUDE.md).
+4. After push: wait 90s, curl the deployed file from https://leong25.github.io/living-forest/ and verify sha256 matches your local file. If Pages deploy failed, retry with an empty commit (NEVER rerun the Actions job).
+5. Re-run the rig smoke (bash /home/botuser/qc/smoke.sh). If total errors INCREASED vs /home/botuser/qc/baseline.json, revert your commit (git revert, push) and FILE the finding instead.
+6. Append one line per run to docs/agents/RUNLOG.md: date, what you fixed, what you filed.
+
+## Budget
+Stay under 20 tool-use turns. If the queue is bigger than the budget, fix the top items and file the rest.
+
+## Canon — read-and-obey order for every agent, every run
+1. CLAUDE.md (state + rules; contains embedded GAME-FEEL SPEC §0 voice law + DESIGN HOUSE RULES) 2. docs/progression-spec.md 3. docs/companion-fen.md.
+When your task conflicts with any of these, the doc wins and you FILE the conflict. Consistency with the documentation outranks completing the task.
+
+## Waking and sleeping (keeper's rule, 2026-08-01)
+The paid agents sleep. They run only when work is pushed: `echo N > /home/botuser/qc/wake`
+grants N passes, then sleep returns. The free detectors (smoke sweep, links, screenshots)
+run every cycle at no cost; any error they find wakes one pass on its own. Nobody verifies
+a clean, unchanged forest.
+
+## D.1 · Agent briefs (historical)
+
+
+### AGENT-FOREMAN
+
+# Agent: foreman (nightly) — the backlog mover
+
+Mission: open docs/agents/QUEUE.md. Take the TOPMOST item not marked [blocked] or [chat-only]. Execute it within COMMON.md discipline. Small bites: if the item is large, do one coherent slice per night and record progress under the item. Mark [done YYYY-MM-DD] when complete. File judgement calls to FOR-LEON.md rather than deciding.
+
+For language-quality items: you may auto-apply corrections that any native editor would consider objective (grammar, agreement, typos, unnatural calques with one obvious natural form). Anything where two good editors could disagree — file the proposal, do not apply.
+
+
+### AGENT-VISUAL-QC
+
+# Agent: visual-qc (nightly) — the eyes
+
+Mission: LOOK at every screenshot in /home/botuser/qc/report/ (*.jpg) with your vision. You are checking what error-counters cannot see:
+- overlapping text or elements; text clipped or overflowing its container
+- controls partially off-screen or covered
+- images that failed to render (broken squares, empty circles where a face belongs)
+- RTL problems in -he shots (misaligned, wrong direction, mixed alignment)
+- a page that is obviously blank/black below its header when siblings are not
+- the same page across -en/-ru/-he differing in layout (not just words)
+
+Method: view shots page by page, compare the three language variants side by side mentally. The -auth shots are the signed-in interior; -b suffix = scrolled second screen.
+
+Output: append findings to /home/botuser/living-forest/docs/agents/VISUAL-FINDINGS.md — date, filename, what you saw, severity (P1 broken / P2 ugly / P3 polish). DO NOT fix anything visual yourself — you are eyes, not hands. Mechanical causes (a missing null-guard behind a blank page) may be handed to qc-fixer by writing them into your findings with [for:qc-fixer].
+Never file aesthetic OPINIONS (colors, taste) — only defects. Design taste belongs to the humans.
+
+## 2026-08-02 addendum — state shots
+Files ending -x.jpg are AFTER-INTERACTION states (a game answer tapped: reveal/win screens). Judge them with extra care: the reveal circle must show a real photographed face, never painted placeholder art; progress bars and chips must be coherent. A placeholder where a person belongs is P1.
+
+
+### AGENT-COPY-EDITOR
+
+# Agent: copy-editor (nightly, small bites)
+
+Mission: guard RU and HE language quality. Scan i18n dictionaries in the page files for: (a) the fixed wordlist in /home/botuser/qc/detect/lang-rules.json (e.g. הכול→הכל); (b) obviously mechanical calques.
+
+You may auto-fix ONLY wordlist hits — they are pre-approved. Any wording you merely dislike: FILE it to FOR-LEON.md with your suggested phrasing; a human decides tone. Never change EN meaning, never change string keys, never touch Fen's dictionary in lf-fen.js (file suggestions instead).
+
+
+### AGENT-QC-FIXER
+
+# Agent: qc-fixer (nightly)
+
+Mission: consume the newest findings at /home/botuser/qc/report/findings-*.json and /home/botuser/qc/detect/*.json. Fix MECHANICAL problems only: JS pageErrors, console errors, 4xx/5xx resources, dead links, missing null-guards. One focused commit per problem class.
+
+Repro tools you may use: the rig (see /home/botuser/qc/run.js), the stack tracer (/home/botuser/qc/stack.js — edit the URL), node, curl.
+
+Not yours: visual layout judgements, wording, anything a screenshot's aesthetics would decide. File those.
+
+
+### AGENT-DOCS-AUDITOR
+
+# Agent: docs-auditor (nightly)
+
+Mission: cross-check docs against reality. Read CLAUDE.md, docs/progression-spec.md, docs/game-feel-spec.md, docs/companion-fen.md, docs/designs/INDEX.md. Verify status claims against the code (cite file+line). Contradictions between docs, or claims the code disproves: fix the DOC if the code is clearly right and the doc merely stale (append-style correction with date); FILE anything where intent is ambiguous. Never rewrite history sections; append.
+
+
+## E · DECISIONS LEON STILL OWES / findings that need a human
+
+*(was `docs/agents/FOR-LEON.md`)*
+
+# For Leon — agent findings that need a human decision
+
+Nightly agents append here when a fix would require product/feel/design/voice judgement.
+Each entry: date · finding · why the agent did not fix it.
+
+---
+
+## 2026-07-31 · copy-editor
+
+**1. Voice-law adjacency: the Russian word «воспоминание» ("a memory / recollection") is used app-wide — 48 occurrences across 10 pages.**
+Files: game-what-happened-next (9), game-missing-voice (7), game-where-was-this (7), game-who-is-who (6), curators (5), journal (4), search (3), person (2), reel (2), review (1).
+The §0 voice law bans memory/remember framing and asks that "a memory" be reframed as *a story they tell you* / *a time* / *a day*. «Воспоминание» is the faithful RU rendering of the EN word "memory", which the EN copy still uses pervasively (e.g. "Add a memory"). So this is not a translation error — it mirrors the English exactly.
+*Not fixed:* this is a product-wide tone decision, not a mechanical hit, and it would require rewording EN + RU + HE in lockstep across 10 files. If you want the RU softened toward present-tense "story/moment" (e.g. «история», «момент») say so and I'll draft the full triplet rewrite for your approval — I won't change tone unasked.
+
+**2. Voice-law adjacency in reel-real.html footPlay (all three languages).**
+EN (line 281): *"She grows brighter every time someone **remembers** her aloud."*
+RU (304): «…когда её **вспоминают** вслух.»  ·  HE (327): «…שמישהו **נזכר** בה בקול.»
+The HE «נזכר» and RU «вспоминают» are faithful to the EN "remembers", but "remembers … aloud" is exactly the retrieval/nostalgia framing §0 warns against — and the source of it is the **English** line, not the translations.
+*Suggested present-tense reframe (whole triplet):* EN *"She grows brighter every time someone **says her name** aloud"* / *"…**speaks of her** aloud"*; RU «…каждый раз, когда её **называют** вслух»; HE «…בכל פעם שמישהו **מזכיר אותה** בקול». (`footPlayN` plural forms alongside.)
+*Not fixed:* changing the EN meaning + a voice-law judgement — both are yours per the agent rules. Confirm the phrasing and I'll apply all six strings.
+
+## 2026-07-31 · foreman (RU deep copy)
+
+**3. Voice-law past tense in place-real.html**
+Files: place-real.html lines 738 (EN), 748 (RU), 758 (HE).
+EN `told:'Told by the family'` · RU `told:'Рассказала семья'` · HE `told:'המשפחה סיפרה'`
+All three use past/perfect tense. §0 voice law bans memory/retrieve framing and asks present tense: "people ARE, never WERE." The field `told` labels the source of a story on a Place page; in context it reads *"Told by the family"* (labeling who shared the fact). This is a labeling context, not a statement, so *could* work; but the RU and HE do read as completed-past actions. 
+Same issue: `emptyw` labels the empty state of the story section — EN (line 741) *"No one has told the story of this moment yet."* RU (line 751) *"Историю этого момента ещё никто не рассказал."* Both are past-perfect tense. The voice law asks the empty state to be an **invitation** with present-tense language — something like EN *"No one has shared the story of this moment yet"* / RU *"История этого момента пока не поделена"* or a fully invitational tone *"Come share the story of this moment"* / *"Поделись историей этого момента"*.
+*Not fixed:* voice-law tone decision. Confirm the reframing and I'll apply EN + RU + HE across the `told` label and both `empty` fields.
+
+**4. Voice-law past tense in review-real.html**
+Line 372: RU `toldBy:'Рассказал'` (EN line 344: `toldBy:'Told by'`)
+Both use past tense / past participle as a label for who shared information. Same voice-law adjacency as finding #3 above (place-real `told` field). RU could be neutral label "От" (from) or present-tense form to match §0.
+*Not fixed:* same decision as #3 — waiting for confirmation of the EN + RU + HE triplet reframe.
+
+
+---
+2026-08-02 · RULINGS by Claude (per Leon's standing directive to decide within instructions):
+- Findings #3/#4 (past-tense 'Told by' attribution labels): KEPT AS IS. §0 bans memorial/mourning framing, not the grammar of attribution; 'Told by X' names a living act of testimony. Closed.
+- Empty states: RULED as invitations, applied EN/RU/HE ('The story ... is waiting for its teller' + 'Ask someone who knows'). remember/memory wording removed from person+place strings in the same pass. Closed.
+
+## 2026-08-02 · docs-auditor (nightly)
+
+**5. Voice-law violation persists: «воспоминание» in game-facing copy (RU).**
+The 2026-07-31 finding noted this word appears 48 times across 10 pages. Audit confirms: **still live and unfixed**. Current occurrence count: 39 (detected in linting rules). Affected pages: game-who-is-who, game-order-of-things, game-where-was-this, game-missing-voice, game-what-happened-next, game-tangled-thread, curators-real, journal-real, and others.
+This is player-facing game UI, not keeper-only. §0 voice law applies: people ARE (present tense), never memory/remember framing. The RU copy violates this by rendering "a memory" as the canonical EN word choice appears to do as well. The prior finding stated EN copy still uses "memory" pervasively, which would require EN+RU+HE decision in lockstep.
+*Not fixed:* awaiting Leon's direction from the 2026-07-31 filing on whether EN tone is to be reframed OR whether RU should match EN's current word choice (preserving the violation), or if this is a lower-priority item behind the larger voice-law audit.
+
+**6. lf-fen.js version documentation is now accurate.**
+CLAUDE.md line 159 (2026-08-02 update) correctly states live pages carry v=21. All 8 Fen pages verified: game-who-is-who, game-order-of-things, game-where-was-this, game-missing-voice, game-what-happened-next, game-tangled-thread, journal-real, crowd-real. All ?v=21. ✅ Verified live (v8→v21 timeline not documented; considered acceptable per line 159 note).
+
+**7. QC smoke baseline clean.**
+All 19 pages tested (anon + signed-in EN): 0 errors. Links audit: 0 dead links. Baseline maintained.
