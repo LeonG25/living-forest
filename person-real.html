@@ -308,6 +308,10 @@
      review page displayed another part of the same picture. Showing the whole photograph
      here needs zoomToPx's geometry changed AND the 45 existing face boxes migrated, or
      every portrait in the forest moves. Until then, what you frame is what you get. */
+  /* The .cimg box is sized to the photograph's own aspect by apply(), so the picture
+     fills it exactly - 'fill' here means no second opinion about shape. If the box is ever
+     square while the photo is not, this stretches, which is precisely what Leon saw when
+     apply() failed to run at all. */
   .cropstage .cimg svg, .cropstage .cimg img{ width:100%; height:100%; object-fit:fill; }
   /* The ring must show EXACTLY what the portrait will be. Measured: the renderer crops a
      square of side m/k and shows its inscribed circle, while this preview ring was 0.92 of
@@ -1148,27 +1152,7 @@
           px=((b.x*iw)+sideSrc/2)/iw*100; py=((b.y*ih)+sideSrc/2)/ih*100;
           const zr=sh.querySelector('[data-zoom]'); if(zr) zr.value=z; }
         apply(); };
-      if(el0){ if(el0.complete) measure(); else el0.onload=measure; } else { apply(); }
-      /* TEMPORARY X-RAY (2026-08-10). The rig cannot reproduce the vertical dark band Leon
-         sees beside the photograph in this stage: on the rig the element covers the whole
-         square with object-fit:cover and a 4000x2252 source. Read the truth from his glass
-         instead of guessing a fifth time. Remove once the cause is known. */
-      try{
-        const el=img.querySelector('img');
-        if(el){ const report=()=>{ try{
-            const s1=img.getBoundingClientRect(), s2=el.getBoundingClientRect();
-            const st=document.querySelector('.cropstage').getBoundingClientRect();
-            if(window.LFDB&&LFDB.note) LFDB.note('cropstage: stage '+Math.round(st.width)+'x'+Math.round(st.height)
-              +' | box '+Math.round(s1.width)+'x'+Math.round(s1.height)+'@'+Math.round(s1.left-st.left)+','+Math.round(s1.top-st.top)
-              +' | img '+Math.round(s2.width)+'x'+Math.round(s2.height)+'@'+Math.round(s2.left-st.left)+','+Math.round(s2.top-st.top)
-              +' | natural '+el.naturalWidth+'x'+el.naturalHeight
-              +' | fit '+getComputedStyle(el).objectFit+' pos '+getComputedStyle(el).objectPosition
-              +' | complete '+el.complete+' | dpr '+(window.devicePixelRatio||1)
-              +' | src '+String(el.currentSrc||el.src).split('/').pop().slice(0,40));
-          }catch(e){} };
-          if(el.complete) setTimeout(report,300); else el.onload=()=>setTimeout(report,300);
-        }
-      }catch(e){}
+      if(el0){ if(el0.complete) measure(); else el0.addEventListener('load',measure,{once:true}); } else { apply(); }
     };
     /* open on the current portrait: same photo, same zoom, same position */
     const curFF=pubList('face','und').slice().sort((a,b)=>String(b.published_at||b.created_at||'').localeCompare(String(a.published_at||a.created_at||'')))[0];
