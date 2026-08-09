@@ -665,7 +665,11 @@
     /* a tag the keeper has not welcomed yet is drawn as waiting, not as settled fact */
     subjects.forEach(s=>{ if(s.detail&&s.detail.w){ TAGS.push({ id:'s:'+s.person_id, kind:'subject', person:s.person_id, pending:(s.status&&s.status!=='published'),
       name:nameFor(s.person_id,lang)||(peopleById[s.person_id]&&peopleById[s.person_id].display_name)||'',
-      x:s.detail.x, y:s.detail.y, w:s.detail.w, h:s.detail.h, status:'ok' }); } });
+      /* The page already draws a waiting tag in violet - it keys off status==='pending',
+         and a tag the keeper has not welcomed is exactly that. Without this a face just
+         drawn looked as settled as one approved years ago. */
+      x:s.detail.x, y:s.detail.y, w:s.detail.w, h:s.detail.h,
+      status:((s.status&&s.status!=='published')?'pending':'ok') }); } });
     edits.filter(e=>e.field==='tag_add').forEach(e=>{ let box=null,name=''; try{const m=JSON.parse(e.new_value||'{}'); box=m.box; name=m.name;}catch(_){}
       if(box&&box.w){ TAGS.push({ id:'e:'+e.id, kind:'edit', editId:e.id, person:e.ref_id,
         name:name||(e.ref_id?nameFor(e.ref_id,lang):'')||'', x:box.x, y:box.y, w:box.w, h:box.h, status:'pending' }); } });
