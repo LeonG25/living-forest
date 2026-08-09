@@ -1248,13 +1248,13 @@
   function kinSentence(them, me, kind, dir, lang){
     if(!them||!me) return '';
     const K={
-      parent:{en:'{a} is a parent of {b}.',      ru:'{a} — родитель {b}.',        he:'{a} הוא/היא הורה של {b}.'},
-      child:{ en:'{a} is a child of {b}.',       ru:'{a} — ребёнок {b}.',         he:'{a} הוא/היא ילד/ה של {b}.'},
-      spouse:{en:'{a} is married to {b}.',       ru:'{a} — супруг(а) {b}.',       he:'{a} נשוי/אה ל{b}.'},
+      parent:{en:'{a} is a parent of {b}.',      ru:'{a} — родитель {b}.',        he:'{a} — הורה של {b}.'},
+      child:{ en:'{a} is a child of {b}.',       ru:'{a} — ребёнок {b}.',         he:'{a} — ילד/ה של {b}.'},
+      spouse:{en:'{a} is married to {b}.',       ru:'{a} — супруг(а) {b}.',       he:'{a} — בן/בת זוג של {b}.'},
       sibling:{en:'{a} and {b} are siblings.',   ru:'{a} и {b} — брат или сестра.', he:'{a} ו{b} הם אחים/אחיות.'},
-      friend:{en:'{a} is a friend of {b}.',      ru:'{a} — друг {b}.',            he:'{a} הוא/היא חבר/ה של {b}.'},
-      mentor:{en:'{a} is a mentor to {b}.',      ru:'{a} — наставник {b}.',       he:'{a} הוא/היא מורה דרך של {b}.'},
-      neighbour:{en:'{a} is a neighbour of {b}.',ru:'{a} — сосед {b}.',           he:'{a} הוא/היא שכן/ה של {b}.'},
+      friend:{en:'{a} is a friend of {b}.',      ru:'{a} — друг {b}.',            he:'{a} — חבר/ה של {b}.'},
+      mentor:{en:'{a} is a mentor to {b}.',      ru:'{a} — наставник {b}.',       he:'{a} — מורה דרך של {b}.'},
+      neighbour:{en:'{a} is a neighbour of {b}.',ru:'{a} — сосед {b}.',           he:'{a} — שכן/ה של {b}.'},
       other:{en:'{a} is connected to {b}.',      ru:'{a} связан(а) с {b}.',       he:'{a} מקושר/ת ל{b}.'}
     };
     const ASK={ en:'\n\nIs that right?', ru:'\n\nВсё верно?', he:'\n\nנכון?' };
