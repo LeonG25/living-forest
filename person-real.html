@@ -1300,7 +1300,7 @@
        was made and never appeared on the review page. The default is 'in_review' now too,
        so no future path can publish by forgetting to say so. */
     if(true){
-      const payload=JSON.stringify({ op:p.relId?'edit':'add', rel_id:p.relId||null, other:p.other||null,
+      let payload=JSON.stringify({ op:p.relId?'edit':'add', rel_id:p.relId||null, other:p.other||null,
         other_name:p.other_name||'', propose:p.propose||'', kind:p.kind, dir:p.dir, certainty:p.certainty, note:p.note||'', from:p.mode==='me'?'viewer':'facet' });
       /* The same acknowledgement the rest of the app gives: moment-real says "Sent to the
          keeper" for exactly this act, and a contributor who is told nothing cannot tell a
@@ -1320,23 +1320,30 @@
           return;
         }
       }catch(e){}
-      const ins=await sb.from('person_facts').insert({person_id:PERSON_ID,group_id:uuid(),field:'kin',lang:'und',value:payload,ord:0,status:'in_review',created_by:user.id});
-      if(ins.error){ toast(L.saveFail||'That could not be sent. Please try again.'); return; }
-      toast(L.sent);
       /* A NAME IS NOT A PERSON. When a contributor names someone the forest has never met,
-         the proposal is filed and then they are handed that person's own empty page, with
-         the tie stated at the top - so what arrives at the keeper is a life, not a label
-         (Leon, 2026-08-07: "users will use this opportunity to add more details than just
-         a name, which is good for our system"). */
+         that person is created FIRST (waiting, like everything else) and the proposal then
+         points at their id - not at a loose name. That matters: the keeper's approval
+         creates a person when the proposal carries only a name, so filing the name AND
+         making the row would have produced two of them, which is exactly how Anna Tihonov
+         ended up in the forest twice. Then the contributor is handed that person's own
+         empty page, with the tie stated at the top and settled. */
+      let newId=null;
       if(!p.other && String(p.propose||'').trim()){
         const nm=String(p.propose).trim();
         const mk=await sb.from('people').insert({display_name:nm,created_by:user.id,status:'in_review'})
                    .select('id').single();
-        if(!mk.error && mk.data){
-          setTimeout(()=>{ location.href='person-real.html?id='+encodeURIComponent(mk.data.id)
-            +'&new=1&tie='+encodeURIComponent(p.kind||'other')
-            +'&of='+encodeURIComponent(nameOf(PERSON_ID)||(person&&person.display_name)||''); }, 900);
-        }
+        if(mk.error||!mk.data){ toast(L.saveFail||'That could not be sent. Please try again.'); return; }
+        newId=mk.data.id;
+        try{ const obj=JSON.parse(payload); obj.other=newId; obj.other_name=nm; obj.propose='';
+             payload=JSON.stringify(obj); }catch(e){}
+      }
+      const ins=await sb.from('person_facts').insert({person_id:PERSON_ID,group_id:uuid(),field:'kin',lang:'und',value:payload,ord:0,status:'in_review',created_by:user.id});
+      if(ins.error){ toast(L.saveFail||'That could not be sent. Please try again.'); return; }
+      toast(L.sent);
+      if(newId){
+        setTimeout(()=>{ location.href='person-real.html?id='+encodeURIComponent(newId)
+          +'&new=1&tie='+encodeURIComponent(p.kind||'other')
+          +'&of='+encodeURIComponent((person&&person.display_name)||nameOf(PERSON_ID)||''); }, 900);
       }
       return; }
     const ends=relEnds(p.other,p.kind,p.dir);
