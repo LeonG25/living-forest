@@ -308,7 +308,7 @@
      review page displayed another part of the same picture. Showing the whole photograph
      here needs zoomToPx's geometry changed AND the 45 existing face boxes migrated, or
      every portrait in the forest moves. Until then, what you frame is what you get. */
-  .cropstage .cimg svg, .cropstage .cimg img{ width:100%; height:100%; object-fit:cover; }
+  .cropstage .cimg svg, .cropstage .cimg img{ width:100%; height:100%; object-fit:fill; }
   /* The ring must show EXACTLY what the portrait will be. Measured: the renderer crops a
      square of side m/k and shows its inscribed circle, while this preview ring was 0.92 of
      the stage - so the finished portrait always included about 9% more around the edge than
@@ -1118,17 +1118,37 @@
       <div class="zoomrow">${sv(I.zoomout,1.6)}<input type="range" min="100" max="400" value="145" data-zoom>${sv(I.zoomin,1.6)}</div>
       <div class="btnrow"><button class="btn ghost" data-act="close">${L.cancel}</button><button class="btn violet" data-act="facesave">${L.send}</button></div>`;
     let z=145,px=50,py=44,drag=false,sx,sy,bx,by,chosen=null; const img=sh.querySelector('.cimg'), st=sh.querySelector('[data-crop]');
-    /* SIZE IT, DO NOT SCALE IT. This used to be a 250x250 element under transform:scale(4),
-       and on Leon's phone Chrome rasterised only part of that scaled layer: a hard vertical
-       edge with dark beyond it, moving with the photograph. His own device proved the
-       geometry was fine - element 1000x1000 covering a 250x250 stage, object-fit:cover,
-       complete:true, source 4000x2252 - and a pixel scan of the source showed no such edge
-       (brightness fell smoothly 153 to 70 across it). Same arithmetic, no transform: the
-       element is simply k times the stage, centred at (px%,py%). */
-    const apply=()=>{ const S=st.clientWidth||250, side=S*(z/100);
-      img.style.cssText=`position:absolute;width:${side}px;height:${side}px;`
-        +`left:${(px/100)*S}px;top:${(py/100)*S}px;transform:translate(-50%,-50%)`; };
-    const setImg=g=>{ chosen=g; img.innerHTML=g.url?`<img src="${g.url}" alt="">`:galSVG(g.i); apply();
+    /* THE WHOLE PHOTOGRAPH, NOT ITS MIDDLE.
+       The stage only ever showed the centred SQUARE of a rectangular photo, so the left and
+       right of every landscape picture were unreachable - and at high zoom near the square's
+       edge there was nothing to draw, which is the "dark band" that cost us five attempts.
+       It was the photograph's boundary all along.
+       The image is now fitted whole (contain) and panned freely; the ring can be placed
+       anywhere in it. Framing is emitted as {x,y,w,h,exact:1} in fractions of the FULL image,
+       which lf-face already renders - legacy zoom/px/py entries keep working through their
+       own path, so nothing already in the forest has to move. */
+    let iw=0, ih=0, reopen=null;         /* natural size of the chosen photograph */
+    let fit=1;                           /* scale that fits the whole photo in the stage */
+    const S=()=>st.clientWidth||250;
+    const apply=()=>{
+      if(!iw||!ih) return;
+      const k=z/100, sc=fit*k, w=iw*sc, h=ih*sc;
+      /* px,py are the CENTRE of the view, in fractions of the image (0..1) */
+      const cx=Math.max(0,Math.min(1,px/100)), cy=Math.max(0,Math.min(1,py/100));
+      img.style.cssText='position:absolute;width:'+Math.round(w)+'px;height:'+Math.round(h)+'px;'
+        +'left:'+Math.round(S()/2-cx*w)+'px;top:'+Math.round(S()/2-cy*h)+'px;';
+    };
+    const setImg=g=>{ chosen=g; img.innerHTML=g.url?`<img src="${g.url}" alt="">`:galSVG(g.i);
+      const el0=img.querySelector('img');
+      const measure=()=>{ if(!el0) return; iw=el0.naturalWidth||1; ih=el0.naturalHeight||1;
+        fit=Math.min(S()/iw, S()/ih);
+        if(reopen){ const b=reopen; reopen=null;
+          const sideSrc=Math.max(b.w*iw,b.h*ih);
+          z=Math.max(100,Math.min(400, Math.round(100*(S()/sideSrc)/fit)));
+          px=((b.x*iw)+sideSrc/2)/iw*100; py=((b.y*ih)+sideSrc/2)/ih*100;
+          const zr=sh.querySelector('[data-zoom]'); if(zr) zr.value=z; }
+        apply(); };
+      if(el0){ if(el0.complete) measure(); else el0.onload=measure; } else { apply(); }
       /* TEMPORARY X-RAY (2026-08-10). The rig cannot reproduce the vertical dark band Leon
          sees beside the photograph in this stage: on the rig the element covers the whole
          square with object-fit:cover and a 4000x2252 source. Read the truth from his glass
@@ -1157,22 +1177,32 @@
     if(cur0){ const j=tagged.findIndex(t=>t.artefact_id===cur0.artefact_id||t.storage_path===cur0.storage_path);
       if(j>=0&&gal[j]){ startG=gal[j]; gi0=j;
         if(cur0.zoom!=null){ z=Math.max(100,Math.min(400,+cur0.zoom||145)); }
-        if(cur0.px!=null) px=+cur0.px; if(cur0.py!=null) py=+cur0.py; } }
+        if(cur0.px!=null) px=+cur0.px; if(cur0.py!=null) py=+cur0.py;
+        /* an exact box describes the whole image and outranks the old stage numbers */
+        if(cur0.box&&cur0.box.exact&&cur0.box.w>0){ reopen=cur0.box; } } }
     if(startG){ setImg(startG); const ge=sh.querySelector('[data-g="'+gi0+'"]'); if(ge) ge.classList.add('on'); const zr=sh.querySelector('[data-zoom]'); if(zr) zr.value=z; }
     sh.querySelector('[data-zoom]').oninput=e=>{ z=+e.target.value; apply(); };
     st.addEventListener('pointerdown',e=>{ drag=true; sx=e.clientX; sy=e.clientY; bx=px; by=py; st.setPointerCapture(e.pointerId); });
-    st.addEventListener('pointermove',e=>{ if(!drag)return; px=bx+(e.clientX-sx)/st.clientWidth*100; py=by+(e.clientY-sy)/st.clientHeight*100; apply(); });
+    st.addEventListener('pointermove',e=>{ if(!drag)return;
+      const k=z/100, w=iw*fit*k||1, h=ih*fit*k||1;
+      px=bx-(e.clientX-sx)/w*100; py=by-(e.clientY-sy)/h*100; apply(); });
     st.addEventListener('pointerup',()=>drag=false);
     sh.querySelectorAll('[data-g]').forEach(el=>el.onclick=()=>{ sh.querySelectorAll('.g').forEach(x=>x.classList.remove('on')); el.classList.add('on'); setImg(gal[+el.dataset.g]); });
     sh._faceSave=async()=>{ let ok=true; if(chosen){ const t=tagged[chosen.i];
+      /* Emit the framing in fractions of the WHOLE photograph - {x,y,w,h,exact:1} - which is
+         what lf-face draws from. The old payload described a position inside the centred
+         SQUARE, which is why the left and right of a landscape picture could never be chosen.
+         zoom/px/py are still written alongside so an older client can still read something. */
       const payload={artefact_id:t.artefact_id,storage_path:t.storage_path,zoom:z,px:px,py:py};
-      const ri=img.querySelector('img');
-      if(ri&&ri.naturalWidth&&ri.naturalHeight){ const W=ri.naturalWidth,H=ri.naturalHeight,k=z/100,m=Math.min(W,H);
-        let side=Math.min(m/k,m);
-        let sx=(W-m)/2+m*(0.5-(px/100)/k), sy=(H-m)/2+m*(0.5-(py/100)/k);
-        sx=Math.max(0,Math.min(W-side,sx)); sy=Math.max(0,Math.min(H-side,sy));
+      if(iw&&ih){
+        const k=z/100, sc=fit*k;                 /* displayed pixels per source pixel */
+        const sideSrc=Math.min(S()/sc, Math.min(iw,ih));   /* the ring, in source pixels */
+        const cx=Math.max(0,Math.min(1,px/100))*iw, cy=Math.max(0,Math.min(1,py/100))*ih;
+        let sx=cx-sideSrc/2, sy=cy-sideSrc/2;
+        sx=Math.max(0,Math.min(iw-sideSrc,sx)); sy=Math.max(0,Math.min(ih-sideSrc,sy));
         const rnd=v=>Math.round(v*10000)/10000;
-        payload.box={x:rnd(sx/W),y:rnd(sy/H),w:rnd(side/W),h:rnd(side/H),exact:1}; }
+        payload.box={x:rnd(sx/iw),y:rnd(sy/ih),w:rnd(sideSrc/iw),h:rnd(sideSrc/ih),exact:1};
+      }
       if(t&&await insFact('face','und',JSON.stringify(payload))===false) ok=false; } hideSheets(); await reload(); if(ok) toast(L.sent); };
     showSheet('face'); }
 
