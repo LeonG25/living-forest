@@ -788,6 +788,41 @@ function genAssign(placed){
   const siblingPairs=dedupe([].concat(...placed.map(id=>siblingsOf(id).map(s=>[id,s]))));
   const spousePairs =dedupe([].concat(...placed.map(id=>spousesOf(id).map(s=>[id,s]))));
   const pc=[]; edges.forEach(e=>{ if(isParentEdge(e)&&inSet.has(e.from)&&inSet.has(e.to)) pc.push([e.from,e.to]); });
+  /* CONTRADICTIONS MUST NOT FLATTEN THE FOREST.
+     This relaxation only ever raises a tier, so an impossible statement - Anna is Basya's
+     sibling AND the parent of Basya's parent - never settles: every level climbs until the
+     cap and the whole tree collapses onto one row. That is what Leon saw, and the tree was
+     right about the data; it just had no way to say so.
+     So before relaxing, find the parent edges that cannot be true and set them aside:
+       (a) a parent edge inside one sibling group (you cannot parent your own sibling)
+       (b) a parent edge that closes a loop of ancestry
+     The rest of the tree is then drawn correctly, and the discarded edges are left in
+     window.__lfImpossible so the page can mark those ties as disputed rather than pretend. */
+  const uf={}; const find=x=>{ while(uf[x]&&uf[x]!==x) x=uf[x]=uf[uf[x]]||uf[x]; return uf[x]||x; };
+  placed.forEach(id=>uf[id]=id);
+  siblingPairs.forEach(([a,b])=>{ const ra=find(a), rb=find(b); if(ra!==rb) uf[ra]=rb; });
+
+  const impossible=[]; const keep=[];
+  pc.forEach(pair=>{ if(find(pair[0])===find(pair[1])) impossible.push({edge:pair, why:'parent-of-own-sibling'});
+                     else keep.push(pair); });
+
+  /* a loop of ancestry over sibling groups: walk it and drop the edge that closes it */
+  const adj={}; keep.forEach(([a,b])=>{ const ra=find(a), rb=find(b); (adj[ra]=adj[ra]||[]).push([rb,[a,b]]); });
+  const colour={}; const survivors=[];
+  const dropped=new Set();
+  (function(){ 
+    const visit=(node)=>{ colour[node]=1;
+      (adj[node]||[]).forEach(([next,edge])=>{
+        if(colour[next]===1){ dropped.add(edge[0]+'|'+edge[1]); impossible.push({edge:edge, why:'loop-of-ancestry'}); return; }
+        if(!colour[next]) visit(next); });
+      colour[node]=2; };
+    Object.keys(adj).forEach(r=>{ if(!colour[r]) visit(r); });
+  })();
+  keep.forEach(pair=>{ if(!dropped.has(pair[0]+'|'+pair[1])) survivors.push(pair); });
+  pc.length=0; survivors.forEach(x=>pc.push(x));
+  try{ window.__lfImpossible=impossible; }catch(e){}
+  if(impossible.length){ try{ console.warn('[tree] '+impossible.length+' impossible tie(s) set aside so the generations survive'); }catch(e){} }
+
   const pull=(a,b)=>{ const m=Math.max(tier[a],tier[b]); let ch=false; if(tier[a]!==m){tier[a]=m;ch=true;} if(tier[b]!==m){tier[b]=m;ch=true;} return ch; };
   const cap=placed.length+8;                  // monotonic increase ⇒ converges well inside this
   for(let it=0; it<cap; it++){ let ch=false;
