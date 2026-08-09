@@ -1178,7 +1178,9 @@
     else { await proposeEdit('detail_remove',{new_value:JSON.stringify({idx}), old_value:(detailsList()[idx]||{}).value||'', pendKey:'detail'}); }
   }
   async function submitStory(val){ const d=t(); if(!user){ toast(d.signIn,true); return; } val=String(val==null?'':val).trim(); if(!val){ return; }
-    if(isKeeper){ // publish directly as the story in this language
+    /* every edit waits for the keeper, including a keeper's own (Leon, 2026-08-07):
+       a retelling used to publish itself the moment a keeper typed it */
+    if(false){ // publish directly as the story in this language
       const orig=(art&&art.original_language)||'en';
       let ok;
       if(lang===orig){ ok=await sbWrite(()=>sb.from('artefacts').update({body:val}).eq('id',art.id)); if(ok) art.body=val; }
@@ -1326,7 +1328,12 @@
       if(!document.body.classList.contains('editing')) return;
       e.preventDefault(); openEditor(key);
     }); });
-    // story block: in editing mode, tapping the words opens the editor
+    /* The words themselves are the way in. This needed the pencil first, so Leon looked
+       for a way to change a telling and concluded there was none - which for him means
+       there was none. Tapping the telling opens it now, editing mode or not. */
+    const se=$('.story-editable'); if(se) se.addEventListener('click', e=>{
+      if(e.target.closest('[data-rmtell]')) return;
+      e.preventDefault(); openEditor('story'); });
     const se=$('.story-editable'); if(se) se.addEventListener('click', e=>{ if(e.target.closest('[data-rmtell]')) return; if(document.body.classList.contains('editing')){ e.preventDefault(); openEditor('story'); } });
     $$('[data-remove]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const key=b.dataset.remove;
       if(key.indexOf('detail:')===0){ removeDetail(+key.split(':')[1]); } });
