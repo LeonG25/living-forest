@@ -1110,7 +1110,16 @@
       <div class="zoomrow">${sv(I.zoomout,1.6)}<input type="range" min="100" max="400" value="145" data-zoom>${sv(I.zoomin,1.6)}</div>
       <div class="btnrow"><button class="btn ghost" data-act="close">${L.cancel}</button><button class="btn violet" data-act="facesave">${L.send}</button></div>`;
     let z=145,px=50,py=44,drag=false,sx,sy,bx,by,chosen=null; const img=sh.querySelector('.cimg'), st=sh.querySelector('[data-crop]');
-    const apply=()=>{ img.style.cssText=`position:absolute;left:${px}%;top:${py}%;width:100%;height:100%;transform:translate(-50%,-50%) scale(${z/100});transform-origin:center`; };
+    /* SIZE IT, DO NOT SCALE IT. This used to be a 250x250 element under transform:scale(4),
+       and on Leon's phone Chrome rasterised only part of that scaled layer: a hard vertical
+       edge with dark beyond it, moving with the photograph. His own device proved the
+       geometry was fine - element 1000x1000 covering a 250x250 stage, object-fit:cover,
+       complete:true, source 4000x2252 - and a pixel scan of the source showed no such edge
+       (brightness fell smoothly 153 to 70 across it). Same arithmetic, no transform: the
+       element is simply k times the stage, centred at (px%,py%). */
+    const apply=()=>{ const S=st.clientWidth||250, side=S*(z/100);
+      img.style.cssText=`position:absolute;width:${side}px;height:${side}px;`
+        +`left:${(px/100)*S}px;top:${(py/100)*S}px;transform:translate(-50%,-50%)`; };
     const setImg=g=>{ chosen=g; img.innerHTML=g.url?`<img src="${g.url}" alt="">`:galSVG(g.i); apply();
       /* TEMPORARY X-RAY (2026-08-10). The rig cannot reproduce the vertical dark band Leon
          sees beside the photograph in this stage: on the rig the element covers the whole
