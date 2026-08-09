@@ -449,14 +449,15 @@
     /* Seven independent reads. They used to run one after another - seven
        round-trips deep - which is why the keeper sat watching a loading line.
        They are asked for together now; the page waits for the slowest, not the sum. */
-    const [rPeople,rFacts,rNvs,rArts,rRels,rPub,rPubNvs] = await Promise.all([
+    const [rPeople,rFacts,rNvs,rArts,rRels,rPub,rPubNvs,rTags] = await Promise.all([
       sb.from('people').select('*'),
       sb.from('person_facts').select('id,person_id,group_id,field,lang,value,ord,status,created_by,created_at').in('status',['in_review','draft']),
       sb.from('name_variants').select('*').in('status',['in_review','draft']),
       sb.from('artefacts').select('*').in('status',['in_review','draft']),
       sb.from('relationships').select('id,from_person,to_person,kind,certainty,note,status,created_by,created_at'),
       sb.from('person_facts').select('id,person_id,group_id,field,lang,value,ord,status,published_at,created_at').eq('status','published'),
-      sb.from('name_variants').select('*').eq('status','published')
+      sb.from('name_variants').select('*').eq('status','published'),
+      sb.from('artefact_subjects').select('artefact_id,person_id,detail,status,created_by').in('status',['in_review','draft'])
     ]);
     (rPeople.data||[]).forEach(p=>{ out.peopleMap[p.id]=p.display_name||p.name||''; out.personRow[p.id]=p;
       if(p.status&&p.status!=='published') out.newcomers.push(p); });
@@ -469,6 +470,8 @@
     out.pubRels=relRows.filter(r=>!r.status||r.status==='published');
     out.pub=rPub.data||[];
     out.pubNvs=rPubNvs.data||[];
+    /* a face drawn on a photograph is an edit like any other and belongs in this queue */
+    out.tags=(rTags&&rTags.data)||[];
     const ts=r=>Date.parse(r.published_at||r.created_at||'')||0;
     const put=(m,k,r)=>{ if(!m[k]||ts(r)>=ts(m[k])) m[k]=r; };
     out.pub.forEach(r=>{ put(out.pubIdx, r.person_id+'|'+r.field+'|'+(r.lang||''), r); put(out.pubAny, r.person_id+'|'+r.field, r);
@@ -544,6 +547,13 @@
       if(f.field==='custom_label'||f.field==='custom_value'){ const g=f.group_id||f.id; (customByGroup[g]=customByGroup[g]||{group_id:g,rows:[],personId:f.person_id,created_by:f.created_by,created_at:f.created_at}).rows.push(f); return; }
       const grp = NAME_FIELDS.includes(f.field) ? 'names' : 'facts';
       items[grp].push({ kind:'fact', id:f.id, group:grp, field:f.field, lang:f.lang, value:factValue(f), personId:f.person_id, suggester:accountName(f.created_by), created_at:f.created_at, raw:f });
+    });
+    /* faces waiting on photographs */
+    (pending.tags||[]).forEach(function(tg){
+      const who=personName(tg.person_id)||'—';
+      items.facts.push({ kind:'tag', id:tg.artefact_id+'|'+tg.person_id, group:'facts', field:'tag',
+        value:who, sentence:who, personId:tg.person_id, artefactId:tg.artefact_id,
+        suggester:accountName(tg.created_by), isNew:true });
     });
     Object.values(customByGroup).forEach(c=>{ const lab=(c.rows.find(r=>r.field==='custom_label')||{}).value||''; const val=(c.rows.find(r=>r.field==='custom_value')||{}).value||'';
       items.facts.push({ kind:'group', id:c.group_id, group:'facts', field:'custom', customLabel:lab, value:val, personId:c.personId, suggester:accountName(c.created_by), created_at:c.created_at }); });
@@ -793,6 +803,20 @@
   async function approveRef(ref){ if(!user||!state.keeper) return; const [kind,id]=ref.split(':'); const now=new Date().toISOString();
     /* A connection proposal becomes real here and only here: the named person is
        created if the family has never met them, then the tie itself is written. */
+    /* a face on a photograph: welcome it, and the person in it if they are new too */
+    if(kind==='tag'){
+      const L=d();
+      if(approveRef._busy) return; approveRef._busy=true;
+      const parts=String(id).split('|'), aid=parts[0], pid=parts[1];
+      const up=await sb.from('artefact_subjects')
+        .update({status:'published', reviewed_by:user.id, published_at:now})
+        .eq('artefact_id',aid).eq('person_id',pid);
+      if(up.error){ approveRef._busy=false; toast(L.tFail||'That did not save.',false); return; }
+      /* a name first met on this photograph enters the forest with it */
+      await sb.from('people').update({status:'published', reviewed_by:user.id, published_at:now})
+        .eq('id',pid).eq('status','in_review');
+      approveRef._busy=false; await reload(); toast(L.tWelcomed||'Welcomed.',true); return;
+    }
     if(kind==='kin'){
       const L=d();
       /* A second tap must never make a second person. Leon's approval of Anna Tihonov
@@ -886,6 +910,10 @@
   }
   async function declineRef(ref){
     { const [k0,i0]=ref.split(':'); const L=d();
+      if(k0==='tag'){ const pr=String(i0).split('|');
+        const r=await sb.from('artefact_subjects').delete().eq('artefact_id',pr[0]).eq('person_id',pr[1]);
+        if(r.error){ toast(L.tFail||'That did not save.',false); return; }
+        await reload(); toast(L.tDeclined||'Declined.',false); return; }
       if(k0==='kin'){ const r=await sb.from('person_facts').update({status:'declined'}).eq('id',i0);
         if(r.error){ toast(L.tFail||'That did not save.',false); return; }
         await reload(); toast(L.tDeclined||'Declined.',false); return; } } if(!user||!state.keeper) return; const [kind,id]=ref.split(':');
