@@ -662,7 +662,8 @@
       const k=map[e.field]; if(k) pend[k]=true; });
   }
   function buildTags(){ TAGS=[];
-    subjects.forEach(s=>{ if(s.detail&&s.detail.w){ TAGS.push({ id:'s:'+s.person_id, kind:'subject', person:s.person_id,
+    /* a tag the keeper has not welcomed yet is drawn as waiting, not as settled fact */
+    subjects.forEach(s=>{ if(s.detail&&s.detail.w){ TAGS.push({ id:'s:'+s.person_id, kind:'subject', person:s.person_id, pending:(s.status&&s.status!=='published'),
       name:nameFor(s.person_id,lang)||(peopleById[s.person_id]&&peopleById[s.person_id].display_name)||'',
       x:s.detail.x, y:s.detail.y, w:s.detail.w, h:s.detail.h, status:'ok' }); } });
     edits.filter(e=>e.field==='tag_add').forEach(e=>{ let box=null,name=''; try{const m=JSON.parse(e.new_value||'{}'); box=m.box; name=m.name;}catch(_){}
@@ -964,7 +965,7 @@
   }
 
   async function commitBox(tg){ const box={x:tg.x,y:tg.y,w:tg.w,h:tg.h};
-    if(tg.kind==='subject'){ if(isKeeper){ const ok=await sbWrite(()=>sb.from('artefact_subjects').update({detail:box}).eq('artefact_id',art.id).eq('person_id',tg.person)); if(ok){ toast(t().saved); await reload(); } }
+    if(tg.kind==='subject'){ if(isKeeper){ const ok=await sbWrite(()=>sb.from('artefact_subjects').update({detail:box,status:'in_review'}).eq('artefact_id',art.id).eq('person_id',tg.person)); if(ok){ toast(t().sent); await reload(); } }
       else { await proposeEdit('tag_move',{ref_id:tg.person, new_value:JSON.stringify({box}), old_value:tg.name, pendKey:'people'}); await reload(); } }
     else if(tg.kind==='edit'){ /* my own pending proposal: update its stored box */
       let m={}; try{m=JSON.parse((edits.find(x=>x.id===tg.editId)||{}).new_value||'{}');}catch(_){}
@@ -1020,9 +1021,13 @@
         if(!personId) personId=await ensurePerson(name);
         // retagging an existing subject to a different person: drop the old row
         if(tg.kind==='subject' && tg.person && tg.person!==personId){ await sb.from('artefact_subjects').delete().eq('artefact_id',art.id).eq('person_id',tg.person); }
-        return sb.from('artefact_subjects').upsert({artefact_id:art.id, person_id:personId, detail:box});
+        /* A keeper's own tag waits like anyone else's (Leon, 2026-08-07). artefact_subjects
+           had no status at all, so every tag went live the instant it was drawn and the
+           review page had nothing to show. */
+        return sb.from('artefact_subjects').upsert({artefact_id:art.id, person_id:personId, detail:box,
+                 status:'in_review', created_by:user.id});
       });
-      if(ok){ toast(t().saved); await reload(); }
+      if(ok){ toast(t().sent); await reload(); }
     } else {
       // contributor proposal → artefact_edits (never a published insert)
       const ok = (tg.kind==='edit')
@@ -1415,7 +1420,7 @@
     const {data:a}=await sb.from('artefacts').select('id,storage_path,body,original_language,metadata,contributor_id,kind').eq('id',MOMENT_ID).maybeSingle();
     if(!a){ $('#wrap').innerHTML='<div style="padding:60px 0;text-align:center;color:var(--muted);font-family:\'Newsreader\',serif;font-style:italic">'+esc(UI[lang].notFound)+'</div>'; return; }
     art=a;
-    const subs=await sb.from('artefact_subjects').select('person_id,detail').eq('artefact_id',MOMENT_ID);
+    const subs=await sb.from('artefact_subjects').select('person_id,detail,status').eq('artefact_id',MOMENT_ID);
     subjects=(subs.data||[]).filter(s=>s.person_id);
     peopleById={}; vars={};
     const ids=subjects.map(s=>s.person_id);
@@ -1429,7 +1434,7 @@
   }
   // light refresh after a write: re-pull subjects/edits/translations, keep scroll
   async function reload(){ const y=window.scrollY;
-    const subs=await sb.from('artefact_subjects').select('person_id,detail').eq('artefact_id',MOMENT_ID);
+    const subs=await sb.from('artefact_subjects').select('person_id,detail,status').eq('artefact_id',MOMENT_ID);
     subjects=(subs.data||[]).filter(s=>s.person_id);
     const ids=subjects.map(s=>s.person_id);
     if(ids.length){ const {data:pp}=await sb.from('people').select('id,display_name,called_name,primary_asset,sex').in('id',ids); (pp||[]).forEach(p=>peopleById[p.id]=p); }
