@@ -1102,7 +1102,15 @@
     showSheet('lang'); }
 
   async function openFace(){ const L=d(); const sh=$('.sheet[data-sheet="face"]');
-    const gal=await Promise.all(tagged.map(async(t,i)=>({i,url:await signedUrl(t.storage_path),box:t.box})));
+    /* Ask for a picture the phone can actually hold. This requested the ORIGINAL - 4000x2252
+       and 1.4MB for Sofia's - and Leon's Chrome painted only part of it into the stage: a hard
+       vertical edge with nothing beyond it, moving with the photograph. Everything else was
+       ruled out by measurement first: his device reported the element covering the stage with
+       object-fit:cover and complete:true, and a column-by-column scan of exactly the region he
+       was seeing found a largest single-column brightness drop of THREE - there is no edge in
+       the photograph. 1600px is far more than the stage can show even at full zoom, and it is
+       a tenth of the bytes. */
+    const gal=await Promise.all(tagged.map(async(t,i)=>({i,url:await signedUrl(t.storage_path,1600),box:t.box})));
     const gals=gal.map(g=>`<div class="g" data-g="${g.i}">${g.url?`<img src="${g.url}" alt="">`:galSVG(g.i)}</div>`).join('');
     sh.innerHTML=`<div class="grip"></div><h3>${L.changeface}</h3><div class="sub">${L.changefaceSub}</div>
       <div class="gal">${gals||`<div class="sub">${L.noFace}</div>`}</div>
