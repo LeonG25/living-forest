@@ -62,6 +62,7 @@
     if(diagCount<DIAG_MAX && !seen[note]){
       seen[note]=1; diagCount++; sendDiag(note);
     }
+    if(!isWrite) tellIncomplete();
     try{ if(typeof LFDB.onFailure==='function') LFDB.onFailure(say(isWrite?'write':'read'), rec); }catch(e){}
   }
 
@@ -144,9 +145,43 @@
     if(diagCount<DIAG_MAX && !seen['note:'+text]){ seen['note:'+text]=1; diagCount++; sendDiag(text); }
   }
 
+  /* AN EMPTY PAGE MUST NEVER BE MISTAKEN FOR AN EMPTY FOREST.
+     211 reads in this app do `(data||[])`, so a refused or failed query renders as
+     nothing at all - which is how a keeper's page showed no pending memories for months
+     and how Zoya was shown a forest with nobody in it. Fixing 211 call sites one by one
+     would take a week and miss the 212th. Since every query already passes through here,
+     the honest thing is said once, on any page, the first time a READ fails: what you are
+     looking at is incomplete. It is not a design surface - it is the page admitting it
+     does not know. */
+  var SAID={ en:{t:'Some of this did not load.', s:'What you see may not be everything. Try again in a moment.'},
+             ru:{t:'Часть данных не загрузилась.', s:'Возможно, здесь показано не всё. Попробуйте обновить.'},
+             he:{t:'חלק מהמידע לא נטען.', s:'ייתכן שלא הכול מוצג כאן. נסו לרענן.'} };
+  var toldAlready=false;
+  function tellIncomplete(){
+    if(toldAlready) return; toldAlready=true;
+    try{
+      var l=lang(), w=SAID[l]||SAID.en, rtl=(l==='he');
+      var bar=document.createElement('div');
+      bar.setAttribute('role','status'); bar.setAttribute('dir', rtl?'rtl':'ltr');
+      bar.style.cssText='position:fixed;left:0;right:0;top:0;z-index:99998;padding:9px 14px;'
+        +'background:rgba(46,26,26,.94);color:#f6e7e0;border-bottom:1px solid rgba(240,150,120,.45);'
+        +'font:inherit;font-size:13px;line-height:1.4;text-align:center;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);';
+      bar.innerHTML='<b style="font-weight:600">'+w.t+'</b> <span style="opacity:.85">'+w.s+'</span>';
+      var x=document.createElement('button');
+      x.type='button'; x.textContent='\u00d7'; x.setAttribute('aria-label','Close');
+      x.style.cssText='position:absolute;'+(rtl?'left':'right')+':8px;top:5px;background:none;border:0;'
+        +'color:inherit;font-size:19px;line-height:1;cursor:pointer;padding:2px 7px;';
+      x.onclick=function(){ try{ bar.remove(); }catch(e){} };
+      bar.appendChild(x);
+      var put=function(){ try{ document.body.appendChild(bar); }catch(e){} };
+      if(document.body) put(); else document.addEventListener('DOMContentLoaded',put);
+    }catch(e){}
+  }
+
   window.LFDB={
     img:img,
     note:note,
+    incomplete:function(){ return toldAlready; },
     failures:[],
     last:null,
     onFailure:null,      /* pages with a toast wire it here: LFDB.onFailure=m=>toast(m) */
