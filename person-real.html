@@ -309,8 +309,13 @@
      here needs zoomToPx's geometry changed AND the 45 existing face boxes migrated, or
      every portrait in the forest moves. Until then, what you frame is what you get. */
   .cropstage .cimg svg, .cropstage .cimg img{ width:100%; height:100%; object-fit:cover; }
-  .cropstage .cmask{ position:absolute; inset:0; pointer-events:none; background:radial-gradient(circle at center, transparent 46%, rgba(4,7,14,.72) 47%); }
-  .cropstage .cring::after{ content:""; position:absolute; inset:calc(50% - 46%); border-radius:50%; border:1.5px solid rgba(255,244,214,.9); box-shadow:0 0 18px rgba(255,232,180,.5); }
+  /* The ring must show EXACTLY what the portrait will be. Measured: the renderer crops a
+     square of side m/k and shows its inscribed circle, while this preview ring was 0.92 of
+     the stage - so the finished portrait always included about 9% more around the edge than
+     the contributor framed. Centres agreed to three decimals in every case tested (default,
+     extremes, square/portrait/landscape sources); only the radius was wrong. 50% now. */
+  .cropstage .cmask{ position:absolute; inset:0; pointer-events:none; background:radial-gradient(circle at center, transparent 49.6%, rgba(4,7,14,.72) 50%); }
+  .cropstage .cring::after{ content:""; position:absolute; inset:calc(50% - 49.6%); border-radius:50%; border:1.5px solid rgba(255,244,214,.9); box-shadow:0 0 18px rgba(255,232,180,.5); }
   .zoomrow{ display:flex; align-items:center; gap:10px; margin-bottom:6px; }
   .zoomrow svg{ width:16px; height:16px; color:var(--muted); flex:0 0 auto; }
   input[type=range]{ -webkit-appearance:none; appearance:none; flex:1; height:4px; border-radius:99px; background:rgba(255,255,255,.16); }
