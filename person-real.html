@@ -466,7 +466,7 @@
       detailLabel:'Label', detailValue:'Value', source:'Source or note',
       langtitle:'Language', langsub:'Names, labels and details all follow the language you choose.',
       changefaceSub:'Pick a photo she’s tagged in, then fine-tune the round crop. Saving sends it to the keeper.',
-      zoom:'Zoom', send:'Send to the keeper', cancel:'Cancel', sent:'Sent to the keeper — thank you', save:'Save', signin:'Sign in',
+      zoom:'Zoom', send:'Send to the keeper', cancel:'Cancel', alreadyWaiting:'That connection is already waiting for the keeper.', sent:'Sent to the keeper — thank you', save:'Save', signin:'Sign in',
       playCta:'Play', gameLocked:'Add more and this opens', gameScoped:'Scoped to this person',
       gameNames:{ whoiswho:'Who Is Who?', crowd:'Find Them in the Crowd', order:'Put Their Life in Order', wherewas:'Where Was This?', thread:'The Tangled Thread', whosememory:'Whose Story Is This?', voice:'The Missing Voice', whatnext:'What Happened Next?' },
       gameSubs:{ whoiswho:'Match the face to the right name.', crowd:'Find them among the gathering.', order:'Set the moments of a life in sequence.', wherewas:'Place the photographs on the map.', thread:'Trace how they connect to the family.', whosememory:'Guess who each story is about.', voice:'Not enough stories yet.', whatnext:'Guess which story came next.' },
@@ -506,7 +506,7 @@
       detailLabel:'Название', detailValue:'Значение', source:'Источник или заметка',
       langtitle:'Язык', langsub:'Имена, подписи и детали — на выбранном языке.',
       changefaceSub:'Выберите фото, где она отмечена, и настройте круглую обрезку. Сохранение уйдёт хранителю.',
-      zoom:'Масштаб', send:'Отправить хранителю', cancel:'Отмена', sent:'Отправлено хранителю — спасибо', save:'Сохранить', signin:'Войти',
+      zoom:'Масштаб', send:'Отправить хранителю', cancel:'Отмена', alreadyWaiting:'Эта связь уже ждёт хранителя.', sent:'Отправлено хранителю — спасибо', save:'Сохранить', signin:'Войти',
       playCta:'Играть', gameLocked:'Добавьте больше — и откроется', gameScoped:'Только про этого человека',
       gameNames:{ whoiswho:'Кто есть кто?', crowd:'Найди в толпе', order:'Расставь жизнь по порядку', wherewas:'Где это было?', thread:'Запутанная нить', whosememory:'Чья это история?', voice:'Пропавший голос', whatnext:'Что было дальше?' },
       gameSubs:{ whoiswho:'Сопоставьте лицо и имя.', crowd:'Найдите среди собравшихся.', order:'Расставьте моменты жизни.', wherewas:'Разместите фото на карте.', thread:'Проследите связь с семьёй.', whosememory:'Угадайте, о ком эта история.', voice:'Историй пока мало.', whatnext:'Угадайте, какая история была следующей.' },
@@ -546,7 +546,7 @@
       detailLabel:'תווית', detailValue:'ערך', source:'מקור או הערה',
       langtitle:'שפה', langsub:'השמות, התוויות והפרטים — לפי השפה שתבחרו.',
       changefaceSub:'בחרו תמונה שבה היא מתויגת וכווננו את החיתוך העגול. השמירה תישלח לשומר.',
-      zoom:'זום', send:'שליחה לשומר', cancel:'ביטול', sent:'נשלח לשומר — תודה', save:'שמירה', signin:'כניסה',
+      zoom:'זום', send:'שליחה לשומר', cancel:'ביטול', alreadyWaiting:'הקשר הזה כבר ממתין לשומר.', sent:'נשלח לשומר — תודה', save:'שמירה', signin:'כניסה',
       playCta:'שחקו', gameLocked:'הוסיפו עוד וזה ייפתח', gameScoped:'מותאם לאדם הזה',
       gameNames:{ whoiswho:'מי זה מי?', crowd:'מצאו אותה בקהל', order:'סדרו את חייה', wherewas:'איפה זה היה?', thread:'החוט הסבוך', whosememory:'של מי הסיפור?', voice:'הקול החסר', whatnext:'מה קרה אחר כך?' },
       gameSubs:{ whoiswho:'התאימו את הפנים לשם הנכון.', crowd:'מצאו אותה בין הנאספים.', order:'סדרו את רגעי החיים.', wherewas:'מקמו את התמונות על המפה.', thread:'עקבו אחר הקשר למשפחה.', whosememory:'נחשו על מי כל סיפור.', voice:'עדיין אין מספיק סיפורים.', whatnext:'נחשו איזה סיפור בא אחר כך.' },
@@ -1247,6 +1247,20 @@
          keeper" for exactly this act, and a contributor who is told nothing cannot tell a
          proposal from a swallowed error. The insert is checked now instead of caught and
          dropped - if it fails, the family hears so. */
+      /* Leon proposed the same tie twice within a few minutes and nothing said a word -
+         he had declined the first one and reasonably read the second card as the first
+         coming back. A proposal that is already waiting is not sent again. */
+      try{
+        const dup=await sb.from('person_facts').select('id,value').eq('person_id',PERSON_ID)
+          .eq('field','kin').eq('status','in_review');
+        if(!dup.error && (dup.data||[]).some(r=>{ try{ const k=JSON.parse(r.value);
+            return k && k.kind===p.kind && String(k.other||'')===String(p.other||'')
+                   && String(k.propose||'').trim().toLowerCase()===String(p.propose||'').trim().toLowerCase(); }
+          catch(e){ return false; } })){
+          toast(L.alreadyWaiting||'That connection is already waiting for the keeper.');
+          return;
+        }
+      }catch(e){}
       const ins=await sb.from('person_facts').insert({person_id:PERSON_ID,group_id:uuid(),field:'kin',lang:'und',value:payload,ord:0,status:'in_review',created_by:user.id});
       if(ins.error){ toast(L.saveFail||'That could not be sent. Please try again.'); return; }
       toast(L.sent);
