@@ -201,6 +201,11 @@
   .memory .told{ margin-top:10px; display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--gold); }
   .memory .told .flame{ width:6px; height:6px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px 1px var(--gold); }
   .memory .told b{ font-weight:600; }
+  .memory .stepin{ margin-top:11px; display:inline-flex; align-items:center; gap:7px; font-size:12.5px;
+    color:var(--gold); text-decoration:none; border:1px solid rgba(243,205,132,.3); border-radius:11px;
+    padding:7px 12px; background:rgba(243,205,132,.06); }
+  .memory .stepin:after{ content:"\2192"; }
+  [dir="rtl"] .memory .stepin:after{ content:"\2190"; }
   .invite{ padding:14px; border-radius:14px; border:1px dashed rgba(243,205,132,.32); background:rgba(243,205,132,.04); }
   .invite .words{ font-family:'Newsreader',serif; font-style:italic; font-size:14px; line-height:1.5; color:#efe0c2; }
   .invite .cta{ margin-top:9px; font-size:12px; color:var(--gold); font-weight:600; display:inline-flex; align-items:center; gap:6px; cursor:pointer; }
@@ -453,7 +458,7 @@
       born:'Born', died:'Died', precision:'Precision', prec:['exact','month','year','approx','unknown'], living:'Still living',
       gender:'Gender', genderHint:'Helps translate her names correctly.', gopts:['She','He','They','—'],
       pbirth:'Place of birth', lived:'Places lived', addplace:'add a home',
-      memories:'Stories told about her', addmemory:'add a story', noStory:'The story of this is waiting for its teller.', askSomeone:'Ask someone who might know →',
+      memories:'Stories told about her', addmemory:'add a story', stepIn:'Step into this moment', noStory:'The story of this is waiting for its teller.', askSomeone:'Ask someone who might know →',
       relations:'Relatives', addkin:'add a connection', kinApp:'The app works out how each of them connects back to you.',
       howrelated:'How are you related?', relChild:'Child', relParent:'Parent',
       reelSub:'Her life, assembled from the rest. It opens as the facets fill.', watch:'Watch', reelBar:'facets kindled',
@@ -493,7 +498,7 @@
       born:'Родилась', died:'Умерла', precision:'Точность', prec:['точно','месяц','год','около','неизв.'], living:'Ещё жива',
       gender:'Пол', genderHint:'Помогает правильно склонять имена.', gopts:['Она','Он','Они','—'],
       pbirth:'Место рождения', lived:'Где жила', addplace:'добавить дом',
-      memories:'Истории о ней', addmemory:'добавить историю', noStory:'Эта история ждёт своего рассказчика.', askSomeone:'Спросить того, кто знает →',
+      memories:'Истории о ней', addmemory:'добавить историю', stepIn:'Войти в этот момент', noStory:'Эта история ждёт своего рассказчика.', askSomeone:'Спросить того, кто знает →',
       relations:'Родственники', addkin:'добавить связь', kinApp:'Приложение вычисляет, как каждый связан с вами.',
       howrelated:'Как вы связаны?', relChild:'Ребёнок', relParent:'Родитель',
       reelSub:'Её жизнь, собранная из остального. Открывается по мере заполнения.', watch:'Смотреть', reelBar:'граней зажжено',
@@ -533,7 +538,7 @@
       born:'נולדה', died:'נפטרה', precision:'דיוק', prec:['מדויק','חודש','שנה','בערך','לא ידוע'], living:'עדיין בחיים',
       gender:'מגדר', genderHint:'עוזר לתרגם את שמותיה נכון.', gopts:['היא','הוא','הם','—'],
       pbirth:'מקום לידה', lived:'מקומות מגורים', addplace:'הוספת בית',
-      memories:'סיפורים עליה', addmemory:'הוספת סיפור', noStory:'הסיפור הזה מחכה למספר שלו.', askSomeone:'שאלו מישהו שאולי מכיר ←',
+      memories:'סיפורים עליה', addmemory:'הוספת סיפור', stepIn:'להיכנס אל הרגע הזה', noStory:'הסיפור הזה מחכה למספר שלו.', askSomeone:'שאלו מישהו שאולי מכיר ←',
       relations:'בני משפחה', addkin:'הוספת קשר', kinApp:'האפליקציה מחשבת כיצד כל אחד קשור אליכם.',
       howrelated:'איך אתם קשורים?', relChild:'ילד', relParent:'הורה',
       reelSub:'חייה, מורכבים מן השאר. נפתח ככל שהפרטים מתמלאים.', watch:'צפייה', reelBar:'פנים הודלקו',
@@ -977,7 +982,10 @@
         ${placed>0?`<div class="appfact"><span class="mark">${sv(I.chart,2)}</span><div class="body">${esc(placesAppLine(placed))}<span class="src">${L.assembled}</span></div></div>`:''}
         ${facetSend('places')}${gamesHTML(f)}`; }
     if(id==='story'){ let h='';
-      if(memories.length) h+=memories.map(m=>`<div class="memory"><div class="words">${m.cap?('“'+esc(m.cap)+'”'):esc(L.noStory)}</div>${m.teller?`<div class="told"><span class="flame"></span><b>${esc(m.teller)}</b></div>`:''}</div>`).join('');
+      /* A story lives on its moment, with the faces in it, the place it happened and
+         everyone who has added to it. Reading it here is only half of it - this is the
+         door through (Leon, 2026-08-07). */
+      if(memories.length) h+=memories.map(m=>`<div class="memory"><div class="words">${m.cap?('“'+esc(m.cap)+'”'):esc(L.noStory)}</div>${m.teller?`<div class="told"><span class="flame"></span><b>${esc(m.teller)}</b></div>`:''}${m.id?`<a class="stepin" href="moment-real.html?id=${esc(m.id)}">${esc(L.stepIn)}</a>`:''}</div>`).join('');
       else h+=`<div class="invite"><div class="words">${L.noStory}</div><div class="cta" data-act="addmemory">${L.askSomeone}</div></div>`;
       h+=`<div class="chips" style="margin-top:10px"><button class="chip add" data-act="addmemory">${sv(I.plus,2)} ${L.addmemory}</button></div>`;
       return h+gamesHTML(f); }
