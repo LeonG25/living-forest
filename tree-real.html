@@ -678,7 +678,15 @@ function inViewport(id){ if(!pos[id]) return false; const s=state.scale;
   const sx=CX(id)*s+state.tx, sy=CTOP(id)*s+state.ty, mx=CW*s, my=CH*s;
   return sx>-mx && sx<vp.clientWidth+mx && sy>-my && sy<vp.clientHeight+my; }
 function hydrateFace(el,id,opts){ if(!el) return; opts=opts||{};
-  el.innerHTML=placeholderFor(id);                       // placeholder shows instantly — no layout shift
+  /* Quiet ground when a real face is coming, an invented one only when none exists.
+     The generated portrait is the permanent stand-in for someone with no photograph
+     anywhere - that stays. But showing it for a second before the real face lands meant
+     every person briefly wore a stranger's face, which Leon rightly disliked. */
+  const _p0=people[id];
+  const _coming = !!(_p0 && (_p0.portrait_path || _p0.primary_asset)) || !!faceFallback[id];
+  el.innerHTML = _coming
+    ? '<svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" fill="rgba(12,22,38,.55)"/></svg>'
+    : placeholderFor(id);
   const p=people[id]; let path=null, box=null;
   /* A BAKED PORTRAIT IS THE PORTRAIT. The tree carried its OWN crop implementation, separate
      from lf-face's - which is how the same person could be framed one way on their page and
