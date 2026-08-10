@@ -708,7 +708,31 @@
     await reload(); }
 
   /* ---------- load ---------- */
+
+  /* THE FACE GOES UP FIRST.
+     Measured: the portrait appeared 1.8s after opening a person page, not because the image
+     is slow - it is 25KB - but because it queued behind six sequential queries. A person's
+     own face should never wait on their tagged photographs or their pending edits. This asks
+     for one column, paints it the moment it lands, and lets the rest of the page load behind
+     it. If it loses the race to the normal path, no harm: both draw the same picture. */
+  async function faceFirst(){
+    try{
+      const r=await sb.from('people').select('portrait_path').eq('id',PERSON_ID).maybeSingle();
+      const pp=r&&r.data&&r.data.portrait_path; if(!pp) return;
+      const u=await signedUrl(pp, 420); if(!u) return;
+      const paint=()=>{ const el=document.getElementById('faceHost');
+        if(!el){ setTimeout(paint,60); return; }
+        if(el.querySelector('img')) return;          /* the full path already won */
+        const im=new Image(); im.decoding='async'; im.alt='';
+        im.style.cssText='width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit';
+        im.onload=()=>{ if(!el.querySelector('img')){ el.innerHTML=''; el.appendChild(im); } };
+        im.src=u; };
+      paint();
+    }catch(e){}
+  }
+
   async function loadData(){
+    faceFirst();                                     /* deliberately not awaited */
     try{ const {data:p}=await sb.from('people').select('id,display_name,called_name,sex,primary_asset,portrait_path,birth_date,birth_certainty,death_date,death_certainty,is_living,metadata').eq('id',PERSON_ID).maybeSingle(); person=p||{id:PERSON_ID}; }catch(e){ person={id:PERSON_ID}; }
     try{ const {data:nv}=await sb.from('name_variants').select('id,lang,given,family,status,created_by').eq('person_id',PERSON_ID); NV=nv||[]; }catch(e){ NV=[]; }
     /* A DECLINED proposal is finished, not pending. This fetched every status, so the
