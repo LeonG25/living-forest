@@ -882,7 +882,7 @@ load();
     /* fill real photos after DOM exists */
     document.querySelectorAll('#faces .crop[data-face]').forEach(el=>{ const id=el.getAttribute('data-face'); const f=m.faceAsset[id]; if(f&&f.path) faceInto(el,f.path,f.box); });
     try{ if(window.LFFace){ const missing=m.faces.filter(f=>!(m.faceAsset[f.id]&&m.faceAsset[f.id].path)).map(f=>f.id);
-      if(missing.length) LFFace.resolve(missing).then(fm=>{ missing.forEach(id=>{ const el=document.querySelector('#faces .crop[data-face="'+id+'"]'); const ff=fm[id]; if(el&&ff) LFFace.into(el,{path:ff.path,box:ff.box,size:140,keep:true}); }); }); } }catch(e){}
+      if(missing.length) LFFace.resolve(missing).then(fm=>{ missing.forEach(id=>{ const el=document.querySelector('#faces .crop[data-face="'+id+'"]'); const ff=fm[id]; if(el&&ff) LFFace.into(el,{path:ff.path,box:ff.box,portrait:ff.portrait,size:140,keep:true}); }); }); } }catch(e){}
     document.querySelectorAll('#moments .img img[data-msrc]').forEach(async el=>{ const mo=m.moments[+el.getAttribute('data-msrc')]; if(mo&&mo.path){ const u=await signedUrl(mo.path); if(u) el.src=u; } });
   }
 
@@ -936,7 +936,7 @@ load();
     const [geoR,artsR,peopleR,factsR]=await Promise.all([
       sb2.from('place_geo').select('name,lat,lng,label').eq('name',PL).maybeSingle(),
       sb2.from('artefacts').select('id,kind,body,metadata,storage_path,contributor_id').eq('status','published').eq('metadata->>where',PL),
-      sb2.from('people').select('id,display_name,called_name,primary_asset'),
+      sb2.from('people').select('id,display_name,called_name,primary_asset,portrait_path'),
       sb2.from('person_facts').select('person_id,value').in('field',['pbirth','lived','home','country']).eq('status','published')
     ]);
     const geo=geoR.data||null, arts=artsR.data||[];

@@ -680,6 +680,18 @@ function inViewport(id){ if(!pos[id]) return false; const s=state.scale;
 function hydrateFace(el,id,opts){ if(!el) return; opts=opts||{};
   el.innerHTML=placeholderFor(id);                       // placeholder shows instantly — no layout shift
   const p=people[id]; let path=null, box=null;
+  /* A BAKED PORTRAIT IS THE PORTRAIT. The tree carried its OWN crop implementation, separate
+     from lf-face's - which is how the same person could be framed one way on their page and
+     another way on a card. One small square, made once, shown here directly: no arithmetic,
+     nothing to disagree with, and no 1.4MB photograph fetched per card. Everything below is
+     the old path, kept for anyone not yet baked. */
+  if(p&&p.portrait_path){
+    const im=new Image(); im.decoding='async'; im.alt='';
+    im.style.cssText='width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit';
+    im.onload=()=>{ el.innerHTML=''; el.appendChild(im); };
+    (async()=>{ try{ const u=await signedUrl(p.portrait_path, 220); if(u) im.src=u; }catch(e){} })();
+    return;
+  }
   if(p&&p.primary_asset){ path=p.primary_asset; box=(p.metadata&&p.metadata.face_box)||null;
     if(!box){ const fv=(window.__lfFaceFacts||{})[id]; if(fv&&fv.storage_path===path) box=fv.box||((fv.zoom!=null)?{zoom:fv.zoom,px:fv.px,py:fv.py}:null); } }
   else { const fb=faceFallback[id]; if(fb){ path=fb.path; box=fb.box; } }
@@ -1271,7 +1283,7 @@ async function loadData(){
      instant it was made - and an unapproved tie is not merely early, it is unchecked:
      Anna is Basya's sibling AND was proposed as Lea's parent, which asks the solver to
      put her on two levels at once. It cannot, so it flattened every generation. */
-  try{ const {data:pp}=await sb.from('people').select('id,display_name,sex,primary_asset,birth_date,death_date,metadata,status').eq('status','published'); (pp||[]).forEach(p=>{
+  try{ const {data:pp}=await sb.from('people').select('id,display_name,sex,primary_asset,portrait_path,birth_date,death_date,metadata,status').eq('status','published'); (pp||[]).forEach(p=>{
     people[p.id]={ id:p.id, display_name:p.display_name, sex:p.sex, primary_asset:p.primary_asset,
       birth_year:(p.birth_date?String(p.birth_date).slice(0,4):''), death_year:(p.death_date?String(p.death_date).slice(0,4):''), metadata:p.metadata||{} }; });
   }catch(e){ people={}; }

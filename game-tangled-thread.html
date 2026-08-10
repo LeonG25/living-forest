@@ -533,7 +533,7 @@
     try{ if(window.LFFace){ LFFace.resolve(chosen.map(function(c){ return c.id; })).then(function(fmap){
       chosen.forEach(function(c){ var f=fmap[c.id]; if(!f) return;
         var n=tmap.querySelector('.tnode[data-id="'+c.id+'"] .disc');
-        if(n) LFFace.into(n,{path:f.path,box:f.box,size:120,keep:true}); }); }); } }catch(e){}
+        if(n) LFFace.into(n,{path:f.path,box:f.box,portrait:f.portrait,size:120,keep:true}); }); }); } }catch(e){}
 
     // stash the pair for the payoff (names/avatars), by display order
     renderPlay._pair=(res.pair||[]).map(function(p){ return { id:p.id, label:p.label }; });
@@ -606,8 +606,8 @@
     $('pnames').innerHTML='<b>'+esc(nA)+'</b> <span style="opacity:.5">—</span> <b>'+esc(nB)+'</b>';
     try{ if(window.LFFace&&pair[0]&&pair[1]){ LFFace.resolve([pair[0].id,pair[1].id]).then(function(fmap){
       var fa=fmap[pair[0].id], fb2=fmap[pair[1].id];
-      if(fa) LFFace.into($('pfaceA'),{path:fa.path,box:fa.box,size:120,keep:true});
-      if(fb2) LFFace.into($('pfaceB'),{path:fb2.path,box:fb2.box,size:120,keep:true}); }); } }catch(e){}
+      if(fa) LFFace.into($('pfaceA'),{path:fa.path,box:fa.box,portrait:fa.portrait,size:120,keep:true});
+      if(fb2) LFFace.into($('pfaceB'),{path:fb2.path,box:fb2.box,portrait:fb2.portrait,size:120,keep:true}); }); } }catch(e){}
   }
 
   // ---- wiring -----------------------------------------------------------

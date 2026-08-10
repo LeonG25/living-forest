@@ -391,7 +391,7 @@
 
   /* ---------- load ---------- */
   async function loadData(){
-    try{ const {data:p}=await sb.from('people').select('id,display_name,called_name,sex,primary_asset,birth_date,death_date,is_living,metadata').eq('id',PERSON_ID).maybeSingle(); person=p||{id:PERSON_ID}; }catch(e){ person={id:PERSON_ID}; }
+    try{ const {data:p}=await sb.from('people').select('id,display_name,called_name,sex,primary_asset,portrait_path,birth_date,death_date,is_living,metadata').eq('id',PERSON_ID).maybeSingle(); person=p||{id:PERSON_ID}; }catch(e){ person={id:PERSON_ID}; }
     try{ const {data:fs}=await sb.from('person_facts').select('id,group_id,field,lang,value,ord,status,created_at,published_at').eq('person_id',PERSON_ID); facts=fs||[]; }catch(e){ facts=[]; }
     tagged=[]; contribNames={};
     try{ const {data:subs}=await sb.from('artefact_subjects').select('artefact_id,detail').eq('person_id',PERSON_ID); const ids=(subs||[]).map(s=>s.artefact_id);

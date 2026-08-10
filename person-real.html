@@ -679,7 +679,7 @@
   /* ---------- storage / face crop ---------- */
   async function signedUrl(path,width){ if(!path) return ''; try{ const opts=width?{transform:{width:width,resize:'contain'}}:undefined; const r=await sb.storage.from('family').createSignedUrl(path,3600,opts); if(r.data&&r.data.signedUrl) return r.data.signedUrl; }catch(e){} if(width){ try{ const r2=await sb.storage.from('family').createSignedUrl(path,3600); return (r2.data&&r2.data.signedUrl)||''; }catch(e){} } return ''; }
   async function faceInto(el, path, box){ if(!el||!path) return;
-    if(window.LFFace){ LFFace.into(el,{path:path,box:LFFace.normBox(box),size:200,priority:true}); return; }
+    if(window.LFFace){ LFFace.into(el,{portrait:(person&&person.portrait_path)||null,path:path,box:LFFace.normBox(box),size:200,priority:true}); return; }
     const u=await signedUrl(path); if(!u) return;
     const img=new Image(); img.crossOrigin='anonymous';
     img.onload=()=>{ const c=document.createElement('canvas'); c.width=c.height=200; const g=c.getContext('2d');
@@ -709,7 +709,7 @@
 
   /* ---------- load ---------- */
   async function loadData(){
-    try{ const {data:p}=await sb.from('people').select('id,display_name,called_name,sex,primary_asset,birth_date,birth_certainty,death_date,death_certainty,is_living,metadata').eq('id',PERSON_ID).maybeSingle(); person=p||{id:PERSON_ID}; }catch(e){ person={id:PERSON_ID}; }
+    try{ const {data:p}=await sb.from('people').select('id,display_name,called_name,sex,primary_asset,portrait_path,birth_date,birth_certainty,death_date,death_certainty,is_living,metadata').eq('id',PERSON_ID).maybeSingle(); person=p||{id:PERSON_ID}; }catch(e){ person={id:PERSON_ID}; }
     try{ const {data:nv}=await sb.from('name_variants').select('id,lang,given,family,status,created_by').eq('person_id',PERSON_ID); NV=nv||[]; }catch(e){ NV=[]; }
     /* A DECLINED proposal is finished, not pending. This fetched every status, so the
        old text row "Sofia's mother" - declined days ago - still showed on Lea's page as

@@ -1434,7 +1434,7 @@
     subjects=(subs.data||[]).filter(s=>s.person_id);
     peopleById={}; vars={};
     const ids=subjects.map(s=>s.person_id);
-    if(ids.length){ const {data:pp}=await sb.from('people').select('id,display_name,called_name,primary_asset,sex').in('id',ids); (pp||[]).forEach(p=>peopleById[p.id]=p);
+    if(ids.length){ const {data:pp}=await sb.from('people').select('id,display_name,called_name,primary_asset,portrait_path,sex').in('id',ids); (pp||[]).forEach(p=>peopleById[p.id]=p);
       const {data:nv}=await sb.from('name_variants').select('person_id,lang,given,family,status').in('person_id',ids).eq('status','published'); (nv||[]).forEach(v=>{(vars[v.person_id]=vars[v.person_id]||[]).push(v);}); }
     tellerName='';
     if(art.contributor_id){ const {data:cp}=await sb.from('people').select('display_name').eq('id',art.contributor_id).maybeSingle(); tellerName=(cp&&cp.display_name)||''; }
@@ -1447,7 +1447,7 @@
     const subs=await sb.from('artefact_subjects').select('person_id,detail,status').eq('artefact_id',MOMENT_ID);
     subjects=(subs.data||[]).filter(s=>s.person_id);
     const ids=subjects.map(s=>s.person_id);
-    if(ids.length){ const {data:pp}=await sb.from('people').select('id,display_name,called_name,primary_asset,sex').in('id',ids); (pp||[]).forEach(p=>peopleById[p.id]=p); }
+    if(ids.length){ const {data:pp}=await sb.from('people').select('id,display_name,called_name,primary_asset,portrait_path,sex').in('id',ids); (pp||[]).forEach(p=>peopleById[p.id]=p); }
     const {data:tr}=await sb.from('artefact_translations').select('lang,body,status').eq('artefact_id',MOMENT_ID).eq('status','published'); translations=tr||[];
     await loadQueue(); buildModel(); render(); window.scrollTo(0,y); }
 

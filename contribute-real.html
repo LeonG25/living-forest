@@ -433,7 +433,7 @@
 
   /* ---------- data ---------- */
   async function loadData(){
-    try{ const {data}=await sb.from('people').select('id,display_name,called_name,sex,primary_asset,birth_date,is_living'); state.people=(data||[]).filter(p=>p.display_name); }catch(e){ state.people=[]; }
+    try{ const {data}=await sb.from('people').select('id,display_name,called_name,sex,primary_asset,portrait_path,birth_date,is_living'); state.people=(data||[]).filter(p=>p.display_name); }catch(e){ state.people=[]; }
     try{ const {data}=await sb.from('relationships').select('id,from_person,to_person,kind'); state.rels=data||[]; }catch(e){ state.rels=[]; }
     try{ const {data}=await sb.from('artefacts').select('id,kind,storage_path,metadata,contributor_id,status').eq('status','published'); state.arts=data||[]; }catch(e){ state.arts=[]; }
     buildGaps(); buildPairs();

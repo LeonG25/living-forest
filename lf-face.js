@@ -92,7 +92,28 @@
   function show(el,node){ el.style.overflow='hidden'; el.innerHTML='';
     node.style.cssText='width:100%;height:100%;display:block;object-fit:cover'; el.appendChild(node); }
 
-  function into(el,o){ if(!el||!o||!o.path) return; o=o||{};
+  /* A BAKED PORTRAIT IS THE PORTRAIT.
+     Every face in the app used to be cut out of the full photograph in the browser, again,
+     on every page - which is the few seconds before a face appears, and which put the crop
+     arithmetic in several places at once where it could disagree with itself. One small
+     square is now made ONCE, when the framing is chosen or when a tagged face is first
+     baked, and simply shown. Live cropping remains for anyone not yet baked, so nothing
+     ever loses its face. */
+  function portrait(el,o){
+    if(!o||!o.portrait) return false;
+    var key='p|'+o.portrait;
+    el.dataset.lfface=key;
+    var im=new Image(); im.decoding='async'; im.alt='';
+    im.style.cssText='width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit';
+    im.onload=function(){ if(el.dataset.lfface===key){ el.innerHTML=''; el.appendChild(im); } };
+    im.onerror=function(){ el.dataset.lfface=''; into(el,{path:o.path,box:o.box,size:o.size,keep:o.keep,priority:o.priority}); };
+    (async function(){ try{ im.src=await url(o.portrait, Math.max(160,(o.size||160)*2)); }catch(e){ im.onerror(); } })();
+    return true;
+  }
+
+  function into(el,o){ if(!el||!o) return; o=o||{};
+    if(portrait(el,o)) return;
+    if(!o.path) return;
     var key=(o.key||'')+'|'+o.path+'|'+boxKey(o.box)+'|'+(o.size||160);
     el.dataset.lfface=key;
     if(!o.keep) el.style.opacity=el.style.opacity||'';
@@ -109,7 +130,7 @@
   /* id -> {path,box}: metadata.face_box first (the fast copy), then the newest
      published face fact (source of truth), then a photo they are tagged in. */
   async function resolve(ids){ var out={}; ids=(ids||[]).filter(Boolean); if(!sb||!ids.length) return out;
-    var ppl=[]; try{ var r1=await sb.from('people').select('id,primary_asset,metadata').in('id',ids); ppl=r1.data||[]; }catch(e){}
+    var ppl=[]; try{ var r1=await sb.from('people').select('id,primary_asset,metadata,portrait_path').in('id',ids); ppl=r1.data||[]; }catch(e){}
     var facts=[]; try{ var r2=await sb.from('person_facts').select('person_id,value,published_at').eq('field','face').eq('status','published').in('person_id',ids).order('published_at',{ascending:false}); facts=r2.data||[]; }catch(e){}
     var factBy={}; facts.forEach(function(f){ if(factBy[f.person_id]) return;
       try{ var v=JSON.parse(f.value); if(v&&v.storage_path) factBy[f.person_id]={path:v.storage_path,box:normBox(v)}; }catch(e){} });
@@ -117,7 +138,10 @@
       var fact=factBy[p.id];
       if(p.primary_asset&&fb) out[p.id]={path:p.primary_asset,box:fb};
       else if(fact) out[p.id]=fact;
-      else if(p.primary_asset) out[p.id]={path:p.primary_asset,box:null}; });
+      else if(p.primary_asset) out[p.id]={path:p.primary_asset,box:null};
+      /* the baked portrait travels with every answer, so a caller that simply passes what
+         resolve() gave it gets the fast path without knowing anything about baking */
+      if(p.portrait_path){ out[p.id]=out[p.id]||{}; out[p.id].portrait=p.portrait_path; } });
     var missing=ids.filter(function(id){ return !out[id]; });
     if(missing.length){ try{
       var r3q=await sb.from('artefact_subjects').select('person_id,artefact_id,detail').in('person_id',missing);
@@ -129,5 +153,5 @@
     }catch(e){} }
     return out; }
 
-  window.LFFace={init:init,url:url,into:into,resolve:resolve,cropImage:cropImage,normBox:normBox};
+  window.LFFace={init:init,url:url,into:into,resolve:resolve,cropImage:cropImage,normBox:normBox,portrait:portrait};
 })();

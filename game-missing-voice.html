@@ -401,7 +401,7 @@
     // real faces onto the option discs — the coloured disc remains the placeholder
     try{ if(window.LFFace){ LFFace.resolve(round.options.map(o=>o.id)).then(fmap=>{
       $$('#tellers .teller').forEach(b=>{ const f=fmap[b.getAttribute('data-id')];
-        if(f) LFFace.into(b.querySelector('.av'),{path:f.path,box:f.box,size:120,keep:true}); }); }); } }catch(e){}
+        if(f) LFFace.into(b.querySelector('.av'),{path:f.path,box:f.box,portrait:f.portrait,size:120,keep:true}); }); }); } }catch(e){}
   }
 
   function renderReveal(round){
@@ -411,8 +411,8 @@
     const line = n>0 ? L.revN(correct.label, n) : L.revOne(correct.label);
     const rev=$('#reveal');
     try{ if(window.LFFace&&round.answer_id){ LFFace.resolve([round.answer_id]).then(fmap=>{ const f=fmap[round.answer_id]; if(!f) return;
-      const hf=document.querySelector('.htface'); if(hf) LFFace.into(hf,{path:f.path,box:f.box,size:120,keep:true});
-      const rf=rev.querySelector('.revface'); if(rf) LFFace.into(rf,{path:f.path,box:f.box,size:160,keep:true}); }); } }catch(e){}
+      const hf=document.querySelector('.htface'); if(hf) LFFace.into(hf,{path:f.path,box:f.box,portrait:f.portrait,size:120,keep:true});
+      const rf=rev.querySelector('.revface'); if(rf) LFFace.into(rf,{path:f.path,box:f.box,portrait:f.portrait,size:160,keep:true}); }); } }catch(e){}
     rev.innerHTML=`
       <div class="eye serif" style="margin-top:24px">${esc(L.revEye)}</div>
       <div class="revface"><i></i></div>
@@ -475,7 +475,7 @@
       <div class="locked-foot serif">${L.lockFoot}</div>`;
     try{ if(window.LFFace){ LFFace.resolve(state.voices.map(v=>v.id)).then(fmap=>{
       $$('#locked .voice-count .av[data-id]').forEach(el=>{ const f=fmap[el.getAttribute('data-id')];
-        if(f) LFFace.into(el,{path:f.path,box:f.box,size:120,keep:true}); }); }); } }catch(e){}
+        if(f) LFFace.into(el,{path:f.path,box:f.box,portrait:f.portrait,size:120,keep:true}); }); }); } }catch(e){}
   }
 
   /* ---------- ERROR ---------- */
