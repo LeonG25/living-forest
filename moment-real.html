@@ -15,6 +15,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="lf-db.js?v=5"></script>
+<script src="lf-name.js?v=1"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
   html,body{ background:#04070e; }
@@ -987,7 +988,25 @@
   }
 
   /* ---------- name picker ---------- */
-  async function loadAllPeople(){ if(allPeople) return; try{ const {data}=await sb.from('people').select('id,display_name,called_name,sex').order('display_name'); allPeople=data||[]; }catch(e){ allPeople=[]; } }
+  /* Names live in person_facts now, in every language. The picker used to match only
+     people.display_name and called_name, which is why searching "Nadezhda" found nobody
+     while her page showed the name correctly - her display_name still held a stale Hebrew
+     string from July. Every published name part comes down with the people. */
+  let nameFacts={};
+  async function loadAllPeople(){ if(allPeople) return;
+    try{ const {data}=await sb.from('people').select('id,display_name,called_name,sex'); allPeople=data||[]; }catch(e){ allPeople=[]; }
+    try{ const {data}=await sb.from('person_facts')
+           .select('person_id,field,lang,value,status')
+           .in('field',['called','given','family','display','maiden']).eq('status','published');
+         nameFacts=(window.LFName?LFName.byPerson(data||[]):{}); }catch(e){ nameFacts={}; }
+    /* order by what each person is actually called, not by a stale column */
+    try{ allPeople.sort((a,b)=>label(a).localeCompare(label(b))); }catch(e){}
+  }
+  function label(p){
+    if(!p) return '';
+    if(window.LFName){ const l=LFName.label(nameFacts[p.id]||[], lang); if(l) return l; }
+    return p.display_name||p.called_name||'';
+  }
   async function openNameSheet(tagId, isNew){ nameTargetId=tagId; await loadAllPeople(); renderNameList(''); show($('#nameSheet')); }
   function renderNameList(q){ const d=t(); const sheet=$('#nameSheet'); const ql=q.trim().toLowerCase();
     /* This rebuilt the WHOLE sheet on every keystroke - including the input being typed
@@ -995,13 +1014,16 @@
        search box is built once; only the list below it is redrawn. */
     const existing=sheet.querySelector('#pSearch');
     const listOnly=!!existing;
-    const list=(allPeople||[]).filter(p=>{ if(!ql) return true; return String(p.display_name||'').toLowerCase().includes(ql) || String(p.called_name||'').toLowerCase().includes(ql); }).slice(0,40);
+    const list=(allPeople||[]).filter(p=>{ if(!ql) return true;
+      if(window.LFName && LFName.matches(nameFacts[p.id]||[], ql)) return true;   /* any name, any language */
+      return String(p.display_name||'').toLowerCase().includes(ql)
+          || String(p.called_name||'').toLowerCase().includes(ql); }).slice(0,40);
     const HTML = `<div class="grip"></div><h3>${esc(d.whoTitle)}</h3><div class="sub">${esc(d.whoSub)}</div>
       <div class="searchbox">${sv(ICON.search,1.7)}<input id="pSearch" placeholder="${esc(d.searchFamily)}" value="${esc(q)}"></div>
       <div class="plist">
         ${list.map(p=>`<button class="popt" data-pick="${esc(p.id)}">
           <span class="pc">${faceSVG(p.display_name)}</span>
-          <span><span class="pn">${esc(nameFor(p.id,lang)||p.display_name)}</span>${p.called_name?`<span class="pr">${esc(p.called_name)}</span>`:''}</span></button>`).join('')}
+          <span><span class="pn">${esc(label(p)||nameFor(p.id,lang)||p.display_name||'')}</span></span></button>`).join('')}
         <button class="popt newp" data-pick="__new">
           <span class="pc">${sv(ICON.plus,2)}</span>
           <span><span class="pn">${q?esc(q):esc(d.someoneNew)}</span><span class="pr">${esc(d.someoneNew)}</span></span></button>
