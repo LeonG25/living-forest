@@ -903,15 +903,18 @@
              image fractions; the stage numbers are legacy and only used when there is no box. */
           const fb2=(fv.box&&(fv.box.w>0))?fv.box:((fv.zoom!=null)?{zoom:fv.zoom,px:fv.px,py:fv.py}:null);
             const per=(pending.personRow&&pending.personRow[f.person_id])||{};
-            if(fb2) patch.metadata=Object.assign({},per.metadata||{},{face_box:fb2}); }catch(e){}
+            if(fb2) patch.metadata=Object.assign({},per.metadata||{},{face_box:fb2}); 
+            /* Bake the portrait HERE - inside the block where fv and the chosen box exist.
+               My first attempt put this call outside it, wrapped in try/catch, so it threw a
+               ReferenceError on names that were not in scope and did nothing, quietly: the
+               framing was approved and no picture was made. Silent failure, in the code
+               written to end silent failures, again. */
+            try{ if(window.LFPortrait && fv && fv.storage_path)
+                   await LFPortrait.bake(sb, f.person_id, fv.storage_path, fb2); }catch(e){}
+          }catch(e){}
           /* one portrait per person: supersede older published crops and stale pending suggestions */
           try{ await sb.from('person_facts').delete().eq('person_id',f.person_id).eq('field','face').neq('id',id); }catch(e){} }
         if(Object.keys(patch).length && f.person_id){ try{ await sb.from('people').update(patch).eq('id',f.person_id); }catch(e){} }
-        /* Bake the portrait here and now, so an approved framing IS a picture from this
-           second rather than a promise to crop it in every browser forever after. Not fatal
-           if it fails: the page falls back to live cropping exactly as before. */
-        try{ if(window.LFPortrait && f.field==='face' && fv && fv.storage_path && f.person_id)
-               await LFPortrait.bake(sb, f.person_id, fv.storage_path, fb2); }catch(e){}
         /* one published part per (person,lang,field): supersede the old one first,
            else person_facts_one_published_name_part rejects the publish (the silent
            root of every stubborn approval). The new value is already stored. */
