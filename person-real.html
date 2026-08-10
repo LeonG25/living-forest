@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <link rel="stylesheet" href="lf-layout.css?v=1">
 <script src="lf-bind.js?v=4"></script>
+<script src="lf-portrait.js?v=1"></script>
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -1539,6 +1540,9 @@
           const fb=(fv.box&&(fv.box.w>0))?fv.box:((fv.zoom!=null)?{zoom:fv.zoom,px:fv.px,py:fv.py}:null);
           if(fb) patch.metadata=Object.assign({},(person&&person.metadata)||{},{face_box:fb}); }catch(e){} }
         if(Object.keys(patch).length){ try{ await sb.from('people').update(patch).eq('id',PERSON_ID); }catch(e){} }
+        /* the same baking as the review page: a framing approved anywhere becomes a picture */
+        try{ if(window.LFPortrait && f.field==='face' && fv && fv.storage_path)
+               await LFPortrait.bake(sb, PERSON_ID, fv.storage_path, fb); }catch(e){}
         /* one published part per (person,lang,field): supersede the old one BEFORE publishing this,
            else person_facts_one_published_name_part rejects the update. Keeper DELETE is allowed by RLS;
            the new value is already safely stored, so this cannot lose data. */

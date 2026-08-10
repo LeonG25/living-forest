@@ -15,6 +15,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="lf-db.js?v=5"></script>
+<script src="lf-portrait.js?v=1"></script>
 <script src="lf-date.js?v=1"></script>
 <script src="lf-face.js?v=3"></script>
 <style>
@@ -815,6 +816,18 @@
       /* a name first met on this photograph enters the forest with it */
       await sb.from('people').update({status:'published', reviewed_by:user.id, published_at:now})
         .eq('id',pid).eq('status','in_review');
+      /* a face welcomed onto a photograph may be the first picture this person has */
+      try{
+        if(window.LFPortrait){
+          const who=await sb.from('people').select('portrait_path').eq('id',pid).maybeSingle();
+          if(!(who&&who.data&&who.data.portrait_path)){
+            const tg2=(pending.tags||[]).find(x=>x.artefact_id===aid&&x.person_id===pid);
+            const art=await sb.from('artefacts').select('storage_path').eq('id',aid).maybeSingle();
+            if(art&&art.data&&art.data.storage_path&&tg2&&tg2.detail)
+              await LFPortrait.bake(sb, pid, art.data.storage_path, tg2.detail);
+          }
+        }
+      }catch(e){}
       approveRef._busy=false; await reload(); toast(L.tWelcomed||'Welcomed.',true); return;
     }
     if(kind==='kin'){
@@ -894,6 +907,11 @@
           /* one portrait per person: supersede older published crops and stale pending suggestions */
           try{ await sb.from('person_facts').delete().eq('person_id',f.person_id).eq('field','face').neq('id',id); }catch(e){} }
         if(Object.keys(patch).length && f.person_id){ try{ await sb.from('people').update(patch).eq('id',f.person_id); }catch(e){} }
+        /* Bake the portrait here and now, so an approved framing IS a picture from this
+           second rather than a promise to crop it in every browser forever after. Not fatal
+           if it fails: the page falls back to live cropping exactly as before. */
+        try{ if(window.LFPortrait && f.field==='face' && fv && fv.storage_path && f.person_id)
+               await LFPortrait.bake(sb, f.person_id, fv.storage_path, fb2); }catch(e){}
         /* one published part per (person,lang,field): supersede the old one first,
            else person_facts_one_published_name_part rejects the publish (the silent
            root of every stubborn approval). The new value is already stored. */
