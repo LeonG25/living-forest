@@ -684,6 +684,11 @@
   /* ---------- storage / face crop ---------- */
   async function signedUrl(path,width){ if(!path) return ''; try{ const opts=width?{transform:{width:width,resize:'contain'}}:undefined; const r=await sb.storage.from('family').createSignedUrl(path,3600,opts); if(r.data&&r.data.signedUrl) return r.data.signedUrl; }catch(e){} if(width){ try{ const r2=await sb.storage.from('family').createSignedUrl(path,3600); return (r2.data&&r2.data.signedUrl)||''; }catch(e){} } return ''; }
   async function faceInto(el, path, box){ if(!el||!path) return;
+    /* If the portrait is already on screen, leave it alone. faceFirst puts it up early and
+       this ran again afterwards with the same picture - the second paint replaced the node
+       and flashed, which is the "loads twice" Leon sees. Same image, same cache, nothing to
+       gain: the only honest thing to do is nothing. */
+    if(el.id==='faceHost' && el.querySelector('img') && person && person.portrait_path) return;
     if(window.LFFace){ LFFace.into(el,{portrait:(person&&person.portrait_path)||null,path:path,box:LFFace.normBox(box),size:200,priority:true}); return; }
     const u=await signedUrl(path); if(!u) return;
     const img=new Image(); img.crossOrigin='anonymous';
