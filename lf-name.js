@@ -33,19 +33,44 @@
     }
     return '';
   }
-  function join(a,b){ a=(a||'').trim(); b=(b||'').trim(); return (a&&b)?(a+' '+b):(a||b); }
+  /* Never say a name twice. The 29 people whose only name was a display string keep it
+     whole as 'called' - "Sofia Mitelman" - and blindly appending the family name gave
+     "Sofia Mitelman Мительман". If the first part already contains the family name, or the
+     two are in different scripts, the family name is left off. */
+  function sameScript(a,b){
+    var cyr=/[\u0400-\u04FF]/, heb=/[\u0590-\u05FF]/;
+    return (cyr.test(a)===cyr.test(b)) && (heb.test(a)===heb.test(b));
+  }
+  function join(a,b){
+    a=(a||'').trim(); b=(b||'').trim();
+    if(!a) return b; if(!b) return a;
+    if(a.toLowerCase().indexOf(b.toLowerCase())>=0) return a;   /* already contains it */
+    if(!sameScript(a,b)) return a;                              /* do not mix alphabets */
+    return a+' '+b;
+  }
 
+  /* Leon's rule, 2026-08-10:
+       1. called + family      - what her family calls her, with the family name
+       2. given  + family      - the formal name
+       3. any single part      - when there is neither, show whatever exists
+     A name in the reader's language wins; 'und' is language-neutral and matches everyone;
+     a name in another language is better than no name at all. */
+  function pick(facts, field, lang){
+    return first(rows(facts,field,lang)) || first(rows(facts,field,null));
+  }
   function label(facts, lang){
     lang=lang||'en';
-    var called=first(rows(facts,'called',lang)) || first(rows(facts,'called',null));
-    if(called) return called;
-    var given=first(rows(facts,'given',lang)), family=first(rows(facts,'family',lang));
-    var both=join(given,family);
-    if(both) return both;
-    given=first(rows(facts,'given',null)); family=first(rows(facts,'family',null));
-    both=join(given,family);
-    if(both) return both;
-    return first(rows(facts,'display',lang)) || first(rows(facts,'display',null)) || '';
+    var family=pick(facts,'family',lang);
+    var called=pick(facts,'called',lang);
+    if(called) return join(called,family);
+    var given=pick(facts,'given',lang);
+    if(given) return join(given,family);
+    var fields=['family','display','maiden','given','called'];
+    for(var i=0;i<fields.length;i++){
+      var v=pick(facts,fields[i],lang);
+      if(v) return v;
+    }
+    return '';
   }
 
   /* every spelling this person has, so a search finds them by any of them */
