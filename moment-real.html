@@ -878,7 +878,8 @@
     const tg=TAGS.find(x=>x.id===selId);
     if(!tg || !document.body.classList.contains('tagging')){ bar.classList.remove('show'); return; }
     const d=t(); const nm=tg.status==='unnamed'?d.unknownFace:(tg.name||d.unknownFace);
-    bar.className='selbar show'+(tg.status==='pending'?' pending':''); bar.style.bottom='58px';
+    /* no inline offset any more: the bar sits under the photograph, not floating on it */
+    bar.className='selbar show'+(tg.status==='pending'?' pending':'');
     bar.innerHTML = `<span class="sname">${esc(nm)}</span>
       <button class="sbtn" data-act="change">${sv(ICON.pencil,1.7)} ${esc(tg.status==='unnamed'?d.addName:d.tagChange)}</button>
       <button class="sbtn danger" data-act="remove">${sv(ICON.trash,1.7)} ${esc(d.tagRemove)}</button>`;
