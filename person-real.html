@@ -1677,6 +1677,11 @@
     if(!session){ render(); showGate(); return; }
     user=session.user;
     try{ const {data:pr}=await sb.from('profiles').select('is_keeper,preferred_lang').eq('id',user.id).maybeSingle(); if(pr){ state.keeper=!!pr.is_keeper; if(state.keeper){ window.__lfKeeper=true; try{document.dispatchEvent(new Event('lf-keeper-ready'));}catch(e){} } if(pr.preferred_lang&&!stored&&T[pr.preferred_lang]) state.lang=pr.preferred_lang; } }catch(e){}
+    /* Draw the ring BEFORE the data arrives, so the face has somewhere to land the moment
+       it is fetched. Measured: the portrait was ready at 718ms and waited until 1766ms
+       purely because #faceHost did not exist yet. The shell costs nothing - it is the same
+       placeholder the page shows anyway - and every real value overwrites it on render(). */
+    try{ render(); }catch(e){}
     await loadData(); seed(); render();
   }
   atmosphere($('#dev .atmo')); wireOnce(); boot();
