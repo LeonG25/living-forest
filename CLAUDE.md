@@ -182,6 +182,14 @@ walked on Leon's own phone. Several change how data is written. Verify before st
 3. **Cold-open performance** — service worker so the app downloads once; defer the 3D world
    past the gate; measure before and after.
 
+**A-NEXT — the nine placeholder pages (Leon, 2026-08-10: "get to A after we finish with B").**
+Nine pages show a person's name beside an empty circle and should show their face:
+`index` (globe pins), `timeline-real`, `crowd-real`, `curators-real`, `home-real`,
+`journal-real`, `contribute-add-real`, `game-what-happened-next`, `game-where-was-this`.
+Faces are drawn in 11 places today and *should* be in 20. Now that a portrait is a small
+baked image, each is a few lines: select `portrait_path`, hand it to `LFFace.into({portrait:…})`.
+Do this AFTER the verification pass.
+
 **C — smaller, known, unbuilt:**
 
 - The Reel has no "step into this moment" door (its hero photo does open one; the *stories*
