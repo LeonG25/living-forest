@@ -473,6 +473,17 @@
     out.pubNvs=rPubNvs.data||[];
     /* a face drawn on a photograph is an edit like any other and belongs in this queue */
     out.tags=(rTags&&rTags.data)||[];
+    /* A keeper must SEE the face being proposed, not just read a name - approving
+       "Nadia Matveev is in this photograph" without the crop is approving nothing you can
+       judge. Fetch the photographs those tags sit on so the card can show the box. */
+    try{
+      const aids=[...new Set(out.tags.map(t=>t.artefact_id).filter(Boolean))];
+      if(aids.length){
+        const ra=await sb.from('artefacts').select('id,storage_path').in('id',aids);
+        const byId={}; (ra.data||[]).forEach(a=>byId[a.id]=a.storage_path);
+        out.tags.forEach(t=>{ t.photo_path=byId[t.artefact_id]||null; });
+      }
+    }catch(e){}
     const ts=r=>Date.parse(r.published_at||r.created_at||'')||0;
     const put=(m,k,r)=>{ if(!m[k]||ts(r)>=ts(m[k])) m[k]=r; };
     out.pub.forEach(r=>{ put(out.pubIdx, r.person_id+'|'+r.field+'|'+(r.lang||''), r); put(out.pubAny, r.person_id+'|'+r.field, r);
@@ -554,6 +565,7 @@
       const who=personName(tg.person_id)||'—';
       items.facts.push({ kind:'tag', id:tg.artefact_id+'|'+tg.person_id, group:'facts', field:'tag',
         value:who, sentence:who, personId:tg.person_id, artefactId:tg.artefact_id,
+        photoPath:tg.photo_path||null, faceBox:tg.detail||null,
         suggester:accountName(tg.created_by), isNew:true });
     });
     Object.values(customByGroup).forEach(c=>{ const lab=(c.rows.find(r=>r.field==='custom_label')||{}).value||''; const val=(c.rows.find(r=>r.field==='custom_value')||{}).value||'';
@@ -614,7 +626,15 @@
   function facePath(v){ if(!v) return ''; if(typeof v!=='string') return v.storage_path||'';
     const s=v.trim(); if(s.charAt(0)==='{'){ try{ const o=JSON.parse(s); return o.storage_path||o.path||''; }catch(e){ return ''; } } return s; }
 
-  function isFaceItem(it){ return it.kind==='fact' && it.field==='face'; }
+  /* A tag shows a face too. Without this the keeper was asked to approve a NAME with no
+     picture - "Nadia Matveev is in this photograph" - which is not a decision anyone can
+     make. There is no 'current' face to compare against, so the card shows the proposed
+     crop alone. */
+  function isFaceItem(it){ return (it.kind==='fact' && it.field==='face') || it.kind==='tag'; }
+  function tagFaceCell(it){
+    if(it.kind!=='tag' || !it.photoPath) return '';
+    return `<div class="imgcmp">${imgCell(it.photoPath,'new',d().capProposed||'',it.faceBox||null)}</div>`;
+  }
   function isPhotoItem(it){ return it.kind==='artefact' && it.mediaKind!=='voice'; }
   function arrowCh(){ return d().dir==='rtl'?'←':'→'; }
 
@@ -654,6 +674,8 @@
   }
 
   function deltaMarkup(it){ const L=d(); const o=oldInfo(it);
+    /* a tag has no 'current' face to compare against - show the proposed crop alone */
+    if(it.kind==='tag') return tagFaceCell(it);
     if(isFaceItem(it)){ let nv=null; try{ nv=JSON.parse(it.raw&&it.raw.value); }catch(e){}
       const nBox=nv?(nv.box||((nv.zoom!=null)?{zoom:nv.zoom,px:nv.px,py:nv.py}:null)):null;
       const per=pending.personRow&&pending.personRow[it.personId];
