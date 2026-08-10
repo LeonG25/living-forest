@@ -147,14 +147,18 @@
   .ptool.tag.on{ border-color:var(--edit); color:#efe6ff; background:rgba(201,162,255,.16); }
   .ptool.round{ width:38px; padding:0; justify-content:center; }
   .ptool.spacer{ margin-inline-start:auto; background:none; border:none; }
-  .taghint{ position:absolute; left:12px; right:12px; top:12px; z-index:6; display:none;
+  /* KEEP THE PHOTOGRAPH CLEAR. These were absolutely positioned ON the picture, and on a
+     360px screen the hint, the selected-face bar and the tools covered the whole of it -
+     there was nowhere left to drag a box across a face. They live under the frame now. */
+  .tagbar{ display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+  .taghint{ display:none;
     align-items:center; gap:9px; padding:9px 12px; border-radius:11px;
     background:rgba(28,18,46,.8); backdrop-filter:blur(10px); border:1px solid rgba(201,162,255,.4);
     font-size:12.5px; color:#efe6ff; }
   body.tagging .taghint{ display:flex; }
   .taghint svg{ width:15px; height:15px; color:var(--edit); flex:0 0 auto; }
 
-  .selbar{ position:absolute; left:12px; right:12px; z-index:7; display:none;
+  .selbar{ display:none;
     align-items:center; gap:7px; padding:8px; border-radius:12px;
     background:rgba(6,16,28,.9); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,.14);
     box-shadow:0 14px 40px -20px #000; }
@@ -776,8 +780,6 @@
             <button type="button" class="zbtn zreset" data-z="reset" aria-label="Reset zoom">⤢</button>
           </div>
           ${d.year?`<div class="yearstamp"><span class="d"></span><span class="y">${esc(d.year)}</span></div>`:''}
-          <div class="taghint">${sv(ICON.tag,1.7)} <span>${esc(d.tagHint)}</span></div>
-          <div class="selbar" id="selbar"></div>
           ${ hasPhoto ? `<div class="phototools" id="phototools">
             <button class="ptool tag" id="tagBtn">${sv(ICON.tag,1.6)} <span id="tagBtnLabel">${esc(d.tagFace)}</span></button>
             <span class="ptool spacer"></span>
@@ -787,6 +789,10 @@
           </div>` : `<div class="phototools" id="phototools">
             <button class="ptool tag" id="replBtn">${sv(ICON.swap,1.6)} <span>${esc(d.replacePhoto)}</span></button></div>` }
         </div></div>
+        <div class="tagbar">
+          <div class="taghint">${sv(ICON.tag,1.7)} <span>${esc(d.tagHint)}</span></div>
+          <div class="selbar" id="selbar"></div>
+        </div>
         <div class="photo-legend">
           <span class="lg"><i></i>${esc(d.lgTagged)}</span>
           <span class="lg"><i class="pend"></i>${esc(d.lgPending)}</span>
