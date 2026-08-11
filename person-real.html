@@ -7,6 +7,8 @@
 <link rel="stylesheet" href="lf-layout.css?v=1">
 <script src="lf-bind.js?v=4"></script>
 <script src="lf-portrait.js?v=1"></script>
+<script src="lf-name.js?v=1"></script>
+<script src="lf-person.js?v=1"></script>
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -447,6 +449,7 @@
   'use strict';
   const SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
   const sb=window.supabase.createClient(SB_URL,SB_KEY);
+  try{ if(window.LFPerson) LFPerson.init(sb); }catch(e){}
   LFDB.install(sb,'person-real');
   if(window.LFFace) LFFace.init(sb);
   const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -617,6 +620,7 @@
 
   /* ---------- state ---------- */
   const state={ lang:'en', keeper:false, facet:'name' };
+  let PERSONA=null;
   let user=null, person=null, NV=[], facts=[], tagged=[], rels=[], memories=[], contribNames={};
   const NF0=['display','given','called','family','maiden','patronymic','honorific'];
   const _emptyN=()=>{ const o={}; NF0.forEach(f=>o[f]={}); return o; };
@@ -747,6 +751,7 @@
   }
 
   async function loadData(){
+    try{ if(window.LFPerson) PERSONA=await LFPerson.get(PERSON_ID,{lang:state.lang}); }catch(e){}
     faceFirst();                                     /* deliberately not awaited */
     try{ const {data:p}=await sb.from('people').select('id,display_name,called_name,sex,primary_asset,portrait_path,birth_date,birth_certainty,death_date,death_certainty,is_living,metadata').eq('id',PERSON_ID).maybeSingle(); person=p||{id:PERSON_ID}; }catch(e){ person={id:PERSON_ID}; }
     try{ const {data:nv}=await sb.from('name_variants').select('id,lang,given,family,status,created_by').eq('person_id',PERSON_ID); NV=nv||[]; }catch(e){ NV=[]; }
@@ -1303,7 +1308,7 @@
         ${pickerHTML()}
         <div class="field"><label>${(function(){
             const them=st.other?nameOf(st.other):String(st.propose||'').trim();
-            const me=(person&&(person.display_name||person.called_name))||'';
+            const me=(PERSONA&&PERSONA.name)||(person&&(person.display_name||person.called_name))||'';
             return (them&&me&&L.relkindWho)?L.relkindWho.replace('{a}',them).replace('{b}',me):L.relkind;
           })()}</label><div class="segwrap" data-kingroup="kind">
           ${REL_KINDS.map(k=>`<button data-kinset="kind:${k}" class="${st.kind===k?'on':''}">${esc(L.relkinds[k])}</button>`).join('')}</div></div>
