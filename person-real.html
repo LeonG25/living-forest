@@ -1120,7 +1120,16 @@
   }
   async function fillFaces(){ if(!person) return; const fh=$('#faceHost'); if(fh){ const ff=pubList('face','und').slice().sort((a,b)=>String(b.published_at||b.created_at||'').localeCompare(String(a.published_at||a.created_at||'')))[0]; const fv=ff?(function(){try{return JSON.parse(ff.value);}catch(e){return null;}})():null;
     const mbox=(person.metadata&&person.metadata.face_box)||null;
-    if(person.primary_asset&&mbox){ faceInto(fh,person.primary_asset,mbox); }
+    /* THE BAKED PORTRAIT COMES FIRST, and on its own. Every branch below needs a source
+       photograph, so someone with a portrait but no primary_asset - which is everyone whose
+       face came from tagging, 36 of the 47 - fell through to a live crop of a tagged photo
+       and showed an older face than the tree did. The tree drew the portrait; this page
+       never asked for it. */
+    if(person.portrait_path && window.LFFace){
+      LFFace.into(fh,{portrait:person.portrait_path,path:person.primary_asset||(fv&&fv.storage_path)||(tagged[0]&&tagged[0].storage_path)||'',
+        box:mbox||(fv||null)||(tagged[0]&&tagged[0].box)||null,size:200,priority:true});
+    }
+    else if(person.primary_asset&&mbox){ faceInto(fh,person.primary_asset,mbox); }
     else if(fv&&fv.storage_path){ faceInto(fh,fv.storage_path,fv); }
     else if(person.primary_asset){ faceInto(fh,person.primary_asset,null); }
     else if(tagged[0]){ faceInto(fh,tagged[0].storage_path,tagged[0].box); } }
