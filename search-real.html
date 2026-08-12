@@ -409,7 +409,7 @@
 
   function parseYear(w){ if(w==null) return ''; const m=String(w).match(/(1[5-9]\d\d|20\d\d)/); return m?m[1]:''; }
 
-  /* localized display name for a person */
+  /* the name to show for a person, in the reader's language */
   function nameFor(p, lang){
     if(!p) return '';
     const parts=IDX.names[p.id]||[];
@@ -488,7 +488,7 @@
 
   /* ---------- gap engine (engine-generated, never hard-coded) ---------- */
   function findGap(){
-    // people ordered stably by display name
+    // people ordered stably by the name we show
     const ppl=DB.people.slice().sort((a,b)=>norm(a.display_name).localeCompare(norm(b.display_name)));
     const livedBy=new Set(DB.facts.filter(f=>f.field==='lived'&&f.value&&f.value.trim()).map(f=>f.person_id));
     const subjOf=new Set(DB.subs.map(s=>s.person_id));

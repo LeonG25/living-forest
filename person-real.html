@@ -468,7 +468,7 @@
       facet:{ name:'Name', face:'Face', life:'Life', places:'Places', story:'Story', kin:'Kin', reel:'Reel', more:'More' },
       toldby:'Told by the family', assembled:'Assembled by the app', bothpending:'Waiting for the keeper',
       addlang:'other languages', addfield:'add in this language',
-      display:'Display name', given:'Given name', family:'Family name', maiden:'Maiden name',
+      given:'Given name', family:'Family name', maiden:'Maiden name',
       called:'Called', calledHint:'everyday form', patronymic:'Patronymic', honorific:'Honorific',
       addpart:'add a name part', addpartHint:'Adds in this language and sends it to the keeper.', otherlangs:'other languages',
       nicks:'Nicknames & pet names', nickname:'Nickname / pet name', pendingChip:'waiting', toReview:'Open the review page', approve:'Approve', decline:'Decline',
@@ -501,14 +501,14 @@
       addconn:'Add a connection', editconn:'Edit the connection', removeconn:'Remove this connection',
       meAsk:'Who are you in the family?', meHint:'Pick your own place in the forest, then say how you connect.',
       pickfirst:'Choose someone first.', saved:'Saved', proposedPerson:'proposed', newPersonNote:'Nothing here is in the forest yet. Add whatever you know — every part waits for the keeper.',
-      saveFail:'Couldn’t save — try again', sameDisplay:'Same as the display name',
+      saveFail:'Couldn’t save — try again',
       foot:'A life, told a little more fully.' },
     ru:{ dir:'ltr', native:'Русский', label:'Russian',
       eyebrow:'Человек', keeper:'Ничто не дойдёт до семьи, пока хранитель не одобрит.',
       facet:{ name:'Имя', face:'Лицо', life:'Жизнь', places:'Места', story:'История', kin:'Родные', reel:'Плёнка', more:'Ещё' },
       toldby:'Рассказано семьёй', assembled:'Собрано приложением', bothpending:'Ожидает хранителя',
       addlang:'другие языки', addfield:'добавить на этом языке',
-      display:'Отображаемое имя', given:'Имя', family:'Фамилия', maiden:'Девичья фамилия',
+      given:'Имя', family:'Фамилия', maiden:'Девичья фамилия',
       called:'Зовут', calledHint:'обиходная форма', patronymic:'Отчество', honorific:'Титул',
       addpart:'добавить часть имени', addpartHint:'Добавит на этом языке и отправит хранителю.', otherlangs:'другие языки',
       nicks:'Прозвища и ласковые имена', nickname:'Прозвище / ласковое имя', toReview:'Открыть страницу проверки', pendingChip:'ожидает', approve:'Одобрить', decline:'Отклонить',
@@ -541,7 +541,7 @@
       addconn:'Добавить связь', editconn:'Изменить связь', removeconn:'Удалить эту связь',
       meAsk:'Кто вы в семье?', meHint:'Выберите себя в лесу, затем укажите связь.',
       pickfirst:'Сначала выберите человека.', saved:'Сохранено', proposedPerson:'предложен', newPersonNote:'Здесь пока ничего нет в лесу. Добавьте всё, что знаете — каждая часть ждёт хранителя.',
-      saveFail:'Не удалось сохранить — попробуйте ещё раз', sameDisplay:'Как отображаемое имя',
+      saveFail:'Не удалось сохранить — попробуйте ещё раз',
       foot:'Жизнь, рассказанная чуть полнее.' },
     he:{ dir:'rtl', native:'עברית', label:'Hebrew',
       eyebrow:'אדם', keeper:'שום דבר לא יגיע למשפחה עד שהשומר יאשר.',
@@ -581,7 +581,7 @@
       addconn:'הוספת קשר', editconn:'עריכת הקשר', removeconn:'מחיקת הקשר הזה',
       meAsk:'מי אתם במשפחה?', meHint:'בחרו את המקום שלכם ביער, ואז ציינו את הקשר.',
       pickfirst:'בחרו קודם אדם.', saved:'נשמר', proposedPerson:'הוצע', newPersonNote:'עדיין אין כאן דבר ביער. הוסיפו כל מה שידוע לכם — כל פרט ממתין לשומר.',
-      saveFail:'לא ניתן היה לשמור — נסו שוב', sameDisplay:'כמו שם התצוגה',
+      saveFail:'לא ניתן היה לשמור — נסו שוב',
       foot:'חיים, מסופרים מעט יותר במלואם.' }
   };
 
@@ -976,7 +976,6 @@
     const editable=['given','called','family','maiden','patronymic','honorific'];
     out+=`<div class="np-langs" hidden>${editable.map(k=>`<div class="mlgrp"><div class="np-lab">${esc(L[k]||k)}</div>
         ${LANGS.map(l=>`<div class="mlvar ${l==='he'?'rtl':''}"><span class="tag">${l}</span><input class="inp" data-field="${k}" data-lang="${l}" value="${esc((NAME[k]&&NAME[k][l])||'')}" placeholder="${L.addfield}"></div>`).join('')}
-        ${k==='given'?`<button type="button" class="np-ctl" data-samedisplay style="margin-top:8px">${sv(I.plus,1.7)} ${esc(L.sameDisplay)}</button>`:''}
       </div>`).join('')}<div class="btnrow" style="margin-top:4px"><button class="btn ghost" data-act="revert">${L.cancel}</button><button class="btn violet" data-act="nmsend">${L.send}</button></div></div>`;
     out+=`<div class="np-addmenu" hidden>${unset.map(k=>`<button class="add-opt" data-addpart="${k}"><span class="ic">${sv(I.plus,1.8)}</span><span><span class="nm">${esc(L[k]||k)}</span><span class="ds">${L.addpartHint}</span></span></button>`).join('')}</div>`;
     out+=chipAddBox('nickname',L.nickname);
@@ -1636,9 +1635,6 @@
       const rdel=e.target.closest('[data-reldel]'); if(rdel){ await removeRel(rdel.getAttribute('data-reldel')); await reload(); selectFacet('kin'); toast(state.keeper?L.saved:L.sent); return; }
       const cp=e.target.closest('[data-clearperson]'); if(cp&&state.keeper){ const col=cp.getAttribute('data-clearperson');
         try{ await sb.from('people').update({[col]:null}).eq('id',PERSON_ID); }catch(er){} await reload(); return; }
-      const sd=e.target.closest('[data-samedisplay]'); if(sd){ const card=$('.facet[data-facet="name"]');
-        const inp=card&&card.querySelector(`.np-langs [data-field="given"][data-lang="${state.lang}"]`);
-        if(inp){ inp.value=nameLabel(); inp.focus(); } return; }
       const apart=e.target.closest('[data-addpart]'); if(apart){ openAddPart(apart.getAttribute('data-addpart')); return; }
       const addc=e.target.closest('[data-addchip]'); if(addc){ const box=$(`.chipadd[data-for="${addc.getAttribute('data-addchip')}"]`); if(box){ box.style.display='block'; const i=box.querySelector('input'); if(i) i.focus(); } return; }
       const cc=e.target.closest('[data-cadd-cancel]'); if(cc){ const box=cc.closest('.chipadd'); if(box) box.style.display='none'; return; }
