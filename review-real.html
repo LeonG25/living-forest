@@ -437,6 +437,27 @@
   }
 
   /* ---------- name resolution (Rule 6) ---------- */
+  /* One rule for a person's name: called+family, else given+family, else any part - never
+     people.display_name, which is the stale column. profiles.display_name is a different
+     thing entirely (the account that signed in) and is left alone. */
+  const NAMEP={};
+  function personLabel(id){
+    const parts=NAMEP[id]||[]; const lg=state.lang||'en';
+    const pick=(f,l)=>{ const r=parts.find(x=>x.field===f&&x.lang===l); return r?r.value:''; };
+    const cyr=/[\u0400-\u04FF]/, heb=/[\u0590-\u05FF]/;
+    const same=(a,b)=>(cyr.test(a)===cyr.test(b))&&(heb.test(a)===heb.test(b));
+    const join=(a,c)=>{ a=(a||'').trim(); c=(c||'').trim();
+      if(!a) return c; if(!c) return a;
+      if(a.toLowerCase().indexOf(c.toLowerCase())>=0||!same(a,c)) return a;
+      return a+' '+c; };
+    for(const l of [lg,'und','en','ru','he']){
+      const ca=pick('called',l), gi=pick('given',l), fa=pick('family',l);
+      if(ca) return join(ca,fa);
+      if(gi) return join(gi,fa);
+      if(fa) return fa;
+    }
+    return (parts[0]&&parts[0].value)||'';
+  }
   function personName(id){ return (pending&&pending.peopleMap[id])||''; }
   function accountName(id){ return (id&&pending&&pending.profMap[id])||''; }
 
@@ -447,7 +468,7 @@
     /* Seven independent reads. They used to run one after another - seven
        round-trips deep - which is why the keeper sat watching a loading line.
        They are asked for together now; the page waits for the slowest, not the sum. */
-    const [rPeople,rFacts,rNvs,rArts,rRels,rPub,rPubNvs,rTags] = await Promise.all([
+    const [rPeople,rFacts,rNvs,rArts,rRels,rPub,rPubNvs,rTags,rNames] = await Promise.all([
       sb.from('people').select('*'),
       sb.from('person_facts').select('id,person_id,group_id,field,lang,value,ord,status,created_by,created_at').in('status',['in_review','draft']),
       sb.from('name_variants').select('*').in('status',['in_review','draft']),
@@ -455,9 +476,13 @@
       sb.from('relationships').select('id,from_person,to_person,kind,certainty,note,status,created_by,created_at'),
       sb.from('person_facts').select('id,person_id,group_id,field,lang,value,ord,status,published_at,created_at').eq('status','published'),
       sb.from('name_variants').select('*').eq('status','published'),
-      sb.from('artefact_subjects').select('artefact_id,person_id,detail,status,created_by').in('status',['in_review','draft'])
+      sb.from('artefact_subjects').select('artefact_id,person_id,detail,status,created_by').in('status',['in_review','draft']),
+      sb.from('person_facts').select('person_id,field,lang,value')
+        .in('field',['called','given','family','maiden']).eq('status','published')
     ]);
-    (rPeople.data||[]).forEach(p=>{ out.peopleMap[p.id]=p.display_name||p.name||''; out.personRow[p.id]=p;
+    /* names first: peopleMap is built a few lines below and asks personLabel for every one */
+    ((rNames&&rNames.data)||[]).forEach(f=>{ (NAMEP[f.person_id]=NAMEP[f.person_id]||[]).push(f); });
+    (rPeople.data||[]).forEach(p=>{ out.peopleMap[p.id]=personLabel(p.id)||p.display_name||p.name||''; out.personRow[p.id]=p;
       if(p.status&&p.status!=='published') out.newcomers.push(p); });
     out.facts=rFacts.data||[];
     out.nvs=rNvs.data||[];
@@ -514,7 +539,7 @@
         suggester:accountName(r.created_by), created_at:r.created_at }); });
     // newcomers
     pending.newcomers.forEach(p=>{ items.newcomers.push({ kind:'person', id:p.id, group:'newcomers',
-      value:p.display_name||p.name||'—', suggester:accountName(p.created_by), created_at:p.created_at }); });
+      value:personLabel(p.id)||p.display_name||p.name||'—', suggester:accountName(p.created_by), created_at:p.created_at }); });
     // name_variants -> names
     pending.nvs.forEach(v=>{ const f=v.field||v.kind||'name'; const val=v.value||v.name||v.variant||v.text||'';
       items.names.push({ kind:'nv', id:v.id, group:'names', field:f, lang:v.lang, value:val, personId:v.person_id, suggester:accountName(v.created_by), created_at:v.created_at }); });
