@@ -14,8 +14,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="lf-db.js?v=5"></script>
+<script src="lf-label.js?v=1"></script>
 <script src="lf-progress.js?v=1"></script>
-<script src="lf-games.js?v=13"></script>
+<script src="lf-games.js?v=9"></script>
 <style>
   /* ============================================================
      Foreground reproduced verbatim from the delivered design:
@@ -470,7 +471,8 @@
 
     const r=await Promise.all(jobs.map(p=>Promise.resolve(p).catch(()=>null)));
     const pr=r[0]&&r[0].data;
-    if(pr) out.personName=(pr.called_name&&pr.called_name.trim())||(pr.display_name&&pr.display_name.trim())||null;
+    if(pr){ try{ await LFLabel.load(sb,[res.person_id]); }catch(e){} }
+    if(pr) out.personName=LFLabel.of(res.person_id,(localStorage.getItem('lf_lang')||'en'))||(pr.called_name&&pr.called_name.trim())||(pr.display_name&&pr.display_name.trim())||null;
     paths.forEach((p,i)=>{ const s=r[2+i]; const u=s&&s.data&&s.data.signedUrl; if(u) out.photos[p[0]]=u; });
 
     const arts=(r[1]&&r[1].data)||[];
@@ -479,7 +481,8 @@
     if(cids.length){
       try{
         const {data:pp}=await sb.from('people').select('id,display_name,called_name').in('id',cids);
-        (pp||[]).forEach(p=>{ names[p.id]=(p.called_name&&p.called_name.trim())||(p.display_name&&p.display_name.trim())||''; });
+        try{ await LFLabel.load(sb,(pp||[]).map(x=>x.id)); }catch(e){}
+        (pp||[]).forEach(p=>{ names[p.id]=LFLabel.of(p.id,(localStorage.getItem('lf_lang')||'en'))||(p.called_name&&p.called_name.trim())||(p.display_name&&p.display_name.trim())||''; });
       }catch(e){}
     }
     // contributor_id = who TOLD it (a person). Never the uploading account.

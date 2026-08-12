@@ -15,6 +15,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="lf-db.js?v=5"></script>
+<script src="lf-label.js?v=1"></script>
 <script src="https://unpkg.com/three@0.149.0/build/three.min.js"></script>
 <script src="https://unpkg.com/topojson-client@3/dist/topojson-client.min.js"></script>
 <script src="lf-globe.js?v=7"></script>
@@ -437,7 +438,7 @@
   </div>
 
 <script src="lf-place.js?v=3"></script>
-<script src="lf-games.js?v=13"></script>
+<script src="lf-games.js?v=9"></script>
 <script>
 'use strict';
 (function(){
@@ -695,7 +696,8 @@
       var cid=r[1]&&r[1].data&&r[1].data.contributor_id;   // who TOLD it (a person), never the uploader
       if(!cid) return out;
       return sb.from('people').select('display_name,called_name').eq('id',cid).maybeSingle().then(function(pr){
-        var p=pr&&pr.data; if(p) out.teller=p.called_name||p.display_name||null;
+        var p=pr&&pr.data;
+        if(p) out.teller=(window.LFLabel&&LFLabel.of(cid,(localStorage.getItem('lf_lang')||'en')))||p.called_name||p.display_name||null;
         return out;
       }, function(){ return out; });
     });

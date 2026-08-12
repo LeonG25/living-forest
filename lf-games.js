@@ -87,19 +87,33 @@
     if(NAMEMAP) return;
     NAMEMAP={};
     try{
-      const rows=await q(sb.from('person_facts').select('person_id,lang,value').in('field',['called','given','family']).eq('status','published'),'names');
-      rows.forEach(r=>{ (NAMEMAP[r.person_id]=NAMEMAP[r.person_id]||{})[r.lang]=r.value; });
+      /* keyed by person AND field. It used to key by language alone, so called, given and
+         family overwrote each other and whichever row came last won - a person could end up
+         labelled by their family name on its own. */
+      const rows=await q(sb.from('person_facts').select('person_id,field,lang,value')
+        .in('field',['called','given','family','maiden']).eq('status','published'),'names');
+      rows.forEach(r=>{ (NAMEMAP[r.person_id]=NAMEMAP[r.person_id]||[]).push(r); });
     }catch(e){}
   }
   function nameOf(p) {
     if (!p) return '';
     let L='en'; try{ L=localStorage.getItem('lf_lang')||'en'; }catch(e){}
-    const m=NAMEMAP&&NAMEMAP[p.id];
-    const fact=m&&(m[L]||m.en);
-    return (fact && String(fact).trim())
-      || (p.display_name && String(p.display_name).trim())
-      || (p.called_name && String(p.called_name).trim())
-      || '';
+    const parts=(NAMEMAP&&NAMEMAP[p.id])||[];
+    const pick=(f,lg)=>{ const r=parts.find(x=>x.field===f&&x.lang===lg); return r?String(r.value||'').trim():''; };
+    const CYR=/[\u0400-\u04FF]/, HEB=/[\u0590-\u05FF]/;
+    const same=(a,c)=>(CYR.test(a)===CYR.test(c))&&(HEB.test(a)===HEB.test(c));
+    const join=(a,c)=>{ a=(a||'').trim(); c=(c||'').trim();
+      if(!a) return c; if(!c) return a;
+      if(a.toLowerCase().indexOf(c.toLowerCase())>=0||!same(a,c)) return a;
+      return a+' '+c; };
+    for(const lg of [L,'und','en','ru','he']){
+      const ca=pick('called',lg), gi=pick('given',lg), fa=pick('family',lg);
+      if(ca) return join(ca,fa);
+      if(gi) return join(gi,fa);
+      if(fa) return fa;
+    }
+    return (p.called_name && String(p.called_name).trim()) || '';
+
   }
   function normPlace(v) { return String(v || '').trim().toLowerCase(); }
   function bodyText(a) { return (a && a.body != null) ? String(a.body).trim() : ''; }
