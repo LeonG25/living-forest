@@ -470,7 +470,7 @@
       addlang:'other languages', addfield:'add in this language',
       given:'Given name', family:'Family name', maiden:'Maiden name',
       called:'Called', calledHint:'everyday form', patronymic:'Patronymic', honorific:'Honorific',
-      addpart:'add a name part', addpartHint:'Adds in this language and sends it to the keeper.', otherlangs:'other languages',
+      copyGiven:'Same as the given name', addpart:'add a name part', addpartHint:'Adds in this language and sends it to the keeper.', otherlangs:'other languages',
       nicks:'Nicknames & pet names', nickname:'Nickname / pet name', pendingChip:'waiting', toReview:'Open the review page', approve:'Approve', decline:'Decline',
       faceLine:'The photos she appears in. The camera on her portrait chooses the crop that represents her everywhere.', changeface:'Change the face', openPhoto:'Open this photograph',
       noFace:'No photographs are tagged to this person yet.',
@@ -510,7 +510,7 @@
       addlang:'другие языки', addfield:'добавить на этом языке',
       given:'Имя', family:'Фамилия', maiden:'Девичья фамилия',
       called:'Зовут', calledHint:'обиходная форма', patronymic:'Отчество', honorific:'Титул',
-      addpart:'добавить часть имени', addpartHint:'Добавит на этом языке и отправит хранителю.', otherlangs:'другие языки',
+      copyGiven:'Как имя', addpart:'добавить часть имени', addpartHint:'Добавит на этом языке и отправит хранителю.', otherlangs:'другие языки',
       nicks:'Прозвища и ласковые имена', nickname:'Прозвище / ласковое имя', toReview:'Открыть страницу проверки', pendingChip:'ожидает', approve:'Одобрить', decline:'Отклонить',
       faceLine:'Фото, где она есть. Камера на портрете выбирает кадр, который представляет её везде.', changeface:'Сменить лицо', openPhoto:'Открыть фотографию',
       noFace:'К этому человеку пока не привязано ни одной фотографии.',
@@ -550,7 +550,7 @@
       addlang:'שפות נוספות', addfield:'הוספה בשפה הזו',
       display:'שם לתצוגה', given:'שם פרטי', family:'שם משפחה', maiden:'שם נעורים',
       called:'קוראים לה', calledHint:'צורה יומיומית', patronymic:'שם האב', honorific:'תואר',
-      addpart:'הוספת חלק לשם', addpartHint:'יתווסף בשפה זו ויישלח לשומר.', otherlangs:'שפות נוספות',
+      copyGiven:'כמו השם הפרטי', addpart:'הוספת חלק לשם', addpartHint:'יתווסף בשפה זו ויישלח לשומר.', otherlangs:'שפות נוספות',
       nicks:'כינויים ושמות חיבה', nickname:'כינוי / שם חיבה', pendingChip:'ממתין', toReview:'לעמוד האישורים', approve:'לאשר', decline:'לדחות',
       faceLine:'התמונות שהיא מופיעה בהן. המצלמה שעל הדיוקן בוחרת את החיתוך שמייצג אותה בכל מקום.', changeface:'החלפת התמונה', openPhoto:'פתח את התצלום',
       noFace:'עדיין לא תויגו תמונות לאדם הזה.',
@@ -975,6 +975,7 @@
     out+=`<div class="np-foot"><button class="np-ctl" data-act="nmlang">${sv(I.globe2,1.5)} ${L.otherlangs}</button>${addBtn}</div>`;
     const editable=['given','called','family','maiden','patronymic','honorific'];
     out+=`<div class="np-langs" hidden>${editable.map(k=>`<div class="mlgrp"><div class="np-lab">${esc(L[k]||k)}</div>
+        ${k==='called'?`<button type="button" class="np-ctl" data-copygiven style="margin:2px 0 6px">${sv(I.plus,1.6)} ${esc(L.copyGiven||'Same as the given name')}</button>`:''}
         ${LANGS.map(l=>`<div class="mlvar ${l==='he'?'rtl':''}"><span class="tag">${l}</span><input class="inp" data-field="${k}" data-lang="${l}" value="${esc((NAME[k]&&NAME[k][l])||'')}" placeholder="${L.addfield}"></div>`).join('')}
       </div>`).join('')}<div class="btnrow" style="margin-top:4px"><button class="btn ghost" data-act="revert">${L.cancel}</button><button class="btn violet" data-act="nmsend">${L.send}</button></div></div>`;
     out+=`<div class="np-addmenu" hidden>${unset.map(k=>`<button class="add-opt" data-addpart="${k}"><span class="ic">${sv(I.plus,1.8)}</span><span><span class="nm">${esc(L[k]||k)}</span><span class="ds">${L.addpartHint}</span></span></button>`).join('')}</div>`;
@@ -1635,6 +1636,20 @@
       const rdel=e.target.closest('[data-reldel]'); if(rdel){ await removeRel(rdel.getAttribute('data-reldel')); await reload(); selectFacet('kin'); toast(state.keeper?L.saved:L.sent); return; }
       const cp=e.target.closest('[data-clearperson]'); if(cp&&state.keeper){ const col=cp.getAttribute('data-clearperson');
         try{ await sb.from('people').update({[col]:null}).eq('id',PERSON_ID); }catch(er){} await reload(); return; }
+      /* Copy the given name into the called name, language by language - Russian given to
+         Russian called, Hebrew to Hebrew. Leon asked for this back after the display-name
+         button was removed; it does the same kind of work with the fields that remain. */
+      const cg=e.target.closest('[data-copygiven]');
+      if(cg){ const box=$('.np-langs'); if(box){
+          LANGS.forEach(l=>{
+            const from=box.querySelector(`input[data-field="given"][data-lang="${l}"]`);
+            const to=box.querySelector(`input[data-field="called"][data-lang="${l}"]`);
+            if(from&&to&&from.value.trim()&&!to.value.trim()){
+              to.value=from.value.trim();
+              to.dispatchEvent(new Event('input',{bubbles:true}));
+            }
+          });
+        } return; }
       const apart=e.target.closest('[data-addpart]'); if(apart){ openAddPart(apart.getAttribute('data-addpart')); return; }
       const addc=e.target.closest('[data-addchip]'); if(addc){ const box=$(`.chipadd[data-for="${addc.getAttribute('data-addchip')}"]`); if(box){ box.style.display='block'; const i=box.querySelector('input'); if(i) i.focus(); } return; }
       const cc=e.target.closest('[data-cadd-cancel]'); if(cc){ const box=cc.closest('.chipadd'); if(box) box.style.display='none'; return; }
