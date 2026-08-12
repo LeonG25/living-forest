@@ -17,6 +17,7 @@
 <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="lf-db.js?v=5"></script>
+<script src="lf-label.js?v=1"></script>
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;height:100%;overflow:hidden;background:#04070e;font-family:'Hanken Grotesk',system-ui,sans-serif;color:#e8eef8;user-select:none;-webkit-user-select:none;touch-action:none;}
@@ -124,6 +125,7 @@
 </div>
 
 <script>
+  function LG(){ try{ return localStorage.getItem('lf_lang')||'en'; }catch(e){ return 'en'; } }
 /* =========================================================================
    THE LIVING FOREST — HOME (the sky), from the inside. You stand at the centre;
    your family surrounds you on a sphere in every direction. Drag to look around
@@ -188,7 +190,8 @@ async function load(){
     ]);
     if(ppl.error) throw ppl.error;
     // the teller is a person (contributor_id), never the uploading account
-    (ppl.data||[]).forEach(p=> prov[p.id]=p.display_name);
+    await LFLabel.load(sb,(ppl.data||[]).map(p=>p.id));
+    (ppl.data||[]).forEach(p=> prov[p.id]=LFLabel.of(p.id,LG())||p.called_name||'');
     const artById={}; (arts.data||[]).forEach(a=>{ a._year=parseYear(a.metadata&&a.metadata.when); a._where=(a.metadata&&a.metadata.where)||''; artById[a.id]=a; });
     const perPerson={}; (subs.data||[]).forEach(s=>{ const a=artById[s.artefact_id]; if(!a) return; (perPerson[s.person_id]=perPerson[s.person_id]||[]).push({art:a,box:s.detail}); });
     const places=[...new Set((arts.data||[]).map(a=>a._where).filter(Boolean))]; const coords={};
@@ -202,7 +205,7 @@ async function load(){
       const located=recs.filter(r=>r.art._where && coords[r.art._where]);
       const withYear=located.map(r=>({y:r.art._year||0, place:r.art._where, art:r.art, box:r.box})).sort((a,b)=>a.y-b.y);
       const last=withYear.length?withYear[withYear.length-1]:null;
-      const nd={ id:p.id, name:p.called_name||p.display_name||'Someone', memoryCount, remembered:memoryCount>0,
+      const nd={ id:p.id, name:LFLabel.of(p.id,LG())||p.called_name||'Someone', memoryCount, remembered:memoryCount>0,
         gen:gen(p.id), records:located.length?located:recs,
         place:last?last.place:null, lat:last?coords[last.place][0]:null, lng:last?coords[last.place][1]:null,
         tw:(hash(p.id)%628)/100, v:new THREE.Vector3() };

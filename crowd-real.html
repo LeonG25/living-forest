@@ -16,6 +16,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="lf-db.js?v=5"></script>
+<script src="lf-label.js?v=1"></script>
 <script src="lf-progress.js?v=1"></script>
 <style>
 
@@ -258,6 +259,7 @@
   <div id="gate"><div class="box" id="gateBox"><div class="spin"></div><p style="margin-top:16px">Gathering the family&hellip;</p></div></div>
 
 <script>
+  function LG(){ try{ return localStorage.getItem('lf_lang')||'en'; }catch(e){ return 'en'; } }
 const $ = s => document.querySelector(s);
 const SVGNS="http://www.w3.org/2000/svg";
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -291,9 +293,10 @@ async function load(){
       sb.from('relationships').select('from_person,to_person,kind'),
     ]);
     if(arts.error) throw arts.error;
-    (ppl.data||[]).forEach(p=> NAME[p.id]=p.called_name||p.display_name||'Someone');
+    await LFLabel.load(sb,(ppl.data||[]).map(p=>p.id));
+    (ppl.data||[]).forEach(p=> NAME[p.id]=LFLabel.of(p.id,LG())||p.called_name||'Someone');
     // the teller is a person (contributor_id), never the uploading account
-    window.__prov={}; (ppl.data||[]).forEach(p=> window.__prov[p.id]=p.display_name);
+    window.__prov={}; (ppl.data||[]).forEach(p=> window.__prov[p.id]=LFLabel.of(p.id,LG())||p.called_name||'');
     REL=rels.data||[];
     // generations from the parent graph (parent -> child)
     const kids={}; REL.forEach(r=>{ if(r.kind==='parent')(kids[r.from_person]=kids[r.from_person]||[]).push(r.to_person); });
