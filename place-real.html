@@ -358,6 +358,34 @@
 <div id="lightbox"><div class="lx-top"><span class="lx-x">&#10005;</span></div><div class="lx-img"></div><div class="lx-meta"><div class="lx-yr"></div><div class="lx-ppl"></div><div class="lx-story"></div><div class="lx-told"></div><div class="lx-note" id="lxNote"></div></div></div>
 
 <script>
+  window.curLang=function(){ try{ return (typeof lang==='string'&&lang)||localStorage.getItem('lf_lang')||'en'; }catch(e){ return 'en'; } }
+  window.NAMEF=window.NAMEF||{};
+  window.nameOfPerson=function(id, lang){
+    const parts=window.NAMEF[id]||[]; if(!parts.length) return '';
+    const pick=(f,lg)=>{ const r=parts.find(x=>x.field===f&&x.lang===lg); return r?r.value:''; };
+    const cyr=/[\u0400-\u04FF]/, heb=/[\u0590-\u05FF]/;
+    const same=(a,b)=>(cyr.test(a)===cyr.test(b))&&(heb.test(a)===heb.test(b));
+    const join=(a,b)=>{ a=(a||'').trim(); b=(b||'').trim();
+      if(!a) return b; if(!b) return a;
+      if(a.toLowerCase().indexOf(b.toLowerCase())>=0||!same(a,b)) return a;
+      return a+' '+b; };
+    for(const lg of [lang||'en','und','en','ru','he']){
+      const c=pick('called',lg), g=pick('given',lg), f=pick('family',lg);
+      if(c) return join(c,f);
+      if(g) return join(g,f);
+      if(f) return f;
+    }
+    return parts[0].value||'';
+  }
+  window.loadNameFacts=async function(client, ids){
+    if(!ids||!ids.length) return;
+    try{ const {data}=await client.from('person_facts')
+      .select('person_id,field,lang,value')
+      .in('person_id',ids).in('field',['called','given','family','maiden']).eq('status','published');
+      (data||[]).forEach(f=>{ (window.NAMEF[f.person_id]=window.NAMEF[f.person_id]||[]).push(f); });
+    }catch(e){}
+  }
+
 /* =========================================================================
    THE LIVING GLOBE — real data. Reads the live Supabase forest on your login
    (shared session, same origin as the app). Place & time come from the photos
@@ -1002,31 +1030,4 @@ load();
   /* Names come from person_facts, by Leon's rule: called+family, else given+family, else
      any part. This page used people.called_name||display_name, which is the stale column
      that showed נדיה מטבייב under an English photograph elsewhere. */
-  function curLang(){ try{ return (typeof lang==='string'&&lang)||localStorage.getItem('lf_lang')||'en'; }catch(e){ return 'en'; } }
-  const NAMEF={};
-  function nameOfPerson(id, lang){
-    const parts=NAMEF[id]||[]; if(!parts.length) return '';
-    const pick=(f,lg)=>{ const r=parts.find(x=>x.field===f&&x.lang===lg); return r?r.value:''; };
-    const cyr=/[\u0400-\u04FF]/, heb=/[\u0590-\u05FF]/;
-    const same=(a,b)=>(cyr.test(a)===cyr.test(b))&&(heb.test(a)===heb.test(b));
-    const join=(a,b)=>{ a=(a||'').trim(); b=(b||'').trim();
-      if(!a) return b; if(!b) return a;
-      if(a.toLowerCase().indexOf(b.toLowerCase())>=0||!same(a,b)) return a;
-      return a+' '+b; };
-    for(const lg of [lang||'en','und','en','ru','he']){
-      const c=pick('called',lg), g=pick('given',lg), f=pick('family',lg);
-      if(c) return join(c,f);
-      if(g) return join(g,f);
-      if(f) return f;
-    }
-    return parts[0].value||'';
-  }
-  async function loadNameFacts(client, ids){
-    if(!ids||!ids.length) return;
-    try{ const {data}=await client.from('person_facts')
-      .select('person_id,field,lang,value')
-      .in('person_id',ids).in('field',['called','given','family','maiden']).eq('status','published');
-      (data||[]).forEach(f=>{ (NAMEF[f.person_id]=NAMEF[f.person_id]||[]).push(f); });
-    }catch(e){}
-  }
 
