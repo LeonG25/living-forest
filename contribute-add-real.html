@@ -14,6 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="lf-db.js?v=5"></script>
+<script src="lf-label.js?v=1"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
   html,body{ background:#04070e; }
@@ -539,8 +540,11 @@
   /* ---------- data ---------- */
   async function loadPeople(){
     try{
-      const {data}=await sb.from('people').select('id,display_name').eq('status','published').order('display_name');
-      M.people=(data||[]).filter(p=>p.display_name);
+      const {data}=await sb.from('people').select('id,display_name,called_name').eq('status','published').order('display_name');
+      M.people=(data||[]);
+      try{ await LFLabel.load(sb,M.people.map(p=>p.id)); }catch(e){}
+      M.people.forEach(p=>{ p.label=LFLabel.of(p.id,M.lang||'en')||p.called_name||p.display_name||''; });
+      M.people=M.people.filter(p=>p.label);
     }catch(e){ M.people=[]; }
   }
 
@@ -676,12 +680,12 @@
     const q=(M.searchQ||'').trim().toLowerCase();
     const taken=new Set(M.subjects.filter(s=>s.id).map(s=>s.id));
     let list=M.people.filter(p=>!taken.has(p.id));
-    if(q) list=list.filter(p=>p.display_name.toLowerCase().includes(q));
+    if(q) list=list.filter(p=>(p.label||'').toLowerCase().includes(q));
     list=list.slice(0,8);
     let h=list.map(p=>
-      '<button class="sug" data-id="'+p.id+'" data-nm="'+esc(p.display_name)+'"><span class="av" style="background:'+avatarBG(p.display_name)+'">'+esc(initial(p.display_name))+'</span><span class="sn">'+esc(p.display_name)+'</span><span class="plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></button>'
+      '<button class="sug" data-id="'+p.id+'" data-nm="'+esc(p.label||'')+'"><span class="av" style="background:'+avatarBG(p.display_name)+'">'+esc(initial(p.display_name))+'</span><span class="sn">'+esc(p.display_name)+'</span><span class="plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></button>'
     ).join('');
-    const exists=q && M.people.some(p=>p.display_name.toLowerCase()===q);
+    const exists=q && M.people.some(p=>(p.label||'').toLowerCase()===q);
     const proposeName=(M.searchQ||'').trim();
     h+= '<button class="sug newp" id="proposeNew"><span class="av"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M6 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M19 4v4M17 6h4"/></svg></span><span class="sn">'+(proposeName&&!exists?esc(L.proposeAs)+' “'+esc(proposeName)+'”':esc(L.proposeNew))+'</span><span class="plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></button>';
     row.innerHTML=h;
@@ -826,7 +830,7 @@
   }
   async function ensurePersonId(sub){
     if(sub.id) return sub.id;
-    const found=M.people.find(p=>p.display_name.toLowerCase()===sub.name.toLowerCase());
+    const found=M.people.find(p=>(p.label||'').toLowerCase()===sub.name.toLowerCase());
     if(found){ sub.id=found.id; return found.id; }
     // proposed newcomer → pending (Rule 3); fall back to published if the status enum rejects it
     let ins=await sb.from('people').insert({display_name:sub.name,created_by:M.user.id,status:'in_review'}).select('id,display_name').single();

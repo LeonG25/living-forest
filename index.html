@@ -10,6 +10,7 @@
 <link rel="icon" href="data:," />
 <title>The Living Forest — the Living Globe</title>
 <script src="lf-auth.js?v=2"></script>
+<script src="lf-label.js?v=1"></script>
 <link rel="stylesheet" href="lf-layout.css?v=1">
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -309,6 +310,7 @@
 </div>
 
 <script>
+  function LG(){ try{ return localStorage.getItem('lf_lang')||'en'; }catch(e){ return 'en'; } }
 /* =========================================================================
    THE LIVING GLOBE — real data. Reads the live Supabase forest on your login
    (shared session, same origin as the app). Place & time come from the photos
@@ -443,7 +445,8 @@ async function load(){
     }
     if(ppl.error) throw ppl.error;
     // the teller is a person (contributor_id), never the uploading account
-    const provName = {}; (ppl.data||[]).forEach(p=> provName[p.id]=p.display_name);
+    const provName = {}; await LFLabel.load(sb,(ppl.data||[]).map(p=>p.id));
+    (ppl.data||[]).forEach(p=> provName[p.id]=LFLabel.of(p.id,LG())||p.called_name||'');
     const artById = {}; (arts.data||[]).forEach(a=>{ a._year=parseYear(a.metadata&&a.metadata.when); a._where=(a.metadata&&a.metadata.where)||''; artById[a.id]=a; });
     // subjects per person and per artefact
     const perPerson = {}; // id -> [{art, box}]
@@ -461,7 +464,7 @@ async function load(){
     const built=[];
     (ppl.data||[]).forEach(p=>{
       const recs=(perPerson[p.id]||[]).filter(r=>r.art._where && coords[r.art._where]);
-      const name = p.called_name || p.display_name || 'Someone';
+      const name = LFLabel.of(p.id,LG()) || p.called_name || 'Someone';
       const memoryCount=(perPerson[p.id]||[]).length;
       if(!recs.length){ built.push({id:p.id,name,waiting:true,memoryCount,gen:gen(p.id),lat:0,lng:0,born:null}); return; }
       // (year, place) points sorted by year

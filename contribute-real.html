@@ -14,6 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="lf-db.js?v=5"></script>
+<script src="lf-label.js?v=1"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
   html,body{ background:#04070e; }
@@ -438,14 +439,14 @@
     try{ const {data}=await sb.from('artefacts').select('id,kind,storage_path,metadata,contributor_id,status').eq('status','published'); state.arts=data||[]; }catch(e){ state.arts=[]; }
     buildGaps(); buildPairs();
   }
-  const nameOf=id=>{ const p=state.people.find(x=>x.id===id); return p?(p.display_name||t('unnamed')):t('unnamed'); };
+  const nameOf=id=>{ const p=state.people.find(x=>x.id===id); return p?(LFLabel.of(id,state.lang)||p.called_name||p.display_name||t('unnamed')):t('unnamed'); };
 
   /* ---------- gaps engine (computed from live data — never hard-coded) ---------- */
   function buildGaps(){
     const g=[];
     // 1. people with no portrait
     state.people.filter(p=>!p.primary_asset).slice(0,6).forEach(p=>{
-      g.push({ type:'face', pid:p.id, name:p.display_name });
+      g.push({ type:'face', pid:p.id, name:LFLabel.of(p.id,state.lang)||p.called_name||p.display_name });
     });
     // 2. published photos with no place recorded
     state.arts.filter(a=>a.kind==='photo'&&a.storage_path&&!(a.metadata&&a.metadata.where)).slice(0,4).forEach(a=>{
@@ -457,7 +458,7 @@
     });
     // 4. people with no birth date
     state.people.filter(p=>!p.birth_date).slice(0,4).forEach(p=>{
-      g.push({ type:'born', pid:p.id, name:p.display_name });
+      g.push({ type:'born', pid:p.id, name:LFLabel.of(p.id,state.lang)||p.called_name||p.display_name });
     });
     state.gaps=g;
   }
