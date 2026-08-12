@@ -389,7 +389,7 @@
       const arr=IDX.names[p.id]=IDX.names[p.id]||[];
       const seen=new Set(arr.map(x=>x.field+'|'+x.lang+'|'+x.value.toLowerCase()));
       const add=(field,lang,val)=>{ if(!val||!val.trim())return; const k=field+'|'+lang+'|'+val.trim().toLowerCase(); if(seen.has(k))return; seen.add(k); arr.push({field,lang,value:val.trim()}); };
-      add('en',p.display_name);
+
       add('called','en',p.called_name);
     });
     // faces: prefer primary_asset, else a subject artefact with a photo
@@ -414,13 +414,24 @@
     if(!p) return '';
     const parts=IDX.names[p.id]||[];
     const pick=(field,lg)=>{ const r=parts.find(x=>x.field===field&&x.lang===lg); return r?r.value:''; };
-    const given=pick('given',lang)||pick('called',lang);
-    const fam=pick('family',lang);
-    if(given||fam) return (given+' '+fam).trim();
-    // fallback: any-language given/family
-    const g2=parts.find(x=>x.field==='given'); const f2=parts.find(x=>x.field==='family');
-    if(g2||f2) return ((g2?g2.value:'')+' '+(f2?f2.value:'')).trim();
-    return p.display_name||p.called_name||'';
+    /* Leon's rule: called+family, else given+family, else any single part. 'und' matches
+       every reader, and a name in another language beats no name at all. Never mix scripts:
+       a Latin called-name beside a Hebrew family name is a person written half in each. */
+    const cyr=/[\u0400-\u04FF]/, heb=/[\u0590-\u05FF]/;
+    const same=(a,b)=>(cyr.test(a)===cyr.test(b))&&(heb.test(a)===heb.test(b));
+    const join=(a,b)=>{ a=(a||'').trim(); b=(b||'').trim();
+      if(!a) return b; if(!b) return a;
+      if(a.toLowerCase().indexOf(b.toLowerCase())>=0) return a;
+      if(!same(a,b)) return a;
+      return a+' '+b; };
+    for(const lg of [lang,'und','en','ru','he']){
+      const cal=pick('called',lg), giv=pick('given',lg), fam=pick('family',lg);
+      if(cal) return join(cal,fam);
+      if(giv) return join(giv,fam);
+      if(fam) return fam;
+    }
+    const any=parts.find(x=>['called','given','family','maiden'].indexOf(x.field)>=0);
+    return any?any.value:(p.called_name||'');
   }
   function firstNameFor(p, lang){ const n=nameFor(p,lang); return n.split(/\s+/)[0]||n; }
 
@@ -489,7 +500,7 @@
   /* ---------- gap engine (engine-generated, never hard-coded) ---------- */
   function findGap(){
     // people ordered stably by the name we show
-    const ppl=DB.people.slice().sort((a,b)=>norm(a.display_name).localeCompare(norm(b.display_name)));
+    const ppl=DB.people.slice().sort((a,b)=>norm(nameFor(a,state.lang)).localeCompare(norm(nameFor(b,state.lang))));
     const livedBy=new Set(DB.facts.filter(f=>f.field==='lived'&&f.value&&f.value.trim()).map(f=>f.person_id));
     const subjOf=new Set(DB.subs.map(s=>s.person_id));
     // prefer someone with a face + a story but no places (most inviting to fill)
@@ -521,7 +532,7 @@
     return '<span class="mchip'+he+'"><span class="lg">'+esc(lab.trim().replace(/·\s*$/,''))+'</span><span class="val">'+esc(c.value)+'</span></span>'; }
 
   function personRow(item, q, hero){
-    const L=d(); const p=item.p; const nm=nameFor(p,state.lang)||p.display_name||'';
+    const L=d(); const p=item.p; const nm=nameFor(p,state.lang)||'';
     const chips=item.chips.map(chipHTML).join('');
     return '<div class="res'+(hero?' person':'')+'" role="button" tabindex="0" data-nav="person:'+esc(p.id)+'" data-name="'+esc(nm)+'">'
       + avatar(p,'av')
@@ -601,7 +612,7 @@
         + avatar(r.p,'rf')
         + '<div class="rn'+(state.lang==='he'?' serif':'')+'">'+esc(firstNameFor(r.p,state.lang))+'</div></div>').join('')+'</div>';
     } else {
-      const sample=DB.people.slice().sort((a,b)=>{ const fa=IDX.facePath[a.id]?0:1, fb=IDX.facePath[b.id]?0:1; return fa-fb||norm(a.display_name).localeCompare(norm(b.display_name)); }).slice(0,8);
+      const sample=DB.people.slice().sort((a,b)=>{ const fa=IDX.facePath[a.id]?0:1, fb=IDX.facePath[b.id]?0:1; return fa-fb||norm(nameFor(a,state.lang)).localeCompare(norm(nameFor(b,state.lang))); }).slice(0,8);
       if(sample.length){ h+=secHead(L.inForest);
         h+='<div class="recents">'+sample.map(p=>'<div class="rec" role="button" tabindex="0" data-nav="person:'+esc(p.id)+'" data-name="'+esc(nameFor(p,state.lang))+'">'
           + avatar(p,'rf')
