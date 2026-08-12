@@ -633,6 +633,12 @@
     const parts=(lang)=>{
       const v=(vars[pid]||[]).find(x=>x.lang===lang); if(!v) return '';
       const g=String(v.called||v.given||'').trim(), f=String(v.family||'').trim();
+      /* Never mix alphabets: 'Rita' beside 'בטיטו-גולניק' gave "Rita בטיטו-גולניק" on an
+         English page - a person's name written half in each script. lf-name.js has this
+         guard; this page's own copy did not. */
+      const cyr=/[\u0400-\u04FF]/, heb=/[\u0590-\u05FF]/;
+      const same=(a,b)=>(cyr.test(a)===cyr.test(b))&&(heb.test(a)===heb.test(b));
+      if(g&&f&&!same(g,f)) return g;
       if(g&&f) return (g.toLowerCase().indexOf(f.toLowerCase())>=0)?g:(g+' '+f);
       return g||f;
     };
