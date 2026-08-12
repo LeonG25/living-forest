@@ -800,8 +800,6 @@
     NF.forEach(f=>{ NAME[f]={}; PEND[f]={}; NAMEROW[f]={}; LANGS.forEach(l=>{ const r=pubRow(f,l); NAMEROW[f][l]=r; NAME[f][l]=r?r.value:''; const p=pendList(f,l)[0]; PEND[f][l]=p?p.value:''; }); });
     LANGS.forEach(l=>{ const vp=NV.find(v=>v.lang===l&&v.status==='published'); if(vp){ if(!NAME.given[l]&&vp.given) NAME.given[l]=vp.given; if(!NAME.family[l]&&vp.family) NAME.family[l]=vp.family; }
       const vpe=NV.find(v=>v.lang===l&&v.status!=='published'); if(vpe){ if(!PEND.given[l]&&vpe.given) PEND.given[l]=vpe.given; if(!PEND.family[l]&&vpe.family) PEND.family[l]=vpe.family; } });
-    LANGS.forEach(l=>{ if(!NAME.display[l]){ const dn=[NAME.given[l],NAME.family[l]].filter(Boolean).join(' '); if(dn) NAME.display[l]=dn; } });
-    if(!NAME.display.en && person.display_name) NAME.display.en=person.display_name;
     if(!NAME.called.en && person.called_name) NAME.called.en=person.called_name;
     NICKS={en:[],ru:[],he:[]}; PENDNICKS={en:[],ru:[],he:[]};
     LANGS.forEach(l=>{ NICKS[l]=facts.filter(x=>x.field==='nickname'&&x.lang===l&&x.status==='published').sort((a,b)=>(a.ord||0)-(b.ord||0)).map(x=>({id:x.id,value:x.value}));
@@ -823,7 +821,7 @@
   const hasv=v=>v&&String(v).trim()!=='';
   function facetK(fid){
     let k=0.12;
-    if(fid==='name') k=(hasv(NAME.given[state.lang])||hasv(NAME.given.en)||hasv(NAME.display.en))?1:0.4;
+    if(fid==='name') k=(hasv(NAME.given[state.lang])||hasv(NAME.given.en)||hasv(nameLabel()))?1:0.4;
     else if(fid==='face') k=tagged.length?Math.min(1,0.3+tagged.length*0.18):0.15;
     else if(fid==='life'){ const p=[S.life.bio[state.lang]||S.life.bio.en,S.life.occupation[state.lang]||S.life.occupation.en,S.life.birth,S.life.gender]; k=Math.max(0.12,p.filter(hasv).length/p.length); }
     else if(fid==='places'){ const c=(hasv(S.places.pbirth)?1:0)+(S.places.lived.length?1:0)+(hasv(S.places.country[state.lang]||S.places.country.en)?1:0); k=Math.max(0.12,c/3); }
@@ -916,8 +914,8 @@
     const beads=FACETS.map((f,i)=>{ const a=-Math.PI/2+i*(Math.PI*2/8); const x=cx+R*Math.cos(a), y=cy+R*Math.sin(a);
       return bead(f,x,y); }).join('');
     const cards=FACETS.map(f=>facetCard(f)).join('');
-    const g0=NAME.given[state.lang]||(NAME.display[state.lang]||'').split(' ')[0]||NAME.display.en||'';
-    const f0=NAME.family[state.lang]||(NAME.display[state.lang]||'').split(' ').slice(1).join(' ')||'';
+    const g0=NAME.given[state.lang]||nameLabel().split(' ')[0]||'';
+    const f0=NAME.family[state.lang]||nameLabel().split(' ').slice(1).join(' ')||'';
     return `<div class="hero">
       <svg class="ring-svg" viewBox="0 0 308 308"><circle cx="154" cy="154" r="126" fill="none" stroke="rgba(243,205,132,.12)" stroke-width="1"/><circle cx="154" cy="154" r="126" fill="none" stroke="rgba(243,205,132,.34)" stroke-width="2" stroke-dasharray="1 13" stroke-linecap="round"/></svg>
       <div class="facewrap"><div class="face"><div id="faceHost"${portAttr}>${faceSVG()}</div><button class="changef" data-act="changeface" aria-label="${esc(L.changeface)}">${sv(I.camera,1.6)}</button></div></div>
@@ -938,6 +936,21 @@
       if(v&&state.keeper) del=`<button class="np-ctl" data-delnv="${v.id}:${k}">${sv(I.trash,1.7)} ${esc(L.remove)}</button>`; }
     return `<div class="rowctl"><button class="np-ctl" data-editpart="${k}">${sv(I.pen,1.7)} ${esc(L.edit)}</button>${del}</div>`; }
   function namePartBlock(k,v){ const L=d(); return `<div class="namepart"><div class="np-lab">${esc(L[k]||k)}</div><div class="np-val serif">${esc(v)}</div>${partCtls(k)}</div>`; }
+  /* The page's own label, in one place. NAME.display no longer exists - the field is gone -
+     and seven separate expressions were reaching into it, so the page threw before it drew
+     anything. This is Leon's rule: called + family, else given + family, else any part. */
+  function nameLabel(lang){
+    lang=lang||state.lang||'en';
+    const pick=k=>(NAME[k]&&(NAME[k][lang]||NAME[k].en||NAME[k].ru||NAME[k].he))||'';
+    const fam=pick('family'), cal=pick('called'), giv=pick('given');
+    const join=(a,b)=>{ a=(a||'').trim(); b=(b||'').trim();
+      if(!a) return b; if(!b) return a;
+      if(a.toLowerCase().indexOf(b.toLowerCase())>=0) return a;
+      return a+' '+b; };
+    if(cal) return join(cal,fam);
+    if(giv) return join(giv,fam);
+    return fam||pick('maiden')||pick('patronymic')||'';
+  }
   function nameBody(){ const L=d(); const lang=state.lang;
     const has=k=>NAME[k]&&NAME[k][lang]?NAME[k][lang]:'';
     const NF=['given','called','family','maiden','patronymic','honorific'];
@@ -1093,7 +1106,7 @@
         ${rels.length?`<div class="appfact"><span class="mark">${sv(I.chart,2)}</span><div class="body">${L.kinApp}<span class="src">${L.assembled}</span></div></div>`:''}
         <button class="chip add" data-act="howrelated" style="margin-top:12px;border-color:rgba(127,180,216,.4);color:var(--cool-hi)">${sv(I.kin,1.7)} ${L.howrelated}</button>`; }
     if(id==='reel'){ const fill=Math.round(overallFill()*100); const kindled=FACETS.filter(x=>x.id!=='reel').filter(x=>facetK(x.id)>=0.5).length;
-      const g0=NAME.given[state.lang]||NAME.called[state.lang]||(NAME.display[state.lang]||'').split(' ')[0]||NAME.display.en||'';
+      const g0=NAME.given[state.lang]||NAME.called[state.lang]||nameLabel().split(' ')[0]||'';
       const reelName={ en:`${g0}’s reel`, ru:`Плёнка · ${g0}`, he:`הסרט של ${g0}` }[state.lang]||`${g0}`;
       return `<div class="reel"><div class="rrow"><div class="rimg"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#0a1422"/><path d="M36 36 L64 50 L36 64 Z" fill="#ffe6ad"/><circle cx="50" cy="50" r="30" fill="none" stroke="#7fb4d8" stroke-width="2" opacity=".5"/></svg></div>
         <div class="rt"><div class="rn">${esc(reelName)}</div><div class="rs">${L.reelSub}</div></div><span class="rgo" data-act="watch">${L.watch}</span></div>
@@ -1112,7 +1125,7 @@
   function render(){ const L=d(); document.documentElement.lang=state.lang; document.documentElement.dir=L.dir;
     const screen=$('.screen'); if(screen) screen.setAttribute('dir',L.dir);
     $('.topbar').innerHTML=`<button class="ibtn" data-act="back" aria-label="Back">${sv(I.back)}</button>
-      <div class="ttl"><div class="k">${esc(L.eyebrow)}</div><div class="n serif">${esc(NAME.display[state.lang]||NAME.display.en||'')}</div></div>
+      <div class="ttl"><div class="k">${esc(L.eyebrow)}</div><div class="n serif">${esc(nameLabel())}</div></div>
       <button class="ibtn" data-act="lang" aria-label="${esc(L.langtitle)}">${sv(I.globe,1.5)}</button>`;
     const kn=$('.keeper-note'); if(state.keeper){ kn.style.display='flex'; kn.innerHTML=`${sv(I.keeper,1.5)}<span>${esc(L.keeper)}</span>`; } else { kn.style.display='none'; kn.innerHTML=''; }
     $('.pad').innerHTML=newPersonBanner()+ringShell();
@@ -1625,7 +1638,7 @@
         try{ await sb.from('people').update({[col]:null}).eq('id',PERSON_ID); }catch(er){} await reload(); return; }
       const sd=e.target.closest('[data-samedisplay]'); if(sd){ const card=$('.facet[data-facet="name"]');
         const inp=card&&card.querySelector(`.np-langs [data-field="given"][data-lang="${state.lang}"]`);
-        if(inp){ inp.value=(NAME.display[state.lang]||NAME.display.en||(person&&person.display_name)||''); inp.focus(); } return; }
+        if(inp){ inp.value=nameLabel(); inp.focus(); } return; }
       const apart=e.target.closest('[data-addpart]'); if(apart){ openAddPart(apart.getAttribute('data-addpart')); return; }
       const addc=e.target.closest('[data-addchip]'); if(addc){ const box=$(`.chipadd[data-for="${addc.getAttribute('data-addchip')}"]`); if(box){ box.style.display='block'; const i=box.querySelector('input'); if(i) i.focus(); } return; }
       const cc=e.target.closest('[data-cadd-cancel]'); if(cc){ const box=cc.closest('.chipadd'); if(box) box.style.display='none'; return; }
