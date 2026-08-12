@@ -810,7 +810,11 @@
     const perLang=f=>{ const o={}; LANGS.forEach(l=>o[l]=pubNewest(f,l)); return o; };
     S={
       life:{ bio:perLang('bio'), occupation:perLang('occupation'), birth:person.birth_date||'', death:person.death_date||'',
-        birth_prec:person.birth_certainty||'', living:!!person.is_living, gender:person.sex||'', langspoken:pubList('langspoken','und') },
+        birth_prec:person.birth_certainty||'', living:!!person.is_living, /* THE FACT IS THE TRUTH, NOT THE COLUMN. This read people.sex, and every one of those is
+       null - the approval writes it but the write never lands, so the gender a keeper approved
+       vanished the moment the page reloaded. gender lives as a published fact in person_facts,
+       language-neutral ('und'), exactly as Leon asked: one value for all languages. */
+      gender:(pubNewest('gender','und')||pubNewest('gender','en')||person.sex||''), langspoken:pubList('langspoken','und') },
       places:{ pbirth:pubNewest('pbirth','und')||pubNewest('pbirth','en')||'', lived:pubList('lived','und'), country:perLang('country') },
       kin:pubList('kin','und'),
       more:{ custom:groupCustom(true), sources:pubList('source','und') }
