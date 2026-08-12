@@ -756,11 +756,22 @@ function CMID(id){ return CTOP(id)+38; }
 
 /* ---------- names ---------- */
 function nm(id){ const p=people[id]; if(!p) return '—';
-  const loc=nameLoc[id]&&nameLoc[id][state.lang];
-  if(loc){ const g=(loc.called||loc.given||'').trim(); const f=(loc.family||'').trim(); const full=(g+' '+f).trim(); if(full) return full; if((loc.display||'').trim()) return loc.display.trim(); }
-  return p.display_name||'—'; }
+  /* Leon's rule, and no display_name anywhere: called+family, else given+family, else any
+     single part - and if this language has nothing, another language beats a dash. */
+  const order=[state.lang,'en','ru','he','und'];
+  for(const lg of order){
+    const loc=nameLoc[id]&&nameLoc[id][lg]; if(!loc) continue;
+    const g=(loc.called||loc.given||'').trim(), f=(loc.family||'').trim();
+    const full=(g&&f)?(g.toLowerCase().indexOf(f.toLowerCase())>=0?g:(g+' '+f)):(g||f);
+    if(full) return full;
+  }
+  return '—'; }
 function firstName(id){ const full=nm(id); return (full.split(/\s+/)[0]||full); }
-function nmLang(id,lang){ const loc=nameLoc[id]&&nameLoc[id][lang]; if(loc){ const g=(loc.called||loc.given||'').trim(), f=(loc.family||'').trim(); const full=(g+' '+f).trim(); if(full) return full; if((loc.display||'').trim()) return loc.display.trim(); } const p=people[id]; return p?(p.display_name||''):''; }
+function nmLang(id,lang){ const loc=nameLoc[id]&&nameLoc[id][lang];
+  if(loc){ const g=(loc.called||loc.given||'').trim(), f=(loc.family||'').trim();
+    const full=(g&&f)?(g.toLowerCase().indexOf(f.toLowerCase())>=0?g:(g+' '+f)):(g||f);
+    if(full) return full; }
+  return ''; }
 function firstLang(id,lang){ const f=nmLang(id,lang); return (f.split(/\s+/)[0]||f); }
 function sexOf(id){ const p=people[id]; return ((p&&p.sex)||'').toString().toLowerCase().charAt(0); } // 'f'|'m'|''
 /* possessive of a person's first name for the sentence, per language */
@@ -861,7 +872,7 @@ function selfTestGenerations(){
   const pe=edges.filter(isParentEdge); const viol=[];
   pe.forEach(e=>{ const p=e.from,c=e.to; if(!pos[p]||!pos[c]) return;
     if(!(pos[c].tier>pos[p].tier)) viol.push(nm(p)+' (gen '+pos[p].tier+') → '+nm(c)+' (gen '+pos[c].tier+')'); });
-  const byName=n=>Object.keys(people).find(id=>String((people[id]&&people[id].display_name)||'').toLowerCase().includes(n.toLowerCase()));
+  const byName=n=>Object.keys(people).find(id=>String(nm(id)||'').toLowerCase().includes(n.toLowerCase()));
   const probe=(pn,cn)=>{ const p=byName(pn),c=byName(cn); if(!p||!c) return pn+'→'+cn+': n/a (not in data)';
     const pt=pos[p]?pos[p].tier:'?', ct=pos[c]?pos[c].tier:'?';
     return pn+'→'+cn+': '+((pos[p]&&pos[c]&&pos[c].tier>pos[p].tier)?'OK':'FAIL')+'  (parent gen '+pt+', child gen '+ct+')'; };
@@ -877,7 +888,7 @@ function selfTestOrdering(){
   const THRESH=3*CW; let total=0, long=0, n=0;
   const drawn=edges.filter(e=>pos[e.from]&&pos[e.to]);
   drawn.forEach(e=>{ const dx=CX(e.from)-CX(e.to), dy=CTOP(e.from)-CTOP(e.to); total+=Math.hypot(dx,dy); n++; if(Math.abs(dx)>THRESH) long++; });
-  const byName=n=>Object.keys(people).find(id=>String((people[id]&&people[id].display_name)||'').toLowerCase().includes(n.toLowerCase()));
+  const byName=n=>Object.keys(people).find(id=>String(nm(id)||'').toLowerCase().includes(n.toLowerCase()));
   const spansOf=nm=>{ const id=byName(nm); if(!id) return nm+': n/a'; const es=drawn.filter(e=>e.from===id||e.to===id);
     if(!es.length) return nm+': no drawn edges'; const mx=Math.max(...es.map(e=>Math.abs(CX(e.from)-CX(e.to))));
     return nm+': max |span| '+Math.round(mx)+'px ('+ (mx/CW).toFixed(1) +' card-widths) over '+es.length+' edge(s)'; };
@@ -1296,7 +1307,7 @@ async function loadData(){
       birth_year:(p.birth_date?String(p.birth_date).slice(0,4):''), death_year:(p.death_date?String(p.death_date).slice(0,4):''), metadata:p.metadata||{} }; });
   }catch(e){ people={}; }
   try{ const {data:nv}=await sb.from('person_names').select('*'); (nv||[]).forEach(r=>{ const id=r.person_id, lg=r.lang||'und'; if(!id) return;
-    (nameLoc[id]=nameLoc[id]||{})[lg]={ given:r.given, family:r.family, called:r.called, display:r.display||r.display_name }; });
+    (nameLoc[id]=nameLoc[id]||{})[lg]={ given:r.given, family:r.family, called:r.called, display:r.called||r.given }; });
   }catch(e){ nameLoc={}; }
   // relationships — probe columns gracefully
   let rp=null;
@@ -1361,7 +1372,7 @@ function parentDisamb(id){ const pr=parentsOf(id); if(pr.length) return fmt(L().
 function renderPick(){ const s=L(); let list=candList();
   if(CF.hideConn) list=list.filter(id=>!connectedTo(id));
   const q=CF.query.trim().toLowerCase();
-  if(q) list=list.filter(id=>['en','ru','he','und'].some(lg=>String(nmLang(id,lg)||'').toLowerCase().includes(q)) || String(people[id].display_name||'').toLowerCase().includes(q));
+  if(q) list=list.filter(id=>['en','ru','he','und'].some(lg=>String(nmLang(id,lg)||'').toLowerCase().includes(q)));
   list.sort((a,b)=>firstName(a).localeCompare(firstName(b)));
   const rows=list.map(id=>{ const noP=!hasFace(id); const conn=connectedTo(id);
     return `<button class="prow ${noP?'nophoto':''} ${CF.other===id?'on':''}" data-pick="${esc(id)}">`+
@@ -1535,7 +1546,7 @@ function openWhoAmI(){
   w.addEventListener('click',e=>{ if(e.target===w) w.remove(); });
   document.body.appendChild(w);
   const q=w.querySelector('#whoQ'), list=w.querySelector('#whoList');
-  function score(person, toks){ const hay=(person.display_name||'').toLowerCase();
+  function score(person, toks){ const hay=(nm(person.id)||'').toLowerCase();
     let sc=0; toks.forEach(t=>{ if(!t) return; if(hay.includes(t)) sc+=t.length>2?2:1;
       else { for(const part of hay.split(/[\s\-]+/)) if(part.startsWith(t)) { sc+=1; break; } } });
     return sc; }
@@ -1548,7 +1559,7 @@ function openWhoAmI(){
     list.innerHTML=ranked.map(x=>`
       <button data-claim="${esc(x.p.id)}" style="display:flex;align-items:center;gap:12px;text-align:${state.lang==='he'?'right':'left'};padding:10px 12px;border-radius:14px;border:1px solid rgba(143,214,160,.35);background:rgba(143,214,160,.07);color:#f4ecdb;cursor:pointer;font-family:inherit;">
         <span class="por" data-face="${esc(x.p.id)}" style="width:44px;height:44px;border-radius:50%;flex:0 0 auto;display:block;overflow:hidden;background:#182436"></span>
-        <span style="flex:1"><span class="serif" style="font-size:16px;display:block">${esc(x.p.display_name||'')}</span></span>
+        <span style="flex:1"><span class="serif" style="font-size:16px;display:block">${esc(nm(x.p.id)||'')}</span></span>
         <span style="font-size:12px;color:#8fd6a0;border:1px solid rgba(143,214,160,.5);border-radius:99px;padding:5px 11px;white-space:nowrap">${esc(st.whoMe)}</span>
       </button>`).join('');
     try{ hydrateFaces(list); }catch(e){}
@@ -1558,8 +1569,9 @@ function openWhoAmI(){
         const u=await sb.from('player_anchors').upsert({user_id:user.id, person_id:pid, status:'active'},{onConflict:'user_id'});
         if(u.error){ console.error('anchor claim', u.error); toast(STR[state.lang].whoFail); return; }
         viewerPersonId=pid; buildCards();
-        const nm=((people||{})[pid]||{}).display_name||'';
-        toast(st.whoDone(nm)); w.remove();
+        const nmv=nm(pid)||'';
+        /* this passed the FUNCTION nm into the message, which would print its source */
+        toast(st.whoDone(nmv)); w.remove();
         if(pos[pid]) centerOn(pid, Math.max(state.scale,1.0));
       }catch(e){ console.error('anchor claim throw', e); toast(STR[state.lang].whoFail); }
     });
