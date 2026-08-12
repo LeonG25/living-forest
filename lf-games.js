@@ -87,7 +87,7 @@
     if(NAMEMAP) return;
     NAMEMAP={};
     try{
-      const rows=await q(sb.from('person_facts').select('person_id,lang,value').eq('field','display').eq('status','published'),'names');
+      const rows=await q(sb.from('person_facts').select('person_id,lang,value').in('field',['called','given','family']).eq('status','published'),'names');
       rows.forEach(r=>{ (NAMEMAP[r.person_id]=NAMEMAP[r.person_id]||{})[r.lang]=r.value; });
     }catch(e){}
   }

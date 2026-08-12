@@ -428,7 +428,7 @@
   function plRu(n,a,b,c){ const m10=n%10,m100=n%100; if(m10===1&&m100!==11)return a; if(m10>=2&&m10<=4&&(m100<10||m100>=20))return b; return c; }
 
   /* ---------- field classification ---------- */
-  const NAME_FIELDS=['given','family','patronymic','maiden','called','honorific','nickname','display'];
+  const NAME_FIELDS=['given','family','patronymic','maiden','called','honorific','nickname'];
   const fldLabel=(f)=> (d().fld[f]||d().fld.field||f);
   function langTag(l){ return (l&&l!=='und'&&l!=='undefined')?(' ('+String(l).toUpperCase()+')'):''; }
 

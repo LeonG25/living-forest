@@ -325,7 +325,7 @@
   let user=null, entries=[], counts={mem:0,people:0,games:0};
   const d=()=>T[state.lang];
 
-  const NAMEFIELDS=['display','given','called','family','maiden','patronymic','honorific','nickname'];
+  const NAMEFIELDS=['given','called','family','maiden','patronymic','honorific','nickname'];
 
   /* ---------- day bucketing (local time) ---------- */
   function startOfDay(ts){ const x=new Date(ts); x.setHours(0,0,0,0); return x.getTime(); }

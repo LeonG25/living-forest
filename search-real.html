@@ -389,7 +389,7 @@
       const arr=IDX.names[p.id]=IDX.names[p.id]||[];
       const seen=new Set(arr.map(x=>x.field+'|'+x.lang+'|'+x.value.toLowerCase()));
       const add=(field,lang,val)=>{ if(!val||!val.trim())return; const k=field+'|'+lang+'|'+val.trim().toLowerCase(); if(seen.has(k))return; seen.add(k); arr.push({field,lang,value:val.trim()}); };
-      add('display','en',p.display_name);
+      add('en',p.display_name);
       add('called','en',p.called_name);
     });
     // faces: prefer primary_asset, else a subject artefact with a photo

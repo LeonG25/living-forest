@@ -410,7 +410,7 @@
   }
 
   /* ---------- name resolution (built from person_facts, newest-published wins) ---------- */
-  function buildNames(){ const NF=['display','given','called','family','maiden','patronymic','honorific'];
+  function buildNames(){ const NF=['given','called','family','maiden','patronymic','honorific'];
     NAME={}; NF.forEach(f=>{ NAME[f]={}; LANGS.forEach(l=>{ NAME[f][l]=pubNewest(f,l); }); });
     LANGS.forEach(l=>{ if(!NAME.display[l]){ const dn=[NAME.given[l],NAME.family[l]].filter(Boolean).join(' '); if(dn) NAME.display[l]=dn; } });
     if(!NAME.display.en && person.display_name) NAME.display.en=person.display_name;
@@ -418,7 +418,7 @@
   }
   function nm(field){ const l=state.lang; const F=NAME[field]||{}; return F[l]||F.en||''; }
   function fullName(){ const l=state.lang;
-    let disp=nm('display'); if(!disp){ const g=nm('given'), f=nm('family'); disp=[g,f].filter(Boolean).join(' '); }
+    let disp=''; if(!disp){ const g=nm('given'), f=nm('family'); disp=[g,f].filter(Boolean).join(' '); }
     if(!disp) disp=person.display_name||pubNewest('given',l)||pubNewest('given','en')||'';
     return disp; }
   function shortName(){ const g=nm('given'); if(g) return g; const disp=fullName(); return disp?disp.split(' ')[0]:''; }
@@ -442,7 +442,7 @@
     L.reel = contentLit>=3;
     // waiting (violet) — has pending suggestions but not yet published
     L._wait = {
-      name: !L.name && hasPending(['given','family','display','called','maiden','patronymic','honorific']),
+      name: !L.name && hasPending(['given','family','called','maiden','patronymic','honorific']),
       life: !L.life && hasPending(['birth','death','occupation','bio','gender','living']),
       places: !L.places && hasPending(['lived','pbirth']),
       story: !L.story && false,

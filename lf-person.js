@@ -25,7 +25,7 @@
   var sb=null, cache={}, allCache=null;
   function init(client){ sb=client||sb; return window.LFPerson; }
 
-  var NAME_FIELDS=['called','given','family','display','maiden'];
+  var NAME_FIELDS=['called','given','family','maiden'];
 
   function factsOf(rows, id){ return (rows||[]).filter(function(f){ return f.person_id===id; }); }
 

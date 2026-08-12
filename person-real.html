@@ -622,7 +622,7 @@
   const state={ lang:'en', keeper:false, facet:'name' };
   let PERSONA=null;
   let user=null, person=null, NV=[], facts=[], tagged=[], rels=[], memories=[], contribNames={};
-  const NF0=['display','given','called','family','maiden','patronymic','honorific'];
+  const NF0=['given','called','family','maiden','patronymic','honorific'];
   const _emptyN=()=>{ const o={}; NF0.forEach(f=>o[f]={}); return o; };
   /* full shape from the first moment — renders before data arrive must never crash */
   let NAME=_emptyN(), NAMEROW=_emptyN(), PEND=_emptyN(), NICKS={en:[],ru:[],he:[]}, PENDNICKS={en:[],ru:[],he:[]};
@@ -649,7 +649,7 @@
   ];
   const GAMES={ crowd:{icon:'face'}, order:{icon:'life'}, wherewas:{icon:'places'}, thread:{icon:'kin'}, whosememory:{icon:'story'}, voice:{icon:'story'}, whatnext:{icon:'story'} };
   const FACETFIELDS={
-    name:['display','given','called','family','maiden','patronymic','honorific','nickname'],
+    name:['given','called','family','maiden','patronymic','honorific','nickname'],
     face:['face'], life:['bio','occupation','birth','death','birth_prec','death_prec','living','gender','langspoken'],
     places:['pbirth','lived','country'], story:[], kin:['kin'], reel:[], more:['custom_label','custom_value','source']
   };
@@ -795,7 +795,7 @@
   function groupCustom(pub){ const groups={}; facts.filter(x=>(x.field==='custom_label'||x.field==='custom_value')&&(pub?x.status==='published':x.status!=='published')).forEach(x=>{ (groups[x.group_id]=groups[x.group_id]||{label:{},value:{}}); groups[x.group_id][x.field==='custom_label'?'label':'value'][x.lang]=x.value; });
     return Object.keys(groups).map(gid=>({group_id:gid,...groups[gid]})); }
   function buildNames(){
-    const NF=['display','given','called','family','maiden','patronymic','honorific'];
+    const NF=['given','called','family','maiden','patronymic','honorific'];
     NAME=_emptyN(); PEND=_emptyN(); NAMEROW=_emptyN();
     NF.forEach(f=>{ NAME[f]={}; PEND[f]={}; NAMEROW[f]={}; LANGS.forEach(l=>{ const r=pubRow(f,l); NAMEROW[f][l]=r; NAME[f][l]=r?r.value:''; const p=pendList(f,l)[0]; PEND[f][l]=p?p.value:''; }); });
     LANGS.forEach(l=>{ const vp=NV.find(v=>v.lang===l&&v.status==='published'); if(vp){ if(!NAME.given[l]&&vp.given) NAME.given[l]=vp.given; if(!NAME.family[l]&&vp.family) NAME.family[l]=vp.family; }
@@ -942,7 +942,6 @@
     const has=k=>NAME[k]&&NAME[k][lang]?NAME[k][lang]:'';
     const NF=['given','called','family','maiden','patronymic','honorific'];
     let out='';
-    if(has('display')) out+=`<div class="namepart"><div class="np-lab">${L.display}</div><div class="np-val serif">${esc(has('display'))}</div>${partCtls('display')}</div>`;
     if(has('given')||has('called')){ out+=`<div class="nameblock">`;
       if(has('given')) out+=`<div class="np-lab">${L.given}</div><div class="np-given serif">${esc(has('given'))}</div>${partCtls('given')}`;
       if(has('called')) out+=`<div class="np-called serif">${esc(has('called'))}<span class="np-tag">${L.called} · ${L.calledHint}</span></div>${partCtls('called')}`;
@@ -961,7 +960,7 @@
     const unset=NF.filter(k=>!has(k)&&!namePendRef(k,lang)).concat('nickname');
     const addBtn=unset.length?`<button class="np-ctl add" data-act="nmadd">${sv(I.plus,2)} ${L.addpart}</button>`:'';
     out+=`<div class="np-foot"><button class="np-ctl" data-act="nmlang">${sv(I.globe2,1.5)} ${L.otherlangs}</button>${addBtn}</div>`;
-    const editable=['display','given','called','family','maiden','patronymic','honorific'];
+    const editable=['given','called','family','maiden','patronymic','honorific'];
     out+=`<div class="np-langs" hidden>${editable.map(k=>`<div class="mlgrp"><div class="np-lab">${esc(L[k]||k)}</div>
         ${LANGS.map(l=>`<div class="mlvar ${l==='he'?'rtl':''}"><span class="tag">${l}</span><input class="inp" data-field="${k}" data-lang="${l}" value="${esc((NAME[k]&&NAME[k][l])||'')}" placeholder="${L.addfield}"></div>`).join('')}
         ${k==='given'?`<button type="button" class="np-ctl" data-samedisplay style="margin-top:8px">${sv(I.plus,1.7)} ${esc(L.sameDisplay)}</button>`:''}
@@ -1535,7 +1534,7 @@
     const read=(f,l)=>{ const el=card.querySelector(`.np-langs [data-field="${f}"][data-lang="${l}"]`); return el?el.value.trim():null; };
     let ok=true;
     /* name parts are person_facts ROWS — name_variants is retiring, do not write to it */
-    for(const f of ['display','given','family','called','maiden','patronymic','honorific']){
+    for(const f of ['given','family','called','maiden','patronymic','honorific']){
       for(const l of LANGS){ const v=read(f,l); if(v&&v!==((NAME[f]||{})[l]||'')){ if(await insFact(f,l,v)===false) ok=false; } } }
     await reload(); if(ok) toast(d().sent); }
 

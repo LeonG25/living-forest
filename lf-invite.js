@@ -23,7 +23,7 @@
     return (L[lang]||L.en)[key];
   }
   async function nameFor(sb, pid, lang){
-    try{ const {data}=await sb.from('person_facts').select('lang,value').eq('person_id',pid).eq('field','display').eq('status','published');
+    try{ const {data}=await sb.from('person_facts').select('lang,value').eq('person_id',pid).in('field',['called','given','family']).eq('status','published');
       const m={}; (data||[]).forEach(r=>m[r.lang]=r.value);
       if(m[lang]||m.en) return m[lang]||m.en; }catch(e){}
     try{ const {data:p}=await sb.from('people').select('display_name,called_name').eq('id',pid).maybeSingle();

@@ -65,7 +65,7 @@
     if(called) return join(called,family);
     var given=pick(facts,'given',lang);
     if(given) return join(given,family);
-    var fields=['family','display','maiden','given','called'];
+    var fields=['family','maiden','given','called'];
     for(var i=0;i<fields.length;i++){
       var v=pick(facts,fields[i],lang);
       if(v) return v;
@@ -78,7 +78,7 @@
     var out=[], seen={};
     (facts||[]).forEach(function(f){
       if(!f) return;
-      if(['called','given','family','display','maiden'].indexOf(f.field)<0) return;
+      if(['called','given','family','maiden'].indexOf(f.field)<0) return;
       if(!(f.status==null||f.status==='published')) return;
       var v=String(f.value==null?'':f.value).trim();
       if(v && !seen[v]){ seen[v]=1; out.push(v); }

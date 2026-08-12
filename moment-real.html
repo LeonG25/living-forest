@@ -997,7 +997,7 @@
     try{ const {data}=await sb.from('people').select('id,display_name,called_name,sex'); allPeople=data||[]; }catch(e){ allPeople=[]; }
     try{ const {data}=await sb.from('person_facts')
            .select('person_id,field,lang,value,status')
-           .in('field',['called','given','family','display','maiden']).eq('status','published');
+           .in('field',['called','given','family','maiden']).eq('status','published');
          nameFacts=(window.LFName?LFName.byPerson(data||[]):{}); }catch(e){ nameFacts={}; }
     /* order by what each person is actually called, not by a stale column */
     try{ allPeople.sort((a,b)=>label(a).localeCompare(label(b))); }catch(e){}
