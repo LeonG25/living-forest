@@ -14,6 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="lf-db.js?v=5"></script>
+<script src="lf-label.js?v=1"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
   html,body{ background:#04070e; }
@@ -391,7 +392,8 @@
 
   /* ---------- load ---------- */
   async function loadData(){
-    try{ const {data:p}=await sb.from('people').select('id,display_name,called_name,sex,primary_asset,portrait_path,birth_date,death_date,is_living,metadata').eq('id',PERSON_ID).maybeSingle(); person=p||{id:PERSON_ID}; }catch(e){ person={id:PERSON_ID}; }
+    try{ await LFLabel.load(sb,[PERSON_ID]);
+    const {data:p}=await sb.from('people').select('id,display_name,called_name,sex,primary_asset,portrait_path,birth_date,death_date,is_living,metadata').eq('id',PERSON_ID).maybeSingle(); person=p||{id:PERSON_ID}; }catch(e){ person={id:PERSON_ID}; }
     try{ const {data:fs}=await sb.from('person_facts').select('id,group_id,field,lang,value,ord,status,created_at,published_at').eq('person_id',PERSON_ID); facts=fs||[]; }catch(e){ facts=[]; }
     tagged=[]; contribNames={};
     try{ const {data:subs}=await sb.from('artefact_subjects').select('artefact_id,detail').eq('person_id',PERSON_ID); const ids=(subs||[]).map(s=>s.artefact_id);
@@ -413,13 +415,12 @@
   function buildNames(){ const NF=['given','called','family','maiden','patronymic','honorific'];
     NAME={}; NF.forEach(f=>{ NAME[f]={}; LANGS.forEach(l=>{ NAME[f][l]=pubNewest(f,l); }); });
     LANGS.forEach(l=>{ if(!NAME.display[l]){ const dn=[NAME.given[l],NAME.family[l]].filter(Boolean).join(' '); if(dn) NAME.display[l]=dn; } });
-    if(!NAME.display.en && person.display_name) NAME.display.en=person.display_name;
     if(!NAME.called.en && person.called_name) NAME.called.en=person.called_name;
   }
   function nm(field){ const l=state.lang; const F=NAME[field]||{}; return F[l]||F.en||''; }
   function fullName(){ const l=state.lang;
     let disp=''; if(!disp){ const g=nm('given'), f=nm('family'); disp=[g,f].filter(Boolean).join(' '); }
-    if(!disp) disp=person.display_name||pubNewest('given',l)||pubNewest('given','en')||'';
+    if(!disp) disp=LFLabel.of(person.id,l)||pubNewest('called',l)||pubNewest('given',l)||pubNewest('given','en')||'';
     return disp; }
   function shortName(){ const g=nm('given'); if(g) return g; const disp=fullName(); return disp?disp.split(' ')[0]:''; }
   function nameInitial(){ const s=shortName(); return s?s.slice(0,1):(fullName().slice(0,1)||'•'); }

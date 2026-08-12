@@ -15,6 +15,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="lf-db.js?v=5"></script>
+<script src="lf-label.js?v=1"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
   html,body{ background:#04070e; }
@@ -375,8 +376,8 @@
     const profMap=new Map(profs.map(p=>[p.id,p]));
     const pids=[...new Set(profs.map(p=>p.person_id).filter(Boolean))];
     let peopleMap=new Map();
-    if(pids.length){ try{ const {data:pl}=await sb.from('people').select('id,display_name').in('id',pids); (pl||[]).forEach(p=>peopleMap.set(p.id,p.display_name)); }catch(e){} }
-    const nameFor=uid=>{ const p=profMap.get(uid); if(!p) return null; return p.display_name || peopleMap.get(p.person_id) || null; };
+    if(pids.length){ try{ await LFLabel.load(sb,pids); const {data:pl}=await sb.from('people').select('id,display_name').in('id',pids); (pl||[]).forEach(p=>peopleMap.set(p.id,p.display_name)); }catch(e){} }
+    const nameFor=uid=>{ const p=profMap.get(uid); if(!p) return null; return p.display_name || LFLabel.of(p.person_id,state.lang) || peopleMap.get(p.person_id) || null; };
 
     selfName = nameFor(user.id) || (user.email? user.email.split('@')[0] : '') || L().roleKeeper;
 

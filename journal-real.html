@@ -14,6 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="lf-db.js?v=5"></script>
+<script src="lf-label.js?v=1"></script>
 <script src="lf-walk.js?v=1"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
@@ -349,7 +350,7 @@
     entries=[]; counts={mem:0,people:0,games:0};
     const nameCache={};
     async function nameOf(pid){ if(!pid) return d().aSomeone; if(nameCache[pid]!==undefined) return nameCache[pid];
-      try{ const {data}=await sb.from('people').select('display_name').eq('id',pid).maybeSingle(); nameCache[pid]=(data&&data.display_name)||d().aSomeone; }
+      try{ await LFLabel.load(sb,[pid]); const {data}=await sb.from('people').select('called_name').eq('id',pid).maybeSingle(); nameCache[pid]=(data&&data.display_name)||d().aSomeone; }
       catch(e){ nameCache[pid]=d().aSomeone; } return nameCache[pid]; }
 
     // 1) journal_entries — the canonical log, if any rows exist for this user
@@ -406,10 +407,11 @@
     try{
       const {data:ppl,error}=await sb.from('people')
         .select('id,display_name,created_at,created_by').eq('created_by',user.id);
+        try{ await LFLabel.load(sb,(data||[]).map(x=>x.id)); }catch(e){}
       if(!error && ppl){
         for(const p of ppl){
           const ts=new Date(p.created_at||Date.now()).getTime();
-          entries.push({ts, act:d().aWelcome(p.display_name||d().aSomeone), icon:I.face, prov:'gold', label:d().provBrought}); counts.people++;
+          entries.push({ts, act:d().aWelcome(LFLabel.of(p.id,state.lang)||p.display_name||d().aSomeone), icon:I.face, prov:'gold', label:d().provBrought}); counts.people++;
         }
       }
     }catch(e){}
