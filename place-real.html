@@ -460,7 +460,8 @@ async function load(){
     ]);
     if(ppl.error) throw ppl.error;
     // the teller is a person (contributor_id), never the uploading account
-    const provName = {}; (ppl.data||[]).forEach(p=> provName[p.id]=p.display_name);
+    const provName = {}; await loadNameFacts(sb,(ppl.data||[]).map(p=>p.id));
+    (ppl.data||[]).forEach(p=> provName[p.id]=nameOfPerson(p.id,curLang())||p.called_name||'');
     const artById = {}; (arts.data||[]).forEach(a=>{ a._year=parseYear(a.metadata&&a.metadata.when); a._where=(a.metadata&&a.metadata.where)||''; artById[a.id]=a; });
     // subjects per person and per artefact
     const perPerson = {}; // id -> [{art, box}]
@@ -478,7 +479,7 @@ async function load(){
     const built=[];
     (ppl.data||[]).forEach(p=>{
       const recs=(perPerson[p.id]||[]).filter(r=>r.art._where && coords[r.art._where]);
-      const name = p.called_name || p.display_name || 'Someone';
+      const name = nameOfPerson(p.id,curLang()) || p.called_name || 'Someone';
       const memoryCount=(perPerson[p.id]||[]).length;
       if(!recs.length){ built.push({id:p.id,name,waiting:true,memoryCount,gen:gen(p.id),lat:0,lng:0,born:null}); return; }
       // (year, place) points sorted by year
@@ -941,9 +942,10 @@ load();
     ]);
     const geo=geoR.data||null, arts=artsR.data||[];
     const pById={}; (peopleR.data||[]).forEach(p=>pById[p.id]=p);
-    const nameOf=id=>{const p=pById[id];return p?(p.called_name||p.display_name||'Someone'):'Someone';};
+    const nameOf=id=>{const n=nameOfPerson(id,curLang()); if(n) return n; const p=pById[id]; return p?(p.called_name||'Someone'):'Someone';};
     // the teller is a person (contributor_id), never the uploading account (Rule 6)
-    const prov={}; (peopleR.data||[]).forEach(p=>prov[p.id]=p.display_name);
+    const prov={}; await loadNameFacts(sb2,(peopleR.data||[]).map(p=>p.id));
+    (peopleR.data||[]).forEach(p=>prov[p.id]=nameOfPerson(p.id,curLang())||p.called_name||'');
     const tellerOf=a=>(a.contributor_id&&prov[a.contributor_id])||'';
 
     const artById={}; arts.forEach(a=>artById[a.id]=a);
@@ -997,3 +999,34 @@ load();
 </script>
 </body>
 </html>
+  /* Names come from person_facts, by Leon's rule: called+family, else given+family, else
+     any part. This page used people.called_name||display_name, which is the stale column
+     that showed נדיה מטבייב under an English photograph elsewhere. */
+  function curLang(){ try{ return (typeof lang==='string'&&lang)||localStorage.getItem('lf_lang')||'en'; }catch(e){ return 'en'; } }
+  const NAMEF={};
+  function nameOfPerson(id, lang){
+    const parts=NAMEF[id]||[]; if(!parts.length) return '';
+    const pick=(f,lg)=>{ const r=parts.find(x=>x.field===f&&x.lang===lg); return r?r.value:''; };
+    const cyr=/[\u0400-\u04FF]/, heb=/[\u0590-\u05FF]/;
+    const same=(a,b)=>(cyr.test(a)===cyr.test(b))&&(heb.test(a)===heb.test(b));
+    const join=(a,b)=>{ a=(a||'').trim(); b=(b||'').trim();
+      if(!a) return b; if(!b) return a;
+      if(a.toLowerCase().indexOf(b.toLowerCase())>=0||!same(a,b)) return a;
+      return a+' '+b; };
+    for(const lg of [lang||'en','und','en','ru','he']){
+      const c=pick('called',lg), g=pick('given',lg), f=pick('family',lg);
+      if(c) return join(c,f);
+      if(g) return join(g,f);
+      if(f) return f;
+    }
+    return parts[0].value||'';
+  }
+  async function loadNameFacts(client, ids){
+    if(!ids||!ids.length) return;
+    try{ const {data}=await client.from('person_facts')
+      .select('person_id,field,lang,value')
+      .in('person_id',ids).in('field',['called','given','family','maiden']).eq('status','published');
+      (data||[]).forEach(f=>{ (NAMEF[f.person_id]=NAMEF[f.person_id]||[]).push(f); });
+    }catch(e){}
+  }
+
