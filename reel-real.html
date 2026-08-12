@@ -414,7 +414,6 @@
   /* ---------- name resolution (built from person_facts, newest-published wins) ---------- */
   function buildNames(){ const NF=['given','called','family','maiden','patronymic','honorific'];
     NAME={}; NF.forEach(f=>{ NAME[f]={}; LANGS.forEach(l=>{ NAME[f][l]=pubNewest(f,l); }); });
-    LANGS.forEach(l=>{ if(!NAME.display[l]){ const dn=[NAME.given[l],NAME.family[l]].filter(Boolean).join(' '); if(dn) NAME.display[l]=dn; } });
     if(!NAME.called.en && person.called_name) NAME.called.en=person.called_name;
   }
   function nm(field){ const l=state.lang; const F=NAME[field]||{}; return F[l]||F.en||''; }
