@@ -625,10 +625,22 @@
   }
 
   /* ---------- names / story / details per language ---------- */
-  function nameFor(pid, L){ const p=peopleById[pid]; if(!p) return null; const base=p.display_name||p.called_name||null;
-    if(L==='en') return base;
-    const v=(vars[pid]||[]).find(x=>x.lang===L); if(v){const s=[v.given,v.family].filter(Boolean).join(' ').trim(); if(s) return s;}
-    const a=autoName[L]&&autoName[L][pid]; if(a) return a; return base; }
+  /* This returned people.display_name outright for English, without even looking at the
+     name facts - which is why נדיה מטבייב appeared under an English photograph while her
+     own page read Nadia Matveev. Leon's rule now, in every language: called+family, else
+     given+family, else any single part, and another language beats nothing at all. */
+  function nameFor(pid, L){
+    const parts=(lang)=>{
+      const v=(vars[pid]||[]).find(x=>x.lang===lang); if(!v) return '';
+      const g=String(v.called||v.given||'').trim(), f=String(v.family||'').trim();
+      if(g&&f) return (g.toLowerCase().indexOf(f.toLowerCase())>=0)?g:(g+' '+f);
+      return g||f;
+    };
+    for(const lg of [L,'en','ru','he','und']){ const n=parts(lg); if(n) return n; }
+    const a=autoName[L]&&autoName[L][pid]; if(a) return a;
+    const p=peopleById[pid];
+    return p?(p.called_name||p.display_name||null):null;   /* last resort only */
+  }
   function firstName(n){ return String(n||'').trim().split(/\s+/)[0]||''; }
   const yearOf = ()=> (String((art&&art.metadata&&art.metadata.when)||'').match(/\d{4}/)||[''])[0];
   function whereText(){ return (art&&art.metadata&&art.metadata.where)||''; }
@@ -672,7 +684,7 @@
   function buildTags(){ TAGS=[];
     /* a tag the keeper has not welcomed yet is drawn as waiting, not as settled fact */
     subjects.forEach(s=>{ if(s.detail&&s.detail.w){ TAGS.push({ id:'s:'+s.person_id, kind:'subject', person:s.person_id, pending:(s.status&&s.status!=='published'),
-      name:nameFor(s.person_id,lang)||(peopleById[s.person_id]&&peopleById[s.person_id].display_name)||'',
+      name:nameFor(s.person_id,lang)||'',
       /* The page already draws a waiting tag in violet - it keys off status==='pending',
          and a tag the keeper has not welcomed is exactly that. Without this a face just
          drawn looked as settled as one approved years ago. */
@@ -1005,7 +1017,7 @@
   function label(p){
     if(!p) return '';
     if(window.LFName){ const l=LFName.label(nameFacts[p.id]||[], lang); if(l) return l; }
-    return p.display_name||p.called_name||'';
+    return nameFor(p.id,lang)||p.called_name||'';
   }
   async function openNameSheet(tagId, isNew){ nameTargetId=tagId; await loadAllPeople(); renderNameList(''); show($('#nameSheet')); }
   function renderNameList(q){ const d=t(); const sheet=$('#nameSheet'); const ql=q.trim().toLowerCase();
@@ -1022,8 +1034,8 @@
       <div class="searchbox">${sv(ICON.search,1.7)}<input id="pSearch" placeholder="${esc(d.searchFamily)}" value="${esc(q)}"></div>
       <div class="plist">
         ${list.map(p=>`<button class="popt" data-pick="${esc(p.id)}">
-          <span class="pc">${faceSVG(p.display_name)}</span>
-          <span><span class="pn">${esc(label(p)||nameFor(p.id,lang)||p.display_name||'')}</span></span></button>`).join('')}
+          <span class="pc">${faceSVG(label(p)||'')}</span>
+          <span><span class="pn">${esc(label(p)||nameFor(p.id,lang)||'')}</span></span></button>`).join('')}
         <button class="popt newp" data-pick="__new">
           <span class="pc">${sv(ICON.plus,2)}</span>
           <span><span class="pn">${q?esc(q):esc(d.someoneNew)}</span><span class="pr">${esc(d.someoneNew)}</span></span></button>
@@ -1467,7 +1479,15 @@
     peopleById={}; vars={};
     const ids=subjects.map(s=>s.person_id);
     if(ids.length){ const {data:pp}=await sb.from('people').select('id,display_name,called_name,primary_asset,portrait_path,sex').in('id',ids); (pp||[]).forEach(p=>peopleById[p.id]=p);
-      const {data:nv}=await sb.from('name_variants').select('person_id,lang,given,family,status').in('person_id',ids).eq('status','published'); (nv||[]).forEach(v=>{(vars[v.person_id]=vars[v.person_id]||[]).push(v);}); }
+      /* names come from person_facts, the single store - name_variants is being retired and
+         has no 'called' column at all, so the rule above would have found nothing in it */
+      const {data:nf}=await sb.from('person_facts')
+        .select('person_id,field,lang,value')
+        .in('person_id',ids).in('field',['called','given','family','maiden']).eq('status','published');
+      const byPL={};
+      (nf||[]).forEach(f=>{ const k=f.person_id+'|'+f.lang;
+        (byPL[k]=byPL[k]||{person_id:f.person_id,lang:f.lang})[f.field]=f.value; });
+      Object.values(byPL).forEach(v=>{ (vars[v.person_id]=vars[v.person_id]||[]).push(v); }); }
     tellerName='';
     if(art.contributor_id){ const {data:cp}=await sb.from('people').select('display_name').eq('id',art.contributor_id).maybeSingle(); tellerName=(cp&&cp.display_name)||''; }
     const {data:tr}=await sb.from('artefact_translations').select('lang,body,status').eq('artefact_id',MOMENT_ID).eq('status','published'); translations=tr||[];
