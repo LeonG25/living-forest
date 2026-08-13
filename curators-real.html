@@ -16,6 +16,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="lf-db.js?v=5"></script>
 <script src="lf-label.js?v=1"></script>
+<script src="lf-face.js?v=3"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
   html,body{ background:#04070e; }
@@ -360,6 +361,20 @@
 
   /* ---------- avatar (initials — no fabricated photo) ---------- */
   function initial(name){ const s=String(name||'').trim(); return s? s[0].toUpperCase() : '·'; }
+  /* A curator is a person too. profiles.display_name is their account name - which stays -
+     but where the account is anchored to someone in the forest, show that person's face
+     instead of a seeded circle. */
+  function hydrateCuratorFaces(){
+    try{ if(!window.LFFace) return;
+      if(!hydrateCuratorFaces._i){ LFFace.init(sb); hydrateCuratorFaces._i=1; }
+      const els=[...document.querySelectorAll('.pf[data-face]')].filter(e=>e.getAttribute('data-face'));
+      const ids=[...new Set(els.map(e=>e.getAttribute('data-face')))];
+      if(!ids.length) return;
+      LFFace.resolve(ids).then(fm=>{ els.forEach(el=>{
+        const f=fm[el.getAttribute('data-face')];
+        if(f&&(f.portrait||f.path)) LFFace.into(el,{path:f.path,box:f.box,portrait:f.portrait,size:96,keep:true}); }); });
+    }catch(e){}
+  }
   function avatar(name,tone){
     const bg = tone==='keeper' ? 'linear-gradient(150deg,#3a2f18,#160f06)'
              : tone==='invited'? 'linear-gradient(150deg,#241633,#120a1e)'
@@ -396,7 +411,7 @@
 
     // candidate accounts the keeper can ask (registered, not keeper, not already a curator, not self)
     candidates = profs.filter(p=>!p.is_keeper && p.id!==user.id && !curUids.has(p.id))
-                      .map(p=>({ id:p.id, name:p.display_name || peopleMap.get(p.person_id) || '—' }));
+                      .map(p=>({ id:p.id, pid:p.person_id||'', name:p.display_name || peopleMap.get(p.person_id) || '—' }));
 
     // memories still waiting on the gate — real count (RLS exposes pending rows to the keeper)
     try{ const {count}=await sb.from('artefacts').select('id',{count:'exact',head:true}).neq('status','published'); waiting=count||0; }catch(e){ waiting=0; }
@@ -451,7 +466,7 @@
     $('#backBtn').onclick=goHome; $('#langBtn').onclick=openLangSheet; $('#gateBack').onclick=goHome;
   }
 
-  function render(){
+  function render(){ setTimeout(hydrateCuratorFaces,60);
     if(!isKeeper){ renderGate(); return; }
     const l=L(); applyDir();
     const hasOthers = curators.length>0 || invited.length>0;
