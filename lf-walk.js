@@ -69,6 +69,32 @@
   var view='walk';
 
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+  /* One rule for a name, from person_facts: called+family, else given+family, else any
+     part; reader's language, then und, then anything rather than nothing; never mixing
+     alphabets. The walk named people - and Fen spoke their names - from the stale column. */
+  var WNF={};
+  function wlang(){ try{ return localStorage.getItem('lf_lang')||'en'; }catch(e){ return 'en'; } }
+  function wname(id){
+    var parts=WNF[id]||[]; if(!parts.length) return '';
+    function pick(f,lg){ for(var i=0;i<parts.length;i++) if(parts[i].field===f&&parts[i].lang===lg) return parts[i].value||''; return ''; }
+    var CYR=/[\u0400-\u04FF]/, HEB=/[\u0590-\u05FF]/;
+    function join(a,c){ a=(a||'').trim(); c=(c||'').trim();
+      if(!a) return c; if(!c) return a;
+      if(a.toLowerCase().indexOf(c.toLowerCase())>=0) return a;
+      if((CYR.test(a)!==CYR.test(c))||(HEB.test(a)!==HEB.test(c))) return a;
+      return a+' '+c; }
+    var order=[wlang(),'und','en','ru','he'];
+    for(var i=0;i<order.length;i++){
+      var lg=order[i], ca=pick('called',lg), gi=pick('given',lg), fa=pick('family',lg);
+      if(ca) return join(ca,fa);
+      if(gi) return join(gi,fa);
+      if(fa) return fa;
+    }
+    return parts[0].value||'';
+  }
+  function personName(id){ var n=wname(id); if(n) return n;
+    var p=D&&D.people&&D.people[id]; return p?(p.display_name||''):''; }
   function first(n){ n=String(n||''); var i=n.indexOf(' '); return i>0?n.slice(0,i):n; }
 
   async function load(){
@@ -80,8 +106,12 @@
       sb.from('player_anchors').select('user_id,person_id,status').eq('status','active'),
       sb.from('relationships').select('from_person,to_person').eq('status','published'),
       sb.from('artefact_subjects').select('person_id,artefact_id'),
-      sb.from('artefacts').select('id,kind,metadata,status').eq('status','published')
+      sb.from('artefacts').select('id,kind,metadata,status').eq('status','published'),
+      /* LAST on purpose: inserting it earlier shifted every q[n] below, so events read
+         name facts and anchors read events - the whole walk built from the wrong data. */
+      sb.from('person_facts').select('person_id,field,lang,value').in('field',['called','given','family','maiden']).eq('status','published')
     ]);
+    (q[6]&&q[6].data||[]).forEach(function(f){ (WNF[f.person_id]=WNF[f.person_id]||[]).push(f); });
     var people={}; (q[0].data||[]).forEach(function(p){ people[p.id]=p; });
     var events=q[1].data||[], anchors=q[2].data||[], rels=q[3].data||[];
     var subs=q[4].data||[], arts={}; (q[5].data||[]).forEach(function(a){ arts[a.id]=a; });
@@ -127,7 +157,7 @@
       if(D.myLevels[id]) return false; var o=D.offered[id];
       return o&&(o.met||o.heard||o.followed||o.woven); });
     out.sort(function(a,b){ var da=D.dist[a]==null?99:D.dist[a], db=D.dist[b]==null?99:D.dist[b];
-      return da-db || String(D.people[a].display_name).localeCompare(String(D.people[b].display_name)); });
+      return da-db || String(personName(a)).localeCompare(String(personName(b))); });
     return out.slice(0,3); }
 
   function render(){
@@ -155,11 +185,11 @@
           +'<div class="beads">'+beads(id,L)+'</div></div></div>'; });
       var edge=edgeList();
       if(edge.length){ h+='<div class="eh">'+L.edge+'</div>';
-        edge.forEach(function(id){ h+='<div class="sug"><a href="person-real.html?id='+encodeURIComponent(id)+'">'+L.sug(esc(D.people[id].display_name))+'</a></div>'; }); }
+        edge.forEach(function(id){ h+='<div class="sug"><a href="person-real.html?id='+encodeURIComponent(id)+'">'+L.sug(esc(personName(id)||D.people[id].display_name))+'</a></div>'; }); }
       body.innerHTML=h;
       hydrateFaces(body);
       /* Fen points the way — data-aware, only where content exists */
-      if(edge.length&&window.Fen){ try{ Fen.say(L.fen(first(D.people[edge[0]].display_name))); }catch(e){} }
+      if(edge.length&&window.Fen){ try{ Fen.say(L.fen(first(personName(edge[0])))); }catch(e){} }
     }
 
     if(view==='family'){
@@ -171,7 +201,7 @@
         var m=D.byUser[a.user_id]||{}, n=Object.keys(m).length, dots='';
         for(var i=0;i<Math.min(n,28);i++) dots+='<span class="fdot" style="animation-delay:'+((i%5)*1.3)+'s"></span>';
         h2+='<div class="frow"><div class="kface" style="width:38px;height:38px" data-pid="'+a.person_id+'"></div>'
-          +'<div class="fname">'+esc(first(per.display_name))+'</div><div class="flies">'+dots+'</div></div>'; });
+          +'<div class="fname">'+esc(first(personName(per.id)||per.display_name))+'</div><div class="flies">'+dots+'</div></div>'; });
       h2+='<div class="together">'+L.together(Object.keys(knownByAnyone).length,total)+'</div>';
       body.innerHTML=h2;
       hydrateFaces(body);

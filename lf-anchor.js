@@ -54,13 +54,44 @@
   function mount(){ (document.body||document.documentElement).appendChild(box); }
   if(document.body) mount(); else document.addEventListener('DOMContentLoaded',mount);
 
+
+  /* Names come from person_facts now, by the forest's one rule: called+family, else
+     given+family, else any part; the reader's language, then und, then anything rather
+     than nothing; never mixing alphabets. people.display_name was the stale column that
+     showed a Hebrew name to an English reader. */
+  var NF={};
+  function lang(){ try{ return localStorage.getItem('lf_lang')||'en'; }catch(e){ return 'en'; } }
+  function nameOf(id){
+    var parts=NF[id]||[]; if(!parts.length) return '';
+    function pick(f,lg){ for(var i=0;i<parts.length;i++) if(parts[i].field===f&&parts[i].lang===lg) return parts[i].value||''; return ''; }
+    var CYR=/[\u0400-\u04FF]/, HEB=/[\u0590-\u05FF]/;
+    function join(a,c){ a=(a||'').trim(); c=(c||'').trim();
+      if(!a) return c; if(!c) return a;
+      if(a.toLowerCase().indexOf(c.toLowerCase())>=0) return a;
+      if((CYR.test(a)!==CYR.test(c))||(HEB.test(a)!==HEB.test(c))) return a;
+      return a+' '+c; }
+    var order=[lang(),'und','en','ru','he'];
+    for(var i=0;i<order.length;i++){
+      var lg=order[i], ca=pick('called',lg), gi=pick('given',lg), fa=pick('family',lg);
+      if(ca) return join(ca,fa);
+      if(gi) return join(gi,fa);
+      if(fa) return fa;
+    }
+    return parts[0].value||'';
+  }
   var people=[], pick=null;
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
   function draw(q){ var list=box.querySelector('.plist'); q=(q||'').toLowerCase();
-    list.innerHTML=people.filter(function(p){ return !q||String(p.display_name||'').toLowerCase().indexOf(q)>=0; })
-      .map(function(p){ return '<div class="prow'+(pick&&pick.id===p.id?' on':'')+'" data-id="'+p.id+'"><div class="pname">'+esc(p.display_name)+'</div></div>'; }).join(''); }
+    list.innerHTML=people.filter(function(p){ return !q||String(nameOf(p.id)||p.display_name||'').toLowerCase().indexOf(q)>=0; })
+      .map(function(p){ return '<div class="prow'+(pick&&pick.id===p.id?' on':'')+'" data-id="'+p.id+'"><div class="pname">'+esc(nameOf(p.id)||p.display_name||'')+'</div></div>'; }).join(''); }
   api('people?select=id,display_name&status=eq.published&order=display_name').then(function(r){ return r.ok?r.json():[]; })
-    .then(function(j){ people=j||[]; draw(''); });
+    .then(function(j){ people=j||[];
+      return api('person_facts?select=person_id,field,lang,value&status=eq.published&field=in.(called,given,family,maiden)')
+        .then(function(r2){ return r2.ok?r2.json():[]; })
+        .then(function(rows){ (rows||[]).forEach(function(f){ (NF[f.person_id]=NF[f.person_id]||[]).push(f); });
+          people.sort(function(x,y){ return String(nameOf(x.id)||'').localeCompare(String(nameOf(y.id)||'')); });
+          draw(''); }); })
+    .catch(function(){ draw(''); });
 
   box.addEventListener('input',function(e){ if(e.target.tagName==='INPUT') draw(e.target.value); });
   box.addEventListener('click',function(e){
@@ -68,14 +99,14 @@
     if(row){ pick=people.filter(function(p){ return p.id===row.getAttribute('data-id'); })[0]||null;
       draw(box.querySelector('input').value);
       var c=box.querySelector('.confirm'); c.style.display=pick?'flex':'none';
-      if(pick) c.querySelector('.cq').innerHTML=L.are(esc(pick.display_name)); return; }
+      if(pick) c.querySelector('.cq').innerHTML=L.are(esc(nameOf(pick.id)||pick.display_name||'')); return; }
     if(e.target.classList.contains('cghost')){ pick=null; box.querySelector('.confirm').style.display='none'; draw(box.querySelector('input').value); return; }
     if(e.target.classList.contains('cbtn')&&pick){
       api('player_anchors?on_conflict=user_id',{method:'POST',
         headers:{Prefer:'resolution=merge-duplicates'},
         body:JSON.stringify({user_id:S.uid,person_id:pick.id,status:'active',decided_by:null,decided_at:null})})
       .then(function(r){
-        var name=pick.display_name;
+        var name=nameOf(pick.id)||pick.display_name||'';
         box.querySelector('.in').innerHTML='<div style="min-height:60vh;display:grid;place-items:center;text-align:center">'
           +'<div><div style="font-family:Georgia,serif;font-size:24px;color:#f3cd84">'+esc(L.done(name))+'</div></div></div>';
         try{ history.replaceState(null,'',location.pathname); }catch(e2){}

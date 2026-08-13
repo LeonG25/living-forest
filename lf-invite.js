@@ -26,7 +26,11 @@
     try{ const {data}=await sb.from('person_facts').select('lang,value').eq('person_id',pid).in('field',['called','given','family']).eq('status','published');
       const m={}; (data||[]).forEach(r=>m[r.lang]=r.value);
       if(m[lang]||m.en) return m[lang]||m.en; }catch(e){}
-    try{ const {data:p}=await sb.from('people').select('display_name,called_name').eq('id',pid).maybeSingle();
+    try{
+      /* the forest's one naming rule, not the stale column */
+      if(window.LFLabel){ await LFLabel.load(sb,[pid]);
+        const n=LFLabel.of(pid,(localStorage.getItem('lf_lang')||'en')); if(n) return n; }
+      const {data:p}=await sb.from('people').select('display_name,called_name').eq('id',pid).maybeSingle();
       return (p&&(p.called_name||p.display_name))||''; }catch(e){ return ''; }
   }
   window.LFInvite={
