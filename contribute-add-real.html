@@ -16,6 +16,7 @@
 <script src="lf-db.js?v=5"></script>
 <script src="lf-label.js?v=1"></script>
 <script src="lf-face.js?v=3"></script>
+<script src="lf-when.js?v=1"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
   html,body{ background:#04070e; }
@@ -649,17 +650,25 @@
         softChip('when',L.whenK,M.when,L.whenEmpty)+
         softChip('where',L.whereK,M.where,L.whereEmpty)+
       '</div>'+
-      '<div class="softedit" id="softEdit"><input id="whenIn" placeholder="'+esc(L.whenPh)+'" value="'+esc(M.when)+'"><input id="whereIn" placeholder="'+esc(L.wherePh)+'" value="'+esc(M.where)+'"></div>'+
+      '<div class="softedit" id="softEdit"><div id="whenPick"></div><input id="whereIn" placeholder="'+esc(L.wherePh)+'" value="'+esc(M.where)+'"></div>'+
       '<button class="primary" id="toWho"><svg class="ar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg> '+L.nextWho+'</button>'+
       '<div class="foot"><div class="l">'+L.footDevelop+'</div></div>';
 
     const tell=$('#tellIn'); tell.oninput=()=>{ M.telling=tell.value; };
     if($('#repl')) $('#repl').onclick=()=>{ const fi=$('#fileIn'); fi.removeAttribute('capture'); fi.click(); };
     const se=$('#softEdit');
-    $('#pad').querySelectorAll('.softchip').forEach(c=>c.onclick=()=>{ se.classList.add('open'); const f=c.dataset.k==='when'?$('#whenIn'):$('#whereIn'); if(f) f.focus(); });
+    $('#pad').querySelectorAll('.softchip').forEach(c=>c.onclick=()=>{ se.classList.add('open'); const f=c.dataset.k==='when'?$('#whenPick select[data-w="y"]'):$('#whereIn'); if(f) f.focus(); });
     if(M.whenOpen) se.classList.add('open');
-    const wi=$('#whenIn'), wo=$('#whereIn');
-    wi.oninput=()=>{ M.when=wi.value; M.whenOpen=true; };
+    const wo=$('#whereIn');
+    /* Three dropdowns instead of a free text box: year, month, day, each optional, with the
+       day list following the month and the year so an impossible date cannot be chosen.
+       M.when keeps the readable text; M.whenDate and M.whenPrec keep what the database
+       stores - a real date and how much of it is true. */
+    const wp=$('#whenPick');
+    if(wp && window.LFWhen){
+      LFWhen.mount(wp,{ value:M.whenDate||'', precision:M.whenPrec||'', lang:(M.lang||'en'),
+        onchange:r=>{ M.whenDate=r.date; M.whenPrec=r.precision; M.when=r.text; M.whenOpen=true; try{ render(); }catch(e){} } });
+    }
     wo.oninput=()=>{ M.where=wo.value; M.whenOpen=true; };
     $('#toWho').onclick=()=>go('who');
   }
@@ -908,6 +917,8 @@
 
       const meta={};
       if(M.when&&M.when.trim()) meta.when=M.when.trim();
+      /* the machine-readable half, so the forest can order and search by it later */
+      if(M.whenDate){ meta.when_date=M.whenDate; meta.when_precision=M.whenPrec||'year'; }
       if(M.where&&M.where.trim()) meta.where=M.where.trim();
 
       let photoPath=null;
@@ -985,7 +996,7 @@
     if(M.photoURL) try{ URL.revokeObjectURL(M.photoURL); }catch(e){}
     discardVoice();
     M.photoFile=null; M.photoURL=''; M.hasPhoto=false;
-    M.telling=''; M.when=''; M.where=''; M.whenOpen=false;
+    M.telling=''; M.when=''; M.whenDate=null; M.whenPrec=null; M.where=''; M.whenOpen=false;
     M.subjects=[]; M.tellerKey=null; M.searchQ=''; M.fromReturn='develop';
   }
 
