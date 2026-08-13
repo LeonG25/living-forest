@@ -650,7 +650,7 @@
         softChip('when',L.whenK,M.when,L.whenEmpty)+
         softChip('where',L.whereK,M.where,L.whereEmpty)+
       '</div>'+
-      '<div class="softedit" id="softEdit"><div id="whenPick"></div><input id="whereIn" placeholder="'+esc(L.wherePh)+'" value="'+esc(M.where)+'"></div>'+
+      '<div class="softedit" id="softEdit"><div id="whenPick"></div><input id="whereIn" list="knownPlaces" autocomplete="off" placeholder="'+esc(L.wherePh)+'" value="'+esc(M.where)+'"><datalist id="knownPlaces"></datalist></div>'+
       '<button class="primary" id="toWho"><svg class="ar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg> '+L.nextWho+'</button>'+
       '<div class="foot"><div class="l">'+L.footDevelop+'</div></div>';
 
@@ -669,7 +669,31 @@
       LFWhen.mount(wp,{ value:M.whenDate||'', precision:M.whenPrec||'', lang:(M.lang||'en'),
         onchange:r=>{ M.whenDate=r.date; M.whenPrec=r.precision; M.when=r.text; M.whenOpen=true; try{ render(); }catch(e){} } });
     }
-    wo.oninput=()=>{ M.where=wo.value; M.whenOpen=true; };
+    /* WHERE, ANCHORED TO PLACES THE FOREST KNOWS. It was a free text box, so 'Tel Aviv',
+       'tel-aviv' and 'TLV' would become three different places that never meet again. The
+       list offers every place already recorded - the same table the moment page reads - and
+       a name typed exactly is matched to it regardless of case or spacing. A genuinely new
+       place is still allowed: a family archive cannot refuse a village it has not heard of.
+       What it will not do any more is silently create a duplicate of one it has. */
+    wo.oninput=()=>{
+      const raw=wo.value;
+      const norm=x=>String(x||'').trim().toLowerCase().replace(/[\s\-_,]+/g,' ');
+      const hit=(M.places||[]).find(pl=>norm(pl)===norm(raw));
+      M.where = hit || raw;            /* snap to the known spelling when it is the same place */
+      M.whenOpen=true;
+    };
+    if(!M.places){
+      M.places=[];
+      (async()=>{ try{
+        const {data}=await sb.from('places').select('name').order('name');
+        M.places=(data||[]).map(x=>x.name).filter(Boolean);
+        const dl=$('#knownPlaces');
+        if(dl) dl.innerHTML=M.places.map(n=>'<option value="'+esc(n)+'"></option>').join('');
+      }catch(e){} })();
+    } else {
+      const dl=$('#knownPlaces');
+      if(dl) dl.innerHTML=(M.places||[]).map(n=>'<option value="'+esc(n)+'"></option>').join('');
+    }
     $('#toWho').onclick=()=>go('who');
   }
   function softChip(k,label,val,empty){
