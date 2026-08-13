@@ -15,6 +15,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="lf-db.js?v=5"></script>
 <script src="lf-label.js?v=1"></script>
+<script src="lf-face.js?v=3"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
   html,body{ background:#04070e; }
@@ -519,6 +520,27 @@
   /* a failure may not pass in silence: lf-db speaks through this page's own voice */
   try{ LFDB.onFailure=function(m){ toast(m); }; }catch(e){}
   function toast(msg){ const t=$('#toast'); $('#toastMsg').textContent=msg; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2600); }
+  /* the people already named on this photograph deserve their faces, not initials */
+  function hydrateAddFaces(){
+    try{ if(!window.LFFace) return;
+      if(!hydrateAddFaces._i){ LFFace.init(sb); hydrateAddFaces._i=1; }
+      /* No data-face attribute needed: every avatar sits inside a chip that already carries
+         its key, and subjectByKey turns that into the person. Adding the attribute meant
+         fighting three layers of quote escaping in a generated string; this reads what the
+         markup already says. */
+      const els=[]; const byEl=new Map();
+      document.querySelectorAll('[data-k] .av, .sug .av').forEach(el=>{
+        const holder=el.closest('[data-k]'); if(!holder) return;
+        const subj=subjectByKey(holder.getAttribute('data-k'));
+        if(subj&&subj.id){ els.push(el); byEl.set(el,subj.id); }
+      });
+      const ids=[...new Set([...byEl.values()])];
+      if(!ids.length) return;
+      LFFace.resolve(ids).then(fm=>{ els.forEach(el=>{
+        const f=fm[byEl.get(el)];
+        if(f&&(f.portrait||f.path)) LFFace.into(el,{path:f.path,box:f.box,portrait:f.portrait,size:64,keep:true}); }); });
+    }catch(e){}
+  }
   function subjectByKey(k){ return M.subjects.find(s=>s.key===k)||null; }
   function tellerSubject(){ return M.tellerKey?subjectByKey(M.tellerKey):null; }
 
@@ -650,7 +672,7 @@
   }
 
   /* ---------- 3. WHO IS IN IT ---------- */
-  function renderWho(){
+  function renderWho(){ setTimeout(hydrateAddFaces,60);
     const photo = M.hasPhoto&&M.photoURL ? '<div class="tagstrip"><img src="'+M.photoURL+'" alt=""></div>' : '';
     $('#pad').innerHTML=
       stepDots('who')+ photo+
