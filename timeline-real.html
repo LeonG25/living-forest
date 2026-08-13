@@ -198,9 +198,12 @@ async function load(){
       const isImg=(a.kind==='photo'||a.kind==='object') && a.storage_path;
       const where=a.metadata.where?(' &middot; '+esc(a.metadata.where)):'';
       const title = a.body ? esc(a.body.replace(/\s+/g,' ').slice(0,80)) + (a.body.length>80?'\u2026':'') : ('A '+esc(a.kind||'memory'));
-      const ppl=(peopleByArt[a.id]||[]).map(id=>nameById[id]).filter(Boolean);
+      /* keep the ids: converting id -> name -> id back again through idByName loses anyone
+         whose label does not round-trip exactly, and every face came out empty because of it */
+      const pplIds=(peopleByArt[a.id]||[]).filter(id=>nameById[id]);
+      const ppl=pplIds.map(id=>nameById[id]);
       let chips='';
-      if(ppl.length){ chips='<div class="chips">'+ppl.slice(0,10).map(n=>'<span class="chip" data-id="'+esc(idByName[n]||'')+'"><i class="cav" data-face="'+esc(idByName[n]||'')+'"></i>'+esc(n)+'</span>').join('')+'</div>'; }
+      if(ppl.length){ chips='<div class="chips">'+pplIds.slice(0,10).map(id=>'<span class="chip" data-id="'+esc(id)+'"><i class="cav" data-face="'+esc(id)+'"></i>'+esc(nameById[id]||'')+'</span>').join('')+'</div>'; }
       h+='<div class="mem" data-edit="'+esc(a.id)+'">'+
            (isImg?'<div class="thumb" data-path="'+esc(a.storage_path)+'" data-art="'+esc(a.id)+'" role="button" tabindex="0" aria-label="Open this photograph" title="Open this photograph" style="cursor:pointer">photo</div>':'<div class="thumb">'+esc(a.kind||'memory')+'</div>')+
            '<div class="mt"><div class="ww"><b>'+esc(a.metadata.when)+'</b>'+where+'</div><div class="ttl">'+title+'</div>'+chips+'</div>'+
