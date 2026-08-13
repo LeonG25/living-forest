@@ -975,6 +975,17 @@
         if(s.error) throw s.error;
       }
       submitting=false;
+      /* ONE PAGE, TWO MODES (Leon, 2026-08-13). Contribute is the doorway; the moment page
+         is where a memory lives afterwards - and it already holds the richer tools: the
+         calendar with seasons, the place picker, the face tagger that draws boxes, the
+         story editor. Rather than keep two implementations of the same four things drifting
+         apart, the contributor is handed the moment itself once it exists. The receipt is
+         no longer a dead end: it is the memory's own page, ready to be filled in further. */
+      if(artId){
+        go('receipt');
+        setTimeout(()=>{ location.href='moment-real.html?id='+encodeURIComponent(artId)+'&new=1'; }, 1400);
+        return;
+      }
       go('receipt');
     }catch(err){
       submitting=false;

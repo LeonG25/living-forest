@@ -427,6 +427,9 @@
   const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const qs=new URLSearchParams(location.search);
   const MOMENT_ID=qs.get('id')||qs.get('moment')||'10474b31-507a-4216-991e-086fd70de8b9';
+  /* Arrived straight from Contribute: the memory exists but is barely filled in, so the
+     page opens ready to edit rather than ready to read. */
+  const IS_NEW = (new URLSearchParams(location.search)).get('new')==='1';
   const LANGKEYS=['en','ru','he'];
 
   /* ---------- UI strings (design copy, all three languages) ---------- */
@@ -715,6 +718,9 @@
 
   /* ---------- render ---------- */
   function render(){
+    if(IS_NEW && !render._newDone){ render._newDone=1;
+      try{ document.body.classList.add('editing'); }catch(e){}
+    }
     const d=t();
     document.documentElement.lang=lang; document.documentElement.dir=d.dir;
     document.body.classList.toggle('rtl', d.dir==='rtl');
@@ -1137,7 +1143,25 @@
     sheet.querySelectorAll('[data-yr]').forEach(b=>b.onclick=()=>{calY+=+b.dataset.yr;renderCal();});
     sheet.querySelectorAll('[data-season]').forEach(b=>b.onclick=()=>{calSeason=+b.dataset.season;renderCal();});
     sheet.querySelector('#calCancel').onclick=hide;
-    sheet.querySelector('#calSend').onclick=async()=>{ const val=calText(); hide(); await saveMeta('when', val, whenText(), 'when'); };
+    sheet.querySelector('#calSend').onclick=async()=>{ const val=calText(); hide();
+      /* The calendar produced only readable text - '12 March 1953' - which no query can
+         order or filter by. It now also records the real date and how much of it is true,
+         the same day|month|year|season vocabulary the database already stores. The text
+         stays as well, because it is what a family reads. */
+      const pad=x=>(x<10?'0':'')+x;
+      let iso=null, prec=null;
+      if(calY){
+        if(calPrec==='day'&&calD){ iso=calY+'-'+pad(calM+1)+'-'+pad(calD); prec='day'; }
+        else if(calPrec==='month'){ iso=calY+'-'+pad(calM+1)+'-01'; prec='month'; }
+        else if(calPrec==='season'){ iso=calY+'-'+pad([1,4,7,10][calSeason]||1)+'-01'; prec='season'; }
+        else { iso=calY+'-01-01'; prec='year'; }
+      }
+      await saveMeta('when', val, whenText(), 'when');
+      if(iso && isKeeper){ try{
+        const md=Object.assign({}, art.metadata||{}); md.when_date=iso; md.when_precision=prec;
+        await sb.from('artefacts').update({metadata:md}).eq('id',art.id); art.metadata=md;
+      }catch(e){} }
+    };
   }
 
   /* ---------- place (where) ---------- */
