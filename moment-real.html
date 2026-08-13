@@ -719,7 +719,11 @@
   /* ---------- render ---------- */
   function render(){
     if(IS_NEW && !render._newDone){ render._newDone=1;
+      /* A memory arriving from Contribute opens ready to be worked on: editing mode shows
+         the tools, and the face tagger is armed so naming who is in the photograph is the
+         obvious next act rather than something to go looking for. */
       try{ document.body.classList.add('editing'); }catch(e){}
+      setTimeout(()=>{ try{ if(art&&art.storage_path) setTagging(true); }catch(e){} }, 400);
     }
     const d=t();
     document.documentElement.lang=lang; document.documentElement.dir=d.dir;
@@ -1240,7 +1244,10 @@
     return ok; }
 
   async function saveMeta(field, val, oldVal, pendKey){ val=String(val==null?'':val).trim();
-    if(isKeeper){ const md=Object.assign({}, art.metadata||{}); if(val) md[field]=val; else delete md[field];
+    /* Every edit waits for the keeper, including a keeper's own (Leon, 2026-08-07). This
+       fast path is why the hedgehog memory was published 28 seconds after it was created:
+       the moment page opened in editing mode and the first metadata save took it live. */
+    if(false){ const md=Object.assign({}, art.metadata||{}); if(val) md[field]=val; else delete md[field];
       const ok=await sbWrite(()=>sb.from('artefacts').update({metadata:md}).eq('id',art.id)); if(ok){ art.metadata=md; toast(t().saved); buildModel(); render(); } }
     else { await proposeEdit(field,{new_value:val, old_value:oldVal||'', pendKey:pendKey||field}); }
   }
