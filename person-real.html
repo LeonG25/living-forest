@@ -1543,7 +1543,13 @@
       const de=read('death'); if(de!=null&&de!=='') await put('death','und',de);
       const seg=card.querySelector('.seg[data-field="birth_prec"] .on'); if(seg) await put('birth_prec','und',seg.getAttribute('data-v'));
       const liv=card.querySelector('.sw[data-field="living"]'); if(liv) await put('living','und',liv.classList.contains('on')?'1':'0');
-      const gseg=card.querySelector('.seg[data-field="gender"] .on'); if(gseg) await put('gender','und',gseg.getAttribute('data-v')||'');
+      const gseg=card.querySelector('.seg[data-field="gender"] .on'); const gval=gseg?(gseg.getAttribute('data-v')||''):'';
+      /* An empty gender is not an answer, and writing it as one destroys a real value.
+         Sofia's 'f' became '' five minutes later: saving anything on this facet wrote
+         back whatever the control showed, and it showed nothing because the page was
+         not reading the fact at all. pbirth and country already guard against this.
+         Clearing a gender means removing the fact, not saving a blank over it. */
+      if(gval) await put('gender','und',gval);
     } else if(fid==='places'){ const pb=read('pbirth'); if(pb!=null&&pb!=='') await put('pbirth','und',pb);
       for(const l of LANGS){ const c=read('country',l); if(c!=null&&c.trim()!=='') await put('country',l,c.trim()); } }
     await reload(); if(ok) toast(d().sent); }
