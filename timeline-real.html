@@ -16,7 +16,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="lf-db.js?v=5"></script>
-<script src="lf-label.js?v=1"></script>
+<script src="lf-label.js?v=1">
+<script src="lf-face.js?v=3"></script></script>
 <style>
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html,body{ margin:0; padding:0; }
@@ -77,6 +78,10 @@
   .chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
   .chip{ font-size:11px; color:var(--cream); background:rgba(243,205,132,.10); border:1px solid rgba(243,205,132,.28); border-radius:99px; padding:4px 9px; cursor:pointer; }
   .chip:active{ background:rgba(243,205,132,.2); }
+  /* a name is better with a face beside it. Small, round, and quiet when there is none. */
+  .chip .cav{ display:inline-block; width:16px; height:16px; border-radius:50%; margin-inline-end:5px;
+    vertical-align:-3px; background:rgba(243,205,132,.14); overflow:hidden; flex:0 0 auto; }
+  .chip .cav img{ width:100%; height:100%; object-fit:cover; display:block; }
 
   .appnote{ margin-top:26px; display:flex; align-items:flex-start; gap:11px; border-top:1px solid var(--hair); padding-top:16px; }
   .appnote .mark{ width:22px; height:22px; border-radius:6px; flex:none; display:grid; place-items:center; background:rgba(127,180,216,.12); border:1px solid rgba(127,180,216,.3); }
@@ -195,7 +200,7 @@ async function load(){
       const title = a.body ? esc(a.body.replace(/\s+/g,' ').slice(0,80)) + (a.body.length>80?'\u2026':'') : ('A '+esc(a.kind||'memory'));
       const ppl=(peopleByArt[a.id]||[]).map(id=>nameById[id]).filter(Boolean);
       let chips='';
-      if(ppl.length){ chips='<div class="chips">'+ppl.slice(0,10).map(n=>'<span class="chip" data-id="'+esc(idByName[n]||'')+'">'+esc(n)+'</span>').join('')+'</div>'; }
+      if(ppl.length){ chips='<div class="chips">'+ppl.slice(0,10).map(n=>'<span class="chip" data-id="'+esc(idByName[n]||'')+'"><i class="cav" data-face="'+esc(idByName[n]||'')+'"></i>'+esc(n)+'</span>').join('')+'</div>'; }
       h+='<div class="mem" data-edit="'+esc(a.id)+'">'+
            (isImg?'<div class="thumb" data-path="'+esc(a.storage_path)+'" data-art="'+esc(a.id)+'" role="button" tabindex="0" aria-label="Open this photograph" title="Open this photograph" style="cursor:pointer">photo</div>':'<div class="thumb">'+esc(a.kind||'memory')+'</div>')+
            '<div class="mt"><div class="ww"><b>'+esc(a.metadata.when)+'</b>'+where+'</div><div class="ttl">'+title+'</div>'+chips+'</div>'+
@@ -227,6 +232,16 @@ async function load(){
        handler ignored it and followed the first face tagged in the photograph instead, so
        tapping a picture of Ida opened Ida rather than the picture. A name chip still opens
        that person (it stops propagation above) - the rest of the row opens the moment. */
+    /* faces for the name chips: LFFace answers with a baked portrait where there is one,
+       and quietly does nothing where there is not */
+    try{ if(window.LFFace){
+      if(!window.__tlFaceInit){ LFFace.init(sb); window.__tlFaceInit=1; }
+      const els=[...document.querySelectorAll('.chip .cav[data-face]')].filter(e=>e.getAttribute('data-face'));
+      const ids=[...new Set(els.map(e=>e.getAttribute('data-face')))];
+      if(ids.length) LFFace.resolve(ids).then(fm=>{ els.forEach(el=>{
+        const f=fm[el.getAttribute('data-face')];
+        if(f&&(f.portrait||f.path)) LFFace.into(el,{path:f.path,box:f.box,portrait:f.portrait,size:48,keep:true}); }); });
+    } }catch(e){}
     document.querySelectorAll('.mem').forEach(row=>{ row.addEventListener('click',()=>{
       const aid=row.getAttribute('data-edit');
       if(aid){ location.href='moment-real.html?id='+encodeURIComponent(aid); return; }
