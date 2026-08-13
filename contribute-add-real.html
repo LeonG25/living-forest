@@ -369,7 +369,7 @@
       nextTeller:'Next — who is telling it', noOnePicked:'No one tagged yet',
       tellTitle:'Whose voice, whose story?',
       tellSub:'The person it belongs to — the one who lived it or told it. This is what the forest remembers, not who typed it in.',
-      toldWords:'Told in their own words', noTeller:'No one in particular', noTellerSub:'A memory with no single teller', change:'Change',
+      toldWords:'Told in their own words', noTeller:'No one in particular', otherTeller:'Someone else — search the forest', otherTellerHint:'Who told this story?', noTellerSub:'A memory with no single teller', change:'Change',
       identK:'Saved by · this account', identV:"You're signed in as <b>%s</b>. You're keeping this memory safe — not claiming it as yours.",
       addVoiceLab:'Add a voice', addVoiceOpt:'the thing that outlives the rest',
       voiceN:'Record them telling it', voiceNScoped:'Record %s telling it', voiceS:'Let the family hear it — one tap, no clock',
@@ -418,7 +418,7 @@
       nextTeller:'Дальше — кто рассказывает', noOnePicked:'Пока никто не отмечен',
       tellTitle:'Чей это голос, чья история?',
       tellSub:'Человек, которому она принадлежит, — тот, кто это пережил или рассказал. Лес помнит именно его, а не того, кто набрал текст.',
-      toldWords:'Рассказано его словами', noTeller:'Никто конкретно', noTellerSub:'Память без одного рассказчика', change:'Изменить',
+      toldWords:'Рассказано его словами', noTeller:'Никто конкретно', otherTeller:'Кто-то другой — искать в лесу', otherTellerHint:'Кто рассказал эту историю?', noTellerSub:'Память без одного рассказчика', change:'Изменить',
       identK:'Сохранено · этим аккаунтом', identV:'Вы вошли как <b>%s</b>. Вы храните эту память — не присваиваете её себе.',
       addVoiceLab:'Добавить голос', addVoiceOpt:'то, что переживёт всё остальное',
       voiceN:'Записать рассказ', voiceNScoped:'Записать, как рассказывает %s', voiceS:'Пусть семья услышит — одно касание, без таймера',
@@ -467,7 +467,7 @@
       nextTeller:'הבא — מי מספר', noOnePicked:'עדיין לא תויג אף אחד',
       tellTitle:'של מי הקול, של מי הסיפור?',
       tellSub:'האדם שהזיכרון שייך לו — זה שחי אותו או סיפר אותו. את זה היער זוכר, לא את מי שהקליד.',
-      toldWords:'סופר במילותיו', noTeller:'לא מישהו מסוים', noTellerSub:'זיכרון בלי מספר יחיד', change:'שינוי',
+      toldWords:'סופר במילותיו', noTeller:'לא מישהו מסוים', otherTeller:'מישהו אחר — לחפש ביער', otherTellerHint:'מי סיפר את הסיפור הזה?', noTellerSub:'זיכרון בלי מספר יחיד', change:'שינוי',
       identK:'נשמר · על ידי חשבון זה', identV:'התחברתם כ־<b>%s</b>. אתם שומרים על הזיכרון — לא מנכסים אותו לעצמכם.',
       addVoiceLab:'הוספת קול', addVoiceOpt:'הדבר ששורד את כל השאר',
       voiceN:'הקליטו את הסיפור', voiceNScoped:'הקליטו את %s מספר/ת', voiceS:'שהמשפחה תשמע — נגיעה אחת, בלי שעון',
@@ -692,7 +692,7 @@
   }
   function renderPicked(){
     const p=$('#picked'); if(!p) return;
-    p.innerHTML=M.subjects.map(s=>
+    p.innerHTML=M.subjects.filter(s=>!s.tellerOnly).map(s=>
       '<span class="pchip '+(s.isNew?'newp':'')+'" data-k="'+s.key+'"><span class="av" style="background:'+avatarBG(s.name)+'">'+esc(initial(s.name))+'</span><span class="nm">'+esc(s.name)+'</span><span class="x" data-x="'+s.key+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></span></span>'
     ).join('');
     p.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{ const k=b.getAttribute('data-x'); M.subjects=M.subjects.filter(s=>s.key!==k); if(M.tellerKey===k) M.tellerKey=null; renderPicked(); renderSug(); });
@@ -720,6 +720,13 @@
     };
   }
   function addSubject(name,id,isNew){
+    /* picked while looking for a teller: they told it, they are not necessarily in it */
+    if(M.tellerSearch){
+      M.tellerSearch=false;
+      const k='t'+(addSubject._n=(addSubject._n||0)+1);
+      M.subjects.push({ key:k, name, id:id||null, isNew:!!isNew, tellerOnly:true });
+      M.tellerKey=k; go('teller'); return;
+    }
     name=(name||'').trim(); if(!name) return;
     if(id && M.subjects.some(s=>s.id===id)) return;
     if(isNew && M.subjects.some(s=>!s.id && s.name.toLowerCase()===name.toLowerCase())) return;
@@ -759,6 +766,13 @@
     if($('#skipVoice')) $('#skipVoice').onclick=()=>submit();
     $('#sendBtn').onclick=()=>submit();
   }
+  /* Reuses the same person search the 'who is in it' step uses, but the person chosen is
+     recorded as the TELLER only - they are not added to the photograph. */
+  function openTellerSearch(){
+    M.tellerSearch=true; go('who');
+    setTimeout(()=>{ const i=document.querySelector('#whoSearch,#pSearch,.search input');
+      if(i){ i.focus(); i.placeholder=(L.otherTellerHint||'Who told this story?'); } },120);
+  }
   function renderTellerList(){
     const el=$('#tellerList'); if(!el) return;
     let h=M.subjects.map(s=>
@@ -766,7 +780,17 @@
     ).join('');
     h+='<button class="sug" data-k="__none"><span class="av"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6"/><circle cx="12" cy="8" r="3.6"/></svg></span><span class="sn">'+esc(L.noTeller)+'</span></button>';
     el.innerHTML=h;
-    el.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{ const k=b.getAttribute('data-k'); M.tellerKey=(k==='__none')?null:k; render(); });
+    /* SOMEONE ELSE MAY HAVE TOLD IT. The teller could only be chosen from the people
+       already tagged in the photograph, so Leon - who was not in his own picture - could
+       not say the story was his. A search opens the whole forest, and choosing someone
+       adds them as the teller without tagging them as being in the photograph. */
+    el.insertAdjacentHTML('beforeend',
+      '<button class="sug" data-k="__other"><span class="av">+</span><span class="sn">'
+      + esc(L.otherTeller||'Someone else — search the forest') + '</span></button>');
+    el.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{
+      const k=b.getAttribute('data-k');
+      if(k==='__other'){ openTellerSearch(); return; }
+      M.tellerKey=(k==='__none')?null:k; render(); });
   }
   const fmtDur=s=>{ s=Math.round(s||0); const m=Math.floor(s/60), r=s%60; return m+':'+(r<10?'0':'')+r; };
 
@@ -877,7 +901,10 @@
       let tellerId=null;
       if(teller) tellerId=await ensurePersonId(teller);
       const subjIds=[];
-      for(const s of M.subjects){ const id=await ensurePersonId(s); if(subjIds.indexOf(id)<0) subjIds.push(id); }
+      /* a teller who is not in the photograph is not tagged as being in it - they told it */
+      for(const s of M.subjects){ if(s.tellerOnly && s.key!==M.tellerKey) continue;
+        const id=await ensurePersonId(s);
+        if(!s.tellerOnly && subjIds.indexOf(id)<0) subjIds.push(id); }
 
       const meta={};
       if(M.when&&M.when.trim()) meta.when=M.when.trim();
@@ -924,7 +951,7 @@
   /* ---------- 6. RECEIPT ---------- */
   function renderReceipt(){
     const ts=tellerSubject();
-    const names=M.subjects.map(s=>s.name);
+    const names=M.subjects.filter(s=>!s.tellerOnly).map(s=>s.name);
     const rows=[];
     if(M.hasPhoto) rows.push(gaverow('img',L.glPhoto,L.gvPhoto+(M.when?(' · '+esc(M.when)):'')));
     if(M.telling&&M.telling.trim()) rows.push(gaverow('quote',L.glTelling, ts?fmt(L.gvTellingBy,esc(ts.name)):L.gvTelling));
@@ -965,6 +992,16 @@
   /* ---------- wire once ---------- */
   function wireOnce(){
     $('#backBtn').onclick=goBack;
+    /* THE HARDWARE BACK BUTTON MUST NOT THROW AWAY THE CONTRIBUTION.
+       Leon lost a photograph, a story and its tags by pressing Android's back arrow at the
+       teller step: the in-app arrow calls goBack and walks the steps, but the phone's own
+       button left the page entirely and took everything unsaved with it. lf-nav asks
+       __lfClose first, and now this page answers - stepping back through the flow instead
+       of abandoning it. Only at the very first step does back mean leave. */
+    window.__lfClose=function(){
+      if(M.step && M.step!=='invite'){ goBack(); return true; }
+      return false;
+    };
     $('#fileIn').addEventListener('change',e=>{ const f=e.target.files&&e.target.files[0]; e.target.value=''; if(f) acceptPhoto(f); });
     $('#langPill').onclick=e=>{ e.stopPropagation(); $('#langMenu').classList.toggle('open'); };
     document.addEventListener('click',e=>{ if(!e.target.closest('.langwrap')) $('#langMenu').classList.remove('open'); });
