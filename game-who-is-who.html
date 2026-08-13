@@ -449,7 +449,9 @@
       if(!renderReveal._i){ LFFace.init(sb); renderReveal._i=1; }
       const el=document.querySelector('#reveal .revface');
       LFFace.resolve([round.answer_id]).then(fm=>{ const f=fm[round.answer_id];
-        if(el&&f&&f.path) LFFace.into(el,{path:f.path,box:f.box,portrait:f.portrait,size:300,keep:true}); });
+        /* a portrait alone is a face: 36 of 47 people have one with no source photograph,
+           and guarding on f.path left every one of them as a coloured circle */
+        if(el&&f&&(f.portrait||f.path)) LFFace.into(el,{path:f.path,box:f.box,portrait:f.portrait,size:300,keep:true}); });
     } }catch(e){} },60);
     rev.innerHTML=`
       <div class="eye serif" style="margin-top:24px">${esc(L.revEye)}</div>
@@ -539,7 +541,7 @@
     var ids=els.map(function(e){ return e.getAttribute('data-face'); });
     if(!ids.length) return;
     LFFace.resolve(ids).then(function(fm){ els.forEach(function(el){
-      var f=fm[el.getAttribute('data-face')]; if(f&&f.path) LFFace.into(el,{path:f.path,box:f.box,portrait:f.portrait,size:96,keep:true}); }); });
+      var f=fm[el.getAttribute('data-face')]; if(f&&(f.portrait||f.path)) LFFace.into(el,{path:f.path,box:f.box,portrait:f.portrait,size:96,keep:true}); }); });
   }catch(e){} }
   /* the story re-presented in the reader's tongue — translation sits on top,
      never instead (Rule 3): the original stays one tap away, and the label says
