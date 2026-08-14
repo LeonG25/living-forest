@@ -1169,6 +1169,25 @@
      stay parked (see CLAUDE.md 4 PARKED).
      A failure is spoken aloud. This function failed silently for an unknown length of time
      because its one caller swallowed the error and returned null. */
+  /* A MODEL'S ANSWER IS NOT A FACT UNTIL IT LOOKS LIKE ONE.
+     Asked for USSR in Hebrew, the function returned the abbreviation, then a transliteration
+     in brackets, then an English gloss, then "Or more commonly used:", then the full name -
+     five lines of conversation, which went into the archive verbatim as a country. The same
+     call by hand had returned two clean words minutes earlier, so this is not reliable and
+     cannot be trusted unchecked.
+     A country name is one short line in the target language's own script. Take the first
+     line, drop any bracketed aside and any trailing punctuation, and refuse it outright if
+     it is too long or written in the wrong alphabet - refusing is safe, because the reader
+     falls back to a language that does have a name. Never mix alphabets. */
+  function cleanTr(v,lang){ if(!v) return '';
+    let t=String(v).split(/[\r\n]+/).map(x=>x.trim()).filter(Boolean)[0]||'';
+    t=t.replace(/\s*[\(\[].*$/,'').replace(/^["'\u201c\u201e]+|["'\u201d\u201c]+$/g,'').replace(/[\s.,;:!]+$/,'').trim();
+    if(!t||t.length>48) return '';
+    if(lang==='he' && !/[\u0590-\u05FF]/.test(t)) return '';
+    if(lang==='ru' && !/[\u0400-\u04FF]/.test(t)) return '';
+    if(lang==='he' && /[A-Za-z]/.test(t)) return '';
+    if(lang==='ru' && /[A-Za-z]/.test(t)) return '';
+    return t; }
   async function translateCountry(gid,text){ const L=d();
     const others=LANGS.filter(l=>l!==state.lang); let failed=false;
     for(const l of others){
@@ -1180,6 +1199,7 @@
         if(error) failed=true;
         else if(data&&data.results&&data.results[0]) out=data.results[0].text||''; }
       catch(e){ failed=true; }
+      out=cleanTr(out,l);
       if(out){ if(await insFact('country',l,out,1,gid)===false) failed=true; }
       else failed=true; }
     if(failed) toast(L.trFail,true);
