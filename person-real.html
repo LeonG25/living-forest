@@ -20,6 +20,7 @@
 <script src="lf-db.js?v=5"></script>
 <script src="lf-face.js?v=3"></script>
 <script src="lf-place.js?v=1"></script>
+<script src="lf-label.js?v=2"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
   html,body{ background:#04070e; }
@@ -787,7 +788,12 @@
        on this page - so every kin card showed an em dash instead of a person and every
        contributor's name came back empty. Leon saw a column of SPOUSE / CHILD / CHILD
        with no one in it, which is why it read like a log rather than a family. */
-    try{ if(window.LFLabel) await LFLabel.load(sb); }catch(e){}
+    /* lf-label.js was not even on this page, so window.LFLabel was undefined and the
+       guard '(window.LFLabel && ...)||""' turned that into an empty string in silence.
+       The tag is added now; if the module is ever missing again this SAYS so instead of
+       quietly drawing a row of em dashes where the family should be. */
+    if(!window.LFLabel) console.error('lf-label.js missing - kin and contributor names will be blank');
+    else { try{ await LFLabel.load(sb); }catch(e){ console.error('LFLabel.load failed',e); } }
     tagged=[]; contribNames={};
     try{ const {data:subs}=await sb.from('artefact_subjects').select('artefact_id,detail').eq('person_id',PERSON_ID); const ids=(subs||[]).map(s=>s.artefact_id);
       if(ids.length){ let arts=[]; try{ const {data:a}=await sb.from('artefacts').select('id,storage_path,metadata,contributor_id,body').in('id',ids); arts=a||[]; }
