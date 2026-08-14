@@ -192,6 +192,10 @@
   body{ gap:0; padding:0; }
   .stagewrap{ gap:0; width:100%; }
   .device{ width:100vw!important; height:100dvh!important; max-width:none!important; border-radius:0!important; border:none!important; box-shadow:none!important; }
+  /* living background fills the glass; the game stage stays a centred column
+     (--stage-max) so it never stretches across a tablet or desktop. Phone (<900)
+     is unaffected — the cap never bites. */
+  .topbar, .pad{ max-width:var(--stage-max); margin-inline:auto; width:100%; }
 
   /* compact language switch (topbar) */
   .langsw{ flex:0 0 auto; display:flex; align-items:center; gap:2px; padding:3px; border-radius:99px;
