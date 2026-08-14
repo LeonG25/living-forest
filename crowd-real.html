@@ -40,7 +40,10 @@
   .appvoice { font-family:'Azeret Mono',monospace; letter-spacing:.24em; text-transform:uppercase; color:rgba(150,180,214,.6); }
 
   .wrap {
-    max-width: 720px; margin: 0 auto; min-height: 100dvh;
+    /* the play area is the point: the stage column uses the shared games token
+       (--stage-max, 900) so it fills a tablet/desktop instead of a narrow strip,
+       and stays full-bleed on a phone where the cap never bites. */
+    max-width: var(--stage-max); margin: 0 auto; min-height: 100dvh;
     display: flex; flex-direction: column;
     padding: max(18px, env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom));
   }

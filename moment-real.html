@@ -285,10 +285,24 @@
   body.editing .fact.link .chev{ color:var(--edit); }
 
   .pending{ margin-top:9px; display:none; align-items:center; gap:8px; font-size:12px; color:var(--edit);
-    padding:7px 11px; border-radius:9px; background:rgba(201,162,255,.1); border:1px solid rgba(201,162,255,.32); }
+    padding:7px 11px; border-radius:9px; background:rgba(201,162,255,.1); border:1px solid rgba(201,162,255,.32);
+    flex-wrap:wrap; }
   .pending.show{ display:inline-flex; }
-  .pending .sp{ width:12px; height:12px; border-radius:50%; border:2px solid rgba(201,162,255,.35); border-top-color:var(--edit); animation:spin 1s linear infinite; }
+  .pending .sp{ width:12px; height:12px; border-radius:50%; border:2px solid rgba(201,162,255,.35); border-top-color:var(--edit); animation:spin 1s linear infinite; flex:0 0 auto; }
+  /* the not-yet-sent counterpart of the spinner: a change staged on this page, waiting only
+     for the one Send button, not yet for the keeper */
+  .pending .pdot{ width:8px; height:8px; border-radius:50%; background:var(--edit); box-shadow:0 0 8px 1px var(--edit); flex:0 0 auto; }
+  .pending .pval{ font-weight:600; color:#efe6ff; }
   @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  /* ONE send for the whole page (Leon, 2026-08-14). Every field edit made in a visit gathers
+     here instead of each sheet firing its own submit; the bar appears only when something is
+     waiting to send. Modelled on person-real's single page send (2026-08-13). */
+  .sendrow{ display:flex; gap:10px; align-items:center; margin-top:10px;
+    padding:11px 13px; border-radius:14px; background:rgba(28,18,46,.78); backdrop-filter:blur(12px);
+    border:1px solid rgba(201,162,255,.45); box-shadow:0 16px 40px -20px #000; }
+  .sendrow .sendinfo{ flex:1; min-width:0; font-size:12px; color:#c8bce6; }
+  .sendrow .btn{ flex:0 0 auto; width:auto; padding:10px 15px; }
 
   .editbanner{ position:sticky; top:8px; z-index:6; margin-top:8px; display:none; align-items:center; gap:11px;
     padding:12px 15px; border-radius:14px; background:rgba(28,18,46,.72); backdrop-filter:blur(12px);
@@ -441,6 +455,7 @@
       langTitle:'Language',langSub:'Names, labels, and the story all follow the language you choose.',
       autoHdr:'Auto-translated · not a person’s words',autoCta:'Add the telling in English →',
       sendKeeper:'Send to the keeper',cancel:'Cancel',waiting:'Waiting for the keeper',sent:'Sent to the keeper',
+      waitingSend:'Waiting to send',readyToSend:'Changes ready — send them together',
       keeperNote:'Nothing reaches the family until the keeper approves it.',saved:'Saved',
       edStory:'The story, in your words',edWhere:'Where it happened',edWhen:'When it happened',
       leaf:'A moment, kept.',tagFace:'Tag a face',tagDone:'Done tagging',
@@ -475,6 +490,7 @@
       langTitle:'Язык',langSub:'Имена, подписи и история — всё на выбранном языке.',
       autoHdr:'Автоперевод · не слова человека',autoCta:'Добавить рассказ по-русски →',
       sendKeeper:'Отправить хранителю',cancel:'Отмена',waiting:'Ожидает хранителя',sent:'Отправлено хранителю',
+      waitingSend:'Ожидает отправки',readyToSend:'Изменения готовы — отправьте их вместе',
       keeperNote:'Ничто не дойдёт до семьи, пока хранитель не одобрит.',saved:'Сохранено',
       edStory:'История, вашими словами',edWhere:'Где это было',edWhen:'Когда это было',
       leaf:'Сохранённый момент.',tagFace:'Отметить лицо',tagDone:'Готово',
@@ -509,6 +525,7 @@
       langTitle:'שפה',langSub:'השמות, התוויות והסיפור — הכל לפי השפה שתבחרו.',
       autoHdr:'תרגום אוטומטי · לא מילים של אדם',autoCta:'הוסיפו את הסיפור בעברית ←',
       sendKeeper:'שליחה לשומר',cancel:'ביטול',waiting:'ממתין לשומר',sent:'נשלח לשומר',
+      waitingSend:'ממתין לשליחה',readyToSend:'השינויים מוכנים — שִלחו אותם יחד',
       keeperNote:'שום דבר לא יגיע למשפחה עד שהשומר יאשר.',saved:'נשמר',
       edStory:'הסיפור, במילים שלכם',edWhere:'איפה זה קרה',edWhen:'מתי זה קרה',
       leaf:'רגע, שנשמר.',tagFace:'תיוג פנים',tagDone:'סיום',
@@ -545,6 +562,11 @@
   let DATA={}, PEOPLE=[], FACTS=[];
   let TAGS=[], selId=null, gesture=null, nameTargetId=null, tagNum={};
   let pend={}, firstReveal=true;
+  /* changes made this visit that have not yet been sent. Each entry: {label, value, flush}.
+     flush() performs the real in_review write. They gather under ONE page send (Leon,
+     2026-08-14), the way person-real does, instead of each sheet submitting on its own. */
+  let staged={};
+  const stagedCount=()=>Object.keys(staged).length;
   const t=()=>DATA[lang];
 
   /* ---------- procedural face + real crop ---------- */
@@ -796,6 +818,10 @@
       <div class="editbanner"><span class="ei">${sv(ICON.pencil)}</span>
         <span class="et"><span class="a">${esc(d.edA)}</span><span class="b">${esc(d.edB)}</span></span>
         <button class="done" id="doneBtn">${esc(d.done)}</button></div>
+      ${ stagedCount() ? `<div class="sendrow" id="sendRow">
+        <span class="sendinfo">${esc(d.readyToSend)}</span>
+        <button class="btn ghost" id="revertAll">${esc(d.cancel)}</button>
+        <button class="btn primary" id="sendAll">${esc(d.sendKeeper)}</button></div>` : '' }
 
       <div class="stage" data-edit="photo">
         <div class="frame"><div class="photostage" id="photostage">
@@ -863,7 +889,7 @@
       const p=PEOPLE.find(x=>String(x.id)===id); const s=subjects.find(x=>x.person_id===id);
       if(p && p.kind==='subject' && p[lang] && art.storage_path) faceInto(el, art.storage_path, s&&s.detail); });
 
-    renderBoxes(); wire(); runReveal(); restorePending();
+    renderBoxes(); wire(); runReveal(); restorePending(); paintPending();
   }
 
   function factRow(key, icon, k, v, link, human, removable){
@@ -1140,14 +1166,14 @@
       ${gridBlock}${seasonBlock}${yearBlock}
       <div class="cal-result">${esc(d.calResult)}: <b>${esc(calText())}</b></div>
       <div class="ed-note">${sv(ICON.info,1.7)} <span>${esc(d.keeperNote)}</span></div>
-      <div class="ed-actions"><button class="btn ghost" id="calCancel">${esc(d.cancel)}</button><button class="btn primary" id="calSend">${esc(isKeeper?d.done:d.sendKeeper)}</button></div>`;
+      <div class="ed-actions"><button class="btn ghost" id="calCancel">${esc(d.cancel)}</button><button class="btn primary" id="calSend">${esc(d.done)}</button></div>`;
     sheet.querySelectorAll('[data-prec]').forEach(b=>b.onclick=()=>{calPrec=b.dataset.prec;renderCal();});
     sheet.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{calD=+b.dataset.day;renderCal();});
     sheet.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{calM+=+b.dataset.mv;if(calM<0){calM=11;calY--;}if(calM>11){calM=0;calY++;}renderCal();});
     sheet.querySelectorAll('[data-yr]').forEach(b=>b.onclick=()=>{calY+=+b.dataset.yr;renderCal();});
     sheet.querySelectorAll('[data-season]').forEach(b=>b.onclick=()=>{calSeason=+b.dataset.season;renderCal();});
     sheet.querySelector('#calCancel').onclick=hide;
-    sheet.querySelector('#calSend').onclick=async()=>{ const val=calText(); hide();
+    sheet.querySelector('#calSend').onclick=()=>{ const val=calText();
       /* The calendar produced only readable text - '12 March 1953' - which no query can
          order or filter by. It now also records the real date and how much of it is true,
          the same day|month|year|season vocabulary the database already stores. The text
@@ -1160,11 +1186,15 @@
         else if(calPrec==='season'){ iso=calY+'-'+pad([1,4,7,10][calSeason]||1)+'-01'; prec='season'; }
         else { iso=calY+'-01-01'; prec='year'; }
       }
-      await saveMeta('when', val, whenText(), 'when');
-      if(iso && isKeeper){ try{
-        const md=Object.assign({}, art.metadata||{}); md.when_date=iso; md.when_precision=prec;
-        await sb.from('artefacts').update({metadata:md}).eq('id',art.id); art.metadata=md;
-      }catch(e){} }
+      const oldWhen=whenText();
+      /* staged, not sent — it joins the page's one Send with everything else */
+      stageEdit('when',{ label:t().whenK, value:val, flush:async()=>{
+        const ok=await proposeEdit('when',{new_value:val, old_value:oldWhen, pendKey:'when', silent:true});
+        if(iso && isKeeper){ try{
+          const md=Object.assign({}, art.metadata||{}); md.when_date=iso; md.when_precision=prec;
+          await sb.from('artefacts').update({metadata:md}).eq('id',art.id); art.metadata=md;
+        }catch(e){} }
+        return ok; } });
     };
   }
 
@@ -1186,8 +1216,12 @@
       </div>
       <div class="ed-note">${sv(ICON.info,1.7)} <span>${esc(d.keeperNote)}</span></div>`;
     const inp=sheet.querySelector('#plSearch'); inp.oninput=()=>renderPlace(inp.value); setTimeout(()=>inp.focus(),340);
-    sheet.querySelectorAll('[data-place]').forEach(b=>b.onclick=async()=>{ const val=b.dataset.place; hide(); await saveMeta('where', val, whereText(), 'where');
-      try{ if(window.LFPlace) LFPlace.ensure(val, (typeof lang==='function'?lang():(window.state&&state.lang)||'en'), sb); }catch(e){} });
+    sheet.querySelectorAll('[data-place]').forEach(b=>b.onclick=()=>{ const val=b.dataset.place; const oldWhere=whereText();
+      /* staged, not sent — one Send carries the place along with the date, story and details */
+      stageEdit('where',{ label:t().whereK, value:val, flush:async()=>{
+        const ok=await proposeEdit('where',{new_value:val, old_value:oldWhere, pendKey:'where', silent:true});
+        try{ if(window.LFPlace) LFPlace.ensure(val, (typeof lang==='function'?lang():(window.state&&state.lang)||'en'), sb); }catch(e){}
+        return ok; } }); });
   }
 
   /* ---------- editor sheet (story / photo / details) ---------- */
@@ -1208,22 +1242,39 @@
       $('#editSheet #edSend').onclick=async()=>{ const f=$('#editSheet #edFile').files&&$('#editSheet #edFile').files[0]; if(!f){ hide(); return; } hide(); await replacePhoto(f); }; return;
     }
     let title='', html='', onsend=null;
-    if(target==='story'){ title=d.edStory; const s=storyForLang(lang); const val=s.kind==='human'?s.text:'';
+    if(target==='story'){ title=d.edStory; const s=storyForLang(lang);
+      /* Editable after it has been submitted, not only entered once (Leon fix a): a story
+         staged this visit, or already waiting for the keeper, opens for further editing -
+         not the stale published text or a blank box. */
+      const pendBody=(edits.find(e=>e.kind==='story'&&e.lang===lang)||{}).body;
+      const val = (staged.story!=null) ? staged.story.value : (pendBody!=null?pendBody : (s.kind==='human'?s.text:''));
       html=`<div class="ed-langtag">${sv(ICON.info,1.7)} ${esc(d.langTitle)}: ${esc(langNative(lang))}</div>
         <div class="ed-field"><label>${esc(d.edStory)}</label><textarea rows="5" id="edInput">${esc(val)}</textarea></div>`;
-      onsend=async()=>{ const val=($('#editSheet #edInput')||{}).value; await submitStory(val); };
+      onsend=async()=>{ const v=String(($('#editSheet #edInput')||{}).value||'').trim(); if(!v){ hide(); return; }
+        const lg=lang;
+        stageEdit('story',{ label:d.storyH, value:v, flush:async()=>{
+          /* If a waiting story for this language already exists, edit it in place so a
+             re-telling does not pile up a second pending row. .select() tells us whether the
+             update actually touched a row (RLS can refuse silently, 0 rows, no error); if it
+             did not, fall back to a fresh insert rather than lose the edit. */
+          const ex=edits.find(e=>e.kind==='story'&&e.lang===lg);
+          if(ex){ const r=await sb.from('artefact_translations').update({body:v}).eq('id',ex.id).select('id');
+            if(!r.error && r.data && r.data.length) return true; }
+          return await sbWrite(()=>sb.from('artefact_translations').insert({artefact_id:art.id,lang:lg,body:v,status:'in_review',created_by:user.id})); } }); };
     } else if(target==='detail-new'){ title=d.addDetail;
       html=`<div class="ed-field"><label>${esc(d.detailLabelL)}</label><input id="edLabel" placeholder="${esc(d.detailLabelP)}"></div>
         <div class="ed-field"><label>${esc(d.detailValueL)}</label><input id="edInput" placeholder="${esc(d.detailValueP)}"></div>`;
-      onsend=async()=>{ const L=($('#editSheet #edLabel')||{}).value||d.detailLabelP; const V=($('#editSheet #edInput')||{}).value||'—'; await saveDetail(null,{label:L,value:V}); };
+      onsend=async()=>{ const L=($('#editSheet #edLabel')||{}).value||d.detailLabelP; const V=($('#editSheet #edInput')||{}).value||'—';
+        stageEdit('detailadd:'+Date.now(),{ label:L, value:L+': '+V, flush:async()=>saveDetail(null,{label:L,value:V},true) }); };
     } else if(target.indexOf('detail:')===0){ const i=+target.split(':')[1]; const f=detailsList()[i]||{}; title=f.label||d.detailLabelL;
       html=`<div class="ed-field"><label>${esc(d.detailLabelL)}</label><input id="edLabel" value="${esc(f.label||'')}"></div>
         <div class="ed-field"><label>${esc(d.detailValueL)}</label><input id="edInput" value="${esc(f.value||'')}"></div>`;
-      onsend=async()=>{ const L=($('#editSheet #edLabel')||{}).value; const V=($('#editSheet #edInput')||{}).value; await saveDetail(i,{label:L,value:V}); };
+      onsend=async()=>{ const L=($('#editSheet #edLabel')||{}).value; const V=($('#editSheet #edInput')||{}).value;
+        stageEdit('detail:'+i,{ label:L, value:L+': '+V, flush:async()=>saveDetail(i,{label:L,value:V},true) }); };
     }
     $('#editSheet').innerHTML=`<div class="grip"></div><h3>${esc(title)}</h3>${html}
       <div class="ed-note">${sv(ICON.info,1.7)} <span>${esc(d.keeperNote)}</span></div>
-      <div class="ed-actions"><button class="btn ghost" id="edCancel">${esc(d.cancel)}</button><button class="btn primary" id="edSend">${esc(isKeeper?d.done:d.sendKeeper)}</button></div>`;
+      <div class="ed-actions"><button class="btn ghost" id="edCancel">${esc(d.cancel)}</button><button class="btn primary" id="edSend">${esc(d.done)}</button></div>`;
     show($('#editSheet'));
     const inp=$('#editSheet #edInput'); if(inp) setTimeout(()=>inp.focus(),340);
     $('#editSheet #edCancel').onclick=hide;
@@ -1240,7 +1291,7 @@
     if(opts.ref_id) row.ref_id=opts.ref_id;
     if(opts.lang) row.lang=opts.lang;
     const ok=await sbWrite(()=>sb.from('artefact_edits').insert(row));
-    if(ok){ const k=opts.pendKey||field; pend[k]=true; const c=document.querySelector(`[data-pending="${k}"]`); if(c) c.classList.add('show'); toast(t().sent); }
+    if(ok){ const k=opts.pendKey||field; pend[k]=true; const c=document.querySelector(`[data-pending="${k}"]`); if(c) c.classList.add('show'); if(!opts.silent) toast(t().sent); }
     return ok; }
 
   async function saveMeta(field, val, oldVal, pendKey){ val=String(val==null?'':val).trim();
@@ -1251,16 +1302,14 @@
       const ok=await sbWrite(()=>sb.from('artefacts').update({metadata:md}).eq('id',art.id)); if(ok){ art.metadata=md; toast(t().saved); buildModel(); render(); } }
     else { await proposeEdit(field,{new_value:val, old_value:oldVal||'', pendKey:pendKey||field}); }
   }
-  async function saveDetail(idx, obj){
-    if(isKeeper){ const md=Object.assign({}, art.metadata||{}); const arr=Array.isArray(md.details)?md.details.slice():[];
-      if(idx==null) arr.push(obj); else arr[idx]=obj; md.details=arr;
-      const ok=await sbWrite(()=>sb.from('artefacts').update({metadata:md}).eq('id',art.id)); if(ok){ art.metadata=md; toast(t().saved); buildModel(); render(); } }
-    else { await proposeEdit(idx==null?'detail_add':'detail_edit',{new_value:JSON.stringify(Object.assign({idx},obj)), old_value:(detailsList()[idx]||{}).value||'', pendKey:'detail'}); }
+  async function saveDetail(idx, obj, silent){
+    /* Always an in_review suggestion now, keeper included, gathered under the page's one
+       Send rather than published in place (Leon, 2026-08-14). */
+    return await proposeEdit(idx==null?'detail_add':'detail_edit',{new_value:JSON.stringify(Object.assign({idx},obj)), old_value:(detailsList()[idx]||{}).value||'', pendKey:'detail', silent:!!silent});
   }
-  async function removeDetail(idx){ const d=t(); if(!confirm(d.removeDetail)) return;
-    if(isKeeper){ const md=Object.assign({}, art.metadata||{}); const arr=(md.details||[]).slice(); arr.splice(idx,1); md.details=arr;
-      const ok=await sbWrite(()=>sb.from('artefacts').update({metadata:md}).eq('id',art.id)); if(ok){ art.metadata=md; toast(t().saved); buildModel(); render(); } }
-    else { await proposeEdit('detail_remove',{new_value:JSON.stringify({idx}), old_value:(detailsList()[idx]||{}).value||'', pendKey:'detail'}); }
+  function removeDetail(idx){ const d=t(); if(!confirm(d.removeDetail)) return; const cur=detailsList()[idx]||{};
+    stageEdit('detailremove:'+idx,{ label:cur.label||d.addDetail, value:'— '+(cur.value||''),
+      flush:async()=>proposeEdit('detail_remove',{new_value:JSON.stringify({idx}), old_value:cur.value||'', pendKey:'detail', silent:true}) });
   }
   async function submitStory(val){ const d=t(); if(!user){ toast(d.signIn,true); return; } val=String(val==null?'':val).trim(); if(!val){ return; }
     /* every edit waits for the keeper, including a keeper's own (Leon, 2026-08-07):
@@ -1304,8 +1353,12 @@
     // artefact_edits visible to me (RLS: keeper sees all in_review, contributor sees own)
     try{ const {data:b}=await sb.from('artefact_edits').select('id,field,lang,new_value,ref_id,old_value,created_at,created_by').eq('artefact_id',MOMENT_ID).eq('status','in_review');
       (b||[]).forEach(x=>edits.push(Object.assign({kind:'edit'},x))); }catch(e){}
-    if(isKeeper){ try{ const {data:a}=await sb.from('artefact_translations').select('id,lang,body,created_at').eq('artefact_id',MOMENT_ID).eq('status','in_review');
-      (a||[]).forEach(x=>edits.push(Object.assign({kind:'story'},x))); }catch(e){} }
+    /* A contributor's OWN waiting story must show and stay editable after it is submitted
+       (Leon fix a): load it too, scoped to the author so RLS is not leaned on for privacy.
+       A keeper still sees every waiting story, for the review queue. */
+    try{ let q=sb.from('artefact_translations').select('id,lang,body,created_at,created_by,status').eq('artefact_id',MOMENT_ID).eq('status','in_review');
+      if(!isKeeper && user) q=q.eq('created_by',user.id);
+      const {data:a}=await q; (a||[]).forEach(x=>edits.push(Object.assign({kind:'story'},x))); }catch(e){}
   }
   function labelFor(item){ const d=t(); if(item.kind==='story') return d.story+' · '+langNative(item.lang);
     const map={where:d.whereK,when:d.whenK,tag_add:d.inMoment,tag_remove:d.inMoment,tag_move:d.inMoment,
@@ -1369,6 +1422,9 @@
     $('#langBtn').onclick=()=>show($('#langSheet'));
     $('#editBtn').onclick=()=>{ const on=!document.body.classList.contains('editing'); document.body.classList.toggle('editing',on); $('#editBtn').classList.toggle('on',on); };
     const done=$('#doneBtn'); if(done) done.onclick=()=>{ document.body.classList.remove('editing'); $('#editBtn').classList.remove('on'); };
+    /* the page's single Send, and the revert beside it (Leon, 2026-08-14) */
+    const sa=$('#sendAll'); if(sa) sa.onclick=flushStaged;
+    const ra=$('#revertAll'); if(ra) ra.onclick=()=>{ staged={}; render(); };
     /* Approving belongs on the keeper's review page and nowhere else (Leon, 2026-08-07).
        This strip used to open an approve/decline sheet right here on the moment. */
     const ks=$('#keeperStrip'); if(ks) ks.onclick=()=>{ location.href='review-real.html'; };
@@ -1425,6 +1481,49 @@
 
   /* ---------- pending chips ---------- */
   function restorePending(){ Object.keys(pend).forEach(k=>{ if(pend[k]){ const c=document.querySelector(`[data-pending="${k}"]`); if(c) c.classList.add('show'); } }); }
+
+  /* ---------- staging: gather this visit's field edits under one send ---------- */
+  /* A change lives here between the sheet that made it and the one Send button. Re-staging
+     the same field overwrites the earlier value, so the count is honest and no duplicate is
+     ever sent. render() is what shows the bar and the violet 'waiting to send' rows. */
+  function stageEdit(key, item){ staged[key]=item; hide(); render();
+    /* the Send button sits under the banner; bring it into view so it is never staged-and-lost
+       below a long page */
+    try{ const sr=document.getElementById('sendRow'); if(sr) sr.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){} }
+  async function flushStaged(){ const d=t(); if(!user){ toast(d.signIn,true); return; }
+    const items=Object.keys(staged).map(k=>staged[k]); if(!items.length){ return; }
+    let ok=true;
+    for(const it of items){ try{ if(await it.flush()===false) ok=false; }catch(e){ ok=false; } }
+    staged={};
+    await reload();
+    if(ok) toast(d.sent);   /* a failing write already spoke for itself through sbWrite */
+  }
+
+  /* The violet treatment (Leon fix d): the edited value itself, plus whether it is only
+     waiting for this page's Send ('staged') or already waiting for the keeper ('sent').
+     Only edits still in flight ever reach here - a decided one is gone from `edits`. */
+  function pendChip(value, state){ const d=t();
+    const mark = state==='staged' ? '<span class="pdot"></span>' : '<span class="sp"></span>';
+    const note = state==='staged' ? d.waitingSend : d.waiting;
+    return `${mark}<span class="pval">${esc(value)}</span> · ${esc(note)}`; }
+  function paintPending(){
+    const set=(key,value,state)=>{ if(value==null||value==='') return; const c=document.querySelector(`[data-pending="${key}"]`); if(!c) return;
+      c.innerHTML=pendChip(value,state); c.classList.add('show'); };
+    // story
+    if(staged.story!=null) set('story', staged.story.value, 'staged');
+    else { const ps=edits.find(e=>e.kind==='story'&&e.lang===lang); if(ps) set('story', ps.body, 'sent'); }
+    // where
+    if(staged.where) set('where', staged.where.value, 'staged');
+    else { const pw=edits.find(e=>e.kind==='edit'&&e.field==='where'); if(pw) set('where', pw.new_value, 'sent'); }
+    // when
+    if(staged.when) set('when', staged.when.value, 'staged');
+    else { const pn=edits.find(e=>e.kind==='edit'&&e.field==='when'); if(pn) set('when', pn.new_value, 'sent'); }
+    // details — there can be several at once, staged and sent together
+    const dParts=[];
+    Object.keys(staged).forEach(k=>{ if(k.indexOf('detail')===0) dParts.push(pendChip(staged[k].value,'staged')); });
+    edits.filter(e=>e.kind==='edit'&&/^detail_/.test(e.field)).forEach(e=>dParts.push(pendChip(reviewValue(e),'sent')));
+    if(dParts.length){ const dc=document.querySelector('[data-pending="detail"]'); if(dc){ dc.innerHTML=dParts.join('<br>'); dc.classList.add('show'); } }
+  }
 
   /* ---------- overlays ---------- */
   const scrim=$('#scrim');

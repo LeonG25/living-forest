@@ -227,11 +227,15 @@
   /* ===== signature ambient motion — soft portrait bokeh (behind foreground) ===== */
   .atmo{ position:absolute; inset:0; z-index:0; width:100%; height:100%; }
 
-  /* full-viewport page (drop the mock device frame) */
+  /* full-viewport page (drop the mock device frame). The living background fills the
+     glass; the game stage stays a centred column (--stage-max) so text and options
+     never stretch across a tablet or desktop. Phone (<900) is unaffected — the cap
+     never bites, so nothing already designed for the phone changes. */
   html,body{ background:#04070e; margin:0; }
   body{ gap:0; padding:0; }
   .stagewrap{ gap:0; width:100%; }
   .device{ width:100vw!important; height:100dvh!important; max-width:none!important; border-radius:0!important; border:none!important; box-shadow:none!important; }
+  .topbar, .pad{ max-width:var(--stage-max); margin-inline:auto; width:100%; }
 </style>
 <script src="lf-bg.js?v=3" defer></script>
 </head>
