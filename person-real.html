@@ -474,7 +474,7 @@
       nicks:'Nicknames & pet names', nickname:'Nickname / pet name', pendingChip:'waiting', toReview:'Open the review page', approve:'Approve', decline:'Decline',
       faceLine:'The photos she appears in. The camera on her portrait chooses the crop that represents her everywhere.', changeface:'Change the face', openPhoto:'Open this photograph',
       noFace:'No photographs are tagged to this person yet.',
-      about:'About', occupation:'Occupation', addoccupation:'add her work', langspoken:'Languages spoken',
+      about:'About', aboutPh:'Anything at all — what they were like, what they did, a story you want kept.', occupation:'Occupation', addoccupation:'add her work', langspoken:'Languages spoken',
       born:'Born', died:'Died', precision:'Precision', prec:['exact','month','year','approx','unknown'], living:'Still living',
       gender:'Gender', genderHint:'Helps translate her names correctly.', gopts:['She','He','They','—'],
       pbirth:'Place of birth', lived:'Places lived', addplace:'add a home',
@@ -514,7 +514,7 @@
       nicks:'Прозвища и ласковые имена', nickname:'Прозвище / ласковое имя', toReview:'Открыть страницу проверки', pendingChip:'ожидает', approve:'Одобрить', decline:'Отклонить',
       faceLine:'Фото, где она есть. Камера на портрете выбирает кадр, который представляет её везде.', changeface:'Сменить лицо', openPhoto:'Открыть фотографию',
       noFace:'К этому человеку пока не привязано ни одной фотографии.',
-      about:'О человеке', occupation:'Занятие', addoccupation:'добавить занятие', langspoken:'Языки',
+      about:'О человеке', aboutPh:'Что угодно — какими они были, чем занимались, история, которую хочется сохранить.', occupation:'Занятие', addoccupation:'добавить занятие', langspoken:'Языки',
       born:'Родилась', died:'Умерла', precision:'Точность', prec:['точно','месяц','год','около','неизв.'], living:'Ещё жива',
       gender:'Пол', genderHint:'Помогает правильно склонять имена.', gopts:['Она','Он','Они','—'],
       pbirth:'Место рождения', lived:'Где жила', addplace:'добавить дом',
@@ -554,7 +554,7 @@
       nicks:'כינויים ושמות חיבה', nickname:'כינוי / שם חיבה', pendingChip:'ממתין', toReview:'לעמוד האישורים', approve:'לאשר', decline:'לדחות',
       faceLine:'התמונות שהיא מופיעה בהן. המצלמה שעל הדיוקן בוחרת את החיתוך שמייצג אותה בכל מקום.', changeface:'החלפת התמונה', openPhoto:'פתח את התצלום',
       noFace:'עדיין לא תויגו תמונות לאדם הזה.',
-      about:'אודות', occupation:'עיסוק', addoccupation:'הוספת עיסוק', langspoken:'שפות',
+      about:'אודות', aboutPh:'כל דבר — איך הם היו, מה עשו, סיפור שחשוב לשמור.', occupation:'עיסוק', addoccupation:'הוספת עיסוק', langspoken:'שפות',
       born:'נולדה', died:'נפטרה', precision:'דיוק', prec:['מדויק','חודש','שנה','בערך','לא ידוע'], living:'עדיין בחיים',
       gender:'מגדר', genderHint:'עוזר לתרגם את שמותיה נכון.', gopts:['היא','הוא','הם','—'],
       pbirth:'מקום לידה', lived:'מקומות מגורים', addplace:'הוספת בית',
@@ -879,7 +879,20 @@
     return `<div class="keeper-note" style="margin:10px 14px 4px;padding:11px 13px;border-radius:13px;
       background:rgba(201,162,255,.10);border:1px solid rgba(201,162,255,.34);color:#e9e2f6;font-size:13.5px;line-height:1.45">${esc(msg)}</div>`+tie;
   }
-  function chipAddBox(field,label){ const L=d(); return `<div class="chipadd" data-for="${field}" style="display:none;margin-top:8px"><input class="inp" placeholder="${esc(label||'')}"><div class="btnrow" style="margin-top:8px"><button class="btn ghost" data-cadd-cancel>${L.cancel}</button><button class="btn violet" data-cadd-ok="${field}">${L.send}</button></div></div>`; }
+  /* Languages are offered, not typed from memory: a free box gives 'Rus', 'russian' and
+     'Русский' as three different languages that never meet. The list is the world's larger
+     languages plus the family's own; anything typed is matched to it case- and
+     spacing-insensitively. A language genuinely absent is still allowed - a family may speak
+     something no list of mine contains - but a duplicate of one on the list is not. */
+  const LANGLIST=['English','Russian','Hebrew','Ukrainian','Yiddish','Polish','German','French',
+    'Spanish','Italian','Arabic','Romanian','Hungarian','Czech','Belarusian','Moldovan',
+    'Lithuanian','Latvian','Georgian','Armenian','Azerbaijani','Uzbek','Kazakh','Turkish',
+    'Greek','Dutch','Portuguese','Swedish','Norwegian','Danish','Finnish','Bulgarian',
+    'Serbian','Croatian','Slovak','Persian','Amharic','Ladino','Aramaic'];
+  function chipAddBox(field,label){ const L=d();
+    const isLang=(field==='langspoken');
+    const dl=isLang?`<datalist id="lfLangs">${LANGLIST.map(x=>`<option value="${x}"></option>`).join('')}</datalist>`:'';
+    return dl+`<div class="chipadd" data-for="${field}" style="display:none;margin-top:8px"><input class="inp"${isLang?' list="lfLangs" autocomplete="off"':''} placeholder="${esc(label||'')}"><div class="btnrow" style="margin-top:8px"><button class="btn ghost" data-cadd-cancel>${L.cancel}</button><button class="btn violet" data-cadd-ok="${field}">${L.send}</button></div></div>`; }
   function chipsField(field,addLabel,cool){ const L=d(); const pubs=pubList(field,'und'); const pends=pendList(field,'und');
     const pubc=pubs.map(r=>`<span class="chip ${cool?'cool':''}">${(cool&&r.ord!=null)?`<span class="ord">${String((r.ord||0)+1).padStart(2,'0')}</span>`:''}${esc(r.value)}<span class="x" data-del="${r.id}">${sv(I.x,2)}</span></span>`).join('');
     const addbtn=`<button class="chip add" data-addchip="${field}">${sv(I.plus,2)} ${esc(addLabel||'')}</button>`;
@@ -888,14 +901,26 @@
       if(!state.keeper) pend+=`<div class="pending" style="margin-top:6px"><span class="sp"></span>${L.bothpending}</div>`; }
     return `<div class="chips">${pubc}${addbtn}</div>${chipAddBox(field,addLabel)}${pend}`;
   }
-  function mlEdit(label,field,vals,listId){ const L=d(); const lang=state.lang; const cur=vals[lang]||''; const others=LANGS.filter(l=>l!==lang);
+  /* 'About' is where a life gets told, and it was a single-line box the width of a name -
+     which tells a contributor to write three words. A textarea, with a placeholder that
+     says anything is welcome (Leon, 2026-08-13). */
+  function mlEdit(label,field,vals,listId,big){ const L=d(); const lang=state.lang; const cur=vals[lang]||''; const others=LANGS.filter(l=>l!==lang);
     const lst=listId?`list="${listId}"`:'';
     const rows=others.map(l=>`<div class="mlvar ${l==='he'?'rtl':''}"><span class="tag">${l}</span><input class="inp" ${lst} data-field="${field}" data-lang="${l}" value="${esc(vals[l]||'')}" placeholder="${esc(L.addfield)}"></div>`).join('');
     return `<div class="field"><label>${esc(label)}</label>
-      <div class="mlrow"><input class="inp name-input" ${lst} data-field="${field}" data-lang="${lang}" value="${esc(cur)}" ${lang==='he'?'style="direction:rtl;text-align:right"':''}>
+      <div class="mlrow">${big
+        ? `<textarea class="inp" ${lst} data-field="${field}" data-lang="${lang}" rows="6"
+             placeholder="${esc(L.aboutPh||'')}" style="min-height:132px;line-height:1.5;resize:vertical${lang==='he'?';direction:rtl;text-align:right':''}">${esc(cur)}</textarea>`
+        : `<input class="inp name-input" ${lst} data-field="${field}" data-lang="${lang}" value="${esc(cur)}" ${lang==='he'?'style="direction:rtl;text-align:right"':''}>`}
         <button class="mladd" data-act="ml">${sv(I.globe2,1.5)} ${esc(L.addlang)}</button></div>
       <div class="mlvars">${rows}</div></div>`; }
-  function facetSend(fid){ const L=d(); return `<div class="btnrow" style="margin-top:16px"><button class="btn ghost" data-act="revert">${L.cancel}</button><button class="btn violet" data-act="send" data-facet="${fid}">${L.send}</button></div>`; }
+  /* ONE send for the whole page, not one per facet. Leon opened Life and Places, saw two
+     'send to the keeper' buttons, pressed both, and one stayed - because each facet drew its
+     own and neither knew about the other. The button belongs to the page: it gathers every
+     change from every facet and sends them together, and it appears only when there is
+     something to send. */
+  function facetSend(fid){ return ''; }
+  function pageSend(){ const L=d(); return `<div class="btnrow" style="margin-top:16px"><button class="btn ghost" data-act="revert">${L.cancel}</button><button class="btn violet" data-act="sendall">${L.send}</button></div>`; }
   function fhead(f){ const L=d(); const cool=f.kind==='cool'; const srcTxt=cool?L.assembled:L.toldby;
     const dot=cool?'background:var(--cool);box-shadow:0 0 7px 1px var(--cool)':'background:var(--gold);box-shadow:0 0 7px 1px var(--gold)';
     return `<div class="fhead ${cool?'cool':''}"><span class="fic">${sv(I[f.id])}</span><div class="ft"><div class="h">${esc(L.facet[f.id])}</div><div class="s"><span class="src-dot" style="${dot}"></span>${esc(srcTxt)}</div></div></div>`; }
@@ -1058,7 +1083,7 @@
         ${gamesHTML(f)}`; }
     if(id==='life'){
       const rowctl=h=>h?`<div class="rowctl">${h}</div>`:'';
-      return mlEdit(L.about,'bio',S.life.bio) + rowctl(delCtl(pubRow('bio',lang)))
+      return mlEdit(L.about,'bio',S.life.bio,null,true) + rowctl(delCtl(pubRow('bio',lang)))
         + `<div class="field"><label>${L.occupation}</label><input class="inp ${hasv(S.life.occupation[lang])?'':'empty-inp'}" data-field="occupation" data-lang="${lang}" value="${esc(S.life.occupation[lang]||'')}" placeholder="${esc(L.addoccupation)}">${rowctl(delCtl(pubRow('occupation',lang)))}</div>`
         + `<div class="row2"><div class="field"><label>${L.born}</label><input class="inp" type="date" data-field="birth" value="${/^\d{4}-\d{2}-\d{2}$/.test(S.life.birth)?esc(S.life.birth):''}">${rowctl(clearCtl('birth_date'))}</div>
            <div class="field"><label>${L.died}</label><input class="inp" type="date" data-field="death" value="${/^\d{4}-\d{2}-\d{2}$/.test(S.life.death)?esc(S.life.death):''}">${rowctl(clearCtl('death_date'))}</div></div>
@@ -1133,6 +1158,14 @@
       <button class="ibtn" data-act="lang" aria-label="${esc(L.langtitle)}">${sv(I.globe,1.5)}</button>`;
     const kn=$('.keeper-note'); if(state.keeper){ kn.style.display='flex'; kn.innerHTML=`${sv(I.keeper,1.5)}<span>${esc(L.keeper)}</span>`; } else { kn.style.display='none'; kn.innerHTML=''; }
     $('.pad').innerHTML=newPersonBanner()+ringShell();
+    /* the page's single send, appended after the facets rather than inside each one */
+    try{
+      const host=$('.pad');
+      if(host && !host.querySelector('[data-act="sendall"]')){
+        const box=document.createElement('div'); box.innerHTML=pageSend();
+        host.appendChild(box.firstElementChild);
+      }
+    }catch(e){}
     /* The ring is rebuilt here, which wiped the portrait that faceFirst had already put up -
        so the face appeared, vanished, and appeared again. It goes straight back, from cache,
        in the same frame: no blank between. */
@@ -1688,6 +1721,13 @@
       if(act==='sw'){ a.classList.toggle('on'); return; }
       if(act==='seg'){ [...a.parentElement.children].forEach(x=>x.classList.remove('on')); a.classList.add('on'); return; }
       if(act==='send'){ await submitFacet(a.dataset.facet); return; }
+      /* one button, every facet: whatever was changed anywhere on the page goes together */
+      if(act==='sendall'){
+        for(const fid of ['name','life','places','kin','more']){
+          try{ await submitFacet(fid); }catch(e){}
+        }
+        return;
+      }
       if(act==='nmsend'){ await submitName(); return; }
       if(act==='revert'){ seed(); render(); return; }
       if(act==='watch'){ const q=(person&&person.id)?('?id='+encodeURIComponent(person.id)):''; location.href='reel-real.html'+q; return; }
