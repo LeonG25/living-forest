@@ -1188,10 +1188,10 @@
     if(lang==='he' && /[A-Za-z]/.test(t)) return '';
     if(lang==='ru' && /[A-Za-z]/.test(t)) return '';
     return t; }
-  async function translateCountry(gid,text){ const L=d();
+  async function translateCountry(gid,text,field){ const L=d(); field=field||'country';
     const others=LANGS.filter(l=>l!==state.lang); let failed=false;
     for(const l of others){
-      const humanRow=facts.some(x=>x.group_id===gid&&x.field==='country'&&x.lang===l&&(x.ord||0)===0&&hasv(x.value));
+      const humanRow=facts.some(x=>x.group_id===gid&&x.field===field&&x.lang===l&&(x.ord||0)===0&&hasv(x.value));
       if(humanRow) continue;                       /* a person typed this one - leave it */
       let out='';
       try{ const {data,error}=await sb.functions.invoke('translate',
@@ -1200,7 +1200,7 @@
         else if(data&&data.results&&data.results[0]) out=data.results[0].text||''; }
       catch(e){ failed=true; }
       out=cleanTr(out,l);
-      if(out){ if(await insFact('country',l,out,1,gid)===false) failed=true; }
+      if(out){ if(await insFact(field,l,out,1,gid)===false) failed=true; }
       else failed=true; }
     if(failed) toast(L.trFail,true);
     return !failed; }
@@ -1230,6 +1230,29 @@
     const cards=gs.map(homeCard).join('');
     const addbtn=`<button class="chip add" data-act="addhome">${sv(I.plus,2)} ${esc(L.addplace)}</button>`;
     return `${cards}<div class="chips" style="margin-top:8px">${addbtn}</div>${homeForm()}`; }
+  /* THE BIRTHPLACE IS A PLACE LIKE ANY OTHER (Leon, 2026-08-14).
+     Every home gained a country and the birthplace kept a bare text box, so 'Bobruisk' had
+     no country while 'Bat Yam, Israel' had one - the same kind of fact recorded two ways.
+     It is a group now: pbirth and pbirth_country sharing one group_id, the country
+     per-language and auto-translated exactly as a home's is. A DISTINCT field name is used
+     rather than reusing 'country', because homeGroups() collects any group holding a
+     'country' row and would have drawn the birthplace as a home. No years: when someone was
+     born is already the birth date in Life, and asking twice invites two answers. */
+  const PBF=['pbirth','pbirth_country'];
+  function pbGroup(){ const rows=facts.filter(x=>PBF.indexOf(x.field)>=0&&x.group_id);
+    if(!rows.length) return {gid:'',place:'',country:'',pending:false};
+    const ts=r=>String(r.published_at||r.created_at||'');
+    const newest=rows.filter(x=>x.field==='pbirth').sort((a,b)=>ts(b).localeCompare(ts(a)))[0]
+              || rows.sort((a,b)=>ts(b).localeCompare(ts(a)))[0];
+    const gid=newest.group_id;
+    const mine=rows.filter(x=>x.group_id===gid);
+    const best=(field,lang)=>{ const c=mine.filter(x=>x.field===field&&hasv(x.value)&&(lang==null||x.lang===lang))
+        .sort((a,b)=>ts(b).localeCompare(ts(a))); return c[0]||null; };
+    const pen=f=>mine.some(x=>x.field===f&&x.status!=='published');
+    const cRow=best('pbirth_country',state.lang)||best('pbirth_country','en')||best('pbirth_country','und')||best('pbirth_country');
+    const pRow=best('pbirth','und')||best('pbirth');
+    return { gid:gid, place:pRow?pRow.value:'', country:cRow?cRow.value:'',
+             pending: pen('pbirth')||pen('pbirth_country') }; }
   function pendingCustomRows(){ const L=d(); return groupCustom(false).map(c=>{ const lab=c.label[state.lang]||c.label.en||Object.values(c.label)[0]||''; const val=c.value[state.lang]||c.value.en||Object.values(c.value)[0]||'';
       return `<div class="detailrow" style="border-color:rgba(201,162,255,.34);background:rgba(201,162,255,.06)"><div><div class="dl">${esc(lab)}</div><div class="dv">${esc(val)}</div>${state.keeper?keeperInline(c.group_id,'group'):`<div class="pending" style="margin-top:6px"><span class="sp"></span>${L.bothpending}</div>`}</div>${state.keeper?`<span class="x" data-delgroup="${c.group_id}">${sv(I.x,2)}</span>`:''}</div>`; }).join(''); }
   function bodyFor(f){ const L=d(); const id=f.id, lang=state.lang;
@@ -1255,7 +1278,10 @@
     if(id==='places'){ const placed=(hasv(S.places.pbirth)?1:0)+homeGroups().length;
       const pctl=r=>r?`<div class="rowctl">${delCtl(r)}</div>`:'';
       return `${placeDatalist()}
-        <div class="field"><label>${L.pbirth}</label><input class="inp" list="placelist" data-field="pbirth" value="${esc(S.places.pbirth)}" placeholder="${esc(L.pbirth)}">${pctl(pubRow('pbirth','und'))}</div>
+        ${(function(){ const g=pbGroup(); return `
+        <div class="field"><label>${L.pbirth}</label><input class="inp" list="placelist" data-field="pbirth" value="${esc(g.place||S.places.pbirth)}" placeholder="${esc(L.pbirth)}">${pctl(pubRow('pbirth','und'))}</div>
+        <div class="field"><label>${L.country}</label><input class="inp" list="placelist" data-field="pbirth_country" value="${esc(g.country)}" placeholder="${esc(L.addcountry)}"></div>
+        ${g.pending?`<div class="pending" style="margin-top:-4px;margin-bottom:10px"><span class="sp"></span>${esc(L.hWaiting)}</div>`:''}`; })()}
         <div class="field"><label>${L.lived}</label>${homesBlock()}</div>
         ${placed>0?`<div class="appfact"><span class="mark">${sv(I.chart,2)}</span><div class="body">${esc(placesAppLine(placed))}<span class="src">${L.assembled}</span></div></div>`:''}
         ${facetSend('places')}${gamesHTML(f)}`; }
@@ -1750,7 +1776,13 @@
          not reading the fact at all. pbirth and country already guard against this.
          Clearing a gender means removing the fact, not saving a blank over it. */
       if(gval) await put('gender','und',gval);
-    } else if(fid==='places'){ const pb=read('pbirth'); if(pb!=null&&pb!=='') await put('pbirth','und',pb);
+    } else if(fid==='places'){
+      const g=pbGroup(); const gid=g.gid||uuid();
+      const pb=(read('pbirth')||'').trim(), pc=(read('pbirth_country')||'').trim();
+      /* only what actually changed - writing an unchanged value breeds a duplicate row */
+      if(pb&&pb!==g.place) await put('pbirth','und',pb,0,gid);
+      if(pc&&pc!==g.country){ await put('pbirth_country',state.lang,pc,0,gid);
+        await translateCountry(gid,pc,'pbirth_country'); }
       /* country used to be written here as a loose per-language fact with no tie to any
          home. It belongs to a home now and is sent by homesend. */ }
     if(!quiet){ await reload(); if(ok) toast(d().sent); }
@@ -1825,6 +1857,17 @@
   /* ---------- wiring (delegated once) ---------- */
   function wireOnce(){ const root=$('#dev');
     root.addEventListener('keydown', e=>{ if(e.key!=='Enter'&&e.key!==' ')return; const om=e.target.closest&&e.target.closest('[data-open-moment]'); if(om){ e.preventDefault(); const aid=om.getAttribute('data-open-moment'); if(aid) location.href='moment-real.html?id='+encodeURIComponent(aid); } });
+    /* A home suggests its country when you name the place; the birthplace must do the same,
+       or the same act behaves differently two boxes apart. Delegated, because this field is
+       re-rendered on every reload and a directly-bound listener would not survive it. */
+    root.addEventListener('change', async e=>{
+      const t=e.target; if(!t||t.getAttribute('data-field')!=='pbirth') return;
+      const val=(t.value||'').trim(); if(!val) return;
+      const ci=root.querySelector('[data-field="pbirth_country"]');
+      if(!ci||ci.value.trim()) return;                 /* never overwrite a typed country */
+      try{ const c=await window.LFPlace.country(val, state.lang, sb);
+        if(c&&!ci.value.trim()) ci.value=c; }catch(err){}
+    }, true);
     root.addEventListener('click', async e=>{
       const L=d();
       const om=e.target.closest('[data-open-moment]'); if(om){ const aid=om.getAttribute('data-open-moment'); if(aid) location.href='moment-real.html?id='+encodeURIComponent(aid); return; }
