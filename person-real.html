@@ -1856,6 +1856,17 @@
       const cc=e.target.closest('[data-cadd-cancel]'); if(cc){ const box=cc.closest('.chipadd'); if(box) box.style.display='none'; return; }
       const co=e.target.closest('[data-cadd-ok]'); if(co){ const field=co.getAttribute('data-cadd-ok'); const box=co.closest('.chipadd'); const val=box.querySelector('input').value.trim();
         if(val){ const perLang=(field==='nickname'); const ord=(field==='lived'?pubList('lived','und').length:field==='source'?pubList('source','und').length:0); await insFact(field, perLang?state.lang:'und', val, ord); } await reload(); return; }
+      /* THESE MUST LIVE ABOVE THE data-act GUARD. They were written below it, where the
+         listener has already returned for any element without a data-act attribute - so
+         Edit and Remove on a home card did nothing at all, silently, and the probe that
+         "verified" them only checked that the buttons EXISTED. Presence is not function. */
+      const eh=e.target.closest('[data-edithome]');
+      if(eh){ return openHome(eh.getAttribute('data-edithome')); }
+      const dh=e.target.closest('[data-delhome]');
+      if(dh){ const gid=dh.getAttribute('data-delhome'); const b=homeGroups().find(x=>x.group_id===gid); if(!b) return;
+        if(b.rows.every(r=>canDelete(r))){ for(const r of b.rows) await delFact(r.id); }
+        else if(!removalReq(gid)){ if(await insFact('remove_request','und',gid)) toast(d().removeAsked); }
+        await reload(); return; }
       const a=e.target.closest('[data-act]'); if(!a) return; const act=a.dataset.act;
       if(act==='back'){ if(history.length>1) history.back(); else location.href='index.html'; return; }
       if(act==='lang') return openLang();
@@ -1890,7 +1901,7 @@
       if(act==='revert'){ seed(); render(); return; }
       if(act==='watch'){ const q=(person&&person.id)?('?id='+encodeURIComponent(person.id)):''; location.href='reel-real.html'+q; return; }
       if(act==='addmemory'){ location.href='contribute-add-real.html'; return; }
-      if(act==='addhome'||act==='edithome'){ return openHome(null); }
+      if(act==='addhome'){ return openHome(null); }
       if(act==='homecancel'){ const box=$('.facet[data-facet="places"] [data-homeadd]'); if(box) box.style.display='none'; return; }
       if(act==='homesend'){ return sendHome(); }
       if(act==='addconn'){ return openKin('add'); }
@@ -1898,13 +1909,7 @@
       if(act==='howrelated'){ return openKin('me'); }
       if(act==='kinsave'){ const sh=$('.sheet[data-sheet="kin"]'); if(sh&&sh._kinSave) return sh._kinSave(); return; }
       if(act==='kinremove'){ const sh=$('.sheet[data-sheet="kin"]'); if(sh&&sh._kinRemove) return sh._kinRemove(); return; }
-      const eh=e.target.closest&&e.target.closest('[data-edithome]');
-      if(eh){ return openHome(eh.getAttribute('data-edithome')); }
-      const dh=e.target.closest&&e.target.closest('[data-delhome]');
-      if(dh){ const gid=dh.getAttribute('data-delhome'); const b=homeGroups().find(x=>x.group_id===gid); if(!b) return;
-        if(b.rows.every(r=>canDelete(r))){ for(const r of b.rows) await delFact(r.id); }
-        else if(!removalReq(gid)){ if(await insFact('remove_request','und',gid)) toast(d().removeAsked); }
-        await reload(); return; }
+
     });
     $('.scrim').addEventListener('click', hideSheets);
   }
