@@ -1045,7 +1045,7 @@
      One tap opens the whole forest to them — the funnel's other half. */
   let atGate=[];
   async function loadGate(){ try{
-      const {data}=await sb.from('profiles').select('id,display_name,created_at,is_member,is_keeper');
+      const {data}=await sb.from('profiles').select('id,created_at,is_member,is_keeper');
       atGate=(data||[]).filter(p=>!p.is_member&&!p.is_keeper);
     }catch(e){ atGate=[]; } }
   function gateSection(){ const L=d();

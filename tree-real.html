@@ -1302,7 +1302,7 @@ async function loadData(){
      instant it was made - and an unapproved tie is not merely early, it is unchecked:
      Anna is Basya's sibling AND was proposed as Lea's parent, which asks the solver to
      put her on two levels at once. It cannot, so it flattened every generation. */
-  try{ const {data:pp}=await sb.from('people').select('id,display_name,sex,primary_asset,portrait_path,birth_date,death_date,metadata,status').eq('status','published'); (pp||[]).forEach(p=>{
+  try{ const {data:pp}=await sb.from('people').select('id,sex,primary_asset,portrait_path,birth_date,death_date,metadata,status').eq('status','published'); (pp||[]).forEach(p=>{
     people[p.id]={ id:p.id, display_name:p.display_name, sex:p.sex, primary_asset:p.primary_asset,
       birth_year:(p.birth_date?String(p.birth_date).slice(0,4):''), death_year:(p.death_date?String(p.death_date).slice(0,4):''), metadata:p.metadata||{} }; });
   }catch(e){ people={}; }

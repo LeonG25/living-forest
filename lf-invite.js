@@ -30,7 +30,7 @@
       /* the forest's one naming rule, not the stale column */
       if(window.LFLabel){ await LFLabel.load(sb,[pid]);
         const n=LFLabel.of(pid,(localStorage.getItem('lf_lang')||'en')); if(n) return n; }
-      const {data:p}=await sb.from('people').select('display_name,called_name').eq('id',pid).maybeSingle();
+      const {data:p}=await sb.from('people').select('').eq('id',pid).maybeSingle();
       return (p&&(p.called_name||p.display_name))||''; }catch(e){ return ''; }
   }
   window.LFInvite={
@@ -77,7 +77,7 @@
             front.forEach(p=>(adj[p]||[]).forEach(q=>{ if(!seen[q]){ seen[q]=1; ring[q]=depth; nxt.push(q); } })); front=nxt; }
         }catch(e){} }
         /* candidates: published people with a portrait, unmet first, nearest kin first */
-        const {data:people}=await sb.from('people').select('id,display_name,called_name,primary_asset,status');
+        const {data:people}=await sb.from('people').select('id,primary_asset,status');
         const pool=(people||[]).filter(p=>(!p.status||p.status==='published'));
         const unmet=pool.filter(p=>!known[p.id]).sort((a,b)=>((ring[a.id]||99)-(ring[b.id]||99)) || ((b.primary_asset?1:0)-(a.primary_asset?1:0)));
         if(unmet.length){ const p=unmet[0]; const nm=await nameFor(sb,p.id,lang)||'Someone';

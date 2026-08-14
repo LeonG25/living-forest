@@ -101,7 +101,7 @@
     var u=await sb.auth.getUser().catch(function(){ return null; });
     var uid=u&&u.data&&u.data.user&&u.data.user.id; if(!uid) return null;
     var q=await Promise.all([
-      sb.from('people').select('id,display_name,primary_asset,metadata').eq('status','published'),
+      sb.from('people').select('id,primary_asset,metadata').eq('status','published'),
       sb.from('knowledge_events').select('user_id,person_id,level,correct'),
       sb.from('player_anchors').select('user_id,person_id,status').eq('status','active'),
       sb.from('relationships').select('from_person,to_person').eq('status','published'),

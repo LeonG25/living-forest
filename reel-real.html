@@ -393,7 +393,7 @@
   /* ---------- load ---------- */
   async function loadData(){
     try{ await LFLabel.load(sb,[PERSON_ID]);
-    const {data:p}=await sb.from('people').select('id,display_name,called_name,sex,primary_asset,portrait_path,birth_date,death_date,is_living,metadata').eq('id',PERSON_ID).maybeSingle(); person=p||{id:PERSON_ID}; }catch(e){ person={id:PERSON_ID}; }
+    const {data:p}=await sb.from('people').select('id,sex,primary_asset,portrait_path,birth_date,death_date,is_living,metadata').eq('id',PERSON_ID).maybeSingle(); person=p||{id:PERSON_ID}; }catch(e){ person={id:PERSON_ID}; }
     try{ const {data:fs}=await sb.from('person_facts').select('id,group_id,field,lang,value,ord,status,created_at,published_at').eq('person_id',PERSON_ID); facts=fs||[]; }catch(e){ facts=[]; }
     tagged=[]; contribNames={};
     try{ const {data:subs}=await sb.from('artefact_subjects').select('artefact_id,detail').eq('person_id',PERSON_ID); const ids=(subs||[]).map(s=>s.artefact_id);
@@ -403,7 +403,7 @@
         tagged=(subs||[]).filter(s=>byId[s.artefact_id]&&byId[s.artefact_id].storage_path&&byId[s.artefact_id].status!=='rejected')
           .map(s=>({artefact_id:s.artefact_id,storage_path:byId[s.artefact_id].storage_path,meta:(byId[s.artefact_id]||{}).metadata||{},contributor_id:(byId[s.artefact_id]||{}).contributor_id||null}));
         const cids=[...new Set(tagged.map(t=>t.contributor_id).filter(Boolean))];
-        if(cids.length){ try{ const {data:pp}=await sb.from('people').select('id,display_name').in('id',cids); (pp||[]).forEach(x=>contribNames[x.id]=x.display_name); }catch(e){} }
+        if(cids.length){ try{ const {data:pp}=await sb.from('people').select('id').in('id',cids); (pp||[]).forEach(x=>contribNames[x.id]=x.display_name); }catch(e){} }
       } }catch(e){}
     rels=[];
     try{ const {data:rp}=await sb.from('relationships').select('id,from_person,to_person').or('from_person.eq.'+PERSON_ID+',to_person.eq.'+PERSON_ID);

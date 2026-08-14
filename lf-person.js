@@ -67,7 +67,7 @@
     if(need.length){
       var people=[], facts=[], tags=[], rels=[];
       try{ var a=await sb.from('people')
-             .select('id,display_name,called_name,sex,status,primary_asset,portrait_path,metadata,birth_date,death_date,birth_precision,death_precision')
+             .select('id,sex,status,primary_asset,portrait_path,metadata,birth_date,death_date,birth_precision,death_precision')
              .in('id',need); people=a.data||[]; }catch(e){}
       try{ var b=await sb.from('person_facts').select('person_id,field,lang,value,status')
              .in('person_id',need).eq('status','published'); facts=b.data||[]; }catch(e){}
@@ -106,7 +106,7 @@
     if(!sb) return [];
     var people=[], facts=[];
     try{ var a=await sb.from('people')
-           .select('id,display_name,called_name,sex,status,primary_asset,portrait_path,metadata')
+           .select('id,sex,status,primary_asset,portrait_path,metadata')
            .eq('status','published'); people=a.data||[]; }catch(e){}
     try{ var b=await sb.from('person_facts').select('person_id,field,lang,value,status')
            .in('field',NAME_FIELDS).eq('status','published'); facts=b.data||[]; }catch(e){}

@@ -1022,7 +1022,7 @@
      string from July. Every published name part comes down with the people. */
   let nameFacts={};
   async function loadAllPeople(){ if(allPeople) return;
-    try{ const {data}=await sb.from('people').select('id,display_name,called_name,sex'); allPeople=data||[]; }catch(e){ allPeople=[]; }
+    try{ const {data}=await sb.from('people').select('id,sex'); allPeople=data||[]; }catch(e){ allPeople=[]; }
     try{ const {data}=await sb.from('person_facts')
            .select('person_id,field,lang,value,status')
            .in('field',['called','given','family','maiden']).eq('status','published');
@@ -1072,7 +1072,7 @@
     const f=(allPeople||[]).find(p=>String(p.display_name||'').toLowerCase()===name.toLowerCase());
     if(f) return f.id;
     /* a new name met on a photograph waits for the keeper like everything else */
-    const {data,error}=await sb.from('people').insert({display_name:name,created_by:user.id,status:'in_review'}).select('id,display_name,called_name,sex').single();
+    const {data,error}=await sb.from('people').insert({display_name:name,created_by:user.id,status:'in_review'}).select('id,sex').single();
     if(error) throw error; (allPeople=allPeople||[]).push(data); peopleById[data.id]=data; return data.id; }
 
   async function pickPerson(pid, q){ const tg=TAGS.find(x=>x.id===nameTargetId); if(!tg){ hide(); return; }
@@ -1515,7 +1515,7 @@
     subjects=(subs.data||[]).filter(s=>s.person_id);
     peopleById={}; vars={};
     const ids=subjects.map(s=>s.person_id);
-    if(ids.length){ const {data:pp}=await sb.from('people').select('id,display_name,called_name,primary_asset,portrait_path,sex').in('id',ids); (pp||[]).forEach(p=>peopleById[p.id]=p);
+    if(ids.length){ const {data:pp}=await sb.from('people').select('id,primary_asset,portrait_path,sex').in('id',ids); (pp||[]).forEach(p=>peopleById[p.id]=p);
       /* names come from person_facts, the single store - name_variants is being retired and
          has no 'called' column at all, so the rule above would have found nothing in it */
       const {data:nf}=await sb.from('person_facts')
@@ -1526,7 +1526,7 @@
         (byPL[k]=byPL[k]||{person_id:f.person_id,lang:f.lang})[f.field]=f.value; });
       Object.values(byPL).forEach(v=>{ (vars[v.person_id]=vars[v.person_id]||[]).push(v); }); }
     tellerName='';
-    if(art.contributor_id){ const {data:cp}=await sb.from('people').select('display_name').eq('id',art.contributor_id).maybeSingle(); tellerName=(cp&&cp.display_name)||''; }
+    if(art.contributor_id){ const {data:cp}=await sb.from('people').select('').eq('id',art.contributor_id).maybeSingle(); tellerName=(cp&&cp.display_name)||''; }
     const {data:tr}=await sb.from('artefact_translations').select('lang,body,status').eq('artefact_id',MOMENT_ID).eq('status','published'); translations=tr||[];
     await loadQueue();
     buildModel(); render(); ensureLangAssets();
@@ -1536,7 +1536,7 @@
     const subs=await sb.from('artefact_subjects').select('person_id,detail,status').eq('artefact_id',MOMENT_ID);
     subjects=(subs.data||[]).filter(s=>s.person_id);
     const ids=subjects.map(s=>s.person_id);
-    if(ids.length){ const {data:pp}=await sb.from('people').select('id,display_name,called_name,primary_asset,portrait_path,sex').in('id',ids); (pp||[]).forEach(p=>peopleById[p.id]=p); }
+    if(ids.length){ const {data:pp}=await sb.from('people').select('id,primary_asset,portrait_path,sex').in('id',ids); (pp||[]).forEach(p=>peopleById[p.id]=p); }
     const {data:tr}=await sb.from('artefact_translations').select('lang,body,status').eq('artefact_id',MOMENT_ID).eq('status','published'); translations=tr||[];
     await loadQueue(); buildModel(); render(); window.scrollTo(0,y); }
 

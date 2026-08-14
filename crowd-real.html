@@ -289,7 +289,7 @@ async function load(){
     const [arts, subs, ppl, rels] = await Promise.all([
       sb.from('artefacts').select('id,body,contributor_id,storage_path,metadata').eq('status','published').eq('kind','photo'),
       sb.from('artefact_subjects').select('artefact_id,person_id,detail'),
-      sb.from('people').select('id,display_name,called_name'),
+      sb.from('people').select('id'),
       sb.from('relationships').select('from_person,to_person,kind'),
     ]);
     if(arts.error) throw arts.error;

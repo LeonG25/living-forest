@@ -461,7 +461,7 @@
     const anchorId=ids[0]||null;
     const out={ personName:null, tellers:{}, photos:{}, anchorTeller:null, anchorId:anchorId };
     const jobs=[
-      res.person_id ? sb.from('people').select('display_name,called_name').eq('id',res.person_id).maybeSingle() : Promise.resolve(null),
+      res.person_id ? sb.from('people').select('').eq('id',res.person_id).maybeSingle() : Promise.resolve(null),
       ids.length ? sb.from('artefacts').select('id,contributor_id').in('id',ids) : Promise.resolve(null)
     ];
     const paths=[];
@@ -480,7 +480,7 @@
     let names={};
     if(cids.length){
       try{
-        const {data:pp}=await sb.from('people').select('id,display_name,called_name').in('id',cids);
+        const {data:pp}=await sb.from('people').select('id').in('id',cids);
         try{ await LFLabel.load(sb,(pp||[]).map(x=>x.id)); }catch(e){}
         (pp||[]).forEach(p=>{ names[p.id]=LFLabel.of(p.id,(localStorage.getItem('lf_lang')||'en'))||(p.called_name&&p.called_name.trim())||(p.display_name&&p.display_name.trim())||''; });
       }catch(e){}
@@ -772,7 +772,7 @@
     let session=null;
     try{ const r=await sb.auth.getSession(); session=r.data&&r.data.session; }catch(e){ session=null; }
     if(!session){ location.replace('index.html'); return; }
-    try{ const {data:pr}=await sb.from('profiles').select('preferred_lang').eq('id',session.user.id).maybeSingle(); if(pr&&pr.preferred_lang&&!stored&&T[pr.preferred_lang]) state.lang=pr.preferred_lang; }catch(e){}
+    try{ const {data:pr}=await sb.from('profiles').select('display_name,preferred_lang').eq('id',session.user.id).maybeSingle(); if(pr&&pr.preferred_lang&&!stored&&T[pr.preferred_lang]) state.lang=pr.preferred_lang; }catch(e){}
     paintChrome();
     await loadRound(START_SEED!=null?START_SEED:freshSeed());
   }

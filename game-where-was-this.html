@@ -695,7 +695,7 @@
                 kindled:r[3], photoUrl:(r[4]&&r[4].data&&r[4].data.signedUrl)||'' };
       var cid=r[1]&&r[1].data&&r[1].data.contributor_id;   // who TOLD it (a person), never the uploader
       if(!cid) return out;
-      return sb.from('people').select('display_name,called_name').eq('id',cid).maybeSingle().then(function(pr){
+      return sb.from('people').select('').eq('id',cid).maybeSingle().then(function(pr){
         var p=pr&&pr.data;
         if(p) out.teller=(window.LFLabel&&LFLabel.of(cid,(localStorage.getItem('lf_lang')||'en')))||p.called_name||p.display_name||null;
         return out;

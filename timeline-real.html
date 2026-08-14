@@ -168,7 +168,7 @@ async function load(){
   try{
     const [artsR, peopleR] = await Promise.all([
       sb.from('artefacts').select('id,kind,body,metadata,storage_path').eq('status','published'),
-      sb.from('people').select('id,display_name,called_name')
+      sb.from('people').select('id')
     ]);
     if(artsR.error) throw artsR.error;
     const arts=(artsR.data||[]).filter(a=>a.metadata && a.metadata.when);

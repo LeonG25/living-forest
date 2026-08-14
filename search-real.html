@@ -360,7 +360,7 @@
 
   async function loadData(){
     const [ppl,facts,arts,subs,geo]=await Promise.all([
-      safe(sb.from('people').select('id,display_name,called_name,sex,primary_asset,portrait_path,birth_date,birth_certainty,death_date,death_certainty,is_living')),
+      safe(sb.from('people').select('id,sex,primary_asset,portrait_path,birth_date,birth_certainty,death_date,death_certainty,is_living')),
       safe(sb.from('person_facts').select('person_id,field,lang,value,status').eq('status','published')),
       safe(sb.from('artefacts').select('id,kind,body,metadata,storage_path,contributor_id,status').eq('status','published')),
       safe(sb.from('artefact_subjects').select('artefact_id,person_id,detail')),
@@ -728,7 +728,7 @@
     const { data:{ session } } = await sb.auth.getSession();
     if(!session){ location.replace('index.html'); return; }
     user=session.user;
-    try{ const { data:pr } = await sb.from('profiles').select('preferred_lang').eq('id',user.id).maybeSingle();
+    try{ const { data:pr } = await sb.from('profiles').select('display_name,preferred_lang').eq('id',user.id).maybeSingle();
       if(pr&&pr.preferred_lang&&!stored&&T[pr.preferred_lang]) state.lang=pr.preferred_lang; }catch(e){}
     renderChrome();
     // wire query field once

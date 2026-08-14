@@ -429,7 +429,7 @@ async function load(){
   try{ await ensureProfile(session.user); }catch(e){ diag('ensureProfile threw: '+(e&&e.message)); }
   try{
     const [ppl, rels, arts, subs] = await Promise.all([
-      sb.from('people').select('id,display_name,called_name'),
+      sb.from('people').select('id'),
       sb.from('relationships').select('from_person,to_person,kind'),
       sb.from('artefacts').select('id,body,certainty,metadata,storage_path,contributor_id').eq('status','published'),
       sb.from('artefact_subjects').select('artefact_id,person_id,detail'),
@@ -952,7 +952,7 @@ function buildMotes(){ const sky=document.getElementById('gateSky'); if(!sky) re
 async function ensureProfile(user){
   if(!user||!user.id) return;
   try{
-    const { data:existing }=await sb.from('profiles').select('id').eq('id',user.id).maybeSingle();
+    const { data:existing }=await sb.from('profiles').select('id,display_name').eq('id',user.id).maybeSingle();
     if(existing) return;                        // never overwrite an existing profile
     const displayName=(user.user_metadata&&user.user_metadata.display_name)||(user.email||'').split('@')[0]||'Someone';
     const lang=GLANG;   // the language chosen at the gate (persisted to localStorage)

@@ -336,7 +336,7 @@
       arts.forEach(a=>{ const body=(a.body!=null?String(a.body).trim():''); if(a.contributor_id && body.length>0) tally[a.contributor_id]=(tally[a.contributor_id]||0)+1; });
       const ids=Object.keys(tally); if(!ids.length) return [];
       let names={};
-      try{ const {data:pp}=await sb.from('people').select('id,display_name,called_name').in('id',ids); (pp||[]).forEach(p=>{ names[p.id]=(p.display_name&&p.display_name.trim())||(p.called_name&&p.called_name.trim())||''; }); }catch(e){}
+      try{ const {data:pp}=await sb.from('people').select('id').in('id',ids); (pp||[]).forEach(p=>{ names[p.id]=(p.display_name&&p.display_name.trim())||(p.called_name&&p.called_name.trim())||''; }); }catch(e){}
       return ids.map(id=>({ id, name:names[id]||'', count:tally[id] })).sort((a,b)=>b.count-a.count);
     }catch(e){ return []; }
   }
@@ -566,7 +566,7 @@
     let session=null;
     try{ const r=await sb.auth.getSession(); session=r.data&&r.data.session; }catch(e){ session=null; }
     if(!session){ location.replace('index.html'); return; }
-    try{ const {data:pr}=await sb.from('profiles').select('preferred_lang').eq('id',session.user.id).maybeSingle(); if(pr&&pr.preferred_lang&&!stored&&T[pr.preferred_lang]) state.lang=pr.preferred_lang; }catch(e){}
+    try{ const {data:pr}=await sb.from('profiles').select('display_name,preferred_lang').eq('id',session.user.id).maybeSingle(); if(pr&&pr.preferred_lang&&!stored&&T[pr.preferred_lang]) state.lang=pr.preferred_lang; }catch(e){}
     state.voices=await loadVoices();
     paintChrome();
     await loadRound(START_SEED!=null?START_SEED:freshSeed());

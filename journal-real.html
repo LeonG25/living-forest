@@ -350,7 +350,7 @@
     entries=[]; counts={mem:0,people:0,games:0};
     const nameCache={};
     async function nameOf(pid){ if(!pid) return d().aSomeone; if(nameCache[pid]!==undefined) return nameCache[pid];
-      try{ await LFLabel.load(sb,[pid]); const {data}=await sb.from('people').select('called_name').eq('id',pid).maybeSingle(); nameCache[pid]=(data&&data.display_name)||d().aSomeone; }
+      try{ await LFLabel.load(sb,[pid]); const {data}=await sb.from('people').select('').eq('id',pid).maybeSingle(); nameCache[pid]=(data&&data.display_name)||d().aSomeone; }
       catch(e){ nameCache[pid]=d().aSomeone; } return nameCache[pid]; }
 
     // 1) journal_entries — the canonical log, if any rows exist for this user
@@ -406,7 +406,7 @@
     // 4) people you welcomed : rows this account created (best-effort; skipped if no such column)
     try{
       const {data:ppl,error}=await sb.from('people')
-        .select('id,display_name,created_at,created_by').eq('created_by',user.id);
+        .select('id,created_at,created_by').eq('created_by',user.id);
         try{ await LFLabel.load(sb,(data||[]).map(x=>x.id)); }catch(e){}
       if(!error && ppl){
         for(const p of ppl){
@@ -531,7 +531,7 @@
     else { const dl=(navigator.language||'en').slice(0,2); if(T[dl]) state.lang=dl; }
     if(!session){ render(); showGate(); return; }
     user=session.user;
-    try{ const {data:pr}=await sb.from('profiles').select('preferred_lang').eq('id',user.id).maybeSingle();
+    try{ const {data:pr}=await sb.from('profiles').select('display_name,preferred_lang').eq('id',user.id).maybeSingle();
       if(pr&&pr.preferred_lang&&!stored&&T[pr.preferred_lang]) state.lang=pr.preferred_lang; }catch(e){}
     await loadData(); render();
   }

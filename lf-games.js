@@ -206,7 +206,7 @@
         };
       }
 
-      const people = await q(sb.from('people').select('id,display_name,called_name'), 'people');
+      const people = await q(sb.from('people').select('id'), 'people');
       await loadNames(sb);
       const byId = {}; people.forEach(p => { byId[p.id] = p; });
 
@@ -271,7 +271,7 @@
         return { status: 'not_enough_data', need: 'at least one published memory linked to a subject (artefact_subjects)', seed: seed };
       }
 
-      const people = await q(sb.from('people').select('id,display_name,called_name'), 'people');
+      const people = await q(sb.from('people').select('id'), 'people');
       await loadNames(sb);
       const byId = {}; people.forEach(p => { byId[p.id] = p; });
 
@@ -371,7 +371,7 @@
       const personIds = Object.keys(atPlace);
       const rawLabel = atPlace[personIds[0]].raw;
 
-      const people = await q(sb.from('people').select('id,display_name,called_name'), 'people');
+      const people = await q(sb.from('people').select('id'), 'people');
       await loadNames(sb);
       const byId = {}; people.forEach(p => { byId[p.id] = p; });
 
@@ -601,7 +601,7 @@
       }
 
       const chosen = pick(playable, rng);
-      const people = await q(sb.from('people').select('id,display_name,called_name'), 'people');
+      const people = await q(sb.from('people').select('id'), 'people');
       await loadNames(sb);
       const byId = {}; people.forEach(p => { byId[p.id] = p; });
       const person = byId[chosen.person_id];
