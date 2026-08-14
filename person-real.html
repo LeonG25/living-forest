@@ -783,12 +783,17 @@
       .select('id,group_id,field,lang,value,ord,status,created_by,reviewed_by,created_at,published_at')
       .eq('person_id',PERSON_ID).in('status',['published','in_review','draft']);
       facts=fs||[]; }catch(e){ facts=[]; }
+    /* LFLabel.of() reads a cache that LFLabel.load() fills, and load() was never called
+       on this page - so every kin card showed an em dash instead of a person and every
+       contributor's name came back empty. Leon saw a column of SPOUSE / CHILD / CHILD
+       with no one in it, which is why it read like a log rather than a family. */
+    try{ if(window.LFLabel) await LFLabel.load(sb); }catch(e){}
     tagged=[]; contribNames={};
     try{ const {data:subs}=await sb.from('artefact_subjects').select('artefact_id,detail').eq('person_id',PERSON_ID); const ids=(subs||[]).map(s=>s.artefact_id);
-      if(ids.length){ let arts=[]; try{ const {data:a}=await sb.from('artefacts').select('id,storage_path,metadata,contributor_id').in('id',ids); arts=a||[]; }
+      if(ids.length){ let arts=[]; try{ const {data:a}=await sb.from('artefacts').select('id,storage_path,metadata,contributor_id,body').in('id',ids); arts=a||[]; }
         catch(e){ try{ const {data:a2}=await sb.from('artefacts').select('id,storage_path').in('id',ids); arts=a2||[]; }catch(e2){ arts=[]; } }
         const byId={}; arts.forEach(a=>byId[a.id]=a);
-        tagged=(subs||[]).filter(s=>byId[s.artefact_id]&&byId[s.artefact_id].storage_path).map(s=>({artefact_id:s.artefact_id,storage_path:byId[s.artefact_id].storage_path,box:s.detail||null,meta:(byId[s.artefact_id]||{}).metadata||{},contributor_id:(byId[s.artefact_id]||{}).contributor_id||null}));
+        tagged=(subs||[]).filter(s=>byId[s.artefact_id]&&byId[s.artefact_id].storage_path).map(s=>({artefact_id:s.artefact_id,storage_path:byId[s.artefact_id].storage_path,box:s.detail||null,meta:(byId[s.artefact_id]||{}).metadata||{},body:(byId[s.artefact_id]||{}).body||'',contributor_id:(byId[s.artefact_id]||{}).contributor_id||null}));
         const cids=[...new Set(tagged.map(t=>t.contributor_id).filter(Boolean))];
         if(cids.length){ try{ const {data:pp}=await sb.from('people').select('id').in('id',cids); (pp||[]).forEach(x=>contribNames[x.id]=(window.LFLabel&&LFLabel.of(x.id,(localStorage.getItem('lf_lang')||'en')))||''); }catch(e){} }
       } }catch(e){}
@@ -808,7 +813,13 @@
     PLACEVALS=[];
     try{ const {data:pv}=await sb.from('person_facts').select('value').in('field',['pbirth','born','lived','home','country']).eq('status','published').limit(3000); (pv||[]).forEach(r=>{ if(r&&r.value) PLACEVALS.push(r.value); }); }catch(e){}
     try{ const {data:pl}=await sb.from('places').select('name').limit(3000); (pl||[]).forEach(r=>{ if(r&&r.name) PLACEVALS.push(r.name); }); }catch(e){}
-    memories=tagged.map(t=>({ id:t.artefact_id, cap:[t.meta&&t.meta.when,t.meta&&t.meta.where].filter(Boolean).join(' · '), teller:t.contributor_id?(contribNames[t.contributor_id]||''):'', pending:false }));
+    /* The STORY facet showed a date and a place in quotation marks and called it a story,
+       because the artefacts query never asked for `body` - the words themselves were
+       never fetched. The story is the story; when and where sit beneath it as a caption,
+       unquoted, because they are not something anybody said. */
+    memories=tagged.map(t=>({ id:t.artefact_id, cap:(t.body||'').trim(),
+      whenwhere:[t.meta&&t.meta.when,t.meta&&t.meta.where].filter(Boolean).join(' · '),
+      teller:t.contributor_id?(contribNames[t.contributor_id]||''):'', pending:false }));
   }
 
   /* ---------- derive working copy ---------- */
@@ -1289,7 +1300,7 @@
       /* A story lives on its moment, with the faces in it, the place it happened and
          everyone who has added to it. Reading it here is only half of it - this is the
          door through (Leon, 2026-08-07). */
-      if(memories.length) h+=memories.map(m=>`<div class="memory"><div class="words">${m.cap?('“'+esc(m.cap)+'”'):esc(L.noStory)}</div>${m.teller?`<div class="told"><span class="flame"></span><b>${esc(m.teller)}</b></div>`:''}${m.id?`<a class="stepin" href="moment-real.html?id=${esc(m.id)}">${esc(L.stepIn)}</a>`:''}</div>`).join('');
+      if(memories.length) h+=memories.map(m=>`<div class="memory"><div class="words">${m.cap?('“'+esc(m.cap)+'”'):esc(L.noStory)}</div>${m.whenwhere?`<div class="cap2" style="margin-top:4px;opacity:.75">${esc(m.whenwhere)}</div>`:''}${m.teller?`<div class="told"><span class="flame"></span><b>${esc(m.teller)}</b></div>`:''}${m.id?`<a class="stepin" href="moment-real.html?id=${esc(m.id)}">${esc(L.stepIn)}</a>`:''}</div>`).join('');
       else h+=`<div class="invite"><div class="words">${L.noStory}</div><div class="cta" data-act="addmemory">${L.askSomeone}</div></div>`;
       h+=`<div class="chips" style="margin-top:10px"><button class="chip add" data-act="addmemory">${sv(I.plus,2)} ${L.addmemory}</button></div>`;
       return h+gamesHTML(f); }
@@ -1764,18 +1775,26 @@
     const read=(f,lg)=>{ const el=card.querySelector(`[data-field="${f}"]${lg?`[data-lang="${lg}"]`:''}`); return el?el.value:null; };
     let ok=true; const put=async(...a)=>{ if(await insFact(...a)===false) ok=false; };
     if(fid==='life'){
-      for(const l of LANGS){ const v=read('bio',l); if(v!=null&&v.trim()!=='') await put('bio',l,v.trim()); const o=read('occupation',l); if(o!=null&&o.trim()!=='') await put('occupation',l,o.trim()); }
-      const b=read('birth'); if(b!=null&&b!=='') await put('birth','und',b);
-      const de=read('death'); if(de!=null&&de!=='') await put('death','und',de);
-      const seg=card.querySelector('.seg[data-field="birth_prec"] .on'); if(seg) await put('birth_prec','und',seg.getAttribute('data-v'));
-      const liv=card.querySelector('.sw[data-field="living"]'); if(liv) await put('living','und',liv.classList.contains('on')?'1':'0');
+      /* ONLY WHAT CHANGED. Every one of these used to be written on every send, whether it
+         had been touched or not - so Leon edited one field and the keeper received fresh
+         requests for his gender and 'still alive' as well, again and again. His own gender,
+         living and birth_prec each carry duplicate published rows written seconds apart from
+         exactly this. A request should mean somebody changed something. */
+      for(const l of LANGS){ const v=read('bio',l); if(v!=null&&v.trim()!==''&&v.trim()!==(S.life.bio[l]||'')) await put('bio',l,v.trim());
+        const o=read('occupation',l); if(o!=null&&o.trim()!==''&&o.trim()!==(S.life.occupation[l]||'')) await put('occupation',l,o.trim()); }
+      const b=read('birth'); if(b!=null&&b!==''&&b!==S.life.birth) await put('birth','und',b);
+      const de=read('death'); if(de!=null&&de!==''&&de!==S.life.death) await put('death','und',de);
+      const seg=card.querySelector('.seg[data-field="birth_prec"] .on');
+      if(seg && seg.getAttribute('data-v')!==(S.life.birth_prec||'exact')) await put('birth_prec','und',seg.getAttribute('data-v'));
+      const liv=card.querySelector('.sw[data-field="living"]');
+      if(liv){ const now=liv.classList.contains('on')?'1':'0'; if(now!==(S.life.living?'1':'0')) await put('living','und',now); }
       const gseg=card.querySelector('.seg[data-field="gender"] .on'); const gval=gseg?(gseg.getAttribute('data-v')||''):'';
       /* An empty gender is not an answer, and writing it as one destroys a real value.
          Sofia's 'f' became '' five minutes later: saving anything on this facet wrote
          back whatever the control showed, and it showed nothing because the page was
          not reading the fact at all. pbirth and country already guard against this.
          Clearing a gender means removing the fact, not saving a blank over it. */
-      if(gval) await put('gender','und',gval);
+      if(gval && gval!==S.life.gender) await put('gender','und',gval);
     } else if(fid==='places'){
       const g=pbGroup(); const gid=g.gid||uuid();
       const pb=(read('pbirth')||'').trim(), pc=(read('pbirth_country')||'').trim();

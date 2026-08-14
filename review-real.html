@@ -363,6 +363,7 @@
       newPerson:'A new person — nothing to compare', newMemory:'A new memory — nothing to compare',
       capCurrent:'current', capProposed:'proposed', noPortrait:'no portrait yet',
       living:['no longer living','still living'], prec:{exact:'exact date',month:'to the month',year:'to the year',approx:'approximate',unknown:'unknown'},
+      stillThere:'still there',
       fld:{ given:'given name', family:'family name', patronymic:'patronymic', maiden:'maiden name', called:'called', honorific:'honorific', nickname:'nickname', lived:'lived in', pbirth:'born in', birth:'born', death:'died', birth_prec:'date precision', living:'still living?', gender:'gender', occupation:'occupation', bio:'about', langspoken:'languages spoken', source:'source', face:'the portrait', custom:'a detail', kin:'relation', field:'detail' } },
     ru:{ dir:'ltr', native:'Русский', en:'Russian',
       topK:'Хранитель', topN:'Ждёт вас',
@@ -390,6 +391,7 @@
       newPerson:'Новый человек — сравнивать не с чем', newMemory:'Новое воспоминание — сравнивать не с чем',
       capCurrent:'сейчас', capProposed:'предложено', noPortrait:'портрета ещё нет',
       living:['уже не живёт','ещё живёт'], prec:{exact:'точная дата',month:'до месяца',year:'до года',approx:'приблизительно',unknown:'неизв.'},
+      stillThere:'до сих пор',
       fld:{ given:'имя', family:'фамилия', patronymic:'отчество', maiden:'девичья', called:'зовут', honorific:'титул', nickname:'прозвище', lived:'жил(а) в', pbirth:'место рождения', birth:'родился', death:'умер', birth_prec:'точность даты', living:'ещё жив?', gender:'пол', occupation:'занятие', bio:'о человеке', langspoken:'языки', source:'источник', face:'портрет', custom:'деталь', kin:'связь', field:'деталь' } },
     he:{ dir:'rtl', native:'עברית', en:'Hebrew',
       topK:'שומר', topN:'מחכה לך',
@@ -417,6 +419,7 @@
       newPerson:'אדם חדש — אין עם מה להשוות', newMemory:'זיכרון חדש — אין עם מה להשוות',
       capCurrent:'נוכחי', capProposed:'מוצע', noPortrait:'אין דיוקן עדיין',
       living:['כבר לא בחיים','עדיין בחיים'], prec:{exact:'תאריך מדויק',month:'עד חודש',year:'עד שנה',approx:'בערך',unknown:'לא ידוע'},
+      stillThere:'עד היום',
       fld:{ given:'שם פרטי', family:'שם משפחה', patronymic:'שם האב', maiden:'שם נעורים', called:'קוראים', honorific:'תואר', nickname:'כינוי', lived:'גר ב', pbirth:'מקום לידה', birth:'נולד', death:'נפטר', birth_prec:'דיוק תאריך', living:'עדיין בחיים?', gender:'מגדר', occupation:'עיסוק', bio:'אודות', langspoken:'שפות', source:'מקור', face:'דיוקן', custom:'פרט', kin:'קשר', field:'פרט' } }
   };
   const d=()=>T[state.lang];
@@ -544,7 +547,8 @@
     pending.nvs.forEach(v=>{ const f=v.field||v.kind||'name'; const val=v.value||v.name||v.variant||v.text||'';
       items.names.push({ kind:'nv', id:v.id, group:'names', field:f, lang:v.lang, value:val, personId:v.person_id, suggester:accountName(v.created_by), created_at:v.created_at }); });
     // person_facts -> names / facts ; custom pairs grouped
-    const customByGroup={};
+    const customByGroup={}; const homeByGroup={};
+    const HOMEISH=['lived','country','home_from','home_to','pbirth','pbirth_country'];
     pending.facts.forEach(f=>{
       /* Connection proposals from a person page arrive HERE, as kin facts - person-real
          writes them this way because a proposal may name someone who does not exist yet.
@@ -579,6 +583,12 @@
         return;
       }
       if(f.field==='custom_label'||f.field==='custom_value'){ const g=f.group_id||f.id; (customByGroup[g]=customByGroup[g]||{group_id:g,rows:[],personId:f.person_id,created_by:f.created_by,created_at:f.created_at}).rows.push(f); return; }
+      /* A HOME IS ONE THING, NOT FOUR. Leon: 'the request shows a year, but it doesn't say
+         what it relates to.' It arrived as four separate cards - a town, a country, 1995,
+         2002 - and a bare year on its own means nothing to the person deciding. The rows of
+         one group_id are gathered into a single card that reads as a sentence. */
+      if(HOMEISH.indexOf(f.field)>=0 && f.group_id){
+        (homeByGroup[f.group_id]=homeByGroup[f.group_id]||{group_id:f.group_id,rows:[],personId:f.person_id,created_by:f.created_by,created_at:f.created_at}).rows.push(f); return; }
       const grp = NAME_FIELDS.includes(f.field) ? 'names' : 'facts';
       items[grp].push({ kind:'fact', id:f.id, group:grp, field:f.field, lang:f.lang, value:factValue(f), personId:f.person_id, suggester:accountName(f.created_by), created_at:f.created_at, raw:f });
     });
@@ -590,6 +600,23 @@
         photoPath:tg.photo_path||null, faceBox:tg.detail||null,
         suggester:accountName(tg.created_by), isNew:true });
     });
+    /* build the sentence from what is being suggested, falling back to what is already
+       approved in the same group - otherwise a change of years alone would read as a home
+       with no place. */
+    Object.values(homeByGroup).forEach(h=>{ const L2=d();
+      const pub=(pending.pubGroup&&pending.pubGroup[h.group_id])||[];
+      const get=fld=>{ const p=h.rows.filter(r=>r.field===fld&&r.value); if(p.length) return p[p.length-1].value;
+        const q=pub.filter(r=>r.field===fld&&r.value); return q.length?q[q.length-1].value:''; };
+      const isBirth=h.rows.some(r=>r.field==='pbirth'||r.field==='pbirth_country');
+      const place=isBirth?get('pbirth'):get('lived');
+      const country=isBirth?get('pbirth_country'):get('country');
+      const from=get('home_from'), to=get('home_to');
+      let sentence=[place,country].filter(Boolean).join(', ');
+      if(!isBirth && (from||to)) sentence+=(sentence?' · ':'')+(from||'…')+' — '+(to||L2.stillThere);
+      if(!sentence) return;
+      items.facts.push({ kind:'group', id:h.group_id, group:'facts', field:isBirth?'pbirth':'lived',
+        customLabel:(L2.fld&&L2.fld[isBirth?'pbirth':'lived'])||'', value:sentence,
+        personId:h.personId, suggester:accountName(h.created_by), created_at:h.created_at }); });
     Object.values(customByGroup).forEach(c=>{ const lab=(c.rows.find(r=>r.field==='custom_label')||{}).value||''; const val=(c.rows.find(r=>r.field==='custom_value')||{}).value||'';
       items.facts.push({ kind:'group', id:c.group_id, group:'facts', field:'custom', customLabel:lab, value:val, personId:c.personId, suggester:accountName(c.created_by), created_at:c.created_at }); });
     // artefacts -> memories
