@@ -1540,7 +1540,21 @@
   function toast(msg, err){ $('#toastMsg').textContent=msg; const el=$('#toast'); el.classList.toggle('err',!!err); el.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('show'),2800); }
 
   /* ---------- language assets ---------- */
-  async function callTranslate(items){ try{const {data,error}=await sb.functions.invoke('translate',{body:{target_lang:lang,items}}); if(error||!data) return null; return data.results||null;}catch(e){return null;} }
+  /* This returned null on every failure and its callers treated null as 'nothing to do',
+     so when the translate function went dark - its API key out of credit - names simply
+     stopped appearing in Russian and Hebrew and NOTHING said so, for an unknown length of
+     time. Silence is the enemy: a failure now speaks, once per page visit so it cannot
+     nag. (Leon, 2026-08-14) */
+  async function callTranslate(items){
+    try{ const {data,error}=await sb.functions.invoke('translate',{body:{target_lang:lang,items}});
+      if(error||!data){ trWarn(); return null; }
+      return data.results||null; }
+    catch(e){ trWarn(); return null; } }
+  function trWarn(){ if(trWarn._said) return; trWarn._said=true;
+    const t={en:'Some of this could not be translated just now.',
+             ru:'Часть этого сейчас не удалось перевести.',
+             he:'חלק מזה לא ניתן היה לתרגם כעת.'};
+    try{ toast(t[lang]||t.en, true); }catch(e){} }
   async function ensureLangAssets(){ if(lang==='en') return;
     const need=subjects.map(s=>s.person_id).filter(pid=>{const p=peopleById[pid]; const hasV=(vars[pid]||[]).some(x=>x.lang===lang); const hasA=autoName[lang]&&autoName[lang][pid]; return p&&p.display_name&&!hasV&&!hasA;});
     if(need.length){ autoName[lang]=autoName[lang]||{}; const items=need.map(pid=>({kind:'name_full',ref:pid,text:peopleById[pid].display_name,gender:peopleById[pid].sex||''}));

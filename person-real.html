@@ -352,6 +352,8 @@
     color:var(--edit-soft); font-size:13px; opacity:0; pointer-events:none; transition:opacity .3s, transform .3s; box-shadow:0 18px 44px -18px #000; max-width:88%; }
   .toast.show{ opacity:1; transform:translate(-50%,0); }
   .toast .fl{ width:8px; height:8px; border-radius:50%; background:var(--edit); box-shadow:0 0 10px 2px var(--edit); flex:0 0 auto; }
+  .toast.err{ border-color:rgba(255,120,120,.6); }
+  .toast.err .fl{ background:#ff9d9d; box-shadow:0 0 10px 2px #ff9d9d; }
 
   @media (prefers-reduced-motion: reduce){ .pending .sp{ animation:none; } }
 
@@ -507,6 +509,7 @@
       meAsk:'Who are you in the family?', meHint:'Pick your own place in the forest, then say how you connect.',
       pickfirst:'Choose someone first.', saved:'Saved', proposedPerson:'proposed', newPersonNote:'Nothing here is in the forest yet. Add whatever you know — every part waits for the keeper.',
       saveFail:'Couldn’t save — try again',
+      trFail:'Saved — but the other languages could not be translated just now.',
       foot:'A life, told a little more fully.' },
     ru:{ dir:'ltr', native:'Русский', label:'Russian',
       eyebrow:'Человек', keeper:'Ничто не дойдёт до семьи, пока хранитель не одобрит.',
@@ -552,6 +555,7 @@
       meAsk:'Кто вы в семье?', meHint:'Выберите себя в лесу, затем укажите связь.',
       pickfirst:'Сначала выберите человека.', saved:'Сохранено', proposedPerson:'предложен', newPersonNote:'Здесь пока ничего нет в лесу. Добавьте всё, что знаете — каждая часть ждёт хранителя.',
       saveFail:'Не удалось сохранить — попробуйте ещё раз',
+      trFail:'Сохранено — но перевести на другие языки сейчас не удалось.',
       foot:'Жизнь, рассказанная чуть полнее.' },
     he:{ dir:'rtl', native:'עברית', label:'Hebrew',
       eyebrow:'אדם', keeper:'שום דבר לא יגיע למשפחה עד שהשומר יאשר.',
@@ -597,6 +601,7 @@
       meAsk:'מי אתם במשפחה?', meHint:'בחרו את המקום שלכם ביער, ואז ציינו את הקשר.',
       pickfirst:'בחרו קודם אדם.', saved:'נשמר', proposedPerson:'הוצע', newPersonNote:'עדיין אין כאן דבר ביער. הוסיפו כל מה שידוע לכם — כל פרט ממתין לשומר.',
       saveFail:'לא ניתן היה לשמור — נסו שוב',
+      trFail:'נשמר — אך לא ניתן לתרגם לשפות האחרות כעת.',
       foot:'חיים, מסופרים מעט יותר במלואם.' }
   };
 
@@ -1153,6 +1158,32 @@
      because a family often knows the place and not the year. */
   function yearOk(v){ if(!hasv(v)) return true; if(!/^\d{4}$/.test(v)) return false;
     const n=+v; return n>=1700 && n<=(new Date().getFullYear()+1); }
+  /* THE CHEAP 80% OF AUTOMATIC TRANSLATION (Leon, 2026-08-14).
+     A country typed in English used to show an English reader "USSR" and a Russian reader
+     the same "USSR", because there was only ever one row. Now the app translates it into
+     the other two languages the first time it is entered, and marks those rows as its own
+     work with ord=1 - a person's own typing is always ord=0.
+     The lock, which is the whole point: a language a HUMAN has typed is never translated
+     over again, ever. Once someone corrects the Russian, the Russian is theirs.
+     No diffing, no splicing, no staleness tracking - those are the expensive parts and they
+     stay parked (see CLAUDE.md 4 PARKED).
+     A failure is spoken aloud. This function failed silently for an unknown length of time
+     because its one caller swallowed the error and returned null. */
+  async function translateCountry(gid,text){ const L=d();
+    const others=LANGS.filter(l=>l!==state.lang); let failed=false;
+    for(const l of others){
+      const humanRow=facts.some(x=>x.group_id===gid&&x.field==='country'&&x.lang===l&&(x.ord||0)===0&&hasv(x.value));
+      if(humanRow) continue;                       /* a person typed this one - leave it */
+      let out='';
+      try{ const {data,error}=await sb.functions.invoke('translate',
+             {body:{target_lang:l,items:[{kind:'place_name',ref:gid,text:text}]}});
+        if(error) failed=true;
+        else if(data&&data.results&&data.results[0]) out=data.results[0].text||''; }
+      catch(e){ failed=true; }
+      if(out){ if(await insFact('country',l,out,1,gid)===false) failed=true; }
+      else failed=true; }
+    if(failed) toast(L.trFail,true);
+    return !failed; }
   async function sendHome(){ const L=d(); const card=$('.facet[data-facet="places"]'); if(!card) return;
     const box=card.querySelector('[data-homeadd]'); if(!box) return;
     const val=sel=>{ const el=box.querySelector(sel); return el?el.value.trim():''; };
@@ -1170,7 +1201,9 @@
       const was=cur?hv(cur,f):'';
       if(next[f]===was) continue;               /* only what actually changed */
       if(await insFact(f,(f==='country'?state.lang:'und'),next[f],0,gid)===false) ok=false; else wrote++; }
+    const countryChanged=hasv(next.country)&&next.country!==(cur?hv(cur,'country'):'');
     box.style.display='none';
+    if(countryChanged) await translateCountry(gid,next.country);
     await reload();
     if(ok&&wrote) toast(L.sent); }
   function homesBlock(){ const L=d(); const gs=homeGroups();
@@ -1307,7 +1340,7 @@
   window.__lfClose=()=>{ if($('.sheet.show')){ hideSheets(); return true; } return false; };
   /* a failure may not pass in silence: lf-db speaks through this page's own voice */
   try{ LFDB.onFailure=function(m){ toast(m); }; }catch(e){}
-  function toast(m){ $('.toastmsg').textContent=m; const el=$('.toast'); el.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('show'),2600); }
+  function toast(m,err){ $('.toastmsg').textContent=m; const el=$('.toast'); el.classList.toggle('err',!!err); el.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('show'),2600); }
 
   function openLang(){ const L=d(); const sh=$('.sheet[data-sheet="lang"]');
     sh.innerHTML=`<div class="grip"></div><h3>${L.langtitle}</h3><div class="sub">${L.langsub}</div>

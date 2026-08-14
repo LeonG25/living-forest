@@ -563,8 +563,11 @@
       try{ const {data:c}=await sb.from('translations').select('text').eq('kind','artefact_body').eq('ref',ref).eq('target_lang',lang).maybeSingle();
         text=c&&c.text||null; }catch(e){}
       if(!text){
+        /* a translation that fails should say so, not just show the original silently */
         try{ const {data,error}=await sb.functions.invoke('translate',{body:{target_lang:lang,items:[{kind:'artefact_body',ref:ref,text:body}]}});
-          if(!error&&data&&data.results&&data.results[0]) text=data.results[0].text||null; }catch(e){}
+          if(!error&&data&&data.results&&data.results[0]) text=data.results[0].text||null;
+          if(error||!text) console.warn('translate failed for artefact_body',ref); }
+        catch(e){ console.warn('translate threw for artefact_body',ref,e); }
       }
       if(!text) return;
       const el=document.getElementById('clueBody'), row=document.getElementById('trRow');
