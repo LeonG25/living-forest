@@ -754,7 +754,7 @@
     try{ if(window.LFPerson) PERSONA=await LFPerson.get(PERSON_ID,{lang:state.lang}); }catch(e){}
     faceFirst();                                     /* deliberately not awaited */
     try{ const {data:p}=await sb.from('people').select('id,sex,primary_asset,portrait_path,birth_date,birth_certainty,death_date,death_certainty,is_living,metadata').eq('id',PERSON_ID).maybeSingle(); person=p||{id:PERSON_ID}; }catch(e){ person={id:PERSON_ID}; }
-    try{ const {data:nv}=await sb.from('name_variants').select('id,lang,given,family,status,created_by').eq('person_id',PERSON_ID); NV=nv||[]; }catch(e){ NV=[]; }
+    NV=[];   /* name_variants is retired - every name lives in person_facts */
     /* A DECLINED proposal is finished, not pending. This fetched every status, so the
        old text row "Sofia's mother" - declined days ago - still showed on Lea's page as
        waiting, while the review queue correctly ignored it. A decision anywhere must read
@@ -1606,8 +1606,8 @@
           await reload(); toast(d().approve+' ✓'); return; } }
       if(f){ const patch={};
         if(f.field==='birth')patch.birth_date=f.value||null; if(f.field==='death')patch.death_date=f.value||null;
-        if(f.field==='birth_prec')patch.birth_certainty=f.value||null; if(f.field==='living')patch.is_living=(f.value==='1');
-        if(f.field==='gender')patch.sex=f.value||null; if(f.field==='face'){ try{ const fv=JSON.parse(f.value); patch.primary_asset=fv.storage_path;
+        if(f.field==='birth_prec')patch.birth_certainty=({exact:'documented',month:'remembered',year:'remembered',circa:'uncertain',unknown:'uncertain'})[f.value]||null; if(f.field==='living')patch.is_living=(f.value==='1');
+        if(f.field==='gender')patch.sex=({f:'female',m:'male'})[f.value]||null;   /* words, not letters */ if(f.field==='face'){ try{ const fv=JSON.parse(f.value); patch.primary_asset=fv.storage_path;
           /* A HUMAN'S FRAMING OUTRANKS A DETECTOR'S GUESS. A face fact carries both the
              tagger's detection box AND the zoom/px/py a person set by hand; this read the
              box FIRST, so Leon's deliberate framing was thrown away on approval and the
@@ -1639,7 +1639,7 @@
         /* one portrait per person: publishing this face supersedes every other face row (older published crops AND stale pending suggestions) */
         if(f.field==='face'){ try{ await sb.from('person_facts').delete().eq('person_id',PERSON_ID).eq('field','face').neq('id',id); }catch(e){} }
         try{ await sb.from('person_facts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){} } }
-    else if(kind==='nv'){ try{ await sb.from('name_variants').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){} }
+    /* 'nv' approvals went with name_variants */
     else if(kind==='group'){ const NP2=['given','family','patronymic','maiden','called','honorific'];
       for(const ff of facts.filter(x=>x.group_id===id&&x.status!=='published')) {
         if(NP2.includes(ff.field)){ try{ await sb.from('person_facts').delete().eq('person_id',PERSON_ID).eq('lang',ff.lang).eq('field',ff.field).eq('status','published').neq('id',ff.id); }catch(e){} }
@@ -1648,7 +1648,7 @@
     await reload(); toast(d().approve+' ✓'); }
   async function declineRef(ref){ const [kind,id]=ref.split(':');
     if(kind==='fact'||kind==='remreq') try{ await sb.from('person_facts').delete().eq('id',id); }catch(e){}
-    else if(kind==='nv') try{ await sb.from('name_variants').delete().eq('id',id); }catch(e){}
+    /* 'nv' declines went with name_variants */
     else if(kind==='group'){ for(const ff of facts.filter(x=>x.group_id===id&&x.status!=='published')){ try{ await sb.from('person_facts').delete().eq('id',ff.id); }catch(e){} } }
     else if(kind==='artefact') try{ await sb.from('artefacts').update({status:'declined'}).eq('id',id); }catch(e){}
     await reload(); toast(d().decline); }
@@ -1663,10 +1663,10 @@
       /* no approving from here - the review page is the only door */
       const del=e.target.closest('[data-del]'); if(del){ await removeRow(del.getAttribute('data-del')); return; }
       const rd=e.target.closest('[data-rowdel]'); if(rd){ await removeRow(rd.getAttribute('data-rowdel')); return; }
-      const dnv=e.target.closest('[data-delnv]'); if(dnv){ const [nid,part]=dnv.getAttribute('data-delnv').split(':');
-        if(state.keeper){ const v=NV.find(x=>x.id===nid); if(v){ const rest=part==='given'?{given:'',family:v.family}:{given:v.given,family:null};
-          try{ if(!rest.given&&!rest.family) await sb.from('name_variants').delete().eq('id',nid);
-            else await sb.from('name_variants').update(rest).eq('id',nid); }catch(er){} } await reload(); }
+      const dnv=e.target.closest('[data-delnv]'); if(dnv){
+        /* a name part is a person_facts row now; name_variants is retired */
+
+
         return; }
       const dg=e.target.closest('[data-delgroup]'); if(dg){ const gid=dg.getAttribute('data-delgroup');
         const rows=facts.filter(x=>x.group_id===gid);

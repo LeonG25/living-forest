@@ -471,11 +471,11 @@
     const [rPeople,rFacts,rNvs,rArts,rRels,rPub,rPubNvs,rTags,rNames] = await Promise.all([
       sb.from('people').select('*'),
       sb.from('person_facts').select('id,person_id,group_id,field,lang,value,ord,status,created_by,created_at').in('status',['in_review','draft']),
-      sb.from('name_variants').select('*').in('status',['in_review','draft']),
+      Promise.resolve({data:[]}),   /* name_variants retired */
       sb.from('artefacts').select('*').in('status',['in_review','draft']),
       sb.from('relationships').select('id,from_person,to_person,kind,certainty,note,status,created_by,created_at'),
       sb.from('person_facts').select('id,person_id,group_id,field,lang,value,ord,status,published_at,created_at').eq('status','published'),
-      sb.from('name_variants').select('*').eq('status','published'),
+      Promise.resolve({data:[]}),   /* name_variants retired */
       sb.from('artefact_subjects').select('artefact_id,person_id,detail,status,created_by').in('status',['in_review','draft']),
       sb.from('person_facts').select('person_id,field,lang,value')
         .in('field',['called','given','family','maiden']).eq('status','published')
@@ -930,8 +930,16 @@
             else { toast((d().tBadDate)||('Could not read the date "'+String(f.value).slice(0,20)+'"'),false); return; }
           }
         }
-        if(f.field==='birth_prec')patch.birth_certainty=f.value||null; if(f.field==='living')patch.is_living=(f.value==='1');
-        if(f.field==='gender')patch.sex=f.value||null;
+        /* The page speaks its own words, the database speaks enums. 'exact' is not a
+           certainty (documented | remembered | uncertain) and 'f' is not a sex
+           (female | male), so approving either threw 22P02 and 23514 and the
+           keeper's decision silently did nothing. Translate at the boundary. */
+        if(f.field==='birth_prec'){
+          const CERT={exact:'documented',month:'remembered',year:'remembered',circa:'uncertain',unknown:'uncertain'};
+          patch.birth_certainty=CERT[f.value]||null;
+        }
+        if(f.field==='living')patch.is_living=(f.value==='1');
+        if(f.field==='gender')patch.sex=({f:'female',m:'male'})[f.value]||null;   /* words, not letters */
         if(f.field==='face'){ try{ const fv=JSON.parse(f.value); patch.primary_asset=fv.storage_path;
             /* A HUMAN'S FRAMING OUTRANKS A DETECTOR'S GUESS. A face fact carries both the
              tagger's detection box AND the zoom/px/py a person set by hand; this read the
@@ -972,7 +980,6 @@
         if(NAMEPARTS2.includes(ff.field)){ try{ await sb.from('person_facts').delete().eq('person_id',ff.person_id).eq('lang',ff.lang).eq('field',ff.field).eq('status','published').neq('id',ff.id); }catch(e){} }
         const u2=await sb.from('person_facts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',ff.id);
         if(u2.error){ console.error('approve group',u2.error); await reload(); toast(d().approveFail,false); return; } } }
-    else if(kind==='nv'){ try{ await sb.from('name_variants').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){} }
     else if(kind==='artefact'){ try{ await sb.from('artefacts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){ try{ await sb.from('artefacts').update({status:'published',reviewed_by:user.id}).eq('id',id); }catch(e2){} } }
     else if(kind==='person'){ try{ await sb.from('people').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){ try{ await sb.from('people').update({status:'published'}).eq('id',id); }catch(e2){} } }
     else if(kind==='rel'){ const r=(pending.rels||[]).find(x=>x.id===id);
@@ -996,7 +1003,6 @@
         await reload(); toast(L.tDeclined||'Declined.',false); return; } } if(!user||!state.keeper) return; const [kind,id]=ref.split(':');
     if(kind==='fact'){ try{ await sb.from('person_facts').delete().eq('id',id); }catch(e){} }
     else if(kind==='group'){ for(const ff of (pending.facts||[]).filter(x=>x.group_id===id)){ try{ await sb.from('person_facts').delete().eq('id',ff.id); }catch(e){} } }
-    else if(kind==='nv'){ try{ await sb.from('name_variants').delete().eq('id',id); }catch(e){} }
     else if(kind==='artefact'){ try{ await sb.from('artefacts').update({status:'declined'}).eq('id',id); }catch(e){} }
     else if(kind==='person'){ try{ await sb.from('people').update({status:'declined'}).eq('id',id); }catch(e){} }
     else if(kind==='rel'){ try{ await sb.from('relationships').delete().eq('id',id); }catch(e){} } // drop the pending request; a live tie it mirrored stays untouched
