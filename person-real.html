@@ -842,6 +842,25 @@
     LANGS.forEach(l=>{ NICKS[l]=facts.filter(x=>x.field==='nickname'&&x.lang===l&&x.status==='published').sort((a,b)=>(a.ord||0)-(b.ord||0)).map(x=>({id:x.id,value:x.value}));
       PENDNICKS[l]=facts.filter(x=>x.field==='nickname'&&x.lang===l&&x.status!=='published').map(x=>({id:x.id,value:x.value})); });
   }
+  /* WHAT IS TRUE ON SCREEN RIGHT NOW, waiting rows included.
+     S.life holds the PUBLISHED value, so a second press of Send compared the box against the
+     old approved value, found a difference, and sent the very same suggestion again - Leon
+     pressed Send twice and it went twice. A change is a change from the newest thing there
+     is, whether the keeper has seen it yet or not. */
+  function newestVal(field,lang){
+    const rows=facts.filter(x=>x.field===field&&(lang==null||x.lang===lang)&&hasv(x.value));
+    if(!rows.length) return '';
+    const ts=r=>String(r.published_at||r.created_at||'');
+    const pen=rows.filter(x=>x.status!=='published').sort((a,b)=>ts(b).localeCompare(ts(a)));
+    if(pen.length) return pen[0].value;
+    return rows.sort((a,b)=>ts(b).localeCompare(ts(a)))[0].value; }
+  /* the violet line that says a field is waiting, shown only where something IS waiting */
+  function waitMark(field,lang){ const L=d();
+    const pen=facts.filter(x=>x.field===field&&(lang==null||x.lang===lang)&&x.status!=='published'&&hasv(x.value));
+    if(!pen.length) return '';
+    const pub=(function(){ const r=pubRow(field,lang); return r?r.value:''; })();
+    if(pen[pen.length-1].value===pub) return '';
+    return `<div class="pending" style="margin-top:6px"><span class="sp"></span>${esc(L.hWaiting)}</div>`; }
   function seed(){
     buildNames();
     const perLang=f=>{ const o={}; LANGS.forEach(l=>o[l]=pubNewest(f,l)); return o; };
@@ -1241,8 +1260,16 @@
     const countryChanged=hasv(next.country)&&next.country!==(cur?hv(cur,'country'):'');
     box.style.display='none';
     if(countryChanged) await translateCountry(gid,next.country);
+    /* Leon typed his country of birth, then opened the home form and pressed ITS Send.
+       The birthplace was never written: this button only ever sent the home, while the
+       page's own Send sends everything else. Two Sends on one facet, each carrying half
+       the visit - exactly what consolidating to one Send was meant to end. Either button
+       now sends everything that changed. */
+    for(const fid of ['name','life','places','kin','more']){
+      try{ if(await submitFacet(fid,true)===false) ok=false; }catch(e){ ok=false; }
+    }
     await reload();
-    if(ok&&wrote) toast(L.sent); }
+    toast(ok?L.sent:L.saveFail, !ok); }
   function homesBlock(){ const L=d(); const gs=homeGroups();
     const cards=gs.map(homeCard).join('');
     const addbtn=`<button class="chip add" data-act="addhome">${sv(I.plus,2)} ${esc(L.addplace)}</button>`;
@@ -1281,14 +1308,14 @@
         ${gamesHTML(f)}`; }
     if(id==='life'){
       const rowctl=h=>h?`<div class="rowctl">${h}</div>`:'';
-      return mlEdit(L.about,'bio',S.life.bio,null,true) + rowctl(delCtl(pubRow('bio',lang)))
-        + `<div class="field"><label>${L.occupation}</label><input class="inp ${hasv(S.life.occupation[lang])?'':'empty-inp'}" data-field="occupation" data-lang="${lang}" value="${esc(S.life.occupation[lang]||'')}" placeholder="${esc(L.addoccupation)}">${rowctl(delCtl(pubRow('occupation',lang)))}</div>`
+      return mlEdit(L.about,'bio',S.life.bio,null,true) + waitMark('bio',lang) + rowctl(delCtl(pubRow('bio',lang)))
+        + `<div class="field"><label>${L.occupation}</label><input class="inp ${hasv(S.life.occupation[lang])?'':'empty-inp'}" data-field="occupation" data-lang="${lang}" value="${esc(S.life.occupation[lang]||'')}" placeholder="${esc(L.addoccupation)}">${waitMark('occupation',lang)}${rowctl(delCtl(pubRow('occupation',lang)))}</div>`
         + `<div class="row2"><div class="field"><label>${L.born}</label><input class="inp" type="date" data-field="birth" value="${/^\d{4}-\d{2}-\d{2}$/.test(S.life.birth)?esc(S.life.birth):''}">${rowctl(clearCtl('birth_date'))}</div>
            <div class="field"><label>${L.died}</label><input class="inp" type="date" data-field="death" value="${/^\d{4}-\d{2}-\d{2}$/.test(S.life.death)?esc(S.life.death):''}">${rowctl(clearCtl('death_date'))}</div></div>
         <div class="field"><div class="toggle"><span class="sw ${S.life.living?'on':''}" data-act="sw" data-field="living"></span><span style="font-size:14px">${L.living}</span></div></div>
         <div class="field"><label>${L.precision}</label><div class="seg" data-field="birth_prec">${L.prec.map((p,i)=>{ const v=['exact','month','year','circa','unknown'][i]; return `<button class="${S.life.birth_prec===v||(!S.life.birth_prec&&i===0)?'on':''}" data-act="seg" data-v="${v}">${esc(p)}</button>`; }).join('')}</div></div>
         <div class="field"><label>${L.gender} · <span style="text-transform:none;letter-spacing:0;color:#7f8fa8">${esc(L.genderHint)}</span></label>
-          <div class="seg gold" data-field="gender">${L.gopts.map((g,i)=>{ const v=['f','m','x',''][i]; return `<button class="${S.life.gender===v||(!S.life.gender&&i===3)?'on':''}" data-act="seg" data-v="${v}">${esc(g)}</button>`; }).join('')}</div>${rowctl(clearCtl('sex'))}</div>
+          <div class="seg gold" data-field="gender">${L.gopts.map((g,i)=>{ const v=['f','m','x',''][i]; return `<button class="${S.life.gender===v||(!S.life.gender&&i===3)?'on':''}" data-act="seg" data-v="${v}">${esc(g)}</button>`; }).join('')}</div>${waitMark('gender','und')}${rowctl(clearCtl('sex'))}</div>
         <div class="field"><label>${L.langspoken}</label>${chipsField('langspoken',L.langspoken,false)}</div>
         ${facetSend('life')}${gamesHTML(f)}`;
     }
@@ -1786,21 +1813,21 @@
          requests for his gender and 'still alive' as well, again and again. His own gender,
          living and birth_prec each carry duplicate published rows written seconds apart from
          exactly this. A request should mean somebody changed something. */
-      for(const l of LANGS){ const v=read('bio',l); if(v!=null&&v.trim()!==''&&v.trim()!==(S.life.bio[l]||'')) await put('bio',l,v.trim());
-        const o=read('occupation',l); if(o!=null&&o.trim()!==''&&o.trim()!==(S.life.occupation[l]||'')) await put('occupation',l,o.trim()); }
-      const b=read('birth'); if(b!=null&&b!==''&&b!==S.life.birth) await put('birth','und',b);
-      const de=read('death'); if(de!=null&&de!==''&&de!==S.life.death) await put('death','und',de);
+      for(const l of LANGS){ const v=read('bio',l); if(v!=null&&v.trim()!==''&&v.trim()!==newestVal('bio',l)) await put('bio',l,v.trim());
+        const o=read('occupation',l); if(o!=null&&o.trim()!==''&&o.trim()!==newestVal('occupation',l)) await put('occupation',l,o.trim()); }
+      const b=read('birth'); if(b!=null&&b!==''&&b!==newestVal('birth','und')) await put('birth','und',b);
+      const de=read('death'); if(de!=null&&de!==''&&de!==newestVal('death','und')) await put('death','und',de);
       const seg=card.querySelector('.seg[data-field="birth_prec"] .on');
-      if(seg && seg.getAttribute('data-v')!==(S.life.birth_prec||'exact')) await put('birth_prec','und',seg.getAttribute('data-v'));
+      if(seg && seg.getAttribute('data-v')!==(newestVal('birth_prec','und')||S.life.birth_prec||'exact')) await put('birth_prec','und',seg.getAttribute('data-v'));
       const liv=card.querySelector('.sw[data-field="living"]');
-      if(liv){ const now=liv.classList.contains('on')?'1':'0'; if(now!==(S.life.living?'1':'0')) await put('living','und',now); }
+      if(liv){ const now=liv.classList.contains('on')?'1':'0'; const was=newestVal('living','und')||(S.life.living?'1':'0'); if(now!==was) await put('living','und',now); }
       const gseg=card.querySelector('.seg[data-field="gender"] .on'); const gval=gseg?(gseg.getAttribute('data-v')||''):'';
       /* An empty gender is not an answer, and writing it as one destroys a real value.
          Sofia's 'f' became '' five minutes later: saving anything on this facet wrote
          back whatever the control showed, and it showed nothing because the page was
          not reading the fact at all. pbirth and country already guard against this.
          Clearing a gender means removing the fact, not saving a blank over it. */
-      if(gval && gval!==S.life.gender) await put('gender','und',gval);
+      if(gval && gval!==(newestVal('gender','und')||S.life.gender)) await put('gender','und',gval);
     } else if(fid==='places'){
       const g=pbGroup(); const gid=g.gid||uuid();
       const pb=(read('pbirth')||'').trim(), pc=(read('pbirth_country')||'').trim();
