@@ -144,62 +144,61 @@ Everything above the Archive line is current; the Archive is history kept for pr
 | how nightly agents worked (all stopped) | §D AGENTS |
 | deploy, rig, commands | §13 and §QC below |
 
-## 1 · WHAT IS TRUE RIGHT NOW (2026-08-09)
+## 1 · WHAT IS TRUE RIGHT NOW (2026-08-13)
 
-- **All background workers are STOPPED** and the cron that resurrected `qc/worker.sh`
-  every 30 minutes is removed. Nothing runs unattended. An orphaned headless Chrome that
-  had been alive 3 days was killed with it.
-- **Egress**: a QC rig pulling full-size photographs 360×/day burned ~20GB against a 5GB
-  free allowance. Every image request is now capped through `LFDB.img(path,width)`; a
-  seven-page pass fell 9.82MB → 0.51MB (~19×). Cycle resets 30 Aug; restriction only bites
-  3 Sep if still over, which it will not be.
-- **Every edit waits for the keeper**, including a keeper's own. `relationships.status` and
-  `people.status` now default to `in_review`; `artefact_subjects` gained `status` at all.
-  Approve/decline controls exist ONLY on review-real.
-- **The tree survives contradictions**: impossible parent edges are set aside and listed in
-  `window.__lfImpossible`; five generations stood up under a deliberate loop of ancestry.
-- **A contradictory tie is refused before it is asked** (person-real `kinConflict`).
-- **An empty page can no longer be mistaken for an empty forest**: any failed READ raises a
-  dismissible bar, once per page, in all three languages (`lf-db` v5).
-- **Rig fidelity**: `qc/sweep-real.js` runs REAL Chromium at Leon's 360×639 dpr3, keeper
-  account, warm cache, every page twice. WebKit-wearing-an-Android-UA hid three bugs.
+**Names live in ONE place: `person_facts`.** `display` is deleted outright - zero rows, zero
+code references - because Leon said twice it was a mistake from the beginning. All 47 people
+have a `called` name and an English name. The rule, everywhere: **called + family, else
+given + family, else any single part**; the reader's language, then `und`, then another
+language rather than nothing; never mixing alphabets ("Rita בטיטו-גולניק" was real); never
+repeating a name a label already contains. `people.display_name` and `called_name` still
+EXIST but nothing reads them for a person's name - they are next to retire. `name_variants`
+is redundant and unread.
+
+**Portraits are baked, once, server- or client-side.** 45 of 47 people have a small square in
+`family/portraits/{id}.jpg` - 9 from a framing someone chose, 36 from a tagged face, treated
+identically. ~25KB each against the 1.4MB photographs the app used to re-crop in every
+browser on every page. `lf-portrait.js` bakes on approval, so a framing approved IS a picture
+from that second. **The baked portrait is the face; the source photo and box exist only so a
+keeper can re-frame it, never so a browser can re-crop it for display.**
+
+**Contribute hands over to the moment page** (2026-08-13). One page, two modes: contribute
+only INSERTs, moment only UPDATEs - birth and life. Both used to ask for story, when, where
+and who, and had drifted apart; the moment page's versions won on every count (a calendar
+with seasons, a place picker, a face tagger that draws boxes). A new memory now opens its own
+moment page with the tagger already armed.
+
+**Every edit waits for the keeper - including a keeper's own.** Five fast paths have been
+closed: relationships, face tags, story, translations, and `saveMeta` on artefact metadata
+(which published Leon's own memory 28 seconds after he made it). `relationships.status`,
+`people.status` and `artefact_subjects.status` all default to `in_review`.
+
+**Shared modules** (each is the single implementation of its rule):
+`lf-name` (naming rule) · `lf-label` (names for simple pages) · `lf-person` (whole person from
+one call) · `lf-portrait` (baking) · `lf-when` (year/month/day picker) · `lf-date` (partial
+dates) · `lf-bind` (the tie confirmation) · `lf-face` · `lf-db` (every query, and the
+"some of this did not load" bar).
+
+**Transport**: Caddy is installed on the droplet with a live Let's Encrypt certificate on
+`living-forest.duckdns.org`, bound to the public IP so Tailscale keeps its own 443. The
+connector still uses the Tailscale Funnel URL - the DuckDNS one failed at OAuth sign-in and
+was never adopted. `botuser` now has sudo for `snap`, `apt`, `systemctl`, `journalctl` and
+owns `/var/snap/caddy/common`. **The drops were never explained**: four theories tested and
+all four disproved, and they cleared on their own.
 
 ## 2 · WHAT TO FIX NEXT (in order)
 
-**A — verification before more building.** Eighteen fixes from 2026-08-07/09 have not been
-walked on Leon's own phone. Several change how data is written. Verify before stacking more.
-
-**B — the three structural items still open:**
-
-1. **Responsive rollout** — 1 of 15 pages is off the fake 390×820 phone frame (tree only).
-   `person`, `review` and the six games have NO frame and will stretch phone-shaped content
-   across 1920px. The designer's layouts are delivered (§C) and `lf-layout.css` holds the
-   token set, linked everywhere but deliberately inert. Order: canvas → subject → list →
-   flow → games. `qc/matrix.js` is the regression check; baseline in §C.
-2. **`lf-auth` on the remaining pages** — gate field ids still differ between pages
-   (`#gPw`/`#gGo` on index, `#gPass`/`#gBtn` on review). Every probe has to special-case it,
-   which is a sign the drift is real.
-3. **Cold-open performance** — service worker so the app downloads once; defer the 3D world
-   past the gate; measure before and after.
-
-**A-NEXT — the nine placeholder pages (Leon, 2026-08-10: "get to A after we finish with B").**
-Nine pages show a person's name beside an empty circle and should show their face:
-`index` (globe pins), `timeline-real`, `crowd-real`, `curators-real`, `home-real`,
-`journal-real`, `contribute-add-real`, `game-what-happened-next`, `game-where-was-this`.
-Faces are drawn in 11 places today and *should* be in 20. Now that a portrait is a small
-baked image, each is a few lines: select `portrait_path`, hand it to `LFFace.into({portrait:…})`.
-Do this AFTER the verification pass.
-
-**C — smaller, known, unbuilt:**
-
-- The Reel has no "step into this moment" door (its hero photo does open one; the *stories*
-  do not). Person pages now do.
-- The keeper's BUNDLE card: a new person and their tie still arrive as separate queue items.
-  The designer's one-gift receipt and bundle card are specified, not built.
-- `tree-bg-demo.html` is a design preview living in the app directory. Excluded from the
-  sweep; delete it when Leon says so.
-- Nothing warns that a proposal was previously DECLINED (duplicates of *waiting* ones are
-  now refused).
+1. **Retire the columns.** Nothing reads `people.display_name` or `called_name` for a name.
+   Rename first so anything still reaching for them fails loudly, use the app a day, then drop
+   them and `name_variants`.
+2. **A-NEXT, continued.** Faces beside names. Done: timeline, curators, contribute-add.
+   Not yet surveyed: crowd, home, journal, index, game-what-happened-next, game-where-was-this
+   - and it is NOT true that all of them show a placeholder circle; several may have no person
+   avatar at all. Ask Leon which screens he sees a name without a face.
+3. **The structural queue**, untouched for a week: responsive rollout (1 of 15 pages),
+   `lf-auth` on the remaining pages (gate fields still differ: `#gPw`/`#gGo` vs `#gPass`/`#gBtn`),
+   cold-open performance (service worker, defer the 3D world).
+4. **The 18-item verification list** from 2026-08-09 was never walked past item 3.
 
 ## 3 · THE HARD-WON LESSONS (do not relearn these)
 
@@ -213,6 +212,30 @@ of reading it.** Four silent failures, all mine, all the same shape:
 - `peopleMap` when the map lives on `pending` — the review queue rendered NO cards at all.
 - Hardened `genAssign()` — **dead code nothing calls**. Tiers come from the unit walk's
   recursion depth. The "fix" changed nothing and reported zero.
+
+**Newer, and just as expensive (2026-08-10/13):**
+
+- **A syntax check is not an execution check.** Three failures it could not see: a helper
+  inserted into raw HTML *between* two script tags (valid JS, never ran); a script tag
+  inserted *inside* another tag's opening and closing halves (module invisible to the
+  browser); and a function reaching for `NAME.display`, a field that had been deleted. Use
+  `qc/addtag.py`, which refuses to write if the open/close tag balance changes.
+- **When someone describes what they see in ordinary words, take the ordinary meaning
+  first.** Leon said the crop was "cropped". It was: the stage showed only the centred square
+  of a rectangular photo. An hour went into proving the geometry, the source pixels and the
+  decoder innocent - all true, all irrelevant.
+- **Check the ten-minute cache before chasing a ghost.** GitHub Pages serves HTML with
+  `max-age=600`. Three round trips this week were spent on pages that were already fixed.
+- **Verify the subject before trusting the test.** "Gender does not show" was tested on
+  someone who had no gender recorded; the result meant nothing.
+- **Inserting into a `Promise.all` shifts every index below it.** In `lf-walk` that made
+  events read name facts and anchors read events. Append, do not insert.
+- **Grep proves presence, never absence.** "The person page cannot edit names" came from
+  searching for two handler names; it writes `person_facts` in 17 places. Leon corrected it.
+- **A page count is not a code count.** "18 of 18 pages migrated" was true and still left
+  `lf-anchor`, `lf-walk` and `lf-invite` reading the stale column.
+- **Stop fighting the escaping.** Four attempts to inject an attribute into a generated
+  string; the answer was to read the id the markup already carried.
 
 Others worth keeping:
 
