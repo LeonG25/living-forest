@@ -491,6 +491,11 @@
       gameNames:{ whoiswho:'Who Is Who?', crowd:'Find Them in the Crowd', order:'Put Their Life in Order', wherewas:'Where Was This?', thread:'The Tangled Thread', whosememory:'Whose Story Is This?', voice:'The Missing Voice', whatnext:'What Happened Next?' },
       gameSubs:{ whoiswho:'Match the face to the right name.', crowd:'Find them among the gathering.', order:'Set the moments of a life in sequence.', wherewas:'Place the photographs on the map.', thread:'Trace how they connect to the family.', whosememory:'Guess who each story is about.', voice:'Not enough stories yet.', whatnext:'Guess which story came next.' },
       country:'Country', addcountry:'add a country',
+      hFrom:'From', hTo:'Until', hPresent:'still there', hEdit:'edit',
+      hYearBad:'A year needs four digits, between 1700 and next year.',
+      hOrderBad:'The year they left cannot come before the year they arrived.',
+      hEmpty:'A home needs at least a place, a country or a year.',
+      hWaiting:'waiting for the keeper',
       edit:'Edit', remove:'Remove', askremove:'Ask to remove', removeAsked:'Removal waiting for the keeper',
       relkind:'Kind of connection', relkindWho:'Who is {a} to {b}?', certainty:'How sure are you?', relnote:'Note (optional)',
       relkinds:{ parent:'Parent', child:'Child', spouse:'Spouse', sibling:'Sibling', friend:'Friend', mentor:'Mentor', neighbour:'Neighbour', other:'Other' },
@@ -531,6 +536,11 @@
       gameNames:{ whoiswho:'Кто есть кто?', crowd:'Найди в толпе', order:'Расставь жизнь по порядку', wherewas:'Где это было?', thread:'Запутанная нить', whosememory:'Чья это история?', voice:'Пропавший голос', whatnext:'Что было дальше?' },
       gameSubs:{ whoiswho:'Сопоставьте лицо и имя.', crowd:'Найдите среди собравшихся.', order:'Расставьте моменты жизни.', wherewas:'Разместите фото на карте.', thread:'Проследите связь с семьёй.', whosememory:'Угадайте, о ком эта история.', voice:'Историй пока мало.', whatnext:'Угадайте, какая история была следующей.' },
       country:'Страна', addcountry:'добавить страну',
+      hFrom:'С', hTo:'По', hPresent:'до сих пор', hEdit:'изменить',
+      hYearBad:'Год — это четыре цифры, от 1700 до следующего года.',
+      hOrderBad:'Год отъезда не может быть раньше года приезда.',
+      hEmpty:'Нужно указать хотя бы место, страну или год.',
+      hWaiting:'ждёт хранителя',
       edit:'Изменить', remove:'Удалить', askremove:'Просить удалить', removeAsked:'Удаление ожидает хранителя',
       relkind:'Вид связи', relkindWho:'Кто {a} для {b}?', certainty:'Насколько вы уверены?', relnote:'Заметка (необязательно)',
       relkinds:{ parent:'Родитель', child:'Ребёнок', spouse:'Супруг(а)', sibling:'Брат/сестра', friend:'Друг', mentor:'Наставник', neighbour:'Сосед', other:'Другое' },
@@ -571,6 +581,11 @@
       gameNames:{ whoiswho:'מי זה מי?', crowd:'מצאו אותה בקהל', order:'סדרו את חייה', wherewas:'איפה זה היה?', thread:'החוט הסבוך', whosememory:'של מי הסיפור?', voice:'הקול החסר', whatnext:'מה קרה אחר כך?' },
       gameSubs:{ whoiswho:'התאימו את הפנים לשם הנכון.', crowd:'מצאו אותה בין הנאספים.', order:'סדרו את רגעי החיים.', wherewas:'מקמו את התמונות על המפה.', thread:'עקבו אחר הקשר למשפחה.', whosememory:'נחשו על מי כל סיפור.', voice:'עדיין אין מספיק סיפורים.', whatnext:'נחשו איזה סיפור בא אחר כך.' },
       country:'מדינה', addcountry:'הוספת מדינה',
+      hFrom:'משנת', hTo:'עד שנת', hPresent:'עד היום', hEdit:'עריכה',
+      hYearBad:'שנה היא ארבע ספרות, בין 1700 לשנה הבאה.',
+      hOrderBad:'שנת העזיבה לא יכולה להקדים את שנת ההגעה.',
+      hEmpty:'לבית דרושים לפחות מקום, מדינה או שנה.',
+      hWaiting:'ממתין לשומר',
       edit:'עריכה', remove:'מחיקה', askremove:'בקשה למחוק', removeAsked:'המחיקה ממתינה לשומר',
       relkind:'סוג הקשר', relkindWho:'מי {a} עבור {b}?', certainty:'עד כמה אתם בטוחים?', relnote:'הערה (לא חובה)',
       relkinds:{ parent:'הורה', child:'ילד/ה', spouse:'בן/בת זוג', sibling:'אח/אחות', friend:'חבר', mentor:'מורה דרך', neighbour:'שכן', other:'אחר' },
@@ -1060,18 +1075,108 @@
       const c=await window.LFPlace.country(val, state.lang, sb); if(c&&!pc.value.trim()&&!manual){ pc.value=c; pc.dispatchEvent(new Event('input',{bubbles:true})); } }
     ph.addEventListener('change',tie); ph.addEventListener('blur',tie);
   }
-  /* "add a home": the home place AND a country field (Item D), each a place typeahead (Item E) */
-  function livedBlock(){ const L=d(); const pubs=pubList('lived','und'); const pends=pendList('lived','und');
-    const pubc=pubs.map(r=>`<span class="chip cool"><span class="ord">${String((r.ord||0)+1).padStart(2,'0')}</span>${esc(r.value)}<span class="x" data-del="${r.id}">${sv(I.x,2)}</span></span>`).join('');
+  /* ---------- HOMES — one group_id per home (Leon, 2026-08-14) ----------
+     A person lives in many places, and "Tel Aviv, Israel, 1998-2004" is ONE fact with four
+     parts, not four facts with nothing holding them together. Before this, `lived` and
+     `country` were written as separate rows with separate group_ids and no years at all, so
+     the sentence could not be expressed - Leon's own two rows in the queue were exactly that.
+     A home is now four rows sharing a group_id: lived, country, home_from, home_to, every
+     one optional. The field name `lived` is KEPT because eight other files read it.
+     An EDIT re-uses the group_id: the new rows land in_review alongside the published ones,
+     which is why the card can show the waiting version in violet next to what is approved. */
+  const HOMEF=['lived','country','home_from','home_to'];
+  function homeGroups(){ const g={};
+    facts.filter(x=>HOMEF.indexOf(x.field)>=0&&x.group_id).forEach(x=>{
+      const b=g[x.group_id]=g[x.group_id]||{group_id:x.group_id,rows:[],pub:{},pen:{}};
+      b.rows.push(x);
+      const bucket=(x.status==='published')?b.pub:b.pen;
+      const ts=String(x.published_at||x.created_at||'');
+      const key=(x.field==='country')?('country:'+(x.lang||'und')):x.field;
+      const prev=bucket[key];
+      if(!prev||ts>prev.ts) bucket[key]={value:x.value,id:x.id,ts:ts,status:x.status}; });
+    return Object.keys(g).map(k=>g[k])
+      .filter(b=>HOMEF.some(f=>hasv((pick(b.pub,f)||{}).value)||hasv((pick(b.pen,f)||{}).value)))
+      .sort((a,b)=>{ const ay=hv(a,'home_from')||'9999', by=hv(b,'home_from')||'9999';
+        return String(ay).localeCompare(String(by)); }); }
+  function pick(bucket,f){ if(f!=='country') return bucket[f];
+    const order=[state.lang,'en','und'].concat(LANGS);
+    for(const l of order){ const r=bucket['country:'+l]; if(r&&hasv(r.value)) return r; }
+    const k=Object.keys(bucket).find(k=>k.indexOf('country:')===0&&hasv(bucket[k].value));
+    return k?bucket[k]:null; }
+  function hv(b,f){ const p=pick(b.pen,f); if(p&&hasv(p.value)) return p.value; const q=pick(b.pub,f); return (q&&hasv(q.value))?q.value:''; }
+  function hpub(b,f){ const q=pick(b.pub,f); return (q&&hasv(q.value))?q.value:''; }
+  function hPending(b){ return HOMEF.some(f=>{ const p=pick(b.pen,f); return p&&hv(b,f)!==hpub(b,f); }); }
+  function homeYears(b){ const L=d(); const f=hv(b,'home_from'), t=hv(b,'home_to');
+    if(!hasv(f)&&!hasv(t)) return '';
+    if(hasv(f)&&!hasv(t)) return f+' — '+L.hPresent;
+    if(!hasv(f)&&hasv(t)) return '… — '+t;
+    return f+' — '+t; }
+  function homeWhere(b){ return [hv(b,'lived'),hv(b,'country')].filter(hasv).join(', '); }
+  /* who may take a home away: the keeper always; the person who suggested it while it waits;
+     anyone else asks, per Rule 3. */
+  function homeDelCtl(b){ const L=d(); const req=removalReq(b.group_id);
+    if(req) return `<span class="remreq">${esc(state.keeper?L.askremove:L.removeAsked)}</span>`;
+    const mine=b.rows.every(r=>canDelete(r));
+    return `<button class="np-ctl ${mine?'':'warn'}" data-delhome="${b.group_id}">${sv(mine?I.trash:I.x,1.7)} ${esc(mine?L.remove:L.askremove)}</button>`; }
+  function homeCard(b){ const L=d(); const pend=hPending(b);
+    const where=homeWhere(b)||'—', yrs=homeYears(b);
+    const style=pend?' style="border-color:rgba(201,162,255,.34);background:rgba(201,162,255,.06)"':'';
+    return `<div class="detailrow"${style} data-home="${b.group_id}">
+      <div><div class="dv">${esc(where)}</div>
+        ${yrs?`<div class="dl" style="text-transform:none;letter-spacing:0;margin-top:3px">${esc(yrs)}</div>`:''}
+        ${pend?`<div class="pending" style="margin-top:6px"><span class="sp"></span>${esc(L.hWaiting)}</div>`:''}
+        <div class="rowctl"><button class="np-ctl" data-edithome="${b.group_id}">${sv(I.pen,1.7)} ${esc(L.hEdit)}</button>${homeDelCtl(b)}</div>
+      </div></div>`; }
+  function homeForm(){ const L=d(); const rtl=state.lang==='he'?' style="direction:rtl;text-align:right"':'';
+    return `<div class="homeadd" data-homeadd style="display:none;margin-top:10px;padding-inline-start:12px;border-inline-start:2px solid rgba(127,180,216,.25)">
+      <input type="hidden" data-homegid value="">
+      <div class="field"><label>${esc(L.addplace)}</label><input class="inp" list="placelist" data-newhome placeholder="${esc(L.lived)}"${rtl}></div>
+      <div class="field"><label>${esc(L.country)}</label><input class="inp" list="placelist" data-newcountry placeholder="${esc(L.addcountry)}"${rtl}></div>
+      <div class="row2">
+        <div class="field"><label>${esc(L.hFrom)}</label><input class="inp" inputmode="numeric" maxlength="4" data-newfrom placeholder="1998"></div>
+        <div class="field"><label>${esc(L.hTo)}</label><input class="inp" inputmode="numeric" maxlength="4" data-newto placeholder="${esc(L.hPresent)}"></div></div>
+      <div class="pending" data-homeerr style="display:none;margin-top:6px"></div>
+      <div class="btnrow"><button class="btn ghost" data-act="homecancel">${L.cancel}</button><button class="btn violet" data-act="homesend">${L.send}</button></div></div>`; }
+  /* open the form, blank for a new home or filled from an existing one. Editing keeps the
+     group_id, so the suggestion joins the home it belongs to instead of starting a new one. */
+  function openHome(gid){ const card=$('.facet[data-facet="places"]'); if(!card) return;
+    const box=card.querySelector('[data-homeadd]'); if(!box) return;
+    const g=gid?homeGroups().find(b=>b.group_id===gid):null;
+    const set=(sel,v)=>{ const el=box.querySelector(sel); if(el) el.value=v||''; };
+    set('[data-homegid]',gid||''); set('[data-newhome]',g?hv(g,'lived'):'');
+    set('[data-newcountry]',g?hv(g,'country'):''); set('[data-newfrom]',g?hv(g,'home_from'):'');
+    set('[data-newto]',g?hv(g,'home_to'):'');
+    const err=box.querySelector('[data-homeerr]'); if(err){ err.style.display='none'; err.textContent=''; }
+    box.style.display='block'; wireCountryTie(box);
+    const i=box.querySelector('[data-newhome]'); if(i) i.focus(); }
+  /* a year is four digits and inside living memory of a calendar; an empty one is allowed,
+     because a family often knows the place and not the year. */
+  function yearOk(v){ if(!hasv(v)) return true; if(!/^\d{4}$/.test(v)) return false;
+    const n=+v; return n>=1700 && n<=(new Date().getFullYear()+1); }
+  async function sendHome(){ const L=d(); const card=$('.facet[data-facet="places"]'); if(!card) return;
+    const box=card.querySelector('[data-homeadd]'); if(!box) return;
+    const val=sel=>{ const el=box.querySelector(sel); return el?el.value.trim():''; };
+    const err=box.querySelector('[data-homeerr]');
+    const fail=m=>{ if(err){ err.textContent=m; err.style.display='block'; } };
+    const gid=val('[data-homegid]')||uuid();
+    const next={ lived:val('[data-newhome]'), country:val('[data-newcountry]'),
+                 home_from:val('[data-newfrom]'), home_to:val('[data-newto]') };
+    if(!HOMEF.some(f=>hasv(next[f]))) return fail(L.hEmpty);
+    if(!yearOk(next.home_from)||!yearOk(next.home_to)) return fail(L.hYearBad);
+    if(hasv(next.home_from)&&hasv(next.home_to)&&+next.home_to<+next.home_from) return fail(L.hOrderBad);
+    const cur=homeGroups().find(b=>b.group_id===gid);
+    let ok=true, wrote=0;
+    for(const f of HOMEF){
+      const was=cur?hv(cur,f):'';
+      if(next[f]===was) continue;               /* only what actually changed */
+      if(await insFact(f,(f==='country'?state.lang:'und'),next[f],0,gid)===false) ok=false; else wrote++; }
+    box.style.display='none';
+    await reload();
+    if(ok&&wrote) toast(L.sent); }
+  function homesBlock(){ const L=d(); const gs=homeGroups();
+    const cards=gs.map(homeCard).join('');
     const addbtn=`<button class="chip add" data-act="addhome">${sv(I.plus,2)} ${esc(L.addplace)}</button>`;
-    let pend='';
-    if(pends.length){ pend=pends.map(r=>`<div class="pendrow"><span class="chip cool pending">${esc(r.value)} <span class="mono" style="font-size:9px;opacity:.8">· ${L.pendingChip}</span></span>${state.keeper?keeperInline(r.id,'fact'):''}</div>`).join('');
-      if(!state.keeper) pend+=`<div class="pending" style="margin-top:6px"><span class="sp"></span>${L.bothpending}</div>`; }
-    const form=`<div class="homeadd" data-homeadd style="display:none;margin-top:10px;padding-inline-start:12px;border-inline-start:2px solid rgba(127,180,216,.25)">
-        <div class="field"><label>${esc(L.addplace)}</label><input class="inp" list="placelist" data-newhome placeholder="${esc(L.lived)}" ${state.lang==='he'?'style="direction:rtl;text-align:right"':''}></div>
-        <div class="field"><label>${esc(L.country)}</label><input class="inp" list="placelist" data-newcountry placeholder="${esc(L.addcountry)}" ${state.lang==='he'?'style="direction:rtl;text-align:right"':''}></div>
-        <div class="btnrow"><button class="btn ghost" data-act="homecancel">${L.cancel}</button><button class="btn violet" data-act="homesend">${L.send}</button></div></div>`;
-    return `<div class="chips">${pubc}${addbtn}</div>${form}${pend}`; }
+    return `${cards}<div class="chips" style="margin-top:8px">${addbtn}</div>${homeForm()}`; }
   function pendingCustomRows(){ const L=d(); return groupCustom(false).map(c=>{ const lab=c.label[state.lang]||c.label.en||Object.values(c.label)[0]||''; const val=c.value[state.lang]||c.value.en||Object.values(c.value)[0]||'';
       return `<div class="detailrow" style="border-color:rgba(201,162,255,.34);background:rgba(201,162,255,.06)"><div><div class="dl">${esc(lab)}</div><div class="dv">${esc(val)}</div>${state.keeper?keeperInline(c.group_id,'group'):`<div class="pending" style="margin-top:6px"><span class="sp"></span>${L.bothpending}</div>`}</div>${state.keeper?`<span class="x" data-delgroup="${c.group_id}">${sv(I.x,2)}</span>`:''}</div>`; }).join(''); }
   function bodyFor(f){ const L=d(); const id=f.id, lang=state.lang;
@@ -1094,12 +1199,11 @@
         <div class="field"><label>${L.langspoken}</label>${chipsField('langspoken',L.langspoken,false)}</div>
         ${facetSend('life')}${gamesHTML(f)}`;
     }
-    if(id==='places'){ const placed=(hasv(S.places.pbirth)?1:0)+S.places.lived.length+(hasv(S.places.country[lang]||S.places.country.en)?1:0);
+    if(id==='places'){ const placed=(hasv(S.places.pbirth)?1:0)+homeGroups().length;
       const pctl=r=>r?`<div class="rowctl">${delCtl(r)}</div>`:'';
       return `${placeDatalist()}
         <div class="field"><label>${L.pbirth}</label><input class="inp" list="placelist" data-field="pbirth" value="${esc(S.places.pbirth)}" placeholder="${esc(L.pbirth)}">${pctl(pubRow('pbirth','und'))}</div>
-        ${mlEdit(L.country,'country',S.places.country,'placelist')}${pctl(pubRow('country',lang))}
-        <div class="field"><label>${L.lived}</label>${livedBlock()}</div>
+        <div class="field"><label>${L.lived}</label>${homesBlock()}</div>
         ${placed>0?`<div class="appfact"><span class="mark">${sv(I.chart,2)}</span><div class="body">${esc(placesAppLine(placed))}<span class="src">${L.assembled}</span></div></div>`:''}
         ${facetSend('places')}${gamesHTML(f)}`; }
     if(id==='story'){ let h='';
@@ -1584,7 +1688,8 @@
          Clearing a gender means removing the fact, not saving a blank over it. */
       if(gval) await put('gender','und',gval);
     } else if(fid==='places'){ const pb=read('pbirth'); if(pb!=null&&pb!=='') await put('pbirth','und',pb);
-      for(const l of LANGS){ const c=read('country',l); if(c!=null&&c.trim()!=='') await put('country',l,c.trim()); } }
+      /* country used to be written here as a loose per-language fact with no tie to any
+         home. It belongs to a home now and is sent by homesend. */ }
     await reload(); if(ok) toast(d().sent); }
   async function submitName(){ if(!user) return; const card=$('.facet[data-facet="name"]'); if(!card) return;
     const read=(f,l)=>{ const el=card.querySelector(`.np-langs [data-field="${f}"][data-lang="${l}"]`); return el?el.value.trim():null; };
@@ -1732,20 +1837,21 @@
       if(act==='revert'){ seed(); render(); return; }
       if(act==='watch'){ const q=(person&&person.id)?('?id='+encodeURIComponent(person.id)):''; location.href='reel-real.html'+q; return; }
       if(act==='addmemory'){ location.href='contribute-add-real.html'; return; }
-      if(act==='addhome'){ const card=$('.facet[data-facet="places"]'); const box=card&&card.querySelector('[data-homeadd]');
-        if(box){ box.style.display='block'; wireCountryTie(box); const i=box.querySelector('[data-newhome]'); if(i) i.focus(); } return; }
+      if(act==='addhome'||act==='edithome'){ return openHome(null); }
       if(act==='homecancel'){ const box=$('.facet[data-facet="places"] [data-homeadd]'); if(box) box.style.display='none'; return; }
-      if(act==='homesend'){ const card=$('.facet[data-facet="places"]'); if(!card) return;
-        const hi=card.querySelector('[data-newhome]'), ci=card.querySelector('[data-newcountry]');
-        const home=hi?hi.value.trim():'', country=ci?ci.value.trim():''; if(!home&&!country) return;
-        let ok=true;
-        if(home&&await insFact('lived','und',home,pubList('lived','und').length)===false) ok=false;
-        if(country&&await insFact('country',state.lang,country)===false) ok=false;
-        await reload(); if(ok) toast(L.sent); return; }
+      if(act==='homesend'){ return sendHome(); }
       if(act==='addconn'){ return openKin('add'); }
+
       if(act==='howrelated'){ return openKin('me'); }
       if(act==='kinsave'){ const sh=$('.sheet[data-sheet="kin"]'); if(sh&&sh._kinSave) return sh._kinSave(); return; }
       if(act==='kinremove'){ const sh=$('.sheet[data-sheet="kin"]'); if(sh&&sh._kinRemove) return sh._kinRemove(); return; }
+      const eh=e.target.closest&&e.target.closest('[data-edithome]');
+      if(eh){ return openHome(eh.getAttribute('data-edithome')); }
+      const dh=e.target.closest&&e.target.closest('[data-delhome]');
+      if(dh){ const gid=dh.getAttribute('data-delhome'); const b=homeGroups().find(x=>x.group_id===gid); if(!b) return;
+        if(b.rows.every(r=>canDelete(r))){ for(const r of b.rows) await delFact(r.id); }
+        else if(!removalReq(gid)){ if(await insFact('remove_request','und',gid)) toast(d().removeAsked); }
+        await reload(); return; }
     });
     $('.scrim').addEventListener('click', hideSheets);
   }
