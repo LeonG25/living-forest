@@ -343,6 +343,24 @@ mark the row as machine-made, and let any human edit in any language lock that l
 permanently. No diffing, no splicing, no staleness tracking. Most of the value, a fraction
 of the cost.
 
+### "Who Is Who?" has no page (found 2026-08-14) — PARKED
+
+Leon found it: he could not reach the game. It is not merely an orphan.
+
+`GAME_PAGES` in person-real maps `whosememory` -> `game-who-is-who.html`. The FILE is the
+"Whose Story Is This?" game; the filename is a legacy misnomer from before that game was
+renamed. There is no `whoiswho` key in the map at all, so `openGame('whoiswho')` falls
+through to the placeholder sheet - the game is advertised on every person page, gated only
+by `tagged.length<1`, and leads nowhere.
+
+CLAUDE.md has listed Who Is Who among the live games and that has been wrong. Live games
+are: Find Them in the Crowd, Put Their Life in Order, Whose Story Is This, Where Was This,
+What Happened Next. Not built: Who Is Who, The Missing Voice, The Tangled Thread.
+
+Two jobs when it is picked up, and they are separable: build the game, and rename the file
+so it says what it is. The rename touches lf-nav, lf-invite and person-real, which all point
+at the current filename.
+
 ### The consequence live today
 
 Country in a home is a single box in the reader's own language. `pick()` reads the reader's

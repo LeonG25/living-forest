@@ -1724,7 +1724,17 @@
     const inp=card.querySelector(`.np-langs [data-field="${part}"][data-lang="${state.lang}"]`); if(inp) inp.focus(); }
 
   /* ---------- submit ---------- */
-  async function submitFacet(fid){ if(!user) return; const card=$(`.facet[data-facet="${fid}"]`); if(!card) return;
+  /* READ EVERY FACET BEFORE RELOADING ANY OF THEM.
+     This used to reload and toast on its own, and 'sendall' called it five times in a row.
+     The first call is for the name facet, which writes nothing at all - but it reloaded, and
+     reload() re-renders the page from the database, so every value the contributor had just
+     typed anywhere else was wiped out of the DOM before the next call could read it. Places
+     then read an empty box, wrote nothing, and said 'Sent to the keeper - thank you',
+     because ok only ever flips on a FAILURE and never on nothing-happened. Leon's place of
+     birth was lost exactly this way, and so was anything typed into Life in the same visit.
+     quiet=true means gather and write, but do not re-render and do not speak; sendall
+     reloads once at the end and reports once, honestly. (Leon, 2026-08-14) */
+  async function submitFacet(fid,quiet){ if(!user) return true; const card=$(`.facet[data-facet="${fid}"]`); if(!card) return true;
     const read=(f,lg)=>{ const el=card.querySelector(`[data-field="${f}"]${lg?`[data-lang="${lg}"]`:''}`); return el?el.value:null; };
     let ok=true; const put=async(...a)=>{ if(await insFact(...a)===false) ok=false; };
     if(fid==='life'){
@@ -1743,7 +1753,8 @@
     } else if(fid==='places'){ const pb=read('pbirth'); if(pb!=null&&pb!=='') await put('pbirth','und',pb);
       /* country used to be written here as a loose per-language fact with no tie to any
          home. It belongs to a home now and is sent by homesend. */ }
-    await reload(); if(ok) toast(d().sent); }
+    if(!quiet){ await reload(); if(ok) toast(d().sent); }
+    return ok; }
   async function submitName(){ if(!user) return; const card=$('.facet[data-facet="name"]'); if(!card) return;
     const read=(f,l)=>{ const el=card.querySelector(`.np-langs [data-field="${f}"][data-lang="${l}"]`); return el?el.value.trim():null; };
     let ok=true;
@@ -1892,9 +1903,13 @@
       if(act==='send'){ await submitFacet(a.dataset.facet); return; }
       /* one button, every facet: whatever was changed anywhere on the page goes together */
       if(act==='sendall'){
+        let allOk=true;
+        /* gather every facet first, write, and only then re-render - once */
         for(const fid of ['name','life','places','kin','more']){
-          try{ await submitFacet(fid); }catch(e){}
+          try{ if(await submitFacet(fid,true)===false) allOk=false; }catch(e){ allOk=false; }
         }
+        await reload();
+        toast(allOk?L.sent:L.saveFail, !allOk);
         return;
       }
       if(act==='nmsend'){ await submitName(); return; }
