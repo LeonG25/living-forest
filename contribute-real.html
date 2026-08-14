@@ -491,9 +491,11 @@
   }
   function currentPrompt(){
     if(!state.pairs.length) return null;
+    /* the naming rule, not the stale column - these four were the last direct reads */
+    const nmOf=x=>(x&&((window.LFLabel&&LFLabel.of(x.id,state.lang))||x.called_name||x.display_name))||'';
     const p=state.pairs[state.pairIdx%state.pairs.length];
     const bank=state.lang==='ru'?Qru:state.lang==='he'?Qhe:Q;
-    const q=bank[state.pairIdx%bank.length](p.teller.display_name,p.subject.display_name);
+    const q=bank[state.pairIdx%bank.length](nmOf(p.teller),nmOf(p.subject));
     return { teller:p.teller, subject:p.subject, q };
   }
 
@@ -568,7 +570,7 @@
         +'<div class="rl">'+(live?t('recLive'):t('recIdle'))+'</div>';
     }
     return topbar(t('voiTitle'))+'<div class="pad">'
-      +'<div class="aboutchip"><span class="txt">'+t('aboutChip')(esc(pr.teller.display_name),esc(pr.subject.display_name))+'</span></div>'
+      +'<div class="aboutchip"><span class="txt">'+t('aboutChip')(esc((window.LFLabel&&LFLabel.of(pr.teller.id,state.lang))||pr.teller.called_name||pr.teller.display_name),esc(pr.subject.display_name))+'</span></div>'
       +'<div class="prompt"><div class="pk">'+esc(t('promptK'))+'</div><div class="pq serif">“'+esc(pr.q)+'”</div><div class="pn">'+t('promptPn')+'</div></div>'
       +'<div class="recwrap">'+recUI+'</div>'
       +'<div class="msg'+(state.msg?' err':'')+'" id="msg">'+esc(state.msg)+'</div>'
@@ -726,11 +728,11 @@
         contributor_user:user.id,          // who uploaded (account)
         contributor_id:pr.teller.id,        // who told it (person) — Rule 6
         status:'in_review',
-        metadata:{ about:pr.subject.display_name, prompt:pr.q }
+        metadata:{ about:((window.LFLabel&&LFLabel.of(pr.subject.id,state.lang))||pr.subject.called_name||pr.subject.display_name), prompt:pr.q }
       }).select('id').single();
       if(ae) throw ae;
       try{ await sb.from('artefact_subjects').insert({ artefact_id:art.id, person_id:pr.subject.id, detail:null }); }catch(e){}
-      state.receipt={ kind:'voice', gave:pr.teller.display_name+' → '+pr.subject.display_name };
+      state.receipt={ kind:'voice', gave:((window.LFLabel&&LFLabel.of(pr.teller.id,state.lang))||pr.teller.display_name)+' → '+pr.subject.display_name };
       resetRecSilent();
       go('receipt');
     }catch(err){ state.rec.status='recorded'; state.msg=t('errSend'); render(); }
