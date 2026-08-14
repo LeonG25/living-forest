@@ -563,7 +563,7 @@
   /* ---------- data ---------- */
   async function loadPeople(){
     try{
-      const {data}=await sb.from('people').select('id').eq('status','published').order('display_name');
+      const {data}=await sb.from('people').select('id').eq('status','published');
       M.people=(data||[]);
       try{ await LFLabel.load(sb,M.people.map(p=>p.id)); }catch(e){}
       M.people.forEach(p=>{ p.label=LFLabel.of(p.id,M.lang||'en')||p.called_name||p.display_name||''; });
@@ -912,7 +912,7 @@
     const found=M.people.find(p=>(p.label||'').toLowerCase()===sub.name.toLowerCase());
     if(found){ sub.id=found.id; return found.id; }
     // proposed newcomer → pending (Rule 3); fall back to published if the status enum rejects it
-    let ins=await sb.from('people').insert({display_name:sub.name,created_by:M.user.id,status:'in_review'}).select('id').single();
+    let ins=await sb.from('people').insert({created_by:M.user.id,status:'in_review'}).select('id').single();
     /* This used to retry as status:'published' when the in_review insert failed -
        so a contributor's new person walked straight past the keeper. A failure is
        reported now; nobody enters the forest unseen. */

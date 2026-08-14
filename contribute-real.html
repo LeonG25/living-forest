@@ -434,7 +434,7 @@
 
   /* ---------- data ---------- */
   async function loadData(){
-    try{ const {data}=await sb.from('people').select('id,sex,primary_asset,portrait_path,birth_date,is_living'); state.people=(data||[]).filter(p=>p.display_name); }catch(e){ state.people=[]; }
+    try{ const {data}=await sb.from('people').select('id,sex,primary_asset,portrait_path,birth_date,is_living'); state.people=(data||[]); }catch(e){ state.people=[]; }
     try{ const {data}=await sb.from('relationships').select('id,from_person,to_person,kind'); state.rels=data||[]; }catch(e){ state.rels=[]; }
     try{ const {data}=await sb.from('artefacts').select('id,kind,storage_path,metadata,contributor_id,status').eq('status','published'); state.arts=data||[]; }catch(e){ state.arts=[]; }
     buildGaps(); buildPairs();
@@ -667,7 +667,7 @@
     try{
       const pid=uuid(); const lang=detectLang(nm);
       // gated container: a proposed person waits for the keeper (status in_review)
-      const {error:pe}=await sb.from('people').insert({ id:pid, display_name:nm, created_by:user.id, status:'in_review' });
+      const {error:pe}=await sb.from('people').insert({ id:pid, created_by:user.id, status:'in_review' });
       if(pe) throw pe;
       // per-field suggestions — each its own row, each independently approvable (Rule 3)
       const rows=[{ field:'given', lang, value:nm }];

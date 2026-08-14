@@ -336,7 +336,7 @@
       arts.forEach(a=>{ const body=(a.body!=null?String(a.body).trim():''); if(a.contributor_id && body.length>0) tally[a.contributor_id]=(tally[a.contributor_id]||0)+1; });
       const ids=Object.keys(tally); if(!ids.length) return [];
       let names={};
-      try{ const {data:pp}=await sb.from('people').select('id').in('id',ids); (pp||[]).forEach(p=>{ names[p.id]=(p.display_name&&p.display_name.trim())||(p.called_name&&p.called_name.trim())||''; }); }catch(e){}
+      try{ const {data:pp}=await sb.from('people').select('id').in('id',ids); (pp||[]).forEach(p=>{ names[p.id]=(window.LFLabel&&LFLabel.of(p.id,(localStorage.getItem('lf_lang')||'en')))||''; }); }catch(e){}
       return ids.map(id=>({ id, name:names[id]||'', count:tally[id] })).sort((a,b)=>b.count-a.count);
     }catch(e){ return []; }
   }

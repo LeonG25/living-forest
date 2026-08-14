@@ -1072,7 +1072,7 @@
     const f=(allPeople||[]).find(p=>String(p.display_name||'').toLowerCase()===name.toLowerCase());
     if(f) return f.id;
     /* a new name met on a photograph waits for the keeper like everything else */
-    const {data,error}=await sb.from('people').insert({display_name:name,created_by:user.id,status:'in_review'}).select('id,sex').single();
+    const {data,error}=await sb.from('people').insert({created_by:user.id,status:'in_review'}).select('id,sex').single();
     if(error) throw error; (allPeople=allPeople||[]).push(data); peopleById[data.id]=data; return data.id; }
 
   async function pickPerson(pid, q){ const tg=TAGS.find(x=>x.id===nameTargetId); if(!tg){ hide(); return; }
@@ -1526,7 +1526,7 @@
         (byPL[k]=byPL[k]||{person_id:f.person_id,lang:f.lang})[f.field]=f.value; });
       Object.values(byPL).forEach(v=>{ (vars[v.person_id]=vars[v.person_id]||[]).push(v); }); }
     tellerName='';
-    if(art.contributor_id){ const {data:cp}=await sb.from('people').select('').eq('id',art.contributor_id).maybeSingle(); tellerName=(cp&&cp.display_name)||''; }
+    if(art.contributor_id){ const {data:cp}=await sb.from('people').select('id').eq('id',art.contributor_id).maybeSingle(); tellerName=(window.LFLabel&&LFLabel.of(art.contributor_id,(localStorage.getItem('lf_lang')||'en')))||''; }
     const {data:tr}=await sb.from('artefact_translations').select('lang,body,status').eq('artefact_id',MOMENT_ID).eq('status','published'); translations=tr||[];
     await loadQueue();
     buildModel(); render(); ensureLangAssets();

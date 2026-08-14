@@ -892,7 +892,7 @@
       if(!other){
         const nm=String(k.propose||k.other_name||'').trim();
         if(!nm){ approveRef._busy=false; toast(L.tCannot||'That suggestion could not be read.',false); return; }
-        const mk=await sb.from('people').insert({display_name:nm,created_by:f.created_by,status:'published',
+        const mk=await sb.from('people').insert({created_by:f.created_by,status:'published',
                    reviewed_by:user.id,published_at:now}).select('id').single();
         if(mk.error||!mk.data){ approveRef._busy=false; toast(L.tFail||'That did not save.',false); return; }
         other=mk.data.id;
@@ -1116,7 +1116,7 @@
     var r=await api('player_anchors?select=user_id,person_id&status=eq.active&decided_at=is.null');
     if(!r.ok) return; var rows=await r.json(); if(!rows||!rows.length) return;
     var pids=rows.map(function(x){return x.person_id;}), uids=rows.map(function(x){return x.user_id;});
-    var pj=await (await api('people?select=id,display_name&id=in.('+pids.join(',')+')')).json();
+    var pj=await (await api('people?select=id&id=in.('+pids.join(',')+')')).json();
     var uj=await (await api('profiles?select=id,display_name&id=in.('+uids.join(',')+')')).json();
     var P={},U={}; (pj||[]).forEach(function(p){P[p.id]=p.display_name;}); (uj||[]).forEach(function(u){U[u.id]=u.display_name;});
     var host=document.createElement('div');

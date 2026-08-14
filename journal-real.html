@@ -350,7 +350,7 @@
     entries=[]; counts={mem:0,people:0,games:0};
     const nameCache={};
     async function nameOf(pid){ if(!pid) return d().aSomeone; if(nameCache[pid]!==undefined) return nameCache[pid];
-      try{ await LFLabel.load(sb,[pid]); const {data}=await sb.from('people').select('').eq('id',pid).maybeSingle(); nameCache[pid]=(data&&data.display_name)||d().aSomeone; }
+      try{ await LFLabel.load(sb,[pid]); const {data}=await sb.from('people').select('id').eq('id',pid).maybeSingle(); nameCache[pid]=(window.LFLabel&&LFLabel.of(pid,state.lang))||d().aSomeone; }
       catch(e){ nameCache[pid]=d().aSomeone; } return nameCache[pid]; }
 
     // 1) journal_entries — the canonical log, if any rows exist for this user

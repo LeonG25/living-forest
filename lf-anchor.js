@@ -84,7 +84,7 @@
   function draw(q){ var list=box.querySelector('.plist'); q=(q||'').toLowerCase();
     list.innerHTML=people.filter(function(p){ return !q||String(nameOf(p.id)||p.display_name||'').toLowerCase().indexOf(q)>=0; })
       .map(function(p){ return '<div class="prow'+(pick&&pick.id===p.id?' on':'')+'" data-id="'+p.id+'"><div class="pname">'+esc(nameOf(p.id)||p.display_name||'')+'</div></div>'; }).join(''); }
-  api('people?select=id,display_name&status=eq.published&order=display_name').then(function(r){ return r.ok?r.json():[]; })
+  api('people?select=id&status=eq.published').then(function(r){ return r.ok?r.json():[]; })
     .then(function(j){ people=j||[];
       return api('person_facts?select=person_id,field,lang,value&status=eq.published&field=in.(called,given,family,maiden)')
         .then(function(r2){ return r2.ok?r2.json():[]; })

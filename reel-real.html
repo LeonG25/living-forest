@@ -403,7 +403,7 @@
         tagged=(subs||[]).filter(s=>byId[s.artefact_id]&&byId[s.artefact_id].storage_path&&byId[s.artefact_id].status!=='rejected')
           .map(s=>({artefact_id:s.artefact_id,storage_path:byId[s.artefact_id].storage_path,meta:(byId[s.artefact_id]||{}).metadata||{},contributor_id:(byId[s.artefact_id]||{}).contributor_id||null}));
         const cids=[...new Set(tagged.map(t=>t.contributor_id).filter(Boolean))];
-        if(cids.length){ try{ const {data:pp}=await sb.from('people').select('id').in('id',cids); (pp||[]).forEach(x=>contribNames[x.id]=x.display_name); }catch(e){} }
+        if(cids.length){ try{ const {data:pp}=await sb.from('people').select('id').in('id',cids); (pp||[]).forEach(x=>contribNames[x.id]=(window.LFLabel&&LFLabel.of(x.id,(localStorage.getItem('lf_lang')||'en')))||''); }catch(e){} }
       } }catch(e){}
     rels=[];
     try{ const {data:rp}=await sb.from('relationships').select('id,from_person,to_person').or('from_person.eq.'+PERSON_ID+',to_person.eq.'+PERSON_ID);

@@ -391,7 +391,7 @@
     const profMap=new Map(profs.map(p=>[p.id,p]));
     const pids=[...new Set(profs.map(p=>p.person_id).filter(Boolean))];
     let peopleMap=new Map();
-    if(pids.length){ try{ await LFLabel.load(sb,pids); const {data:pl}=await sb.from('people').select('id').in('id',pids); (pl||[]).forEach(p=>peopleMap.set(p.id,p.display_name)); }catch(e){} }
+    if(pids.length){ try{ await LFLabel.load(sb,pids); const {data:pl}=await sb.from('people').select('id').in('id',pids); (pl||[]).forEach(p=>peopleMap.set(p.id, LFLabel.of(p.id,(localStorage.getItem('lf_lang')||'en'))||'')); }catch(e){} }
     const nameFor=uid=>{ const p=profMap.get(uid); if(!p) return null; return p.display_name || LFLabel.of(p.person_id,state.lang) || peopleMap.get(p.person_id) || null; };
 
     selfName = nameFor(user.id) || (user.email? user.email.split('@')[0] : '') || L().roleKeeper;
