@@ -141,7 +141,7 @@ Everything above the Archive line is current; the Archive is history kept for pr
 | **what to build next, and what waits for Leon** | **§2 — start here** |
 | what is true right now | §1 |
 | the lessons that cost the most | §3 |
-| what Leon has decided and parked | §4 PARKED / §5 DECISIONS |
+| what Leon has decided and parked | §4 PARKED / §E DECISIONS |
 | the walk / levels spec | §A PROGRESSION |
 | Fen's clips and moods | §B FEN |
 | design deliveries and the responsive brief | §C DESIGN |
@@ -303,6 +303,53 @@ Others worth keeping:
 - **A sentence can be read backwards; a shape cannot.** The binding confirmation draws a
   mini-tree in the tree's own conventions.
 - **Test data belongs to the family.** Every probe that writes must clean up, by name.
+
+## 4 · PARKED — decided, not now (do not build unasked)
+
+*The orientation table has pointed at "§4 PARKED" since 2026-08-09 and there was no such
+section: it was lost in the consolidation. Restored 2026-08-14.*
+
+### Automatic translation of every text field (Leon, 2026-08-14) — PARKED
+
+The idea: a contributor types into one box, in whatever language the app is in. On first
+entry the app translates it into the other two and stores all three. On a later edit, the
+app asks whether to carry the change into the other languages; yes translates only the
+edited part, no leaves the edit visible in its own language alone.
+
+Why it is parked, and it is NOT the translating that is heavy:
+
+- **Cheap:** translating on first entry. The `translate` Edge Function already exists and
+  is already used for names. Two extra calls and two extra rows.
+- **Hard:** "translate only the edited part". A fragment cannot be spliced into a Russian or
+  Hebrew sentence and stay grammatical - case, agreement and word order all move. Doing it
+  properly means sending the old text, the new text and the existing translation and asking
+  for a revised whole. That works, but it is a judgement call with a quality ceiling, not a
+  deterministic edit.
+- **The actual weight - the truth model.** The app's spine is gold = a person said this,
+  cool blue = the app worked it out. A machine translation is a third thing: human-authored,
+  machine-restated, and it needs its own mark and its own rules:
+  - Does a translated row enter the keeper's queue? If yes, a keeper approves prose in a
+    language they may not read. If no, machine text publishes itself - and five fast paths
+    that did exactly that were closed deliberately.
+  - Provenance per row: which language it came from, and a fingerprint of the source text.
+  - **Staleness.** Edit the English and the Russian is now a translation of a sentence that
+    no longer exists. That has to be detectable and visible.
+  - **Ownership flips once.** The moment a human edits the Russian, the Russian is theirs
+    and must never be overwritten by a machine again.
+  - Every text field gains two model calls before it can save.
+
+**The cheap 80%, if it is ever wanted without the weight:** translate on first entry only,
+mark the row as machine-made, and let any human edit in any language lock that language
+permanently. No diffing, no splicing, no staleness tracking. Most of the value, a fraction
+of the cost.
+
+### The consequence live today
+
+Country in a home is a single box in the reader's own language. `pick()` reads the reader's
+language, then en, then und, then any - so nothing is ever blank, but a country typed in
+English shows as "USSR" to a Russian reader, not "СССР". The old per-language Country box
+(`mlEdit`, with an "add a language" toggle) was removed when country moved inside a home.
+The read side handles three languages; the write side can only produce one.
 
 
 # CONSOLIDATED DOCUMENTS
