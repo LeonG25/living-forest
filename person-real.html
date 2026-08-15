@@ -693,7 +693,16 @@
       .sort((a,b)=>String(b.published_at||b.created_at||'').localeCompare(String(a.published_at||a.created_at||''))); return rows[0]||null; };
 
   /* ---------- per-row gate: who may remove what (Rule 3) ---------- */
-  function canDelete(row){ if(!row) return false; if(state.keeper) return true;
+  /* EVERYBODY ASKS (Leon, 2026-08-15).
+     The keeper used to delete outright while everyone else had to ask. Leon removed that
+     rule deliberately: he wants his own edits to travel the road the family travels, because
+     a keeper who never experiences the waiting cannot see what it feels like. So there is no
+     keeper shortcut left anywhere on this page - a published row is asked about, by anyone.
+     What survives is not a privilege but a symmetry: ANY person may withdraw their OWN
+     suggestion while it is still waiting, because retracting something the keeper has not
+     yet seen is not a deletion from the archive. The keeper has that same right, as a
+     contributor, and no more. */
+  function canDelete(row){ if(!row) return false;
     return row.status!=='published' && !!user && row.created_by===user.id; }
   /* a contributor cannot delete a published row — they ask, and the keeper decides */
   function removalReq(targetId){ return facts.find(x=>x.field==='remove_request'&&x.status!=='published'&&x.value===targetId)||null; }
@@ -705,7 +714,10 @@
     const can=canDelete(row);
     return `<button class="np-ctl ${can?'':'warn'}" data-rowdel="${row.id}">${sv(can?I.trash:I.x,1.7)} ${esc(can?(label||L.remove):L.askremove)}</button>`; }
   /* birth/death/gender live on people columns — only the keeper may clear them */
-  function clearCtl(col){ if(!state.keeper) return ''; const L=d();
+  /* birth/death/gender live on people columns. These were keeper-only instant clears;
+     with no keeper shortcut left they would be a back door, so they are shown to nobody
+     until they are rebuilt as a request like everything else. */
+  function clearCtl(col){ return ''; const L=d();
     const has=person&&person[col]!=null&&person[col]!=='';
     return has?`<button class="np-ctl" data-clearperson="${col}">${sv(I.trash,1.7)} ${esc(L.remove)}</button>`:''; }
 
@@ -1034,7 +1046,8 @@
   function partCtls(k){ const L=d(); const lang=state.lang; const row=(NAMEROW[k]||{})[lang];
     let del=delCtl(row);
     if(!del&&(k==='given'||k==='family')){ const v=NV.find(x=>x.lang===lang&&x.status==='published'&&x[k]);
-      if(v&&state.keeper) del=`<button class="np-ctl" data-delnv="${v.id}:${k}">${sv(I.trash,1.7)} ${esc(L.remove)}</button>`; }
+      /* the keeper's instant name-part delete is gone with the rest of the shortcuts */
+      if(false) del=''; }
     return `<div class="rowctl"><button class="np-ctl" data-editpart="${k}">${sv(I.pen,1.7)} ${esc(L.edit)}</button>${del}</div>`; }
   function namePartBlock(k,v){ const L=d(); return `<div class="namepart"><div class="np-lab">${esc(L[k]||k)}</div><div class="np-val serif">${esc(v)}</div>${partCtls(k)}</div>`; }
   /* The page's own label, in one place. NAME.display no longer exists - the field is gone -
@@ -1417,7 +1430,7 @@
     return { gid:gid, place:pRow?pRow.value:'', country:cRow?cRow.value:'',
              pending: pen('pbirth')||pen('pbirth_country') }; }
   function pendingCustomRows(){ const L=d(); return groupCustom(false).map(c=>{ const lab=c.label[state.lang]||c.label.en||Object.values(c.label)[0]||''; const val=c.value[state.lang]||c.value.en||Object.values(c.value)[0]||'';
-      return `<div class="detailrow" style="border-color:rgba(201,162,255,.34);background:rgba(201,162,255,.06)"><div><div class="dl">${esc(lab)}</div><div class="dv">${esc(val)}</div>${state.keeper?keeperInline(c.group_id,'group'):`<div class="pending" style="margin-top:6px"><span class="sp"></span>${L.bothpending}</div>`}</div>${state.keeper?`<span class="x" data-delgroup="${c.group_id}">${sv(I.x,2)}</span>`:''}</div>`; }).join(''); }
+      return `<div class="detailrow" style="border-color:rgba(201,162,255,.34);background:rgba(201,162,255,.06)"><div><div class="dl">${esc(lab)}</div><div class="dv">${esc(val)}</div>${state.keeper?keeperInline(c.group_id,'group'):`<div class="pending" style="margin-top:6px"><span class="sp"></span>${L.bothpending}</div>`}</div><span class="x" data-delgroup="${c.group_id}">${sv(I.x,2)}</span></div>`; }).join(''); }
   function bodyFor(f){ const L=d(); const id=f.id, lang=state.lang;
     if(id==='name') return nameBody();
     if(id==='face'){ const shots=tagged.map((t,i)=>`<div class="tagshot"><div class="im" data-thumb="${i}"${t.artefact_id?` data-open-moment="${esc(t.artefact_id)}" role="button" tabindex="0" aria-label="${esc(L.openPhoto)}" style="cursor:pointer"`:''}>${galSVG(i)}</div><div class="cap2">${esc([t.meta&&t.meta.when,t.meta&&t.meta.where].filter(Boolean).join(' · '))}</div></div>`).join('');
@@ -1462,7 +1475,7 @@
           <div class="rk">${esc(kindText(r))}</div><div class="rn">${esc(r.name)}</div>
           <div class="rc">${esc(L.certs[r.certainty]||r.certainty)}${r.note?' · '+esc(r.note):''}</div>
           <div class="rowctl"><button class="np-ctl" data-reledit="${r.id}">${sv(I.pen,1.7)} ${L.edit}</button>
-            <button class="np-ctl warn" data-reldel="${r.id}">${sv(I.trash,1.7)} ${esc(state.keeper?L.remove:L.askremove)}</button></div>
+            <button class="np-ctl warn" data-reldel="${r.id}">${sv(I.trash,1.7)} ${esc(L.askremove)}</button></div>
         </div></div>`).join('');
       /* free-text kin rows written before connections were typed */
       const legacy=pubList('kin','und').filter(r=>!parseKin(r.value)).map(r=>`<div class="relrow"><div>
@@ -1489,7 +1502,7 @@
     /* more */
     let h=S.more.custom.map(c=>`<div class="detailrow"><div><div class="dl">${esc(c.label[lang]||c.label.en||c.label.ru||c.label.he||'')}</div><div class="dv">${esc(c.value[lang]||c.value.en||c.value.ru||c.value.he||'')}</div>
         <div class="rowctl"><button class="np-ctl" data-editgroup="${c.group_id}">${sv(I.pen,1.7)} ${L.edit}</button>
-          <button class="np-ctl warn" data-delgroup="${c.group_id}">${sv(I.trash,1.7)} ${esc(state.keeper?L.remove:L.askremove)}</button></div></div></div>`).join('');
+          <button class="np-ctl warn" data-delgroup="${c.group_id}">${sv(I.trash,1.7)} ${esc(L.askremove)}</button></div></div></div>`).join('');
     h+=pendingCustomRows();
     h+=`<div class="adddetail"><button class="plus" data-act="adddetail">${sv(I.plus,1.8)} ${L.adddetail}</button></div>`;
     h+=`<div class="field" style="margin-top:14px"><label>${L.source}</label>${chipsField('source',L.source,true)}</div>`;
@@ -1713,7 +1726,9 @@
         <div class="field"><label>${L.relnote}</label><input class="inp" data-kinnote value="${esc(st.note||'')}" placeholder="${esc(L.relnote)}"></div>
         ${state.keeper?'':`<div class="hint" style="display:flex;gap:9px">${sv(I.info,1.7)}<span>${esc(L.keeper)}</span></div>`}
         <div class="btnrow"><button class="btn ghost" data-act="close">${L.cancel}</button>
-          <button class="btn ${state.keeper?'primary':'violet'}" data-act="kinsave">${state.keeper?L.save:L.send}</button></div>
+          <!-- this said Save to a keeper while saveRel has sent every tie to the queue since
+               2026-08-07 - the button was promising something the code had stopped doing -->
+          <button class="btn violet" data-act="kinsave">${L.send}</button></div>
         ${canRemove?`<div class="btnrow"><button class="btn ghost" data-act="kinremove" style="color:var(--edit-hi);border-color:rgba(201,162,255,.4)">${sv(I.trash,1.7)} ${esc(L.removeconn)}</button></div>`:''}`;
       const s=sh.querySelector('[data-kinsearch]'); if(s) s.oninput=e=>{ st.q=e.target.value; draw(); const n=sh.querySelector('[data-kinsearch]'); if(n){ n.focus(); n.setSelectionRange(n.value.length,n.value.length); } };
       const np=sh.querySelector('[data-kinnote]'); if(np) np.oninput=e=>{ st.note=e.target.value; };
@@ -1757,8 +1772,8 @@
       }
       await saveRel({ relId:st.relId, other:st.other, other_name:st.other?nameOf(st.other):String(st.propose||'').trim(),
         propose:st.other?'':String(st.propose||'').trim(), kind:kindForStore, dir:st.dir, certainty:st.certainty, note:st.note, mode });
-      hideSheets(); await reload(); selectFacet('kin'); toast(state.keeper?L.saved:L.sent); };
-    sh._kinRemove=async()=>{ await removeRel(st.relId); hideSheets(); await reload(); selectFacet('kin'); toast(state.keeper?L.saved:L.sent); };
+      hideSheets(); await reload(); selectFacet('kin'); toast(L.sent); };
+    sh._kinRemove=async()=>{ await removeRel(st.relId); hideSheets(); await reload(); selectFacet('kin'); toast(L.sent); };
     draw(); showSheet('kin'); }
 
   /* A TIE THAT CANNOT BE TRUE IS REFUSED BEFORE IT IS ASKED.
@@ -1887,7 +1902,9 @@
         else await sb.from('relationships').insert({from_person:ends.from,to_person:ends.to}); }catch(e2){} } }
 
   async function removeRel(relId){ if(!relId||!user) return; const r=rels.find(x=>x.id===relId);
-    if(state.keeper){ try{ await sb.from('relationships').delete().eq('id',relId); }catch(e){} return; }
+    /* the keeper used to cut the tie here and now; that shortcut is gone. A severed
+       relationship is the heaviest deletion in the app and it goes through the queue
+       like everything else - approving it still materialises the removal. */
     const payload=JSON.stringify({ op:'remove', rel_id:relId, other:r?r.other:null, other_name:r?r.name:'',
       kind:r?r.kind:'other', dir:r?r.dir:'other_child', certainty:r?r.certainty:'remembered', note:'' });
     try{ await sb.from('person_facts').insert({person_id:PERSON_ID,group_id:uuid(),field:'kin',lang:'und',value:payload,ord:0,status:'in_review',created_by:user.id}); }catch(e){} }
@@ -2054,13 +2071,13 @@
         return; }
       const dg=e.target.closest('[data-delgroup]'); if(dg){ const gid=dg.getAttribute('data-delgroup');
         const rows=facts.filter(x=>x.group_id===gid);
-        if(state.keeper||rows.every(canDelete)){ for(const ff of rows) await delFact(ff.id); }
+        if(rows.every(canDelete)){ for(const ff of rows) await delFact(ff.id); }
         else { let ok=true; for(const ff of rows) if(!removalReq(ff.id)&&await insFact('remove_request','und',ff.id)===false) ok=false; if(ok) toast(L.removeAsked); }
         await reload(); return; }
       const eg=e.target.closest('[data-editgroup]'); if(eg){ openAdd(eg.getAttribute('data-editgroup')); return; }
       const ep=e.target.closest('[data-editpart]'); if(ep){ openAddPart(ep.getAttribute('data-editpart')); return; }
       const re=e.target.closest('[data-reledit]'); if(re){ openKin('edit',re.getAttribute('data-reledit')); return; }
-      const rdel=e.target.closest('[data-reldel]'); if(rdel){ await removeRel(rdel.getAttribute('data-reldel')); await reload(); selectFacet('kin'); toast(state.keeper?L.saved:L.sent); return; }
+      const rdel=e.target.closest('[data-reldel]'); if(rdel){ await removeRel(rdel.getAttribute('data-reldel')); await reload(); selectFacet('kin'); toast(L.sent); return; }
       const cp=e.target.closest('[data-clearperson]'); if(cp&&state.keeper){ const col=cp.getAttribute('data-clearperson');
         try{ await sb.from('people').update({[col]:null}).eq('id',PERSON_ID); }catch(er){} await reload(); return; }
       /* Copy the given name into the called name, language by language - Russian given to
