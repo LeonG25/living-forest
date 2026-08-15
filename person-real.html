@@ -1305,6 +1305,80 @@
     }
     await reload();
     toast(ok?L.sent:L.saveFail, !ok); }
+  /* OCCUPATION IS NOT ONE THING (Leon, 2026-08-15).
+     A person is a teacher and a beekeeper and, later, someone who mends clocks. It was a
+     single box, so a second occupation could only ever overwrite the first - which is how
+     'Engineer' and 'Engineer m' came to be published side by side with no way to remove
+     either from inside the app.
+     One group_id per occupation, exactly as a home works. The group holds that occupation in
+     whichever languages it has, which makes it a STABLE IDENTITY: it can be edited and
+     removed as itself instead of a row being guessed at by its text. Reading falls back the
+     way every multilingual field here does - the reader's language, then en, then und, then
+     any - so an occupation typed in English is still visible to a Russian reader rather than
+     vanishing. Not auto-translated: translation beyond countries is parked. */
+  function occGroups(){ const g={}; const ts=r=>String(r.published_at||r.created_at||'');
+    facts.filter(x=>x.field==='occupation'&&x.group_id&&hasv(x.value)).forEach(x=>{
+      const b=g[x.group_id]=g[x.group_id]||{group_id:x.group_id,rows:[],by:{}};
+      b.rows.push(x);
+      const k=(x.status==='published'?'pub:':'pen:')+(x.lang||'und');
+      if(!b.by[k]||ts(x)>ts(b.by[k])) b.by[k]=x; });
+    return Object.keys(g).map(k=>g[k]).sort((a,b)=>ts(a.rows[0]).localeCompare(ts(b.rows[0]))); }
+  function occVal(b){ const order=[state.lang,'en','und'].concat(LANGS);
+    for(const pre of ['pen:','pub:']) for(const l of order){ const r=b.by[pre+l]; if(r&&hasv(r.value)) return r.value; }
+    return ''; }
+  function occPubVal(b){ const order=[state.lang,'en','und'].concat(LANGS);
+    for(const l of order){ const r=b.by['pub:'+l]; if(r&&hasv(r.value)) return r.value; }
+    return ''; }
+  function occPending(b){ return occVal(b)!==occPubVal(b); }
+  function occDelCtl(b){ const L=d(); const req=removalReq(b.group_id);
+    if(req) return `<span class="remreq">${esc(state.keeper?L.askremove:L.removeAsked)}</span>`;
+    const mine=b.rows.every(r=>canDelete(r));
+    return `<button class="np-ctl ${mine?'':'warn'}" data-delocc="${b.group_id}">${sv(mine?I.trash:I.x,1.7)} ${esc(mine?L.remove:L.askremove)}</button>`; }
+  function occCard(b){ const L=d(); const pend=occPending(b);
+    const style=pend?' style="border-color:rgba(201,162,255,.34);background:rgba(201,162,255,.06)"':'';
+    return `<div class="detailrow"${style}>
+      <div><div class="dv">${esc(occVal(b))}</div>
+        ${pend?`<div class="pending" style="margin-top:6px"><span class="sp"></span>${esc(L.hWaiting)}</div>`:''}
+        <div class="rowctl"><button class="np-ctl" data-editocc="${b.group_id}">${sv(I.pen,1.7)} ${esc(L.hEdit)}</button>${occDelCtl(b)}</div>
+      </div></div>`; }
+  let occDrafts=[];
+  function occFormBox(){ const c=$('.facet[data-facet="life"]'); return c?c.querySelector('[data-occadd]'):null; }
+  function occDraftCard(dft,i){ const L=d();
+    return `<div class="detailrow" style="border-color:rgba(201,162,255,.34);background:rgba(201,162,255,.06)">
+      <div><div class="dv">${esc(dft.value)}</div>
+        <div class="pending" style="margin-top:6px"><span class="sp"></span>${esc(L.hDraft)}</div>
+        <div class="rowctl"><button class="np-ctl" data-dropocc="${i}">${sv(I.trash,1.7)} ${esc(L.remove)}</button></div>
+      </div></div>`; }
+  /* stage what is typed, so reaching for a second occupation does not throw away the first */
+  function stageOccForm(){ const box=occFormBox(); if(!box) return true;
+    if(getComputedStyle(box).display==='none') return true;
+    const gi=box.querySelector('[data-occgid]'), vi=box.querySelector('[data-occval]');
+    const v=vi?vi.value.trim():''; if(!v) return true;
+    const gid=gi?gi.value:'';
+    const i=occDrafts.findIndex(x=>x.gid&&x.gid===gid);
+    if(gid&&i>=0) occDrafts[i]={gid:gid,value:v}; else occDrafts.push({gid:gid,value:v});
+    return true; }
+  async function flushOccDrafts(){ let ok=true;
+    const drafts=occDrafts.slice(); occDrafts=[];
+    for(const dft of drafts){
+      const gid=dft.gid||uuid();
+      const cur=occGroups().find(b=>b.group_id===gid);
+      if(cur && occVal(cur)===dft.value) continue;      /* nothing actually changed */
+      if(await insFact('occupation',state.lang,dft.value,0,gid)===false) ok=false; }
+    return ok; }
+  function openOcc(gid){ const box=occFormBox(); if(!box) return;
+    const b=gid?occGroups().find(x=>x.group_id===gid):null;
+    const gi=box.querySelector('[data-occgid]'), vi=box.querySelector('[data-occval]');
+    if(gi) gi.value=gid||''; if(vi) vi.value=b?occVal(b):'';
+    box.style.display='block'; if(vi) vi.focus(); }
+  function occBlock(){ const L=d(); const gs=occGroups();
+    const cards=gs.map(occCard).join('')+occDrafts.map(occDraftCard).join('');
+    const rtl=state.lang==='he'?' style="direction:rtl;text-align:right"':'';
+    return `${cards}<div class="chips" style="margin-top:8px"><button class="chip add" data-act="addocc">${sv(I.plus,2)} ${esc(L.addoccupation)}</button></div>
+      <div data-occadd style="display:none;margin-top:10px;padding-inline-start:12px;border-inline-start:2px solid rgba(127,180,216,.25)">
+        <input type="hidden" data-occgid value="">
+        <div class="field"><input class="inp" data-occval placeholder="${esc(L.addoccupation)}"${rtl}></div>
+      </div>`; }
   function draftCard(dft,i){ const L=d();
     const where=[dft.lived,dft.country].filter(hasv).join(', ')||'—';
     const yrs=(hasv(dft.home_from)||hasv(dft.home_to))
@@ -1354,7 +1428,7 @@
     if(id==='life'){
       const rowctl=h=>h?`<div class="rowctl">${h}</div>`:'';
       return mlEdit(L.about,'bio',S.life.bio,null,true) + waitMark('bio',lang) + rowctl(delCtl(pubRow('bio',lang)))
-        + `<div class="field"><label>${L.occupation}</label><input class="inp ${hasv(S.life.occupation[lang])?'':'empty-inp'}" data-field="occupation" data-lang="${lang}" value="${esc(S.life.occupation[lang]||'')}" placeholder="${esc(L.addoccupation)}">${waitMark('occupation',lang)}${rowctl(delCtl(pubRow('occupation',lang)))}</div>`
+        + `<div class="field"><label>${L.occupation}</label>${occBlock()}</div>`
         + `<div class="row2"><div class="field"><label>${L.born}</label><input class="inp" type="date" data-field="birth" value="${/^\d{4}-\d{2}-\d{2}$/.test(S.life.birth)?esc(S.life.birth):''}">${rowctl(clearCtl('birth_date'))}</div>
            <div class="field"><label>${L.died}</label><input class="inp" type="date" data-field="death" value="${/^\d{4}-\d{2}-\d{2}$/.test(S.life.death)?esc(S.life.death):''}">${rowctl(clearCtl('death_date'))}</div></div>
         <div class="field"><div class="toggle"><span class="sw ${S.life.living?'on':''}" data-act="sw" data-field="living"></span><span style="font-size:14px">${L.living}</span></div></div>
@@ -1858,8 +1932,8 @@
          requests for his gender and 'still alive' as well, again and again. His own gender,
          living and birth_prec each carry duplicate published rows written seconds apart from
          exactly this. A request should mean somebody changed something. */
-      for(const l of LANGS){ const v=read('bio',l); if(v!=null&&v.trim()!==''&&v.trim()!==newestVal('bio',l)) await put('bio',l,v.trim());
-        const o=read('occupation',l); if(o!=null&&o.trim()!==''&&o.trim()!==newestVal('occupation',l)) await put('occupation',l,o.trim()); }
+      for(const l of LANGS){ const v=read('bio',l); if(v!=null&&v.trim()!==''&&v.trim()!==newestVal('bio',l)) await put('bio',l,v.trim()); }
+      stageOccForm(); if(!await flushOccDrafts()) ok=false;
       const b=read('birth'); if(b!=null&&b!==''&&b!==newestVal('birth','und')) await put('birth','und',b);
       const de=read('death'); if(de!=null&&de!==''&&de!==newestVal('death','und')) await put('death','und',de);
       const seg=card.querySelector('.seg[data-field="birth_prec"] .on');
@@ -2014,6 +2088,15 @@
          "verified" them only checked that the buttons EXISTED. Presence is not function. */
       const eh=e.target.closest('[data-edithome]');
       if(eh){ return openHome(eh.getAttribute('data-edithome')); }
+      const eo=e.target.closest('[data-editocc]');
+      if(eo){ stageOccForm(); render(); openOcc(eo.getAttribute('data-editocc')); return; }
+      const dpo=e.target.closest('[data-dropocc]');
+      if(dpo){ occDrafts.splice(+dpo.getAttribute('data-dropocc'),1); render(); return; }
+      const dlo=e.target.closest('[data-delocc]');
+      if(dlo){ const gid=dlo.getAttribute('data-delocc'); const b=occGroups().find(x=>x.group_id===gid); if(!b) return;
+        if(b.rows.every(r=>canDelete(r))){ for(const r of b.rows) await delFact(r.id); }
+        else if(!removalReq(gid)){ if(await insFact('remove_request','und',gid)) toast(d().removeAsked); }
+        await reload(); return; }
       const dd=e.target.closest('[data-dropdraft]');
       if(dd){ homeDrafts.splice(+dd.getAttribute('data-dropdraft'),1); render(); return; }
       const dh=e.target.closest('[data-delhome]');
@@ -2060,6 +2143,7 @@
       if(act==='watch'){ const q=(person&&person.id)?('?id='+encodeURIComponent(person.id)):''; location.href='reel-real.html'+q; return; }
       if(act==='addmemory'){ location.href='contribute-add-real.html'; return; }
       if(act==='addhome'){ if(!stageHomeForm()) return; render(); openHome(null); return; }
+      if(act==='addocc'){ stageOccForm(); render(); openOcc(null); return; }
       if(act==='homecancel'){ const box=$('.facet[data-facet="places"] [data-homeadd]'); if(box) box.style.display='none'; return; }
       if(act==='homesend'){ return sendHome(); }
       if(act==='addconn'){ return openKin('add'); }
