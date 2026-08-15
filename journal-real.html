@@ -391,11 +391,14 @@
     try{
       let myPid=null; try{ const {data:pr}=await sb.from('profiles').select('person_id').eq('id',user.id).maybeSingle(); myPid=pr&&pr.person_id; }catch(e){}
       const {data:arts,error}=myPid?await sb.from('artefacts')
-        .select('id,metadata,created_at,status,contributor_id').eq('contributor_id',myPid):{data:[],error:null};
+        .select('id,metadata,created_at,status,contributor_id,body').eq('contributor_id',myPid):{data:[],error:null};
       if(!error && arts){
         for(const a of arts){
           const ts=new Date(a.created_at||Date.now()).getTime();
-          const m=a.metadata||{}; const cap=[m.when,m.where].filter(Boolean).join(' · ');
+          /* a photograph with no date and no place left this line reading 'added a photo of'
+             and then nothing. Its own words are the better name for it when it has them. */
+          const m=a.metadata||{}; let cap=[m.when,m.where].filter(Boolean).join(' · ');
+          if(!cap && a.body){ const b=String(a.body).replace(/\s+/g,' ').trim(); if(b) cap=b.slice(0,48)+(b.length>48?'…':''); }
           const pub=a.status==null||a.status==='published';
           const prov=pub?'gold':'wait'; const label=pub?d().provWords:d().provWaiting;
           entries.push({ts, act:d().aPhoto(cap), icon:I.photo, prov, label, art:a.id}); counts.mem++;
