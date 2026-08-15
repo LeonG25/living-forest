@@ -793,11 +793,11 @@ function modeHTML(mode){
      +'<div class="seg"><button class="segb '+(mode==='in'?'on':'')+'" data-gosign>'+t.segIn+'</button><button class="segb '+(mode==='up'?'on':'')+'" data-goreg>'+t.segUp+'</button></div>'
      +'<div class="fields">'+nameField
        +'<label class="field"><span class="fl">'+t.email+'</span><div class="fin">'+IC_MAIL+'<input id="gEmail" type="email" placeholder="'+t.emailPh+'" autocomplete="email"></div></label>'
-       +'<label class="field"><span class="fl">'+t.pw+'</span><div class="fin" id="gPwFin">'+IC_LOCK+'<input id="gPw" type="password" placeholder="'+pwPh+'" autocomplete="'+(mode==='up'?'new-password':'current-password')+'"><button class="eye" data-eye aria-label="'+t.showPw+'">'+IC_EYE+'</button></div></label>'
+       +'<label class="field"><span class="fl">'+t.pw+'</span><div class="fin" id="gPassFin">'+IC_LOCK+'<input id="gPass" type="password" placeholder="'+pwPh+'" autocomplete="'+(mode==='up'?'new-password':'current-password')+'"><button class="eye" data-eye aria-label="'+t.showPw+'">'+IC_EYE+'</button></div></label>'
      +'</div>'
      +opennote
      +'<div class="errslot" id="gErr"></div>'
-     +'<button class="enter" id="gGo">'+enter+' '+arrow+'</button>'
+     +'<button class="enter" id="gBtn">'+enter+' '+arrow+'</button>'
      +alt
    +'</div>'
   +'</div>'
@@ -814,7 +814,7 @@ function wireMode(mode){ const s=gscreen();
  s.querySelectorAll('[data-eye]').forEach(b=>b.onclick=()=>{ const i=b.parentNode.querySelector('input'); i.type=i.type==='password'?'text':'password'; });
  s.querySelectorAll('[data-langbtn]').forEach(b=>b.onclick=openLangSheet);
  s.querySelectorAll('[data-forgot]').forEach(b=>b.onclick=doForgot);
- const go=s.querySelector('#gGo'); if(go) go.onclick=(mode==='up'?doRegister:doSignIn);
+ const go=s.querySelector('#gBtn'); if(go) go.onclick=(mode==='up'?doRegister:doSignIn);
  /* the keyboard's Go key IS the button: Enter in any gate field submits the current mode
     (on phones the real button often hides beneath the keyboard - typing must be enough) */
  s.querySelectorAll('input').forEach(inp=>{ inp.addEventListener('keydown', ev=>{
@@ -822,9 +822,9 @@ function wireMode(mode){ const s=gscreen();
  s.querySelectorAll('input').forEach(inp=>inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); go&&go.click(); } }));
 }
 
-function fieldError(text){ const box=document.getElementById('gErr'); if(box) box.innerHTML='<div class="errline">'+IC_ALERT+text+'</div>'; const fin=document.getElementById('gPwFin'); if(fin) fin.classList.add('wrong'); }
-function infoMsg(text){ const box=document.getElementById('gErr'); if(box) box.innerHTML='<div class="infoline">'+text+'</div>'; const fin=document.getElementById('gPwFin'); if(fin) fin.classList.remove('wrong'); }
-function clearErr(){ const box=document.getElementById('gErr'); if(box) box.innerHTML=''; const fin=document.getElementById('gPwFin'); if(fin) fin.classList.remove('wrong'); }
+function fieldError(text){ const box=document.getElementById('gErr'); if(box) box.innerHTML='<div class="errline">'+IC_ALERT+text+'</div>'; const fin=document.getElementById('gPassFin'); if(fin) fin.classList.add('wrong'); }
+function infoMsg(text){ const box=document.getElementById('gErr'); if(box) box.innerHTML='<div class="infoline">'+text+'</div>'; const fin=document.getElementById('gPassFin'); if(fin) fin.classList.remove('wrong'); }
+function clearErr(){ const box=document.getElementById('gErr'); if(box) box.innerHTML=''; const fin=document.getElementById('gPassFin'); if(fin) fin.classList.remove('wrong'); }
 
 const GATE_WAIT={
  en:{ ttl:'You are at the gate', body:(k)=>`The forest is a family circle. ${k} — the keeper — has been told you are here; everything opens the moment you are welcomed in.`, again:'Knock again', out:'Sign out' },
@@ -861,14 +861,14 @@ document.addEventListener('focusin', function(e){
   }
 });
 async function doSignIn(){ clearErr(); const t=T[GLANG];
- const email=(gscreen().querySelector('#gEmail').value||'').trim(), password=gscreen().querySelector('#gPw').value;
+ const email=(gscreen().querySelector('#gEmail').value||'').trim(), password=gscreen().querySelector('#gPass').value;
  if(!email||!password){ fieldError(t.needBoth); return; }
  const { error }=await sb.auth.signInWithPassword({ email, password });
  if(error){ fieldError(/invalid|credential|password|not found/i.test(error.message||'')?t.badPw:error.message); return; }
  showPlanting('plant'); if(await anchorGate()) return; load();
 }
 async function doRegister(){ clearErr(); const t=T[GLANG];
- const name=(gscreen().querySelector('#gName').value||'').trim(), email=(gscreen().querySelector('#gEmail').value||'').trim(), password=gscreen().querySelector('#gPw').value;
+ const name=(gscreen().querySelector('#gName').value||'').trim(), email=(gscreen().querySelector('#gEmail').value||'').trim(), password=gscreen().querySelector('#gPass').value;
  if(!name||!email||!password){ fieldError(t.needAll); return; }
  if(password.length<6){ fieldError(t.shortPw); return; }
  const { data, error }=await sb.auth.signUp({ email, password, options:{ data:{ display_name:name } } });
