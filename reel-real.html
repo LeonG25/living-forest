@@ -119,6 +119,12 @@
   .sceneno.cool{ border-color:rgba(127,180,216,.34); } .sceneno.cool .dot{ background:var(--cool); box-shadow:0 0 8px 1px var(--cool); }
   @keyframes flick{ 0%,100%{opacity:.7; transform:scale(.9);} 45%{opacity:1; transform:scale(1.14);} }
   .rcap{ position:absolute; inset-inline:14px; bottom:14px; z-index:4; }
+  /* the reel had no style for this at all; the person page's, so one app looks like one app */
+  .rcap .stepin{ margin-top:10px; display:inline-flex; align-items:center; gap:7px; font-size:12.5px;
+    color:var(--gold,#f3cd84); text-decoration:none; border:1px solid rgba(243,205,132,.3);
+    border-radius:11px; padding:7px 12px; background:rgba(243,205,132,.06); }
+  .rcap .stepin:after{ content:"\2192"; }
+  .screen[dir="rtl"] .rcap .stepin:after{ content:"\2190"; }
   .rcap .telling p{ font-family:'Newsreader',serif; font-size:19px; line-height:1.34; color:#f8efdb; text-shadow:0 2px 18px rgba(0,0,0,.7); }
   .rcap .telling p em{ color:var(--gold-hi); font-style:italic; }
   .toldby{ display:inline-flex; align-items:center; gap:8px; margin-top:11px; padding:6px 12px 6px 12px; border-radius:99px; background:rgba(6,10,22,.6); backdrop-filter:blur(8px); border:1px solid rgba(243,205,132,.4); }
@@ -275,6 +281,7 @@
       kindledA:'kindled', ofEight:'of eight facets kindled', ringOf:'of eight facets', nee:'was', stillDark:n=>n===1?'one still dark':`${n} still dark`, allLit:'all eight alight',
       provGold:'Gold — a person told us this', provCool:'Cool — the app worked this out', provViolet:'Violet — still gathering, held for the keeper',
       toldBy:'Told by', openPhoto:'Open this photograph',
+      stepIn:'Step into this moment',
       capName:'Her name, as the family keeps it', capNameN:'Their name, as the family keeps it',
       appearsIn:n=>n===1?'Appears in one photograph':`Appears in ${n} photographs`,
       born:'Born', died:'Died', pbirth:'Born in', livedIn:'Lived in',
@@ -298,6 +305,7 @@
       kindledA:'зажжено', ofEight:'из восьми граней зажжены', ringOf:'из восьми граней', nee:'урожд.', stillDark:n=>n===1?'одна ещё тёмная':`ещё ${n} тёмных`, allLit:'все восемь горят',
       provGold:'Золото — это рассказал человек', provCool:'Синее — приложение вычислило', provViolet:'Фиолетовое — ещё собирается, ждёт хранителя',
       toldBy:'Рассказал(а)', openPhoto:'Открыть фотографию',
+      stepIn:'Войти в этот момент',
       capName:'Её имя, как хранит семья', capNameN:'Их имя, как хранит семья',
       appearsIn:n=>`На ${n} фотографиях`,
       born:'Родилась', died:'Умерла', pbirth:'Место рождения', livedIn:'Жила в',
@@ -321,6 +329,7 @@
       kindledA:'נדלקו', ofEight:'מתוך שמונה גרנים נדלקו', ringOf:'מתוך שמונה', nee:'לבית', stillDark:n=>n===1?'אחת עדיין חשוכה':`${n} עדיין חשוכות`, allLit:'כל השמונה דולקות',
       provGold:'זהב — אדם סיפר לנו את זה', provCool:'כחול — האפליקציה חישבה זאת', provViolet:'סגול — עדיין נאסף, שמור לשומר',
       toldBy:'סיפר/ה', openPhoto:'פתח את התצלום',
+      stepIn:'להיכנס לרגע הזה',
       capName:'שמה, כפי שהמשפחה שומרת', capNameN:'שמם, כפי שהמשפחה שומרת',
       appearsIn:n=>`מופיעה ב-${n} תצלומים`,
       born:'נולדה', died:'נפטרה', pbirth:'נולדה ב', livedIn:'גרה ב',
@@ -397,18 +406,26 @@
     try{ const {data:fs}=await sb.from('person_facts').select('id,group_id,field,lang,value,ord,status,created_at,published_at').eq('person_id',PERSON_ID); facts=fs||[]; }catch(e){ facts=[]; }
     tagged=[]; contribNames={};
     try{ const {data:subs}=await sb.from('artefact_subjects').select('artefact_id,detail').eq('person_id',PERSON_ID); const ids=(subs||[]).map(s=>s.artefact_id);
-      if(ids.length){ let arts=[]; try{ const {data:a}=await sb.from('artefacts').select('id,storage_path,metadata,contributor_id,status').in('id',ids); arts=a||[]; }
+      if(ids.length){ let arts=[]; try{ const {data:a}=await sb.from('artefacts').select('id,storage_path,metadata,contributor_id,status,body').in('id',ids); arts=a||[]; }
         catch(e){ try{ const {data:a2}=await sb.from('artefacts').select('id,storage_path').in('id',ids); arts=a2||[]; }catch(e2){ arts=[]; } }
         const byId={}; arts.forEach(a=>byId[a.id]=a);
         tagged=(subs||[]).filter(s=>byId[s.artefact_id]&&byId[s.artefact_id].storage_path&&byId[s.artefact_id].status!=='rejected')
-          .map(s=>({artefact_id:s.artefact_id,storage_path:byId[s.artefact_id].storage_path,meta:(byId[s.artefact_id]||{}).metadata||{},contributor_id:(byId[s.artefact_id]||{}).contributor_id||null}));
+          .map(s=>({artefact_id:s.artefact_id,storage_path:byId[s.artefact_id].storage_path,meta:(byId[s.artefact_id]||{}).metadata||{},body:(byId[s.artefact_id]||{}).body||'',contributor_id:(byId[s.artefact_id]||{}).contributor_id||null}));
         const cids=[...new Set(tagged.map(t=>t.contributor_id).filter(Boolean))];
-        if(cids.length){ try{ const {data:pp}=await sb.from('people').select('id').in('id',cids); (pp||[]).forEach(x=>contribNames[x.id]=(window.LFLabel&&LFLabel.of(x.id,(localStorage.getItem('lf_lang')||'en')))||''); }catch(e){} }
+        /* LFLabel was loaded for this person alone, so every teller's name came back
+           empty and 'told by' showed nothing at all. Load the tellers too. */
+        if(cids.length){ try{ if(window.LFLabel) await LFLabel.load(sb,cids); }catch(e){}
+          try{ const {data:pp}=await sb.from('people').select('id').in('id',cids); (pp||[]).forEach(x=>contribNames[x.id]=(window.LFLabel&&LFLabel.of(x.id,(localStorage.getItem('lf_lang')||'en')))||''); }catch(e){} }
       } }catch(e){}
     rels=[];
     try{ const {data:rp}=await sb.from('relationships').select('id,from_person,to_person').or('from_person.eq.'+PERSON_ID+',to_person.eq.'+PERSON_ID);
       rels=(rp||[]).map(r=>({id:r.id})); }catch(e){ rels=[]; }
-    memories=tagged.map(t=>({ id:t.artefact_id, storage_path:t.storage_path, cap:[t.meta&&t.meta.when,t.meta&&t.meta.where].filter(Boolean).join(' · '), teller:t.contributor_id?(contribNames[t.contributor_id]||''):'' }));
+    /* The reel called a date and a place a story, exactly as the person page did - the
+       artefacts query never asked for `body`. The words are the story; when and where
+       are a caption beneath them. */
+    memories=tagged.map(t=>({ id:t.artefact_id, storage_path:t.storage_path, cap:(t.body||'').trim(),
+      whenwhere:[t.meta&&t.meta.when,t.meta&&t.meta.where].filter(Boolean).join(' · '),
+      teller:t.contributor_id?(contribNames[t.contributor_id]||''):'' }));
   }
 
   /* ---------- name resolution (built from person_facts, newest-published wins) ---------- */
@@ -474,7 +491,7 @@
       const line=(pb?d().pbirth+' '+pb:'')+((pb&&lived.length)?' · ':'')+(lived.length?d().livedIn+' '+lived.join(', '):'');
       scenes.push({facet:'places', prov:'cool', tile:placeSVG, cap:line||d().facet.places }); }
     memories.forEach((m,i)=>{ scenes.push({facet:'story', prov:'gold', photo:m.storage_path, seed:i+1,
-      artId:m.id||'', cap:m.cap||'', teller:m.teller }); });
+      artId:m.id||'', cap:m.cap||'', whenwhere:m.whenwhere||'', teller:m.teller }); });
     if(LIT.kin){ scenes.push({facet:'kin', prov:'cool', tile:kinSVG, cap:d().kinLine(rels.length) }); }
     if(state.idx>=scenes.length) state.idx=Math.max(0,scenes.length-1);
   }
@@ -538,7 +555,12 @@
         <div class="sceneno ${cool?'cool':''}"><span class="dot"></span> ${esc(L.sceneOf(state.idx+1,scenes.length))} · ${esc(L.facet[s.facet])}</div>
         <div class="rcap">
           ${s.cap?`<div class="telling"><p>${esc(s.cap)}</p></div>`:''}
+          ${s.whenwhere?`<div class="whenwhere" style="opacity:.72;font-size:12px;margin-top:2px">${esc(s.whenwhere)}</div>`:''}
           ${told}
+          <!-- Stepping in was a tap on the photograph with nothing to say so, and a story
+               without a photograph had no way in at all. Now it is a plain link on every
+               story that has a moment behind it. -->
+          ${s.artId?`<a class="stepin" href="moment-real.html?id=${esc(s.artId)}">${esc(L.stepIn)}</a>`:''}
         </div>
       </div>
       <div class="provline"><span class="lp ${provCls}"></span> ${esc(provTxt)}</div>
