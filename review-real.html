@@ -365,6 +365,7 @@
       living:['no longer living','still living'], prec:{exact:'exact date',month:'to the month',year:'to the year',approx:'approximate',unknown:'unknown'},
       stillThere:'still there',
       askToRemove:'asks to remove', askUnknown:'something already gone',
+      askGone:'gone from the forest',
       fld:{ given:'given name', family:'family name', patronymic:'patronymic', maiden:'maiden name', called:'called', honorific:'honorific', nickname:'nickname', lived:'lived in', pbirth:'born in', birth:'born', death:'died', birth_prec:'date precision', living:'still living?', gender:'gender', occupation:'occupation', bio:'about', langspoken:'languages spoken', source:'source', face:'the portrait', custom:'a detail', kin:'relation', field:'detail' } },
     ru:{ dir:'ltr', native:'Русский', en:'Russian',
       topK:'Хранитель', topN:'Ждёт вас',
@@ -394,6 +395,7 @@
       living:['уже не живёт','ещё живёт'], prec:{exact:'точная дата',month:'до месяца',year:'до года',approx:'приблизительно',unknown:'неизв.'},
       stillThere:'до сих пор',
       askToRemove:'просит удалить', askUnknown:'то, чего уже нет',
+      askGone:'исчезнет из леса',
       fld:{ given:'имя', family:'фамилия', patronymic:'отчество', maiden:'девичья', called:'зовут', honorific:'титул', nickname:'прозвище', lived:'жил(а) в', pbirth:'место рождения', birth:'родился', death:'умер', birth_prec:'точность даты', living:'ещё жив?', gender:'пол', occupation:'занятие', bio:'о человеке', langspoken:'языки', source:'источник', face:'портрет', custom:'деталь', kin:'связь', field:'деталь' } },
     he:{ dir:'rtl', native:'עברית', en:'Hebrew',
       topK:'שומר', topN:'מחכה לך',
@@ -423,6 +425,7 @@
       living:['כבר לא בחיים','עדיין בחיים'], prec:{exact:'תאריך מדויק',month:'עד חודש',year:'עד שנה',approx:'בערך',unknown:'לא ידוע'},
       stillThere:'עד היום',
       askToRemove:'מבקש להסיר', askUnknown:'משהו שכבר איננו',
+      askGone:'ייעלם מהיער',
       fld:{ given:'שם פרטי', family:'שם משפחה', patronymic:'שם האב', maiden:'שם נעורים', called:'קוראים', honorific:'תואר', nickname:'כינוי', lived:'גר ב', pbirth:'מקום לידה', birth:'נולד', death:'נפטר', birth_prec:'דיוק תאריך', living:'עדיין בחיים?', gender:'מגדר', occupation:'עיסוק', bio:'אודות', langspoken:'שפות', source:'מקור', face:'דיוקן', custom:'פרט', kin:'קשר', field:'פרט' } }
   };
   const d=()=>T[state.lang];
@@ -693,6 +696,11 @@
     return `${esc(grpName)} · <b>${esc(fldLabel(it.field))}${esc(langTag(it.lang))}</b>`;
   }
 
+  /* the plain text of what an ask is about, for the 'was' line */
+  function valText(it){ const L2=d();
+    if(it.kind==='remreq') return removeTargetText(it.target)||L2.askUnknown;
+    if(it.kind==='clearreq') return (L2.fld&&L2.fld[it.target])||it.target;
+    return it.value||''; }
   function valMarkup(it){
     if(it.kind==='artefact'){ return it.value ? `<span class="quiet">“${esc(it.value)}”</span>` : `<span class="quiet">${esc(it.mediaKind==='voice'?d().voiceRec:d().photoRec)}</span>`; }
     if(it.kind==='group'){ return `${esc(it.value||'—')}`; }
@@ -700,8 +708,7 @@
        nothing, and a keeper who cannot see what they are agreeing to cannot agree. */
     /* valMarkup has no L - the line above it calls d() directly. Assumed twice in one
        file now; both times the keeper's page died on load and showed nothing at all. */
-    if(it.kind==='remreq'){ return `${esc(removeTargetText(it.target)||d().askUnknown)}`; }
-    if(it.kind==='clearreq'){ const L2=d(); return `${esc((L2.fld&&L2.fld[it.target])||it.target)}`; }
+    if(it.kind==='remreq'||it.kind==='clearreq'){ return `<span class="quiet">${esc(d().askGone)}</span>`; }
     return esc(it.value||'—');
   }
 
@@ -772,6 +779,11 @@
         if(row){ try{ const ov=JSON.parse(row.value); if(ov&&ov.storage_path===oPath) oBox=ov.box||((ov.zoom!=null)?{zoom:ov.zoom,px:ov.px,py:ov.py}:null); }catch(e){} } }
       return imgCompareFace(oPath,oBox,facePath(it.raw&&it.raw.value),nBox); }
     if(isPhotoItem(it)) return imgCompare('', it.storage||'', true);
+    /* An ask reads backwards in the was/now frame: it said 'was: adding - no previous
+       value' above a home that has stood in the forest for weeks. What a removal has
+       IS the value; what it will have is nothing. */
+    if(it.kind==='remreq'||it.kind==='clearreq')
+      return `<div class="wasrow"><span class="wastag">${esc(L.wasTag)}</span><span class="wasval">${esc(valText(it))}</span><span class="arrow">${arrowCh()}</span></div>`;
     if(o.kind==='new')  return `<div class="newmark">${IC.leaf} ${esc(o.why==='person'?L.newPerson:L.newMemory)}</div>`;
     if(o.kind==='none') return `<div class="wasrow"><span class="wastag">${esc(L.wasTag)}</span><span class="wasnone">${esc(L.noPrev)}</span></div>`;
     return `<div class="wasrow"><span class="wastag">${esc(L.wasTag)}</span><span class="wasval">${esc(o.text)}</span><span class="arrow">${arrowCh()}</span></div>`;
