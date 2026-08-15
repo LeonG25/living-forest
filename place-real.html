@@ -144,7 +144,13 @@
      .phone is pointer-events:none so the transparent hero region passes taps
      through to the globe canvas and the time-dial #hitring beneath it; only the
      scrolled-in .content re-enables pointer events. */
-  .phone{position:relative;z-index:5;width:100%;max-width:430px;margin:0 auto;pointer-events:none;}
+  /* Responsive rollout (canvas family): the globe already takes the whole glass
+     (#stage/#mount are position:fixed, full-bleed at every width). The scroll-up detail
+     column grows from a phone width to the designer's reading cap (lf-layout --measure,
+     64ch ~= the subject facts column) and stays centred over the living globe. At <=phone
+     the cap never bites, so 360 is unchanged. The full two-column subject layout and the
+     corner rail/inspector are a separate redesign, not this layout-only pass. */
+  .phone{position:relative;z-index:5;width:100%;max-width:var(--measure);margin:0 auto;pointer-events:none;}
   .herospace{height:100dvh;}
   .content{position:relative;padding:0 20px calc(90px + env(safe-area-inset-bottom));background:linear-gradient(to bottom, transparent 0, #04070e 22vh, #04070e 100%);pointer-events:auto;}
   .content::before{content:"";position:absolute;left:0;right:0;top:-1px;height:22vh;background:linear-gradient(to bottom, transparent, #04070e);pointer-events:none;}
