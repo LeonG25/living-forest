@@ -698,8 +698,10 @@
     if(it.kind==='group'){ return `${esc(it.value||'—')}`; }
     /* say WHAT is being removed, in the words the family used - a uuid tells the keeper
        nothing, and a keeper who cannot see what they are agreeing to cannot agree. */
-    if(it.kind==='remreq'){ return `${esc(removeTargetText(it.target)||L.askUnknown)}`; }
-    if(it.kind==='clearreq'){ return `${esc((L.fld&&L.fld[it.target])||it.target)}`; }
+    /* valMarkup has no L - the line above it calls d() directly. Assumed twice in one
+       file now; both times the keeper's page died on load and showed nothing at all. */
+    if(it.kind==='remreq'){ return `${esc(removeTargetText(it.target)||d().askUnknown)}`; }
+    if(it.kind==='clearreq'){ const L2=d(); return `${esc((L2.fld&&L2.fld[it.target])||it.target)}`; }
     return esc(it.value||'—');
   }
 
