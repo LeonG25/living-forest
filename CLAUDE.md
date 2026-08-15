@@ -343,6 +343,30 @@ mark the row as machine-made, and let any human edit in any language lock that l
 permanently. No diffing, no splicing, no staleness tracking. Most of the value, a fraction
 of the cost.
 
+### Journal redesign (Leon, 2026-08-15) — PARKED
+
+The journal was always meant to be built as a simple LOG first, through a designer pass, with
+the fuller progression-driven version left for later. It has never had that pass. It reads as
+a list of events because that is exactly what it is, and Leon has now looked at it and asked
+for a redesign rather than more patching.
+
+Fixed today so the parked work starts from a page that at least tells the truth: an entry for
+a photograph with neither date nor place used to read "added a photo of" and then stop. It
+falls back to the photograph's own words now.
+
+Do NOT tinker further before the designer pass. It needs a shape, not another fix.
+
+### Reel redesign (Leon, 2026-08-15) — PARKED
+
+Same call, the same evening. The reel now shows real stories, a caption of when and where, the
+teller's name, and a way into each moment - all repaired today - but Leon wants it redesigned
+rather than extended. Three things it gained today are load-bearing and should survive in some
+form whatever the designer decides: the story is the story and not a date standing in for one,
+a story with no photograph still needs a way in, and the teller has a name.
+
+Note for whoever picks these up: BOTH are excluded from the responsive rollout on purpose.
+Reflowing a page that is about to be redesigned is work thrown away twice.
+
 ### "Who Is Who?" has no page (found 2026-08-14) — PARKED
 
 Leon found it: he could not reach the game. It is not merely an orphan.
