@@ -31,13 +31,12 @@
   .serif{ font-family:'Newsreader',Georgia,serif; }
   .mono{ font-family:'Azeret Mono',monospace; }
 
-  /* one living device — full-bleed on phones, bezelled on desktop */
+  /* full-viewport page (drop the mock device frame). The living background fills the
+     glass; the content stays a centred column (--stage-max, 900px) so the keeper list
+     never stretches across a tablet or desktop. Phone (<900) is unaffected — the cap
+     never bites, so nothing designed for the phone changes. */
   .device{ position:relative; width:100vw; height:100dvh; overflow:hidden; background:#04070e; }
-  @media (min-width:520px){
-    body{ display:flex; align-items:center; justify-content:center; }
-    .device{ width:min(390px,100vw); height:820px; max-height:96dvh; border-radius:42px;
-      box-shadow:0 40px 120px -50px #000, 0 0 0 9px #14141b, 0 0 0 10px #2b2b34; }
-  }
+  .topbar, .pad, .gate{ max-width:var(--stage-max); margin-inline:auto; width:100%; }
   .screen[dir="rtl"]{ direction:rtl; }
   .screen[dir="rtl"] .serif,.screen[dir="rtl"] .warm,.screen[dir="rtl"] .cn,.screen[dir="rtl"] .ttl .n{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
   .screen[dir="rtl"] .ibtn.back svg{ transform:scaleX(-1); }
