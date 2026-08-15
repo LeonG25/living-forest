@@ -495,6 +495,7 @@
       gameSubs:{ whoiswho:'Match the face to the right name.', crowd:'Find them among the gathering.', order:'Set the moments of a life in sequence.', wherewas:'Place the photographs on the map.', thread:'Trace how they connect to the family.', whosememory:'Guess who each story is about.', voice:'Not enough stories yet.', whatnext:'Guess which story came next.' },
       country:'Country', addcountry:'add a country',
       hFrom:'From', hTo:'Until', hPresent:'still there', hEdit:'edit',
+      hDraft:'not sent yet',
       hYearBad:'A year needs four digits, between 1700 and next year.',
       hOrderBad:'The year they left cannot come before the year they arrived.',
       hEmpty:'A home needs at least a place, a country or a year.',
@@ -541,6 +542,7 @@
       gameSubs:{ whoiswho:'Сопоставьте лицо и имя.', crowd:'Найдите среди собравшихся.', order:'Расставьте моменты жизни.', wherewas:'Разместите фото на карте.', thread:'Проследите связь с семьёй.', whosememory:'Угадайте, о ком эта история.', voice:'Историй пока мало.', whatnext:'Угадайте, какая история была следующей.' },
       country:'Страна', addcountry:'добавить страну',
       hFrom:'С', hTo:'По', hPresent:'до сих пор', hEdit:'изменить',
+      hDraft:'ещё не отправлено',
       hYearBad:'Год — это четыре цифры, от 1700 до следующего года.',
       hOrderBad:'Год отъезда не может быть раньше года приезда.',
       hEmpty:'Нужно указать хотя бы место, страну или год.',
@@ -587,6 +589,7 @@
       gameSubs:{ whoiswho:'התאימו את הפנים לשם הנכון.', crowd:'מצאו אותה בין הנאספים.', order:'סדרו את רגעי החיים.', wherewas:'מקמו את התמונות על המפה.', thread:'עקבו אחר הקשר למשפחה.', whosememory:'נחשו על מי כל סיפור.', voice:'עדיין אין מספיק סיפורים.', whatnext:'נחשו איזה סיפור בא אחר כך.' },
       country:'מדינה', addcountry:'הוספת מדינה',
       hFrom:'משנת', hTo:'עד שנת', hPresent:'עד היום', hEdit:'עריכה',
+      hDraft:'טרם נשלח',
       hYearBad:'שנה היא ארבע ספרות, בין 1700 לשנה הבאה.',
       hOrderBad:'שנת העזיבה לא יכולה להקדים את שנת ההגעה.',
       hEmpty:'לבית דרושים לפחות מקום, מדינה או שנה.',
@@ -1253,38 +1256,67 @@
       else failed=true; }
     if(failed) toast(L.trFail,true);
     return !failed; }
-  async function sendHome(){ const L=d(); const card=$('.facet[data-facet="places"]'); if(!card) return;
-    const box=card.querySelector('[data-homeadd]'); if(!box) return;
+  /* SEVERAL HOMES IN ONE VISIT (Leon, 2026-08-15).
+     There is one form, and 'add a home' blanked it - so filling it in, then reaching for
+     another, threw the first away. A person who lived in four places could only ever record
+     one per trip to the keeper. A filled form is now STAGED when you reach for the next one:
+     it becomes a card that says it has not been sent yet, and every staged home goes with
+     the next Send, whichever button you press. Staged homes live only in this page - nothing
+     is written until Send, which is the promise the single Send button makes. */
+  let homeDrafts=[];
+  function homeFormBox(){ const card=$('.facet[data-facet="places"]'); return card?card.querySelector('[data-homeadd]'):null; }
+  function readHomeForm(){ const box=homeFormBox(); if(!box) return null;
     const val=sel=>{ const el=box.querySelector(sel); return el?el.value.trim():''; };
+    return { gid:val('[data-homegid]'), lived:val('[data-newhome]'), country:val('[data-newcountry]'),
+             home_from:val('[data-newfrom]'), home_to:val('[data-newto]') }; }
+  function homeFormError(m){ const box=homeFormBox(); if(!box) return false;
     const err=box.querySelector('[data-homeerr]');
-    const fail=m=>{ if(err){ err.textContent=m; err.style.display='block'; } };
-    const gid=val('[data-homegid]')||uuid();
-    const next={ lived:val('[data-newhome]'), country:val('[data-newcountry]'),
-                 home_from:val('[data-newfrom]'), home_to:val('[data-newto]') };
-    if(!HOMEF.some(f=>hasv(next[f]))) return fail(L.hEmpty);
-    if(!yearOk(next.home_from)||!yearOk(next.home_to)) return fail(L.hYearBad);
-    if(hasv(next.home_from)&&hasv(next.home_to)&&+next.home_to<+next.home_from) return fail(L.hOrderBad);
-    const cur=homeGroups().find(b=>b.group_id===gid);
-    let ok=true, wrote=0;
-    for(const f of HOMEF){
-      const was=cur?hv(cur,f):'';
-      if(next[f]===was) continue;               /* only what actually changed */
-      if(await insFact(f,(f==='country'?state.lang:'und'),next[f],0,gid)===false) ok=false; else wrote++; }
-    const countryChanged=hasv(next.country)&&next.country!==(cur?hv(cur,'country'):'');
-    box.style.display='none';
-    if(countryChanged) await translateCountry(gid,next.country);
-    /* Leon typed his country of birth, then opened the home form and pressed ITS Send.
-       The birthplace was never written: this button only ever sent the home, while the
-       page's own Send sends everything else. Two Sends on one facet, each carrying half
-       the visit - exactly what consolidating to one Send was meant to end. Either button
-       now sends everything that changed. */
+    if(err){ err.textContent=m; err.style.display='block'; } return false; }
+  /* returns true if the form was empty or successfully staged, false if it is invalid */
+  function stageHomeForm(){ const L=d(); const box=homeFormBox(); if(!box) return true;
+    if(getComputedStyle(box).display==='none') return true;
+    const d0=readHomeForm(); if(!d0) return true;
+    if(!HOMEF.some(f=>hasv(d0[f]))) return true;                 /* nothing typed - fine */
+    if(!yearOk(d0.home_from)||!yearOk(d0.home_to)) return homeFormError(L.hYearBad);
+    if(hasv(d0.home_from)&&hasv(d0.home_to)&&+d0.home_to<+d0.home_from) return homeFormError(L.hOrderBad);
+    const i=homeDrafts.findIndex(x=>x.gid&&x.gid===d0.gid);
+    if(d0.gid&&i>=0) homeDrafts[i]=d0; else homeDrafts.push(d0);
+    return true; }
+  /* write every staged home. Called from submitFacet('places') so that BOTH the page's Send
+     and the home form's own Send flush them - one road, not two. */
+  async function flushHomeDrafts(){ let ok=true;
+    const drafts=homeDrafts.slice(); homeDrafts=[];
+    for(const dft of drafts){
+      const gid=dft.gid||uuid();
+      const cur=homeGroups().find(b=>b.group_id===gid);
+      for(const f of HOMEF){
+        const was=cur?hv(cur,f):'';
+        if(dft[f]===was) continue;                /* only what actually changed */
+        if(await insFact(f,(f==='country'?state.lang:'und'),dft[f],0,gid)===false) ok=false; }
+      if(hasv(dft.country) && dft.country!==(cur?hv(cur,'country'):'')){
+        if(await translateCountry(gid,dft.country)===false) ok=false; } }
+    return ok; }
+  async function sendHome(){ const L=d();
+    if(!stageHomeForm()) return;                  /* invalid - the error is already showing */
+    const box=homeFormBox(); if(box) box.style.display='none';
+    let ok=true;
     for(const fid of ['name','life','places','kin','more']){
       try{ if(await submitFacet(fid,true)===false) ok=false; }catch(e){ ok=false; }
     }
     await reload();
     toast(ok?L.sent:L.saveFail, !ok); }
+  function draftCard(dft,i){ const L=d();
+    const where=[dft.lived,dft.country].filter(hasv).join(', ')||'—';
+    const yrs=(hasv(dft.home_from)||hasv(dft.home_to))
+      ? ((dft.home_from||'…')+' — '+(dft.home_to||L.hPresent)) : '';
+    return `<div class="detailrow" style="border-color:rgba(201,162,255,.34);background:rgba(201,162,255,.06)">
+      <div><div class="dv">${esc(where)}</div>
+        ${yrs?`<div class="dl" style="text-transform:none;letter-spacing:0;margin-top:3px">${esc(yrs)}</div>`:''}
+        <div class="pending" style="margin-top:6px"><span class="sp"></span>${esc(L.hDraft)}</div>
+        <div class="rowctl"><button class="np-ctl" data-dropdraft="${i}">${sv(I.trash,1.7)} ${esc(L.remove)}</button></div>
+      </div></div>`; }
   function homesBlock(){ const L=d(); const gs=homeGroups();
-    const cards=gs.map(homeCard).join('');
+    const cards=gs.map(homeCard).join('') + homeDrafts.map(draftCard).join('');
     const addbtn=`<button class="chip add" data-act="addhome">${sv(I.plus,2)} ${esc(L.addplace)}</button>`;
     return `${cards}<div class="chips" style="margin-top:8px">${addbtn}</div>${homeForm()}`; }
   /* THE BIRTHPLACE IS A PLACE LIKE ANY OTHER (Leon, 2026-08-14).
@@ -1842,6 +1874,7 @@
          Clearing a gender means removing the fact, not saving a blank over it. */
       if(gval && gval!==(newestVal('gender','und')||S.life.gender)) await put('gender','und',gval);
     } else if(fid==='places'){
+      if(!await flushHomeDrafts()) ok=false;
       const g=pbGroup(); const gid=g.gid||uuid();
       const pb=(read('pbirth')||'').trim(), pc=(read('pbirth_country')||'').trim();
       /* only what actually changed - writing an unchanged value breeds a duplicate row */
@@ -1981,6 +2014,8 @@
          "verified" them only checked that the buttons EXISTED. Presence is not function. */
       const eh=e.target.closest('[data-edithome]');
       if(eh){ return openHome(eh.getAttribute('data-edithome')); }
+      const dd=e.target.closest('[data-dropdraft]');
+      if(dd){ homeDrafts.splice(+dd.getAttribute('data-dropdraft'),1); render(); return; }
       const dh=e.target.closest('[data-delhome]');
       if(dh){ const gid=dh.getAttribute('data-delhome'); const b=homeGroups().find(x=>x.group_id===gid); if(!b) return;
         if(b.rows.every(r=>canDelete(r))){ for(const r of b.rows) await delFact(r.id); }
@@ -2024,7 +2059,7 @@
       if(act==='revert'){ seed(); render(); return; }
       if(act==='watch'){ const q=(person&&person.id)?('?id='+encodeURIComponent(person.id)):''; location.href='reel-real.html'+q; return; }
       if(act==='addmemory'){ location.href='contribute-add-real.html'; return; }
-      if(act==='addhome'){ return openHome(null); }
+      if(act==='addhome'){ if(!stageHomeForm()) return; render(); openHome(null); return; }
       if(act==='homecancel'){ const box=$('.facet[data-facet="places"] [data-homeadd]'); if(box) box.style.display='none'; return; }
       if(act==='homesend'){ return sendHome(); }
       if(act==='addconn'){ return openKin('add'); }
