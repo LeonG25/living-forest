@@ -444,7 +444,10 @@
   function removeTargetText(target){
     const rows=removeTargets(target); if(!rows.length) return '';
     const L=d();
-    const seen=[]; rows.forEach(r=>{ if(hasv(r.value)&&seen.indexOf(r.value)<0) seen.push(r.value); });
+    /* hasv() lives on the person page, not this one. Borrowing a helper by memory instead
+       of checking is exactly the habit that keeps costing hours here. */
+    const seen=[]; rows.forEach(r=>{ const v=(r.value==null?'':String(r.value)).trim();
+      if(v&&seen.indexOf(r.value)<0) seen.push(r.value); });
     const what=seen.join(', ');
     const lab=(L.fld&&L.fld[rows[0].field])||rows[0].field;
     return what?(lab+' · '+what):lab; }
