@@ -863,14 +863,27 @@
     return `<div class="pending" style="margin-top:6px"><span class="sp"></span>${esc(L.hWaiting)}</div>`; }
   function seed(){
     buildNames();
-    const perLang=f=>{ const o={}; LANGS.forEach(l=>o[l]=pubNewest(f,l)); return o; };
+    /* MINE-FIRST. The box was seeded from the PUBLISHED value, so the moment a suggestion was
+       sent the page re-rendered and the field snapped back to the old approved text while the
+       new one waited unseen. Leon corrected 'Engineer m' to 'Engineer', sent it, watched the
+       box revert to 'Engineer m', pressed Send again and sent 'Engineer m' as a fresh change -
+       two requests fourteen seconds apart, and neither of them wrong by its own logic.
+       A person sees their OWN waiting suggestion in the box, which is what the violet line
+       beneath it is promising. Someone else's unapproved text is NOT shown: that would put
+       unreviewed words in front of the family, which is the whole reason the queue exists. */
+    const mineFirst=(f,l)=>{ const ts=r=>String(r.published_at||r.created_at||'');
+      const mine=facts.filter(x=>x.field===f&&(l==null||x.lang===l)&&x.status!=='published'
+                 &&hasv(x.value)&&user&&x.created_by===user.id).sort((a,b)=>ts(b).localeCompare(ts(a)));
+      if(mine.length) return mine[0].value;
+      return (l==null?pubNewest(f,'und'):pubNewest(f,l))||''; };
+    const perLang=f=>{ const o={}; LANGS.forEach(l=>o[l]=mineFirst(f,l)); return o; };
     S={
       life:{ bio:perLang('bio'), occupation:perLang('occupation'), birth:person.birth_date||'', death:person.death_date||'',
         birth_prec:person.birth_certainty||'', living:!!person.is_living, /* THE FACT IS THE TRUTH, NOT THE COLUMN. This read people.sex, and every one of those is
        null - the approval writes it but the write never lands, so the gender a keeper approved
        vanished the moment the page reloaded. gender lives as a published fact in person_facts,
        language-neutral ('und'), exactly as Leon asked: one value for all languages. */
-      gender:(pubNewest('gender','und')||pubNewest('gender','en')||person.sex||''), langspoken:pubList('langspoken','und') },
+      gender:(mineFirst('gender','und')||pubNewest('gender','en')||person.sex||''), langspoken:pubList('langspoken','und') },
       places:{ pbirth:pubNewest('pbirth','und')||pubNewest('pbirth','en')||'', lived:pubList('lived','und'), country:perLang('country') },
       kin:pubList('kin','und'),
       more:{ custom:groupCustom(true), sources:pubList('source','und') }
