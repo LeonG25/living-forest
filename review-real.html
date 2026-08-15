@@ -364,6 +364,7 @@
       capCurrent:'current', capProposed:'proposed', noPortrait:'no portrait yet',
       living:['no longer living','still living'], prec:{exact:'exact date',month:'to the month',year:'to the year',approx:'approximate',unknown:'unknown'},
       stillThere:'still there',
+      askToRemove:'asks to remove', askUnknown:'something already gone',
       fld:{ given:'given name', family:'family name', patronymic:'patronymic', maiden:'maiden name', called:'called', honorific:'honorific', nickname:'nickname', lived:'lived in', pbirth:'born in', birth:'born', death:'died', birth_prec:'date precision', living:'still living?', gender:'gender', occupation:'occupation', bio:'about', langspoken:'languages spoken', source:'source', face:'the portrait', custom:'a detail', kin:'relation', field:'detail' } },
     ru:{ dir:'ltr', native:'Русский', en:'Russian',
       topK:'Хранитель', topN:'Ждёт вас',
@@ -392,6 +393,7 @@
       capCurrent:'сейчас', capProposed:'предложено', noPortrait:'портрета ещё нет',
       living:['уже не живёт','ещё живёт'], prec:{exact:'точная дата',month:'до месяца',year:'до года',approx:'приблизительно',unknown:'неизв.'},
       stillThere:'до сих пор',
+      askToRemove:'просит удалить', askUnknown:'то, чего уже нет',
       fld:{ given:'имя', family:'фамилия', patronymic:'отчество', maiden:'девичья', called:'зовут', honorific:'титул', nickname:'прозвище', lived:'жил(а) в', pbirth:'место рождения', birth:'родился', death:'умер', birth_prec:'точность даты', living:'ещё жив?', gender:'пол', occupation:'занятие', bio:'о человеке', langspoken:'языки', source:'источник', face:'портрет', custom:'деталь', kin:'связь', field:'деталь' } },
     he:{ dir:'rtl', native:'עברית', en:'Hebrew',
       topK:'שומר', topN:'מחכה לך',
@@ -420,6 +422,7 @@
       capCurrent:'נוכחי', capProposed:'מוצע', noPortrait:'אין דיוקן עדיין',
       living:['כבר לא בחיים','עדיין בחיים'], prec:{exact:'תאריך מדויק',month:'עד חודש',year:'עד שנה',approx:'בערך',unknown:'לא ידוע'},
       stillThere:'עד היום',
+      askToRemove:'מבקש להסיר', askUnknown:'משהו שכבר איננו',
       fld:{ given:'שם פרטי', family:'שם משפחה', patronymic:'שם האב', maiden:'שם נעורים', called:'קוראים', honorific:'תואר', nickname:'כינוי', lived:'גר ב', pbirth:'מקום לידה', birth:'נולד', death:'נפטר', birth_prec:'דיוק תאריך', living:'עדיין בחיים?', gender:'מגדר', occupation:'עיסוק', bio:'אודות', langspoken:'שפות', source:'מקור', face:'דיוקן', custom:'פרט', kin:'קשר', field:'פרט' } }
   };
   const d=()=>T[state.lang];
@@ -432,6 +435,19 @@
   const fldLabel=(f)=> (d().fld[f]||d().fld.field||f);
   function langTag(l){ return (l&&l!=='und'&&l!=='undefined')?(' ('+String(l).toUpperCase()+')'):''; }
 
+  /* a request names either one published row or a whole group (a home, an occupation) */
+  function removeTargets(target){
+    const pub=(pending.pub||[]);
+    const one=pub.filter(r=>r.id===target);
+    if(one.length) return one;
+    return pub.filter(r=>r.group_id===target); }
+  function removeTargetText(target){
+    const rows=removeTargets(target); if(!rows.length) return '';
+    const L=d();
+    const seen=[]; rows.forEach(r=>{ if(hasv(r.value)&&seen.indexOf(r.value)<0) seen.push(r.value); });
+    const what=seen.join(', ');
+    const lab=(L.fld&&L.fld[rows[0].field])||rows[0].field;
+    return what?(lab+' · '+what):lab; }
   function factValue(f){ const L=d();
     if(f.field==='living') return L.living[f.value==='1'?1:0];
     if(f.field==='birth_prec') return L.prec[f.value]||f.value||'';
@@ -587,6 +603,18 @@
          what it relates to.' It arrived as four separate cards - a town, a country, 1995,
          2002 - and a bare year on its own means nothing to the person deciding. The rows of
          one group_id are gathered into a single card that reads as a sentence. */
+      /* AN ASK IS NOT A FACT (2026-08-15). Every deletion in the app now travels as a
+         remove_request or clear_request, including the keeper's own. Nothing here knew that:
+         the rows fell through into the ordinary fact list, where they drew a nameless card
+         showing a raw uuid, and approving one published the REQUEST while leaving the thing
+         it asked about exactly where it was. So 'everybody asks' meant nothing could ever
+         actually be removed. They are their own kind of item now, and they say what they
+         are about. */
+      if(f.field==='remove_request'||f.field==='clear_request'){
+        items.facts.push({ kind:f.field==='clear_request'?'clearreq':'remreq', id:f.id, group:'facts',
+          field:f.field, target:f.value, personId:f.person_id,
+          suggester:accountName(f.created_by), created_at:f.created_at });
+        return; }
       if(HOMEISH.indexOf(f.field)>=0 && f.group_id){
         (homeByGroup[f.group_id]=homeByGroup[f.group_id]||{group_id:f.group_id,rows:[],personId:f.person_id,created_by:f.created_by,created_at:f.created_at}).rows.push(f); return; }
       const grp = NAME_FIELDS.includes(f.field) ? 'names' : 'facts';
@@ -657,6 +685,7 @@
     if(it.kind==='person') return `${esc(L.groups.newcomers)} · <b>${esc(L.fld.field)}</b>`;
     if(it.kind==='artefact') return `${esc(L.groups.memories)} · <b>${esc(it.mediaKind==='voice'?L.voiceRec:L.photoRec)}</b>`;
     if(it.kind==='group') return `${esc(L.groups.facts)} · <b>${esc(it.customLabel||L.fld.custom)}</b>`;
+    if(it.kind==='remreq'||it.kind==='clearreq') return `${esc(L.groups.facts)} · <b>${esc(L.askToRemove)}</b>`;
     const grpName = it.group==='names'?L.groups.names:L.groups.facts;
     return `${esc(grpName)} · <b>${esc(fldLabel(it.field))}${esc(langTag(it.lang))}</b>`;
   }
@@ -664,6 +693,10 @@
   function valMarkup(it){
     if(it.kind==='artefact'){ return it.value ? `<span class="quiet">“${esc(it.value)}”</span>` : `<span class="quiet">${esc(it.mediaKind==='voice'?d().voiceRec:d().photoRec)}</span>`; }
     if(it.kind==='group'){ return `${esc(it.value||'—')}`; }
+    /* say WHAT is being removed, in the words the family used - a uuid tells the keeper
+       nothing, and a keeper who cannot see what they are agreeing to cannot agree. */
+    if(it.kind==='remreq'){ return `${esc(removeTargetText(it.target)||L.askUnknown)}`; }
+    if(it.kind==='clearreq'){ return `${esc((L.fld&&L.fld[it.target])||it.target)}`; }
     return esc(it.value||'—');
   }
 
@@ -1001,6 +1034,22 @@
         if(NAMEPARTS.includes(f.field)){ try{ await sb.from('person_facts').delete().eq('person_id',f.person_id).eq('lang',f.lang).eq('field',f.field).eq('status','published').neq('id',id); }catch(e){} }
         const u=await sb.from('person_facts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id);
         if(u.error){ console.error('approve fact',u.error); await reload(); toast(d().approveFail,false); return; } } }
+    else if(kind==='remreq'){
+      const req=(pending.facts||[]).find(x=>x.id===id); if(!req) return;
+      for(const r of removeTargets(req.value)){ try{ await sb.from('person_facts').delete().eq('id',r.id); }catch(e){} }
+      try{ await sb.from('person_facts').delete().eq('id',id); }catch(e){}
+    }
+    else if(kind==='clearreq'){
+      /* birth, death and gender live on people columns as well as in facts, so clearing one
+         means emptying BOTH - a column left behind would refill the page on the next load. */
+      const req=(pending.facts||[]).find(x=>x.id===id); if(!req) return;
+      const COL={ birth:{birth_date:null,birth_certainty:null}, death:{death_date:null,death_precision:null},
+                  gender:{sex:null} };
+      const patch=COL[req.value];
+      if(patch && req.person_id){ try{ await sb.from('people').update(patch).eq('id',req.person_id); }catch(e){} }
+      try{ await sb.from('person_facts').delete().eq('person_id',req.person_id).eq('field',req.value); }catch(e){}
+      try{ await sb.from('person_facts').delete().eq('id',id); }catch(e){}
+    }
     else if(kind==='group'){
       const NAMEPARTS2=['given','family','patronymic','maiden','called','honorific'];
       for(const ff of (pending.facts||[]).filter(x=>x.group_id===id&&x.status!=='published')){
@@ -1029,6 +1078,7 @@
         if(r.error){ toast(L.tFail||'That did not save.',false); return; }
         await reload(); toast(L.tDeclined||'Declined.',false); return; } } if(!user||!state.keeper) return; const [kind,id]=ref.split(':');
     if(kind==='fact'){ try{ await sb.from('person_facts').delete().eq('id',id); }catch(e){} }
+    else if(kind==='remreq'||kind==='clearreq'){ try{ await sb.from('person_facts').delete().eq('id',id); }catch(e){} }
     else if(kind==='group'){ for(const ff of (pending.facts||[]).filter(x=>x.group_id===id)){ try{ await sb.from('person_facts').delete().eq('id',ff.id); }catch(e){} } }
     else if(kind==='artefact'){ try{ await sb.from('artefacts').update({status:'declined'}).eq('id',id); }catch(e){} }
     else if(kind==='person'){ try{ await sb.from('people').update({status:'declined'}).eq('id',id); }catch(e){} }

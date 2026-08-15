@@ -714,12 +714,23 @@
     const can=canDelete(row);
     return `<button class="np-ctl ${can?'':'warn'}" data-rowdel="${row.id}">${sv(can?I.trash:I.x,1.7)} ${esc(can?(label||L.remove):L.askremove)}</button>`; }
   /* birth/death/gender live on people columns — only the keeper may clear them */
-  /* birth/death/gender live on people columns. These were keeper-only instant clears;
-     with no keeper shortcut left they would be a back door, so they are shown to nobody
-     until they are rebuilt as a request like everything else. */
-  function clearCtl(col){ return ''; const L=d();
-    const has=person&&person[col]!=null&&person[col]!=='';
-    return has?`<button class="np-ctl" data-clearperson="${col}">${sv(I.trash,1.7)} ${esc(L.remove)}</button>`:''; }
+  /* ASKING TO EMPTY A FIELD (Leon, 2026-08-15).
+     Birth, death and gender live on people COLUMNS as well as in facts, so they had a
+     keeper-only instant clear. When every other shortcut closed, that one had to go too -
+     but removing it left the three of them un-emptiable by anyone, and a half-remembered
+     birth date that turns out to be wrong should become blank again, not a different wrong
+     date. So it is a request now, like everything else, and anybody may make it.
+     The field name IS the target here - there may be no fact row to point at, because
+     older entries only ever reached the column. */
+  const CLEARCOL={ birth:'birth_date', death:'death_date', gender:'sex' };
+  function clearReq(field){ return facts.find(x=>x.field==='clear_request'&&x.status!=='published'&&x.value===field)||null; }
+  function clearCtl(col){ const L=d();
+    const field=Object.keys(CLEARCOL).find(k=>CLEARCOL[k]===col)||col;
+    const hasCol=person&&person[col]!=null&&person[col]!=='';
+    const hasFact=facts.some(x=>x.field===field&&x.status==='published'&&hasv(x.value));
+    if(!hasCol&&!hasFact) return '';
+    if(clearReq(field)) return `<span class="remreq">${esc(L.removeAsked)}</span>`;
+    return `<button class="np-ctl warn" data-clearask="${field}">${sv(I.x,1.7)} ${esc(L.askremove)}</button>`; }
 
   /* ---------- storage / face crop ---------- */
   async function signedUrl(path,width){ if(!path) return ''; try{ const opts=width?{transform:{width:width,resize:'contain'}}:undefined; const r=await sb.storage.from('family').createSignedUrl(path,3600,opts); if(r.data&&r.data.signedUrl) return r.data.signedUrl; }catch(e){} if(width){ try{ const r2=await sb.storage.from('family').createSignedUrl(path,3600); return (r2.data&&r2.data.signedUrl)||''; }catch(e){} } return ''; }
@@ -2105,6 +2116,10 @@
          "verified" them only checked that the buttons EXISTED. Presence is not function. */
       const eh=e.target.closest('[data-edithome]');
       if(eh){ return openHome(eh.getAttribute('data-edithome')); }
+      const ca=e.target.closest('[data-clearask]');
+      if(ca){ const f=ca.getAttribute('data-clearask');
+        if(!clearReq(f)){ if(await insFact('clear_request','und',f)) toast(d().removeAsked); }
+        await reload(); return; }
       const eo=e.target.closest('[data-editocc]');
       if(eo){ stageOccForm(); render(); openOcc(eo.getAttribute('data-editocc')); return; }
       const dpo=e.target.closest('[data-dropocc]');
