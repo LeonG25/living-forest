@@ -40,8 +40,24 @@
     background:radial-gradient(115% 80% at 50% 34%, transparent 30%, rgba(4,7,14,.55) 100%),
               linear-gradient(to bottom, rgba(4,7,14,.28), transparent 26%, transparent 62%, rgba(4,7,14,.82)); }
 
+  /* RESPONSIVE (2026-08-15). This page never had a fake device frame - it was simply
+     capped at 440px, so on Leon's iPad the whole moment sat in a narrow column down the
+     middle of a large screen while the background filled the glass around it.
+     The column widens to the shared --stage-max the games settled on. Below 600px nothing
+     changes at all: the old 440 cap never bit at 360, and the new one does not either.
+     The photograph takes the extra width, which is the point of a bigger screen - the face
+     boxes are positioned in PERCENTAGES of the image, so they follow it exactly and no
+     tag drifts off a face.
+     The story does NOT take it. Twenty-four-point italic running 900px wide is a worse read
+     than it was at 440, so the words keep to --measure and stay centred in the wider column.
+     That is the one thing a wide screen must not do to prose. */
   .wrap{ position:relative; z-index:2; width:100%; max-width:440px; margin:0 auto;
     padding:0 22px calc(60px + env(safe-area-inset-bottom)); }
+  @media (min-width:600px){
+    .wrap{ max-width:var(--stage-max); padding-inline:var(--safe-pad); }
+    .story-words, .story-editable{ max-width:var(--measure); margin-inline:auto; }
+    .sheet{ max-width:560px; border-radius:22px 22px 0 0; }
+  }
 
   .topbar{ display:flex; align-items:center; gap:10px; padding:max(14px,env(safe-area-inset-top)) 0 8px; }
   .icon-btn{ width:42px; height:42px; border-radius:13px; border:1px solid var(--hair);
