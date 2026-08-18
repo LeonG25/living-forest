@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="lf-db.js?v=6"></script>
+<script src="lf-db.js?v=7"></script>
 <script src="lf-face.js?v=3"></script>
 <script src="lf-place.js?v=1"></script>
 <script src="lf-label.js?v=2"></script>
@@ -666,7 +666,11 @@
     {id:'face',   kind:'gold', games:['crowd']},
     {id:'life',   kind:'gold', games:['order']},
     {id:'places', kind:'cool', games:['wherewas','thread']},
-    {id:'story',  kind:'gold', games:['whosememory','voice']},
+    /* 'What Happened Next' was finished, mapped in GAME_PAGES, named in all three languages
+       and registered in GAMES - and listed on no facet at all, so openGame('whatnext') could
+       never fire and no click in the app could reach it. Found by the QC agent 2026-08-17.
+       It belongs with the stories: it builds its rounds from the gaps between told moments. */
+    {id:'story',  kind:'gold', games:['whosememory','voice','whatnext']},
     {id:'kin',    kind:'gold', games:[]},
     {id:'reel',   kind:'cool', games:[]},
     {id:'more',   kind:'gold', games:[]}
@@ -940,6 +944,8 @@
     if(gid==='order') return !(hasv(S.life.birth)||hasv(S.life.death));
     if(gid==='wherewas'||gid==='thread') return !(hasv(S.places.pbirth)||S.places.lived.length);
     if(gid==='whosememory'||gid==='voice') return memories.filter(m=>!m.pending).length<1;
+    /* it asks what came next, so it needs at least two moments to have a 'next' at all */
+    if(gid==='whatnext') return memories.filter(m=>!m.pending).length<2;
     return false;
   }
 

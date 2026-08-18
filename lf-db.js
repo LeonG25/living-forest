@@ -127,8 +127,12 @@
                   var msg='full-size image requested without a transform: '+PAGE+' -> '+
                           String(Array.isArray(pth)?pth[0]:pth).slice(-44)+
                           ' (use LFDB.img(path,width) - this costs ~15x the bytes)';
-                  try{ console.error('[LFDB] '+msg); }catch(_){ }
-                  try{ note(msg); }catch(_){ }
+                  /* once per file per page: the proxy sees the call and its retry, so an
+                     unguarded fetch read as two faults and sent whoever met it hunting
+                     for a second bug that was never there. */
+                  if(!seen['img:'+pth]){ seen['img:'+pth]=1;
+                    try{ console.error('[LFDB] '+msg); }catch(_){ }
+                    try{ note(msg); }catch(_){ } }
                 }
               }
             }catch(_){ }

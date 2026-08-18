@@ -343,6 +343,19 @@ mark the row as machine-made, and let any human edit in any language lock that l
 permanently. No diffing, no splicing, no staleness tracking. Most of the value, a fraction
 of the cost.
 
+### home-real.html is an orphan ON PURPOSE — do not "fix" it
+
+A connectedness audit will report `home-real.html` ("The whole sky") as unreachable: nothing
+links to it. That is correct and intended. The sky was retired on 2026-07-23 when the globe
+became home — removed from the ⊕ menu, its inbound links re-pointed to `index.html`, the file
+kept in the repo rather than deleted. It orphaned nothing on its way out, because the sky only
+ever linked outward.
+
+Written here because the QC agent flagged it on 2026-08-17 as a fault and I nearly wired a
+way back into a page Leon had deliberately closed. An audit cannot tell a retirement from a
+mistake; only the record can. If the sky is ever wanted again it needs Leon's word, not an
+agent's report.
+
 ### Journal redesign (Leon, 2026-08-15) — PARKED
 
 The journal was always meant to be built as a simple LOG first, through a designer pass, with
