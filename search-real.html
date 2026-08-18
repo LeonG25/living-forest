@@ -223,11 +223,13 @@
   @keyframes bodydrift{ 0%,100%{ transform:translate(0,0) scale(1); } 50%{ transform:translate(2%,-2%) scale(1.08); } }
   @media (prefers-reduced-motion:reduce){ .aurora,.mote,.mote b,.stars,.qfield.active,body::before{ animation:none!important; } }
 
-  /* fill the viewport on a real phone (single live screen, not the showcase device) */
-  @media (max-width:440px){
-    body{ padding:0; }
-    .device{ width:100vw!important; height:100dvh!important; max-width:none!important; border-radius:0!important; box-shadow:none!important; }
-  }
+  /* full-viewport page (drop the mock device frame). The living background fills the
+     glass; the content stays a centred column (--stage-max, 900px) so the search field,
+     names and results never stretch across a tablet or desktop. Phone (<900) is
+     unaffected — the cap never bites, so nothing designed for the phone changes. */
+  body{ padding:0; }
+  .device{ width:100vw!important; height:100dvh!important; max-width:none!important; border-radius:0!important; border:none!important; box-shadow:none!important; }
+  .topbar, .pad{ max-width:var(--stage-max); margin-inline:auto; width:100%; }
 </style>
 <script src="lf-bg.js?v=3" defer></script>
 </head>

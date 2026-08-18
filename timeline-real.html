@@ -38,8 +38,13 @@
   .sky i{ position:absolute; width:2px; height:2px; border-radius:50%; background:#cfe0f5; opacity:.5; animation:tw 4s ease-in-out infinite; }
   @keyframes tw{ 0%,100%{opacity:.15;} 50%{opacity:.7;} }
 
-  .phone{ position:relative; z-index:1; width:100%; max-width:480px; margin:0 auto;
-    padding:0 20px calc(64px + env(safe-area-inset-bottom)); padding-top:max(16px, env(safe-area-inset-top)); }
+  /* Responsive rollout (list family): the star field is already full-bleed (position:fixed);
+     the reading column just grows from a phone width to the designer's list cap (~560,
+     = lf-layout --measure 64ch) and stays centred over the living background. At <=phone
+     the cap never bites, so 360 is unchanged. A wider list would be a stretched list, which
+     the designer's grammar rules out - the "2nd track" (decade spine) is a separate redesign. */
+  .phone{ position:relative; z-index:1; width:100%; max-width:var(--measure); margin:0 auto;
+    padding:0 var(--safe-pad) calc(64px + env(safe-area-inset-bottom)); padding-top:max(16px, env(safe-area-inset-top)); }
 
   /* top bar */
   .topbar{ display:flex; align-items:center; justify-content:space-between; height:44px; }
