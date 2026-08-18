@@ -83,7 +83,12 @@
     if(Object.prototype.toString.call(s)==='[object Array]') s=s[Math.floor(Math.random()*s.length)];
     return s; }
   function clipMeta(n){ var c=CLIP[n], g=0; while(c && !c.src && c.fb && g++<5) c=CLIP[c.fb]; return c||{}; }
-  var FOREST="https://oabcdrktuikifbormjip.supabase.co/storage/v1/object/public/companion/"+encodeURIComponent("Wood animated bg 9s.mp4");
+  /* The forest behind Fen was the LAST thing this app fetched from Supabase Storage, and
+     it is 1.8 MB pulled on every page that shows him - eight of them. It is a loop of
+     trees: identical for every person, never changing, not remotely private. It had no
+     business on a metered, access-controlled bucket. It sits in the repo now and comes
+     from the same CDN as the fox clips beside it, which were already here. (2026-08-18) */
+  var FOREST="assets/fen/forest-bg.mp4";
   var STRIP=151;
 
   /* speech dictionary — §0 voice law: present tense, meet/know, never remember/preserve */
