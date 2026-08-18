@@ -111,6 +111,27 @@
           var v=t[p];
           if(typeof v!=='function') return v;
           return function(){
+            /* THE TRANSFORMER MUST NEVER BE BYPASSED (Leon, 2026-08-18).
+               A family photograph asked for without a width crosses the wire at full
+               camera resolution - 2.9 MB where 200 KB would do, fifteen times the cost.
+               That is how the egress allowance was exhausted twice, and both times it
+               was silent: the picture looked right, so nothing looked wrong. A page that
+               forgets LFDB.img now says so, loudly, in the console and in the diagnostic
+               note, naming itself and the file so it can be found without a bisect. */
+            try{
+              if((p==='createSignedUrl'||p==='createSignedUrls'||p==='download') && bucket==='family'){
+                var a=arguments, pth=a[0];
+                var opts=(p==='createSignedUrl')?a[2]:(p==='download'?a[1]:a[2]);
+                var wanted=opts&&opts.transform&&opts.transform.width;
+                if(!wanted && IMG.test(String(Array.isArray(pth)?(pth[0]||''):pth))){
+                  var msg='full-size image requested without a transform: '+PAGE+' -> '+
+                          String(Array.isArray(pth)?pth[0]:pth).slice(-44)+
+                          ' (use LFDB.img(path,width) - this costs ~15x the bytes)';
+                  try{ console.error('[LFDB] '+msg); }catch(_){ }
+                  try{ note(msg); }catch(_){ }
+                }
+              }
+            }catch(_){ }
             var r=v.apply(t, arguments);
             if(r && typeof r.then==='function'){
               return r.then(function(res){
