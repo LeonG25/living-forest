@@ -202,6 +202,14 @@
   .sec{ margin-top:32px; }
   .sec-h{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
   .sec-h .lp{ width:7px; height:7px; border-radius:2px; transform:rotate(45deg); flex:0 0 auto; }
+  /* Leon, 2026-08-20: a small pen OUTSIDE the story, the same in every language, opening
+     the story ready to edit. The big invitations it replaces said 'add a telling in
+     Russian' over a story that was plainly already there. */
+  .penbtn{ margin-inline-start:auto; display:inline-flex; align-items:center; justify-content:center;
+    width:30px; height:30px; border-radius:9px; border:1px solid rgba(243,205,132,.28);
+    background:rgba(243,205,132,.07); color:var(--gold); cursor:pointer; flex:0 0 auto; }
+  .penbtn:active{ background:rgba(243,205,132,.16); }
+  .sec-h{ display:flex; align-items:center; gap:8px; }
   .sec-h .t{ font-family:'Azeret Mono',monospace; font-size:10.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); }
   .sec-h .add{ margin-inline-start:auto; display:none; align-items:center; gap:6px; cursor:pointer;
     font-family:'Hanken Grotesk',sans-serif; font-size:11.5px; font-weight:600; color:var(--edit);
@@ -781,14 +789,13 @@
           <!-- Leon, 2026-08-20: 'User have to be able to edit a story.' It has been editable all
                along - tapping the words opens it - but nothing on screen said so, and a control
                nobody can see does not exist. It says so now, beside the way to remove it. -->
-          <button class="rmtell" data-open="story">${sv(ICON.spark,1.7)} ${esc(d.editTelling)}</button>
           ${d.teller?`<button class="rmtell" data-rmtell="1">${sv(ICON.trash,1.7)} ${esc(d.removeTelling)}</button>`:''}</div>
         <div class="pending" data-pending="story"><span class="sp"></span>${esc(d.waiting)}</div></div>`;
     } else if(d.story.kind==='machine'){
       storyBlock=`<div class="story" data-edit="story"><div class="autobar">
         <div class="h">${sv(ICON.auto,1.7)} ${esc(d.autoHdr)}</div>
         <div class="m">${esc(d.story.text||'…')}</div>
-        <div class="cta" data-open="story">${sv(ICON.spark,1.7)} ${esc(d.autoCta)}</div></div>
+        </div>
         <div class="pending" data-pending="story"><span class="sp"></span>${esc(d.waiting)}</div></div>`;
     } else {
       storyBlock=`<div class="invite" data-open="story"><div class="em">${esc(d.noStoryEm)}</div>
@@ -887,7 +894,7 @@
         <div class="faces">${facesHTML}</div>
         <div class="pending" data-pending="people"><span class="sp"></span>${esc(d.waiting)}</div></div>
 
-      <div class="sec"><div class="sec-h"><span class="lp" style="background:var(--gold);box-shadow:0 0 8px 1px var(--gold)"></span><span class="t">${esc(d.storyH)}</span></div>
+      <div class="sec"><div class="sec-h"><span class="lp" style="background:var(--gold);box-shadow:0 0 8px 1px var(--gold)"></span><span class="t">${esc(d.storyH)}</span><button class="penbtn" data-open="story" aria-label="edit">${sv(ICON.pencil,1.7)}</button></div>
         ${storyBlock}</div>
 
       <div class="sec"><div class="sec-h"><span class="lp" style="background:var(--cool);box-shadow:0 0 8px 1px var(--cool)"></span><span class="t">${esc(d.factsH)}</span>
@@ -1270,7 +1277,12 @@
          staged this visit, or already waiting for the keeper, opens for further editing -
          not the stale published text or a blank box. */
       const pendBody=(edits.find(e=>e.kind==='story'&&e.lang===lang)||{}).body;
-      const val = (staged.story!=null) ? staged.story.value : (pendBody!=null?pendBody : (s.kind==='human'?s.text:''));
+      /* Leon, 2026-08-20: it opened EMPTY whenever the story in this language was the app's
+         own translation - so in Russian he got a blank box over a story plainly on the
+         screen, and in English a full one. Whatever is on the page is what opens: his own
+         staging first, then anything waiting, then the words being read, whoever made them.
+         Editing a translation is how it stops being a translation and becomes his. */
+      const val = (staged.story!=null) ? staged.story.value : (pendBody!=null?pendBody : (s.text||''));
       html=`<div class="ed-langtag">${sv(ICON.info,1.7)} ${esc(d.langTitle)}: ${esc(langNative(lang))}</div>
         <div class="ed-field"><label>${esc(d.edStory)}</label><textarea rows="5" id="edInput">${esc(val)}</textarea></div>`;
       onsend=async()=>{ const v=String(($('#editSheet #edInput')||{}).value||'').trim(); if(!v){ hide(); return; }
