@@ -1650,7 +1650,9 @@
     if(need.length){ autoName[lang]=autoName[lang]||{}; const items=need.map(pid=>({kind:'name_full',ref:pid,text:peopleById[pid].display_name,gender:peopleById[pid].sex||''}));
       const res=await callTranslate(items); if(res){res.forEach(r=>{if(r&&r.ref&&r.text)autoName[lang][r.ref]=r.text;}); buildModel(); render();} }
     const s=storyForLang(lang);
-    if(s.kind==='machine' && art.body && autoStory[lang]==null){ autoStory[lang]=''; const res=await callTranslate([{kind:'artefact_body',ref:art.id,text:art.body}]); autoStory[lang]=(res&&res[0]&&res[0].text)||''; buildModel(); render(); } }
+    if(s.kind==='machine' && art.body && autoStory[lang]==null){ autoStory[lang]=''; /* the story shown live while no retelling is stored - it needs the speaker too, or it
+         reads in the wrong voice on screen even when the stored one is right */
+      const res=await callTranslate([Object.assign({kind:'artefact_body',ref:art.id,text:art.body},tellerSex?{gender:tellerSex}:{})]); autoStory[lang]=(res&&res[0]&&res[0].text)||''; buildModel(); render(); } }
 
   /* ---------- atmosphere (verbatim) ---------- */
   (function atmosphere(){
