@@ -245,7 +245,15 @@
       for(var i=0;i<rows.length;i++){
         var r=rows[i]; if(!r.name) continue;
         var v = lang==='ru'?r.name_ru : lang==='he'?r.name_he : r.name_en;
-        if(v && String(v).trim()) m[r.name]=v;
+        if(!v || !String(v).trim()) continue;
+        /* EVERY SPELLING IS A KEY TO THE SAME PLACE. The table is keyed by whichever spelling
+           happened to be geocoded, so a home typed as Бобруйск found nothing and stayed
+           Russian on an English page - measured, not guessed. Each row's own three names
+           point at it as well, so a place recognised in any language is recognised in all. */
+        m[r.name]=v;
+        if(r.name_en) m[r.name_en]=v;
+        if(r.name_ru) m[r.name_ru]=v;
+        if(r.name_he) m[r.name_he]=v;
       }
       _placeMap=m; _placeLang=lang; return m;
     }catch(e){ return {}; }
