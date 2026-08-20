@@ -356,6 +356,37 @@ way back into a page Leon had deliberately closed. An audit cannot tell a retire
 mistake; only the record can. If the sky is ever wanted again it needs Leon's word, not an
 agent's report.
 
+### Translating PLACE NAMES needs places-as-rows first (2026-08-20) — BLOCKED, not deferred
+
+Automatic translation reached every text field on the person page except two: `lived` and
+`pbirth`. They are not harder to translate. They are the only text stored as ONE value for
+all languages (`lang='und'`), and four other pages group people by that value as a STRING:
+
+- `place-real` gathers everyone who lived somewhere by matching the text
+- `search-real` builds its list of places the same way
+- `lf-games.js` feeds Tangled Thread and Where Was This from it
+- `reel-real` reads `pubList('lived','und')` and would simply MISS a row written with a language
+
+So translating Tel Aviv would not give one place with three names. It would give three
+places, each holding a third of the family, and a reel that shows none of them. The place
+page's whole premise - here is everyone who lived here - quietly breaks.
+
+The fix is the schema decision already deferred in this file: a place becomes a ROW with an
+id and per-language labels, and a person's home points at the id. Then translation is
+trivial and grouping gets BETTER than it is today, because "Tel Aviv" and "תל אביב" become
+the same place rather than two strings that happen to differ.
+
+Do not translate place names before that. Measured, not assumed: the four readers above were
+read on 2026-08-20 and every one of them matches on the value.
+
+### Kin notes: nothing to translate (2026-08-20)
+
+Checked before building: 46 relationships exist and NONE has a note. The note is also a
+single column on `relationships`, not a per-language row, so translating it means a schema
+change for a field no one has ever used. Skipped deliberately. If notes start being written,
+store them as person_facts rows keyed by the relationship id and the existing machinery
+works unchanged.
+
 ### Journal redesign (Leon, 2026-08-15) — PARKED
 
 The journal was always meant to be built as a simple LOG first, through a designer pass, with
