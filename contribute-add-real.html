@@ -1080,9 +1080,9 @@
     document.addEventListener('click',e=>{ if(!e.target.closest('.langwrap')) $('#langMenu').classList.remove('open'); });
   }
 
-  /* ---------- boot ---------- */
-  async function boot(){
-  /* refuse the model's commentary, keep prose: the same rule the moment page uses */
+  /* THIS MUST SIT AT THE TOP LEVEL. It was written inside boot(), where it existed only
+     while boot ran - so submitting a memory died with 'cleanStoryOut is not defined' and
+     Leon could not send anything at all. A function is only where you put it. */
   function cleanStoryOut(v,lg,src){ if(v==null) return '';
     let raw=String(v).replace(/[\u00a0\ufeff]/g,' ').trim(); if(!raw) return '';
     if(/\b(as an ai|i (can('?t| ?not)|could not|am unable)|cannot translate)\b/i.test(raw)) return '';
@@ -1097,6 +1097,9 @@
     if(on(cnt(out))===0) return '';
     if(out.length > (String(src||'').length*3 + 80)) return '';
     return out; }
+
+  /* ---------- boot ---------- */
+  async function boot(){
     const stored=(function(){ try{ return localStorage.getItem('lf_lang'); }catch(e){ return null; } })();
     if(stored&&T[stored]) M.lang=stored;
     else { const dl=(navigator.language||'en').slice(0,2); if(T[dl]) M.lang=dl; }
