@@ -1344,8 +1344,14 @@
         : facts.some(x=>x.field===field&&x.lang===l&&(x.ord||0)===0&&hasv(x.value));
       if(humanRow) continue;                       /* a person typed this one - leave it */
       let out='';
+      const item={kind:kind,ref:String(ref),text:text};
+      /* a NAME is not a word to translate but a person's name to carry across an
+         alphabet, and in Russian a surname takes the form of the person who bears it -
+         Golnick is Голник for a man and Голник for his wife only if we say which.
+         'Rita בטיטו-גולניק', half Latin and half Hebrew in one name, was real here. */
+      if(opt.gender) item.gender=opt.gender;
       try{ const {data,error}=await sb.functions.invoke('translate',
-             {body:{target_lang:l,items:[{kind:kind,ref:String(ref),text:text}]}});
+             {body:{target_lang:l,items:[item]}});
         if(error) failed=true;
         else if(data&&data.results&&data.results[0]) out=data.results[0].text||''; }
       catch(e){ failed=true; }
@@ -2080,8 +2086,22 @@
     const read=(f,l)=>{ const el=card.querySelector(`.np-langs [data-field="${f}"][data-lang="${l}"]`); return el?el.value.trim():null; };
     let ok=true;
     /* name parts are person_facts ROWS — name_variants is retiring, do not write to it */
+    /* NAMES CROSS THE ALPHABET (Leon, 2026-08-20). A name typed in English showed a
+       Hebrew reader Latin letters, on every card, every game and every tie - the most-seen
+       text in the app and the last of it left untranslated. It goes through the function's
+       own 'name_full' path with the person's gender, not the prose path: a name is carried
+       across an alphabet, not translated, and cleanTr is right here precisely because a name
+       IS one short line. The source rule and the lock apply as everywhere else - correct the
+       Russian spelling of a surname by hand and it is yours for good. */
+    const gsex=({f:'f',m:'m'})[S.life.gender]||null;
+    const changed=[];
     for(const f of ['given','family','called','maiden','patronymic','honorific']){
-      for(const l of LANGS){ const v=read(f,l); if(v&&v!==((NAME[f]||{})[l]||'')){ if(await insFact(f,l,v)===false) ok=false; } } }
+      for(const l of LANGS){ const v=read(f,l);
+        if(v&&v!==((NAME[f]||{})[l]||'')){
+          if(await insFact(f,l,v)===false) ok=false; else changed.push({f:f,l:l,v:v}); } } }
+    for(const c of changed){
+      if(await translateInto(PERSON_ID,c.v,c.f,
+           {from:c.l,kind:'name_full',clean:cleanTr,grouped:false,gender:gsex})===false) ok=false; }
     await reload(); if(ok) toast(d().sent); }
 
   /* ---------- keeper: per-field approve / decline (Rule 3) ---------- */
