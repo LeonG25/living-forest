@@ -439,6 +439,12 @@
   function langTag(l){ return (l&&l!=='und'&&l!=='undefined')?(' ('+String(l).toUpperCase()+')'):''; }
 
   /* a request names either one published row or a whole group (a home, an occupation) */
+  /* the machine translations that came from one human row: same field, same group,
+     ord=1, still waiting. They are not separate suggestions and never travel alone. */
+  function mtSiblings(f){ if(!f) return [];
+    return (pending.facts||[]).filter(x=>x.id!==f.id && (x.ord||0)===1
+      && x.field===f.field && x.person_id===f.person_id
+      && (x.group_id||'')===(f.group_id||'') && x.status!=='published'); }
   function removeTargets(target){
     const pub=(pending.pub||[]);
     const one=pub.filter(r=>r.id===target);
@@ -569,7 +575,7 @@
     pending.nvs.forEach(v=>{ const f=v.field||v.kind||'name'; const val=v.value||v.name||v.variant||v.text||'';
       items.names.push({ kind:'nv', id:v.id, group:'names', field:f, lang:v.lang, value:val, personId:v.person_id, suggester:accountName(v.created_by), created_at:v.created_at }); });
     // person_facts -> names / facts ; custom pairs grouped
-    const customByGroup={}; const homeByGroup={};
+    const customByGroup={}; const homeByGroup={}; const mtByField={};
     const HOMEISH=['lived','country','home_from','home_to','pbirth','pbirth_country'];
     pending.facts.forEach(f=>{
       /* Connection proposals from a person page arrive HERE, as kin facts - person-real
@@ -623,8 +629,33 @@
         return; }
       if(HOMEISH.indexOf(f.field)>=0 && f.group_id){
         (homeByGroup[f.group_id]=homeByGroup[f.group_id]||{group_id:f.group_id,rows:[],personId:f.person_id,created_by:f.created_by,created_at:f.created_at}).rows.push(f); return; }
+      /* A TRANSLATION IS NOT A SEPARATE DECISION (Leon, 2026-08-20).
+         He wrote one bio and the queue asked him to approve it three times, once per
+         language, as though he had written three different things. He wrote one; the app
+         made the other two. Machine rows (ord=1) are folded into the human row they came
+         from and travel with it: approve the words and the translations go with them,
+         decline and they go too. Nothing publishes itself - the keeper still decides,
+         once, about the thing a person actually wrote. */
+      if((f.ord||0)===1){ const mk=f.field+'|'+(f.group_id||''); (mtByField[mk]=mtByField[mk]||[]).push(f); return; }
       const grp = NAME_FIELDS.includes(f.field) ? 'names' : 'facts';
       items[grp].push({ kind:'fact', id:f.id, group:grp, field:f.field, lang:f.lang, value:factValue(f), personId:f.person_id, suggester:accountName(f.created_by), created_at:f.created_at, raw:f });
+    });
+    /* hand each machine translation to the human row it belongs with. Any left over with
+       no human row to join is shown on its own rather than dropped - a row that vanishes
+       quietly is how things go missing here. */
+    ['names','facts'].forEach(function(g){
+      (items[g]||[]).forEach(function(it){
+        if(it.kind!=='fact') return;
+        const k=it.field+'|'+(it.group_id||'');
+        if(mtByField[k]&&mtByField[k].length){ it.mt=mtByField[k].slice(); delete mtByField[k]; }
+      });
+    });
+    Object.keys(mtByField).forEach(function(k){
+      (mtByField[k]||[]).forEach(function(f){
+        items.facts.push({ kind:'fact', id:f.id, group:'facts', field:f.field, lang:f.lang,
+          value:factValue(f), personId:f.person_id, suggester:accountName(f.created_by),
+          created_at:f.created_at });
+      });
     });
     /* faces waiting on photographs */
     (pending.tags||[]).forEach(function(tg){
@@ -1050,7 +1081,12 @@
         const NAMEPARTS=['given','family','patronymic','maiden','called','honorific'];
         if(NAMEPARTS.includes(f.field)){ try{ await sb.from('person_facts').delete().eq('person_id',f.person_id).eq('lang',f.lang).eq('field',f.field).eq('status','published').neq('id',id); }catch(e){} }
         const u=await sb.from('person_facts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id);
-        if(u.error){ console.error('approve fact',u.error); await reload(); toast(d().approveFail,false); return; } } }
+        if(u.error){ console.error('approve fact',u.error); await reload(); toast(d().approveFail,false); return; }
+        /* the translations the app made from these words go with them: one decision */
+        for(const m of mtSiblings(f)){
+          const um=await sb.from('person_facts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',m.id);
+          if(um.error) console.error('approve translation',um.error);
+        } } }
     else if(kind==='remreq'){
       const req=(pending.facts||[]).find(x=>x.id===id); if(!req) return;
       for(const r of removeTargets(req.value)){ try{ await sb.from('person_facts').delete().eq('id',r.id); }catch(e){} }
@@ -1094,7 +1130,12 @@
       if(k0==='kin'){ const r=await sb.from('person_facts').update({status:'declined'}).eq('id',i0);
         if(r.error){ toast(L.tFail||'That did not save.',false); return; }
         await reload(); toast(L.tDeclined||'Declined.',false); return; } } if(!user||!state.keeper) return; const [kind,id]=ref.split(':');
-    if(kind==='fact'){ try{ await sb.from('person_facts').delete().eq('id',id); }catch(e){} }
+    if(kind==='fact'){
+      /* the translations made from these words are declined with them; left behind they
+         would sit in the queue forever, orphaned from the sentence they came from */
+      const f0=(pending.facts||[]).find(x=>x.id===id);
+      for(const m of mtSiblings(f0)){ try{ await sb.from('person_facts').delete().eq('id',m.id); }catch(e){} }
+      try{ await sb.from('person_facts').delete().eq('id',id); }catch(e){} }
     else if(kind==='remreq'||kind==='clearreq'){ try{ await sb.from('person_facts').delete().eq('id',id); }catch(e){} }
     else if(kind==='group'){ for(const ff of (pending.facts||[]).filter(x=>x.group_id===id)){ try{ await sb.from('person_facts').delete().eq('id',ff.id); }catch(e){} } }
     else if(kind==='artefact'){ try{ await sb.from('artefacts').update({status:'declined'}).eq('id',id); }catch(e){} }

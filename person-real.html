@@ -1316,9 +1316,26 @@
        opt.grouped=false - bio: the lock and the write key on (field,lang), not on a group_id
        opt.skip - languages the human ALSO typed in THIS submit (not yet in `facts`, so they
                   cannot be found by the ord=0 lock below and must be excluded explicitly) */
+  /* ONE LANGUAGE IS THE SOURCE; THE REST FOLLOW IT (Leon, 2026-08-20).
+     Leon wrote a bio in English, then corrected the Hebrew - and the app rewrote the RUSSIAN
+     from his Hebrew, three seconds later, because Russian was still a machine row and every
+     edit regenerated every machine row. That is wrong twice over: he never asked for Russian
+     to change, and a translation of a translation drifts further from what he actually wrote.
+     A field now has a SOURCE language: the one a person wrote first, found as the oldest
+     human row. Only a change to the source re-translates. Editing any other language makes
+     that language yours - it stops being machine-written for good - and touches nothing else.
+     With no rows yet, whatever is typed first becomes the source. */
+  function sourceLang(field,ref){
+    const ts=r=>String(r.published_at||r.created_at||'');
+    const rows=facts.filter(x=>x.field===field&&(x.ord||0)===0&&hasv(x.value)&&(!ref||x.group_id===ref))
+                    .sort((a,b)=>ts(a).localeCompare(ts(b)));
+    return rows.length?(rows[0].lang||'und'):null; }
   async function translateInto(ref,text,field,opt){ const L=d(); opt=opt||{};
     const from=opt.from||state.lang, kind=opt.kind||'place_name', clean=opt.clean||cleanTr;
     const grouped=opt.grouped!==false;
+    /* silence, not failure: a correction to a non-source language is a normal thing to do */
+    const src=sourceLang(field, grouped?ref:null);
+    if(src && src!==from) return true;
     const others=LANGS.filter(l=>l!==from&&!(opt.skip&&opt.skip.has(l)));
     let failed=false;
     for(const l of others){
