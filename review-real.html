@@ -365,6 +365,7 @@
       living:['no longer living','still living'], prec:{exact:'exact date',month:'to the month',year:'to the year',approx:'approximate',unknown:'unknown'},
       stillThere:'still there',
       askToRemove:'asks to remove', askUnknown:'something already gone',
+      aTelling:'A telling',
       askGone:'gone from the forest',
       fld:{ given:'given name', family:'family name', patronymic:'patronymic', maiden:'maiden name', called:'called', honorific:'honorific', nickname:'nickname', lived:'lived in', pbirth:'born in', birth:'born', death:'died', birth_prec:'date precision', living:'still living?', gender:'gender', occupation:'occupation', bio:'about', langspoken:'languages spoken', source:'source', face:'the portrait', custom:'a detail', kin:'relation', field:'detail' } },
     ru:{ dir:'ltr', native:'Русский', en:'Russian',
@@ -395,6 +396,7 @@
       living:['уже не живёт','ещё живёт'], prec:{exact:'точная дата',month:'до месяца',year:'до года',approx:'приблизительно',unknown:'неизв.'},
       stillThere:'до сих пор',
       askToRemove:'просит удалить', askUnknown:'то, чего уже нет',
+      aTelling:'Рассказ',
       askGone:'исчезнет из леса',
       fld:{ given:'имя', family:'фамилия', patronymic:'отчество', maiden:'девичья', called:'зовут', honorific:'титул', nickname:'прозвище', lived:'жил(а) в', pbirth:'место рождения', birth:'родился', death:'умер', birth_prec:'точность даты', living:'ещё жив?', gender:'пол', occupation:'занятие', bio:'о человеке', langspoken:'языки', source:'источник', face:'портрет', custom:'деталь', kin:'связь', field:'деталь' } },
     he:{ dir:'rtl', native:'עברית', en:'Hebrew',
@@ -425,6 +427,7 @@
       living:['כבר לא בחיים','עדיין בחיים'], prec:{exact:'תאריך מדויק',month:'עד חודש',year:'עד שנה',approx:'בערך',unknown:'לא ידוע'},
       stillThere:'עד היום',
       askToRemove:'מבקש להסיר', askUnknown:'משהו שכבר איננו',
+      aTelling:'סיפור',
       askGone:'ייעלם מהיער',
       fld:{ given:'שם פרטי', family:'שם משפחה', patronymic:'שם האב', maiden:'שם נעורים', called:'קוראים', honorific:'תואר', nickname:'כינוי', lived:'גר ב', pbirth:'מקום לידה', birth:'נולד', death:'נפטר', birth_prec:'דיוק תאריך', living:'עדיין בחיים?', gender:'מגדר', occupation:'עיסוק', bio:'אודות', langspoken:'שפות', source:'מקור', face:'דיוקן', custom:'פרט', kin:'קשר', field:'פרט' } }
   };
@@ -494,12 +497,12 @@
 
   /* ---------- data ---------- */
   async function loadData(){
-    const out={ people:[], newcomers:[], facts:[], nvs:[], arts:[], rels:[], pubRels:[], peopleMap:{}, profMap:{}, personRow:{},
+    const out={ people:[], newcomers:[], facts:[], nvs:[], arts:[], trans:[], rels:[], pubRels:[], peopleMap:{}, profMap:{}, personRow:{},
                 pub:[], pubNvs:[], pubIdx:{}, pubAny:{}, pubGroup:{} };
     /* Seven independent reads. They used to run one after another - seven
        round-trips deep - which is why the keeper sat watching a loading line.
        They are asked for together now; the page waits for the slowest, not the sum. */
-    const [rPeople,rFacts,rNvs,rArts,rRels,rPub,rPubNvs,rTags,rNames] = await Promise.all([
+    const [rPeople,rFacts,rNvs,rArts,rRels,rPub,rPubNvs,rTags,rNames,rTrans] = await Promise.all([
       sb.from('people').select('*'),
       sb.from('person_facts').select('id,person_id,group_id,field,lang,value,ord,status,created_by,created_at').in('status',['in_review','draft']),
       Promise.resolve({data:[]}),   /* name_variants retired */
@@ -509,13 +512,22 @@
       Promise.resolve({data:[]}),   /* name_variants retired */
       sb.from('artefact_subjects').select('artefact_id,person_id,detail,status,created_by').in('status',['in_review','draft']),
       sb.from('person_facts').select('person_id,field,lang,value')
-        .in('field',['called','given','family','maiden']).eq('status','published')
+        .in('field',['called','given','family','maiden']).eq('status','published'),
+      /* A RETELLING WAS NEVER FETCHED HERE AT ALL (Leon, 2026-08-20). He rewrote a story in
+         Hebrew, sent it, and it never appeared - because this page has never asked for
+         artefact_translations. It only ever touched the table when approving something else.
+         So every retelling anyone has ever written in a second language has been waiting for
+         a keeper who was never shown it. */
+      sb.from('artefact_translations')
+        .select('id,artefact_id,lang,body,status,machine,created_by,created_at')
+        .eq('status','in_review').eq('machine',false)
     ]);
     /* names first: peopleMap is built a few lines below and asks personLabel for every one */
     ((rNames&&rNames.data)||[]).forEach(f=>{ (NAMEP[f.person_id]=NAMEP[f.person_id]||[]).push(f); });
     (rPeople.data||[]).forEach(p=>{ out.peopleMap[p.id]=personLabel(p.id)||p.display_name||p.name||''; out.personRow[p.id]=p;
       if(p.status&&p.status!=='published') out.newcomers.push(p); });
     out.facts=rFacts.data||[];
+    out.trans=(rTrans&&rTrans.data)||[];
     out.nvs=rNvs.data||[];
     out.arts=(rArts.data||[]).filter(a=>a.kind==='photo'||a.kind==='voice');
     let relRows=rRels.data||[];
@@ -657,6 +669,11 @@
           created_at:f.created_at });
       });
     });
+    /* a retelling somebody wrote in another language */
+    (pending.trans||[]).forEach(function(tr){
+      items.memories.push({ kind:'telling', id:tr.id, group:'memories', artefactId:tr.artefact_id,
+        lang:tr.lang, value:tr.body, suggester:accountName(tr.created_by), created_at:tr.created_at });
+    });
     /* faces waiting on photographs */
     (pending.tags||[]).forEach(function(tg){
       const who=personName(tg.person_id)||'—';
@@ -723,6 +740,7 @@
     if(it.kind==='artefact') return `${esc(L.groups.memories)} · <b>${esc(it.mediaKind==='voice'?L.voiceRec:L.photoRec)}</b>`;
     if(it.kind==='group') return `${esc(L.groups.facts)} · <b>${esc(it.customLabel||L.fld.custom)}</b>`;
     if(it.kind==='remreq'||it.kind==='clearreq') return `${esc(L.groups.facts)} · <b>${esc(L.askToRemove)}</b>`;
+    if(it.kind==='telling') return `${esc(L.groups.memories)} · <b>${esc(L.aTelling||'A telling')}${esc(langTag(it.lang))}</b>`;
     const grpName = it.group==='names'?L.groups.names:L.groups.facts;
     return `${esc(grpName)} · <b>${esc(fldLabel(it.field))}${esc(langTag(it.lang))}</b>`;
   }
@@ -740,6 +758,7 @@
     /* valMarkup has no L - the line above it calls d() directly. Assumed twice in one
        file now; both times the keeper's page died on load and showed nothing at all. */
     if(it.kind==='remreq'||it.kind==='clearreq'){ return `<span class="quiet">${esc(d().askGone)}</span>`; }
+    if(it.kind==='telling'){ return `<span class="quiet">“${esc(String(it.value||'').slice(0,240))}”</span>`; }
     return esc(it.value||'—');
   }
 
@@ -1114,6 +1133,9 @@
        filed as waiting - and the keeper's page never listed them, so there was no way to
        approve one and they would have waited forever. They go live with the memory they
        came from. A person's own retelling still waits, as it always did. */
+    if(kind==='telling'){ try{ await sb.from('artefact_translations')
+      .update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){}
+      await reload(); toast(d().approved,true); return; }
     if(kind==='artefact'){ try{ await sb.from('artefact_translations')
       .update({status:'published',reviewed_by:user.id,published_at:now})
       .eq('artefact_id',id).eq('machine',true); }catch(e){} }
@@ -1143,6 +1165,7 @@
       const f0=(pending.facts||[]).find(x=>x.id===id);
       for(const m of mtSiblings(f0)){ try{ await sb.from('person_facts').delete().eq('id',m.id); }catch(e){} }
       try{ await sb.from('person_facts').delete().eq('id',id); }catch(e){} }
+    else if(kind==='telling'){ try{ await sb.from('artefact_translations').delete().eq('id',id); }catch(e){} }
     else if(kind==='remreq'||kind==='clearreq'){ try{ await sb.from('person_facts').delete().eq('id',id); }catch(e){} }
     else if(kind==='group'){ for(const ff of (pending.facts||[]).filter(x=>x.group_id===id)){ try{ await sb.from('person_facts').delete().eq('id',ff.id); }catch(e){} } }
     else if(kind==='artefact'){ try{ await sb.from('artefacts').update({status:'declined'}).eq('id',id); }catch(e){} }
