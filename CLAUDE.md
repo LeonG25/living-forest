@@ -455,6 +455,36 @@ improved, one was already right, and one came back mangled - the model answered 
 text and then argued with itself in the output - and was REJECTED rather than stored. That
 script had no cleaner; the app does, which is exactly why.
 
+### Places: learn a new one WHEN THE MOMENT IS APPROVED (Leon, 2026-08-20) — TO BUILD
+
+A place learns its three names the first time anything asks for it, which today means when
+somebody opens that place's page. Leon: "The translation should be triggered when the moment
+with a new place is approved."
+
+He is right and the reason is not tidiness. Хабаровск sits on his father's army photograph
+and has no names in place_geo, because nobody has ever opened Khabarovsk as a place - so a
+Hebrew reader sees Cyrillic on an otherwise Hebrew page, and will keep seeing it until
+someone happens to wander there. Approval is the moment the place enters the forest, and the
+right moment to learn it.
+
+Where: review-real, alongside publishing an artefact - read metadata.where, and if place_geo
+has no row for that spelling, run the same lookup lf-place already does. It is slow and
+polite (over a second between languages, ~3.5s a place) but nobody is waiting on it there.
+
+Do NOT warm the table in bulk. Leon declined that: the archive should fill as the family
+fills it.
+
+### Places: one spelling per language — CHECKED, and it holds
+
+Leon asked that a place have only one spelling per language. Verified 2026-08-20: three rows
+point at Tel Aviv (Tel Aviv, Tel-Aviv Jaffo Israel, תל אביב) and two each at Holon and Yavne,
+but every row for a place carries the SAME name_en, name_ru and name_he. Zero places have two
+spellings in one language. 18 spellings, 14 actual places.
+
+Several rows per place is the mechanism, not a fault: a row is one SPELLING SOMEBODY TYPED,
+and they all point at the same answer. A unique index on `name` now stops the same typed
+spelling being learned twice with different answers.
+
 ### Journal redesign (Leon, 2026-08-15) — PARKED
 
 The journal was always meant to be built as a simple LOG first, through a designer pass, with
