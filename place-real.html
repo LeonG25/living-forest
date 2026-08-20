@@ -18,7 +18,7 @@
 <script src="lf-face.js?v=3"></script>
 <script src="https://unpkg.com/topojson-client@3/dist/topojson-client.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="lf-db.js?v=7"></script>
+<script src="lf-db.js?v=8"></script>
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   :root{
@@ -496,6 +496,8 @@ async function load(){
     // the teller is a person (contributor_id), never the uploading account
     const provName = {}; await loadNameFacts(sb,(ppl.data||[]).map(p=>p.id));
     (ppl.data||[]).forEach(p=> provName[p.id]=nameOfPerson(p.id,curLang())||p.called_name||'');
+    /* read each story in the reader's own language where one exists */
+    if(window.LFDB&&LFDB.stories) await LFDB.stories(sb,(arts.data||[]),curLang());
     const artById = {}; (arts.data||[]).forEach(a=>{ a._year=parseYear(a.metadata&&a.metadata.when); a._where=(a.metadata&&a.metadata.where)||''; artById[a.id]=a; });
     // subjects per person and per artefact
     const perPerson = {}; // id -> [{art, box}]

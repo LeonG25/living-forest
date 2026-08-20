@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="lf-db.js?v=7"></script>
+<script src="lf-db.js?v=8"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
   html,body{ background:#04070e; }
@@ -368,6 +368,8 @@
       safe(sb.from('artefact_subjects').select('artefact_id,person_id,detail')),
       safe(sb.from('place_geo').select('name,lat,lng,label'))
     ]);
+    /* read each story in the reader's own language where one exists */
+    if(window.LFDB&&LFDB.stories) await LFDB.stories(sb,arts,(localStorage.getItem('lf_lang')||'en'));
     DB.people=ppl; DB.facts=facts; DB.arts=arts; DB.subs=subs; DB.geo=geo;
     DB.byId={}; ppl.forEach(p=>DB.byId[p.id]=p);
     buildIndices();

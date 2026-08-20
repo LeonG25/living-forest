@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="lf-db.js?v=7"></script>
+<script src="lf-db.js?v=8"></script>
 <script src="lf-label.js?v=1"></script>
 <script src="lf-face.js?v=3"></script>
 <style>
@@ -177,6 +177,8 @@ async function load(){
     ]);
     if(artsR.error) throw artsR.error;
     const arts=(artsR.data||[]).filter(a=>a.metadata && a.metadata.when);
+    /* read each story in the reader's own language where one exists */
+    if(window.LFDB&&LFDB.stories) await LFDB.stories(sb, arts, LG());
     await LFLabel.load(sb,(peopleR.data||[]).map(p=>p.id));
     const nameById={}; (peopleR.data||[]).forEach(p=> nameById[p.id]=LFLabel.of(p.id,LG())||p.called_name||'');
     const idByName={}; (peopleR.data||[]).forEach(p=> idByName[LFLabel.of(p.id,LG())||p.called_name||'']=p.id);

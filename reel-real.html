@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="lf-db.js?v=7"></script>
+<script src="lf-db.js?v=8"></script>
 <script src="lf-label.js?v=1"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
@@ -406,7 +406,7 @@
     try{ const {data:fs}=await sb.from('person_facts').select('id,group_id,field,lang,value,ord,status,created_at,published_at').eq('person_id',PERSON_ID); facts=fs||[]; }catch(e){ facts=[]; }
     tagged=[]; contribNames={};
     try{ const {data:subs}=await sb.from('artefact_subjects').select('artefact_id,detail').eq('person_id',PERSON_ID); const ids=(subs||[]).map(s=>s.artefact_id);
-      if(ids.length){ let arts=[]; try{ const {data:a}=await sb.from('artefacts').select('id,storage_path,metadata,contributor_id,status,body').in('id',ids); arts=a||[]; }
+      if(ids.length){ let arts=[]; try{ const {data:a}=await sb.from('artefacts').select('id,storage_path,metadata,contributor_id,status,body').in('id',ids); arts=a||[]; if(window.LFDB&&LFDB.stories) await LFDB.stories(sb,arts,(localStorage.getItem('lf_lang')||'en')); }
         catch(e){ try{ const {data:a2}=await sb.from('artefacts').select('id,storage_path').in('id',ids); arts=a2||[]; }catch(e2){ arts=[]; } }
         const byId={}; arts.forEach(a=>byId[a.id]=a);
         tagged=(subs||[]).filter(s=>byId[s.artefact_id]&&byId[s.artefact_id].storage_path&&byId[s.artefact_id].status!=='rejected')

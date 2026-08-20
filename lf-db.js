@@ -203,7 +203,30 @@
     }catch(e){}
   }
 
+  /* A STORY SHOULD BE READ IN THE READER'S LANGUAGE, WHEREVER IT APPEARS (Leon, 2026-08-20).
+     The moment page looked for a translation. Nowhere else did - so the timeline, the person
+     page, the reel, search, the journal and the place page all showed the words exactly as
+     they were first typed, in Russian to an English reader. Translating the stories was only
+     half the job; the other half is every page remembering to ask.
+     One helper rather than six copies: hand it the rows just fetched and it swaps in the
+     approved retelling for the language being read. Silence on failure is right here - a
+     story in the wrong language is far better than no story. */
+  async function stories(sb, rows, lang){
+    try{
+      if(!sb||!rows||!rows.length||!lang) return rows;
+      var ids=[]; for(var i=0;i<rows.length;i++){ var r=rows[i]; if(r&&r.id&&r.body) ids.push(r.id); }
+      if(!ids.length) return rows;
+      var res=await sb.from('artefact_translations')
+        .select('artefact_id,body').eq('lang',lang).eq('status','published').in('artefact_id',ids);
+      var data=res&&res.data; if(!data||!data.length) return rows;
+      var by={}; for(var j=0;j<data.length;j++){ if(data[j].body) by[data[j].artefact_id]=data[j].body; }
+      for(var k=0;k<rows.length;k++){ var t=by[rows[k].id]; if(t) rows[k].body=t; }
+    }catch(e){ }
+    return rows;
+  }
+
   window.LFDB={
+    stories:stories,
     img:img,
     note:note,
     incomplete:function(){ return toldAlready; },
