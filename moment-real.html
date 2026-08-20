@@ -1338,8 +1338,57 @@
         if(ok){ translations=translations.filter(x=>x.lang!==lang); translations.push({lang,body:val,status:'published'}); } }
       if(ok){ toast(d.saved); buildModel(); render(); }
     } else { const ok=await sbWrite(()=>sb.from('artefact_translations').insert({artefact_id:art.id,lang,body:val,status:'in_review',created_by:user.id}));
-      if(ok){ pend.story=true; const c=document.querySelector('[data-pending="story"]'); if(c) c.classList.add('show'); toast(d.sent); } }
+      if(ok){ pend.story=true; const c=document.querySelector('[data-pending="story"]'); if(c) c.classList.add('show'); toast(d.sent);
+        await carryStory(val); } }
   }
+  /* A STORY CROSSES THE LANGUAGES TOO (Leon, 2026-08-20).
+     Every text field on the person page carries into the other two languages; the stories -
+     the longest and most personal writing in the archive, and the thing the app exists for -
+     did not. A story told in Russian was silence to a grandchild who reads only Hebrew.
+     The same rules as everywhere else, and no new ones:
+       - only a retelling in the story's ORIGINAL language is carried across. Correcting the
+         Hebrew is a correction to the Hebrew and must not rewrite the Russian from it.
+       - a language a PERSON has written is never machine-written again. Their words stand.
+       - the app's own versions wait for the keeper with the words they came from.
+     A refusal is not a failure here: it means somebody already told it in that language. */
+  async function carryStory(srcText){
+    try{
+      const orig=(art&&art.original_language)||'en';
+      if(lang!==orig) return;                       /* not the source: carry nothing */
+      const LANGS3=['en','ru','he'];
+      for(const l of LANGS3){
+        if(l===orig) continue;
+        const human=(translations||[]).some(x=>x.lang===l && x.body && String(x.body).trim() && !x.machine);
+        if(human) continue;                          /* their words stand */
+        let out='';
+        try{ const {data,error}=await sb.functions.invoke('translate',
+               {body:{target_lang:l,items:[{kind:'artefact_body',ref:String(art.id),text:srcText}]}});
+          if(!error && data && data.results && data.results[0]) out=data.results[0].text||''; }
+        catch(e){ out=''; }
+        out=cleanStory(out,l,srcText);
+        if(!out){ trWarn(); continue; }
+        await sbWrite(()=>sb.from('artefact_translations')
+          .insert({artefact_id:art.id,lang:l,body:out,status:'in_review',created_by:user.id,machine:true}));
+      }
+    }catch(e){ try{ console.warn('carryStory',e); }catch(_){ } }
+  }
+  /* the model sometimes answers ABOUT a translation instead of giving one. A story is prose,
+     so keep it line by line in the target's own alphabet rather than taking the first line -
+     that rule is right for a country and would amputate a paragraph. */
+  function cleanStory(v,lg,src){ if(v==null) return '';
+    let raw=String(v).replace(/[\u00a0\ufeff]/g,' ').trim(); if(!raw) return '';
+    if(/\b(as an ai|i (can('?t| ?not)|could not|am unable)|cannot translate)\b/i.test(raw)) return '';
+    const cnt=x=>({lat:(x.match(/[A-Za-z]/g)||[]).length,cyr:(x.match(/[\u0400-\u04FF]/g)||[]).length,heb:(x.match(/[\u0590-\u05FF]/g)||[]).length});
+    const on=c=> lg==='ru'?c.cyr : lg==='he'?c.heb : c.lat;
+    const off=c=> lg==='ru'?(c.lat+c.heb) : lg==='he'?(c.lat+c.cyr) : (c.cyr+c.heb);
+    const kept=raw.split(/\r?\n/).map(x=>x.trim()).filter(line=>{ if(!line) return false;
+      const c=cnt(line), o=on(c), f=off(c);
+      if(o===0&&f===0) return true; return o>0 && o>=f; });
+    let out=kept.join('\n').replace(/\n{3,}/g,'\n\n').trim();
+    if(!out) return '';
+    if(on(cnt(out))===0) return '';
+    if(out.length > (String(src||'').length*3 + 80)) return '';
+    return out; }
   async function removeTelling(){ const d=t();
     if(isKeeper){ const orig=(art&&art.original_language)||'en'; let ok;
       if(lang===orig){ ok=await sbWrite(()=>sb.from('artefacts').update({body:null}).eq('id',art.id)); if(ok) art.body=null; }
@@ -1372,7 +1421,7 @@
     /* A contributor's OWN waiting story must show and stay editable after it is submitted
        (Leon fix a): load it too, scoped to the author so RLS is not leaned on for privacy.
        A keeper still sees every waiting story, for the review queue. */
-    try{ let q=sb.from('artefact_translations').select('id,lang,body,created_at,created_by,status').eq('artefact_id',MOMENT_ID).eq('status','in_review');
+    try{ let q=sb.from('artefact_translations').select('id,lang,body,created_at,created_by,status,machine').eq('artefact_id',MOMENT_ID).eq('status','in_review');
       if(!isKeeper && user) q=q.eq('created_by',user.id);
       const {data:a}=await q; (a||[]).forEach(x=>edits.push(Object.assign({kind:'story'},x))); }catch(e){}
   }
@@ -1656,7 +1705,7 @@
       Object.values(byPL).forEach(v=>{ (vars[v.person_id]=vars[v.person_id]||[]).push(v); }); }
     tellerName='';
     if(art.contributor_id){ const {data:cp}=await sb.from('people').select('id').eq('id',art.contributor_id).maybeSingle(); tellerName=(window.LFLabel&&LFLabel.of(art.contributor_id,(localStorage.getItem('lf_lang')||'en')))||''; }
-    const {data:tr}=await sb.from('artefact_translations').select('lang,body,status').eq('artefact_id',MOMENT_ID).eq('status','published'); translations=tr||[];
+    const {data:tr}=await sb.from('artefact_translations').select('lang,body,status,machine').eq('artefact_id',MOMENT_ID).eq('status','published'); translations=tr||[];
     await loadQueue();
     buildModel(); render(); ensureLangAssets();
   }
@@ -1666,7 +1715,7 @@
     subjects=(subs.data||[]).filter(s=>s.person_id);
     const ids=subjects.map(s=>s.person_id);
     if(ids.length){ const {data:pp}=await sb.from('people').select('id,primary_asset,portrait_path,sex').in('id',ids); (pp||[]).forEach(p=>peopleById[p.id]=p); }
-    const {data:tr}=await sb.from('artefact_translations').select('lang,body,status').eq('artefact_id',MOMENT_ID).eq('status','published'); translations=tr||[];
+    const {data:tr}=await sb.from('artefact_translations').select('lang,body,status,machine').eq('artefact_id',MOMENT_ID).eq('status','published'); translations=tr||[];
     await loadQueue(); buildModel(); render(); window.scrollTo(0,y); }
 
   boot();
