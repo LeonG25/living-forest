@@ -495,6 +495,7 @@
       noStoryEm:'No one has told this moment yet.',noStoryCta:'Add the telling →',
       emWhereEm:'The place isn’t known yet.',emWhenEm:'The time isn’t known yet.',addCta:'Add →',
       removeTelling:'Remove this telling',
+      editTelling:'Edit the story',
       signIn:'Enter the forest',signInSub:'This moment opens once you’re signed in.',email:'you@example.com',pass:'Password',signInBtn:'Sign in',
       keeperStrip:'You’re the keeper · {n} waiting',reviewT:'Suggestions waiting',
       reviewSub:'Nothing reaches the family until you approve it.',approve:'Approve',decline:'Decline',
@@ -530,6 +531,7 @@
       noStoryEm:'Этот момент ещё никто не рассказал.',noStoryCta:'Добавить рассказ →',
       emWhereEm:'Место пока неизвестно.',emWhenEm:'Время пока неизвестно.',addCta:'Добавить →',
       removeTelling:'Убрать этот рассказ',
+      editTelling:'Изменить рассказ',
       signIn:'Войти в лес',signInSub:'Момент откроется после входа.',email:'you@example.com',pass:'Пароль',signInBtn:'Войти',
       keeperStrip:'Вы хранитель · {n} на рассмотрении',reviewT:'Правки на рассмотрении',
       reviewSub:'Ничто не дойдёт до семьи, пока вы не одобрите.',approve:'Одобрить',decline:'Отклонить',
@@ -565,6 +567,7 @@
       noStoryEm:'עדיין איש לא סיפר את הרגע הזה.',noStoryCta:'הוספת הסיפור →',
       emWhereEm:'המקום עדיין לא ידוע.',emWhenEm:'הזמן עדיין לא ידוע.',addCta:'הוספה →',
       removeTelling:'הסרת הסיפור הזה',
+      editTelling:'עריכת הסיפור',
       signIn:'כניסה ליער',signInSub:'הרגע ייפתח לאחר הכניסה.',email:'you@example.com',pass:'סיסמה',signInBtn:'כניסה',
       keeperStrip:'את/ה השומר · {n} ממתינים',reviewT:'הצעות ממתינות',
       reviewSub:'שום דבר לא יגיע למשפחה עד שתאשרו.',approve:'אישור',decline:'דחייה',
@@ -774,8 +777,12 @@
       const words=String(d.story.text).split(' ').map(w=>`<span class="word">${esc(w)}</span>`).join(' ');
       storyBlock=`<div class="story story-editable" data-edit="story"><span class="quotemark">&ldquo;</span>
         <p class="story-words" id="storyWords">${words}</p>
-        ${d.teller?`<div class="told"><span class="flame"></span><span class="txt">${esc(d.toldBy)} <b>${esc(d.teller)}</b></span>
-          <button class="rmtell" data-rmtell="1">${sv(ICON.trash,1.7)} ${esc(d.removeTelling)}</button></div>`:''}
+        <div class="told"><span class="flame"></span>${d.teller?`<span class="txt">${esc(d.toldBy)} <b>${esc(d.teller)}</b></span>`:'<span class="txt"></span>'}
+          <!-- Leon, 2026-08-20: 'User have to be able to edit a story.' It has been editable all
+               along - tapping the words opens it - but nothing on screen said so, and a control
+               nobody can see does not exist. It says so now, beside the way to remove it. -->
+          <button class="rmtell" data-open="story">${sv(ICON.spark,1.7)} ${esc(d.editTelling)}</button>
+          ${d.teller?`<button class="rmtell" data-rmtell="1">${sv(ICON.trash,1.7)} ${esc(d.removeTelling)}</button>`:''}</div>
         <div class="pending" data-pending="story"><span class="sp"></span>${esc(d.waiting)}</div></div>`;
     } else if(d.story.kind==='machine'){
       storyBlock=`<div class="story" data-edit="story"><div class="autobar">
