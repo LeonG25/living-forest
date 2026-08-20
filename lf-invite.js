@@ -81,9 +81,17 @@
         const pool=(people||[]).filter(p=>(!p.status||p.status==='published'));
         const unmet=pool.filter(p=>!known[p.id]).sort((a,b)=>((ring[a.id]||99)-(ring[b.id]||99)) || ((b.primary_asset?1:0)-(a.primary_asset?1:0)));
         if(unmet.length){ const p=unmet[0]; const nm=await nameFor(sb,p.id,lang)||'Someone';
+        /* FEN PROMISED AN INTRODUCTION AND OPENED A QUIZ (QC agent, 2026-08-17).
+           This invitation says "is family - and still a stranger to you. Come, I'll
+           introduce you", and it led to game-who-is-who.html, which despite its
+           filename is the "Whose Story Is This?" guessing game. The face-matching game
+           the name implies has never been built and is parked. Meeting someone is not a
+           quiz about them: an introduction leads to the person's own page, where their
+           name, face, homes and stories are. The 'story' invitations below still go to
+           the story game, because that one tells the truth about where it goes. */
           return { kind:'meet', person_id:p.id, line:t(lang,'meet',nm),
                    yes:t(lang,'yes'), no:t(lang,'no'),
-                   go:'game-who-is-who.html?id='+encodeURIComponent(p.id) }; }
+                   go:'person-real.html?id='+encodeURIComponent(p.id) }; }
         /* everyone met: an unheard story about a known person (most storied first) */
         try{ const {data:subs}=await sb.from('artefact_subjects').select('artefact_id,person_id');
           const cnt={}; (subs||[]).forEach(s=>{ cnt[s.person_id]=(cnt[s.person_id]||0)+1; });

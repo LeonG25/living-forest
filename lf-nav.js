@@ -205,19 +205,45 @@
       .then(function(j){ if(j===null) return; setKeeper(!!(j&&j[0]&&j[0].is_keeper)); })
       .catch(function(){});                                    // offline: leave the fast path as-is
   }
-  keeperCheck(2);
   /* ---- step out: visible whenever a session exists; back to the globe's gate ---- */
-  if(storedSession()){
-    var so=document.createElement('a'); so.href='#'; so.setAttribute('data-lf','signout');
-    so.innerHTML='<span class="ic">\u238b</span><span>Step out</span>';
-    so.addEventListener('click', function(ev){ ev.preventDefault();
+  var soEl=null;
+  function addStepOut(){
+    if(soEl && soEl.parentNode) return;
+    soEl=document.createElement('a'); soEl.href='#'; soEl.setAttribute('data-lf','signout');
+    soEl.innerHTML='<span class="ic">\u238b</span><span>Step out</span>';
+    soEl.addEventListener('click', function(ev){ ev.preventDefault();
       var s2=storedSession();
       try{ if(s2) fetch(SB_URL+'/auth/v1/logout',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+s2.token}}); }catch(e){}
       try{ localStorage.removeItem(SB_STORE); }catch(e){}
       setTimeout(function(){ location.href='index.html'; },150);
     });
-    panel.appendChild(so);
+    panel.appendChild(soEl);
   }
+
+  /* THE MENU MUST NOTICE A SIGN-IN THAT HAPPENS AFTER IT IS BUILT (found by the QC agent,
+     2026-08-17). Every other page is entered with a session already in hand, so the check
+     that runs once at load is right there. The GLOBE is not: it is the front door, and the
+     keeper signs in on the page itself, minutes after this menu was drawn. The check had
+     already concluded 'not a keeper', and Step out was only ever added if a session existed
+     at load - so on the globe, and only on the globe, the keeper's own three entries were
+     missing until they navigated somewhere else and back.
+     It watches for a session appearing instead of assuming one was there, and gives up
+     after a minute rather than polling forever. LFNav.refresh() lets a page say so
+     immediately rather than waiting for the next tick. */
+  function syncSession(){
+    if(storedSession()) addStepOut();
+    keeperCheck(2);
+  }
+  syncSession();
+  if(!storedSession()){
+    var tries=0;
+    var watch=setInterval(function(){
+      if(storedSession()){ clearInterval(watch); syncSession(); return; }
+      if(++tries>40) clearInterval(watch);          /* a minute, then stop asking */
+    }, 1500);
+  }
+  window.LFNav = window.LFNav || {};
+  window.LFNav.refresh = syncSession;
   var btn=document.createElement('button'); btn.id='lfnavBtn'; btn.type='button';
   btn.setAttribute('aria-label','Move between lenses');
   /* drawn, not typed: U+2295 is missing from the face iOS falls back to, so the
