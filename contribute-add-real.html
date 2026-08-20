@@ -933,6 +933,12 @@
       const teller=tellerSubject();
       let tellerId=null;
       if(teller) tellerId=await ensurePersonId(teller);
+      /* WHO IS SPEAKING CHANGES THE WORDS. A story is told in the first person and both
+         Hebrew and Russian inflect the verb on the speaker's gender - Leon, who is male,
+         was made to say חושבת. Ask the teller's record once, here, and carry it. */
+      let tellerSex=null;
+      if(tellerId){ try{ const {data:tp}=await sb.from('people').select('sex').eq('id',tellerId).maybeSingle();
+        if(tp&&tp.sex) tellerSex=({male:'m',female:'f'})[tp.sex]||null; }catch(e){} }
       const subjIds=[];
       /* a teller who is not in the photograph is not tagged as being in it - they told it */
       for(const s of M.subjects){ if(s.tellerOnly && s.key!==M.tellerKey) continue;
@@ -986,8 +992,10 @@
         for(const l of ['en','ru','he']){
           if(l===src) continue;
           let out='';
+          /* the teller's gender goes with the words: a first-person story inflects on it */
           try{ const {data,error}=await sb.functions.invoke('translate',
-                 {body:{target_lang:l,items:[{kind:'artefact_body',ref:String(artId),text:told}]}});
+                 {body:{target_lang:l,items:[Object.assign({kind:'artefact_body',ref:String(artId),text:told},
+                    tellerSex?{gender:tellerSex}:{})]}});
             if(!error&&data&&data.results&&data.results[0]) out=data.results[0].text||''; }
           catch(e){ out=''; }
           out=cleanStoryOut(out,l,told);

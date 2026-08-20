@@ -585,7 +585,7 @@
 
   /* ---------- state ---------- */
   let lang='en', user=null, isKeeper=false;
-  let art=null, subjects=[], peopleById={}, vars={}, autoName={}, autoStory={}, translations=[], edits=[], tellerName='', allPeople=null, places=null;
+  let art=null, subjects=[], peopleById={}, vars={}, autoName={}, autoStory={}, translations=[], edits=[], tellerName='', tellerSex=null, allPeople=null, places=null;
   let DATA={}, PEOPLE=[], FACTS=[];
   let TAGS=[], selId=null, gesture=null, nameTargetId=null, tagNum={};
   let pend={}, firstReveal=true;
@@ -1381,7 +1381,8 @@
         if(human) continue;                          /* their words stand */
         let out='';
         try{ const {data,error}=await sb.functions.invoke('translate',
-               {body:{target_lang:l,items:[{kind:'artefact_body',ref:String(art.id),text:srcText}]}});
+               {body:{target_lang:l,items:[Object.assign({kind:'artefact_body',ref:String(art.id),text:srcText},
+                  tellerSex?{gender:tellerSex}:{})]}});
           if(!error && data && data.results && data.results[0]) out=data.results[0].text||''; }
         catch(e){ out=''; }
         out=cleanStory(out,l,srcText);
@@ -1728,7 +1729,12 @@
         (byPL[k]=byPL[k]||{person_id:f.person_id,lang:f.lang})[f.field]=f.value; });
       Object.values(byPL).forEach(v=>{ (vars[v.person_id]=vars[v.person_id]||[]).push(v); }); }
     tellerName='';
-    if(art.contributor_id){ const {data:cp}=await sb.from('people').select('id').eq('id',art.contributor_id).maybeSingle(); tellerName=(window.LFLabel&&LFLabel.of(art.contributor_id,(localStorage.getItem('lf_lang')||'en')))||''; }
+    /* WHO IS SPEAKING CHANGES THE WORDS (Leon, 2026-08-20). A story is told in the first
+       person, and Hebrew and Russian inflect the verb by the speaker's gender: Leon, who is
+       male, was made to say חושבת. The app knew he was male on every one of his stories and
+       never said so. His sex travels with the text now. */
+    tellerSex=null;
+    if(art.contributor_id){ const {data:cp}=await sb.from('people').select('id,sex').eq('id',art.contributor_id).maybeSingle(); if(cp&&cp.sex) tellerSex=({male:'m',female:'f'})[cp.sex]||null; tellerName=(window.LFLabel&&LFLabel.of(art.contributor_id,(localStorage.getItem('lf_lang')||'en')))||''; }
     const {data:tr}=await sb.from('artefact_translations').select('lang,body,status,machine').eq('artefact_id',MOMENT_ID).eq('status','published'); translations=tr||[];
     await loadQueue();
     buildModel(); render(); ensureLangAssets();
