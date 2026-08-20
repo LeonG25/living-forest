@@ -428,6 +428,33 @@ keeper, in Russian, on a phone, and write down what happens. The bugs above were
 single sitting by one person doing one ordinary thing, which says the flow has never been
 walked whole.
 
+### Gender in translation: what is solved and what is not (2026-08-20)
+
+SOLVED. The teller's gender travels with a story, because the story is told in the first
+person and Hebrew and Russian inflect the verb on the speaker. Leon, who is male, was made to
+say חושבת. The translate function tested for 'male'/'female' while every caller sent 'm'/'f',
+so no gender instruction had EVER been sent - not for stories and not for names. Both
+spellings are accepted now and the cache key carries gender for every kind.
+
+NOT SOLVED, and Leon named it before it bit us: the gender of the people IN the story matters
+too. 'Sofia cannot have male verbs and adjectives, in any language, because she is female.'
+Today that rests entirely on the model inferring it from the name and the context, which is
+usually right for a Sofia and unreliable for an Adi, a Yuval or a Sasha.
+
+Two things make this genuinely hard rather than merely unfinished:
+- Gender is not recorded for everyone in the archive.
+- A story may name people who are NOT IN the archive at all. Leon: 'gender grammatics
+  decision should not only rely on what's in the system.'
+
+So a fix cannot simply look up the subjects. The realistic shape is to pass what IS known -
+the tagged people and their genders - as a hint alongside the text, and accept that anyone
+unknown falls back to the model's judgement. Do not pretend it is exact.
+
+Also recorded: a one-off pass re-translated the stored machine retellings as male. Four were
+improved, one was already right, and one came back mangled - the model answered with broken
+text and then argued with itself in the output - and was REJECTED rather than stored. That
+script had no cleaner; the app does, which is exactly why.
+
 ### Journal redesign (Leon, 2026-08-15) — PARKED
 
 The journal was always meant to be built as a simple LOG first, through a designer pass, with
