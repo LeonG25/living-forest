@@ -2236,11 +2236,28 @@
       if(act==='addsend'){ const sh=$('.sheet[data-sheet="add"]'); const lab=sh.querySelector('[data-add-label]').value.trim(), val=sh.querySelector('[data-add-value]').value.trim();
         const grp=sh.dataset.group||''; let okAdd=true;
         if(lab||val){
-          if(grp&&state.keeper){ /* keeper edits publish in place, per row */
+          /* A SEVENTH KEEPER SHORTCUT, missed on 2026-08-15 when the other six were closed:
+             editing a custom detail as keeper wrote straight over the published row, no
+             queue, no record. Leon asked that everybody ask, himself included, so it is a
+             suggestion now like everyone else's. Kept as dead-but-visible history? No -
+             removed, because a branch that cannot run is a lie waiting to be believed. */
+          if(false){
             const now=new Date().toISOString();
             for(const ff of facts.filter(x=>x.group_id===grp&&(x.field==='custom_label'||x.field==='custom_value')&&x.lang===state.lang)){
               try{ await sb.from('person_facts').update({value:ff.field==='custom_label'?lab:val,reviewed_by:user.id,published_at:now}).eq('id',ff.id); }catch(er){} }
-          } else { const gid=grp||uuid(); const a1=await insFact('custom_label',state.lang,lab,0,gid); const a2=await insFact('custom_value',state.lang,val,0,gid); if(a1===false||a2===false) okAdd=false; } }
+          } else { const gid=grp||uuid();
+            const a1=await insFact('custom_label',state.lang,lab,0,gid);
+            const a2=await insFact('custom_value',state.lang,val,0,gid);
+            if(a1===false||a2===false) okAdd=false;
+            /* the family's own invented details travel into the other two languages, the
+               same way a bio does. A label is short and a value may be a sentence, so the
+               hint follows the length while the cleaner stays the prose one - cleanTr
+               keeps only the FIRST LINE, which is right for a country and destroys a
+               remembered recipe. */
+            const hint=t=>(String(t).length<60 && String(t).indexOf('\n')<0)?'place_name':'artefact_body';
+            if(lab && await translateInto(gid,lab,'custom_label',{kind:hint(lab),clean:cleanBio})===false) okAdd=false;
+            if(val && await translateInto(gid,val,'custom_value',{kind:hint(val),clean:cleanBio})===false) okAdd=false;
+          } }
         hideSheets(); await reload(); if(okAdd) toast(state.keeper&&grp?L.saved:L.sent); return; }
       if(act==='ml'){ const v=a.parentElement.parentElement.querySelector('.mlvars'); if(v) v.classList.toggle('open'); return; }
       if(act==='nmlang'){ const b=a.closest('.fbody').querySelector('.np-langs'); if(b) b.hidden=!b.hidden; a.classList.toggle('on'); return; }
