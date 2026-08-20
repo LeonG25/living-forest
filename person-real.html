@@ -1270,22 +1270,74 @@
     if(lang==='he' && /[A-Za-z]/.test(t)) return '';
     if(lang==='ru' && /[A-Za-z]/.test(t)) return '';
     return t; }
-  async function translateCountry(gid,text,field){ const L=d(); field=field||'country';
-    const others=LANGS.filter(l=>l!==state.lang); let failed=false;
+  /* cleanTr is for ONE SHORT LINE (a country, an occupation). It cannot be used on a bio:
+     asked to translate "USSR" the function once returned five lines - an abbreviation, a
+     bracketed transliteration, an English gloss, "Or more commonly used:", then the name -
+     and a first-line-only rule survives that only because a country IS one line. A paragraph
+     is not, and taking its first line would throw away most of it.
+     cleanBio judges PROSE. The failure it must catch is the same one - the model wrapping an
+     answer in commentary about the answer - but the safe move for a paragraph is to drop the
+     lines that are commentary and keep the lines that are the translation, then sanity-check
+     the whole. A line is commentary if it is written in the WRONG alphabet for the target
+     (an English gloss inside a Hebrew reply, "Or more commonly used:"); such a line has more
+     foreign-script letters than target-script letters and is dropped. Numbers/dates/punctuation
+     lines carry no alphabet and are kept. After the cut: it must actually contain the target
+     script, must not be an outright AI refusal, and must not be WILDLY longer than the source
+     (padding is explanation, not translation). If nothing survives, refuse - the reader falls
+     back to a language that has a value, exactly as with a country. */
+  function cleanBio(v,lang,src){ if(v==null) return '';
+    let raw=String(v).replace(/[\u00a0\ufeff]/g,' ').trim(); if(!raw) return '';
+    if(/\b(as an ai|i (can('?t| ?not)|could not|am unable)|i'?m unable to|cannot translate)\b/i.test(raw)) return '';
+    const cnt=s=>({ lat:(s.match(/[A-Za-z]/g)||[]).length, cyr:(s.match(/[\u0400-\u04FF]/g)||[]).length, heb:(s.match(/[\u0590-\u05FF]/g)||[]).length });
+    const on=c=> lang==='ru'?c.cyr : lang==='he'?c.heb : c.lat;
+    const off=c=> lang==='ru'?(c.lat+c.heb) : lang==='he'?(c.lat+c.cyr) : (c.cyr+c.heb);
+    const kept=raw.split(/\r?\n/).map(s=>s.trim()).filter(line=>{ if(!line) return false;
+      const c=cnt(line); const o=on(c), f=off(c);
+      if(o===0&&f===0) return true;                 /* a date / a number / punctuation only */
+      return o>0 && o>=f; });                        /* a line mostly in the target's own script */
+    let t=kept.join('\n').replace(/\n{3,}/g,'\n\n').trim();
+    if(!t) return '';
+    const C=cnt(t);
+    if((lang==='ru'||lang==='he') && on(C)===0) return '';   /* nothing in the target script */
+    if(lang!=='ru'&&lang!=='he' && C.lat===0) return '';
+    if(t.length > (String(src||'').length*3 + 80)) return '';/* padded with explanation */
+    return t; }
+  /* AUTOMATIC TRANSLATION - one implementation for every field that gains it (Leon, 2026-08-20).
+     On first entry the app carries a value into the other two languages and stores all three.
+     THE LOCK is the whole point: a language a HUMAN has typed is NEVER machine-written again -
+     an ord=0 row in that language is human, and we skip it. The app's own rows are ord=1.
+     Every write lands in_review (insFact enforces this; a 'published' insert is silently
+     rejected by RLS). A failure SPEAKS through trFail, never returns a silent null.
+       ref      - group_id for grouped fields; the person id for ungrouped bio
+       opt.from - the source language (defaults to the app's language)
+       opt.kind - the translate function's hint ('place_name' for short labels, 'artefact_body'
+                  for prose - measured: place_name gives the cleanest short-label output)
+       opt.clean- cleanTr for short labels, cleanBio for prose
+       opt.grouped=false - bio: the lock and the write key on (field,lang), not on a group_id
+       opt.skip - languages the human ALSO typed in THIS submit (not yet in `facts`, so they
+                  cannot be found by the ord=0 lock below and must be excluded explicitly) */
+  async function translateInto(ref,text,field,opt){ const L=d(); opt=opt||{};
+    const from=opt.from||state.lang, kind=opt.kind||'place_name', clean=opt.clean||cleanTr;
+    const grouped=opt.grouped!==false;
+    const others=LANGS.filter(l=>l!==from&&!(opt.skip&&opt.skip.has(l)));
+    let failed=false;
     for(const l of others){
-      const humanRow=facts.some(x=>x.group_id===gid&&x.field===field&&x.lang===l&&(x.ord||0)===0&&hasv(x.value));
+      const humanRow=grouped
+        ? facts.some(x=>x.group_id===ref&&x.field===field&&x.lang===l&&(x.ord||0)===0&&hasv(x.value))
+        : facts.some(x=>x.field===field&&x.lang===l&&(x.ord||0)===0&&hasv(x.value));
       if(humanRow) continue;                       /* a person typed this one - leave it */
       let out='';
       try{ const {data,error}=await sb.functions.invoke('translate',
-             {body:{target_lang:l,items:[{kind:'place_name',ref:gid,text:text}]}});
+             {body:{target_lang:l,items:[{kind:kind,ref:String(ref),text:text}]}});
         if(error) failed=true;
         else if(data&&data.results&&data.results[0]) out=data.results[0].text||''; }
       catch(e){ failed=true; }
-      out=cleanTr(out,l);
-      if(out){ if(await insFact(field,l,out,1,gid)===false) failed=true; }
+      out=clean(out,l,text);
+      if(out){ if(await insFact(field,l,out,1,grouped?ref:undefined)===false) failed=true; }
       else failed=true; }
     if(failed) toast(L.trFail,true);
     return !failed; }
+  async function translateCountry(gid,text,field){ return translateInto(gid,text,field||'country',{kind:'place_name',clean:cleanTr}); }
   /* SEVERAL HOMES IN ONE VISIT (Leon, 2026-08-15).
      There is one form, and 'add a home' blanked it - so filling it in, then reaching for
      another, threw the first away. A person who lived in four places could only ever record
@@ -1394,7 +1446,10 @@
       const gid=dft.gid||uuid();
       const cur=occGroups().find(b=>b.group_id===gid);
       if(cur && occVal(cur)===dft.value) continue;      /* nothing actually changed */
-      if(await insFact('occupation',state.lang,dft.value,0,gid)===false) ok=false; }
+      if(await insFact('occupation',state.lang,dft.value,0,gid)===false) ok=false;
+      /* carry the occupation into the other two languages, exactly as a country is - a short
+         label, so cleanTr and the place_name hint (measured cleanest for short labels) fit. */
+      else if(await translateInto(gid,dft.value,'occupation',{kind:'place_name',clean:cleanTr})===false) ok=false; }
     return ok; }
   function openOcc(gid){ const box=occFormBox(); if(!box) return;
     const b=gid?occGroups().find(x=>x.group_id===gid):null;
@@ -1966,7 +2021,18 @@
          requests for his gender and 'still alive' as well, again and again. His own gender,
          living and birth_prec each carry duplicate published rows written seconds apart from
          exactly this. A request should mean somebody changed something. */
-      for(const l of LANGS){ const v=read('bio',l); if(v!=null&&v.trim()!==''&&v.trim()!==newestVal('bio',l)) await put('bio',l,v.trim()); }
+      /* THE ABOUT TEXT, IN THREE LANGUAGES. Write every language the human actually changed as
+         their own (ord 0), then translate ONCE from the one they were writing in into the other
+         two - skipping any language they typed themselves, here (bioTouched, not yet in `facts`)
+         or in the past (the ord=0 lock inside translateInto). The source is the app's language
+         if that one changed, else the first language that did. bio is ungrouped: the lock and
+         the write key on (field,lang), so grouped:false. */
+      let bioSrc=null; const bioTouched=new Set();
+      for(const l of LANGS){ const v=read('bio',l);
+        if(v!=null&&v.trim()!==''&&v.trim()!==newestVal('bio',l)){ await put('bio',l,v.trim()); bioTouched.add(l);
+          if(!bioSrc||l===state.lang) bioSrc={lang:l,text:v.trim()}; } }
+      if(bioSrc){ if(await translateInto(PERSON_ID,bioSrc.text,'bio',
+          {from:bioSrc.lang,kind:'artefact_body',clean:cleanBio,grouped:false,skip:bioTouched})===false) ok=false; }
       stageOccForm(); if(!await flushOccDrafts()) ok=false;
       const b=read('birth'); if(b!=null&&b!==''&&b!==newestVal('birth','und')) await put('birth','und',b);
       const de=read('death'); if(de!=null&&de!==''&&de!==newestVal('death','und')) await put('death','und',de);
