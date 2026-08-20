@@ -387,6 +387,27 @@ change for a field no one has ever used. Skipped deliberately. If notes start be
 store them as person_facts rows keyed by the relationship id and the existing machinery
 works unchanged.
 
+### REVIEW THE WHOLE CONTRIBUTION FLOW (Leon, 2026-08-20) — NEXT UP, not parked
+
+Leon added one photograph with one sentence and hit five separate problems. He asked for the
+whole flow to be reviewed rather than patched finding by finding. His words, kept as he said
+them:
+
+1. **There was no "country" field.** A home on the person page has one; adding a photograph
+   from a place does not.
+2. **I couldn't find the person in Russian.** The people picker did not match when he typed
+   a name in Russian - almost certainly searching one language's rows only.
+3. **I couldn't choose myself as the storyteller.** The teller picker would not let him name
+   himself, though he is in the family and is telling the story.
+4. **Tagging the face was confusing.** The drag-to-draw tagger needs looking at with fresh
+   eyes; the logic was ported from the old prototype and never re-examined.
+5. Two translation faults, FIXED 2026-08-20 (below) - but found the same way, by using it.
+
+Do not fix these one at a time. Walk the flow end to end as a contributor who is not the
+keeper, in Russian, on a phone, and write down what happens. The bugs above were found in a
+single sitting by one person doing one ordinary thing, which says the flow has never been
+walked whole.
+
 ### Journal redesign (Leon, 2026-08-15) — PARKED
 
 The journal was always meant to be built as a simple LOG first, through a designer pass, with

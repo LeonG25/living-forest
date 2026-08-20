@@ -949,8 +949,15 @@
       if(M.hasPhoto&&M.photoFile){ const pf=await lfDownscaleImage(M.photoFile); const tp=(pf.type||''); const ext = tp==='image/jpeg'?'jpg':tp==='image/png'?'png':tp==='image/webp'?'webp':((M.photoFile.name.split('.').pop())||'jpg').toLowerCase(); photoPath=await uploadBlob(pf,ext); }
 
       const primaryKind = M.hasPhoto?'photo':'text';
+      /* SAY WHICH LANGUAGE THE STORY WAS TOLD IN (Leon, 2026-08-20).
+         original_language was never set here - it is null on every story in the archive -
+         and the moment page falls back to 'en' when it is null. So Leon told a story in
+         Russian, the app filed it as English, and nothing would ever have carried it into
+         the other two languages: it would have sat in Russian forever under an English
+         label. The app knows perfectly well which language he was using. */
       const primary=await sb.from('artefacts').insert({
         kind:primaryKind, storage_path:photoPath, body:(M.telling&&M.telling.trim())||null,
+        original_language:(M.lang||'en'),
         contributor_id:tellerId, contributor_user:M.user.id, certainty:'remembered',
         status:'in_review', metadata:meta
       }).select('id').single();
@@ -969,6 +976,26 @@
           .then(async r=>{ if(subjIds.length){ const rows=subjIds.map(pid=>({artefact_id:r.data.id,person_id:pid,detail:null})); const s=await sb.from('artefact_subjects').insert(rows); if(s.error) throw s.error; } });
       }
 
+      /* carry the telling into the other two languages, exactly as the moment page does
+         when a story is edited. It was wired there and not here, so a story translated
+         itself when RE-told and never when first told - which is the only moment that
+         matters, because most stories are told once. */
+      const told=(M.telling&&M.telling.trim())||'';
+      if(told){
+        const src=(M.lang||'en');
+        for(const l of ['en','ru','he']){
+          if(l===src) continue;
+          let out='';
+          try{ const {data,error}=await sb.functions.invoke('translate',
+                 {body:{target_lang:l,items:[{kind:'artefact_body',ref:String(artId),text:told}]}});
+            if(!error&&data&&data.results&&data.results[0]) out=data.results[0].text||''; }
+          catch(e){ out=''; }
+          out=cleanStoryOut(out,l,told);
+          if(!out){ try{ console.warn('[contribute] translation refused for',l); }catch(_){ } continue; }
+          try{ await sb.from('artefact_translations').insert({artefact_id:artId,lang:l,body:out,
+                 status:'in_review',created_by:M.user.id,machine:true}); }catch(e){}
+        }
+      }
       if(subjIds.length){
         const rows=subjIds.map(pid=>({artefact_id:artId,person_id:pid,detail:null}));
         const s=await sb.from('artefact_subjects').insert(rows);
@@ -1055,6 +1082,21 @@
 
   /* ---------- boot ---------- */
   async function boot(){
+  /* refuse the model's commentary, keep prose: the same rule the moment page uses */
+  function cleanStoryOut(v,lg,src){ if(v==null) return '';
+    let raw=String(v).replace(/[\u00a0\ufeff]/g,' ').trim(); if(!raw) return '';
+    if(/\b(as an ai|i (can('?t| ?not)|could not|am unable)|cannot translate)\b/i.test(raw)) return '';
+    const cnt=x=>({lat:(x.match(/[A-Za-z]/g)||[]).length,cyr:(x.match(/[\u0400-\u04FF]/g)||[]).length,heb:(x.match(/[\u0590-\u05FF]/g)||[]).length});
+    const on=c=> lg==='ru'?c.cyr : lg==='he'?c.heb : c.lat;
+    const off=c=> lg==='ru'?(c.lat+c.heb) : lg==='he'?(c.lat+c.cyr) : (c.cyr+c.heb);
+    const kept=raw.split(/\r?\n/).map(x=>x.trim()).filter(function(line){ if(!line) return false;
+      const c=cnt(line), o=on(c), f=off(c);
+      if(o===0&&f===0) return true; return o>0 && o>=f; });
+    let out=kept.join('\n').replace(/\n{3,}/g,'\n\n').trim();
+    if(!out) return '';
+    if(on(cnt(out))===0) return '';
+    if(out.length > (String(src||'').length*3 + 80)) return '';
+    return out; }
     const stored=(function(){ try{ return localStorage.getItem('lf_lang'); }catch(e){ return null; } })();
     if(stored&&T[stored]) M.lang=stored;
     else { const dl=(navigator.language||'en').slice(0,2); if(T[dl]) M.lang=dl; }
