@@ -401,7 +401,27 @@ them:
    himself, though he is in the family and is telling the story.
 4. **Tagging the face was confusing.** The drag-to-draw tagger needs looking at with fresh
    eyes; the logic was ported from the old prototype and never re-examined.
-5. Two translation faults, FIXED 2026-08-20 (below) - but found the same way, by using it.
+5. Two translation faults, FIXED 2026-08-20 - but found the same way, by using it.
+6. **A photograph was left behind by every failed send.** Three copies of the same picture of
+   his mother reached the archive because the picture is saved before the step that failed.
+   Leon caught and declined them; nobody else would.
+7. **The story area showed an empty box inviting a telling in English while a translation was
+   already waiting underneath it.** Two true things said at once, reading as a failure.
+
+### More, added by Leon after a second sitting, 2026-08-20
+
+8. **The list of people to choose from shows empty boxes.** The names are not drawn - he could
+   only see who was who by tapping each blank box in turn.
+9. **That list should show each person's small face**, as the rest of the app does.
+10. **Choosing people and tagging faces must be ONE act.** No choosing without tagging first.
+11. **Tagging was only possible AFTER sending the whole contribution to the keeper.** It has to
+    happen inside the flow, while the photograph is in front of you.
+12. **EVERYTHING except the media must be optional.** Tagging, the story, where, when, any
+    detail - all optional. A person must be able to finish having added only a photograph, or
+    only a voice recording, or only whatever they have. The forest takes what it is given.
+
+That is twelve findings from two ordinary sittings by one person. The flow has never been
+walked end to end by anyone who was not building it.
 
 Do not fix these one at a time. Walk the flow end to end as a contributor who is not the
 keeper, in Russian, on a phone, and write down what happens. The bugs above were found in a
