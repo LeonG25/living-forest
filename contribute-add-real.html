@@ -992,6 +992,8 @@
           catch(e){ out=''; }
           out=cleanStoryOut(out,l,told);
           if(!out){ try{ console.warn('[contribute] translation refused for',l); }catch(_){ } continue; }
+          /* it waits here only because the MEMORY is waiting - approving the memory releases
+             it. It is never a decision of its own. */
           try{ await sb.from('artefact_translations').insert({artefact_id:artId,lang:l,body:out,
                  status:'in_review',created_by:M.user.id,machine:true}); }catch(e){}
         }

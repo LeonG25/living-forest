@@ -1367,8 +1367,13 @@
         catch(e){ out=''; }
         out=cleanStory(out,l,srcText);
         if(!out){ trWarn(); continue; }
-        await sbWrite(()=>sb.from('artefact_translations')
-          .insert({artefact_id:art.id,lang:l,body:out,status:'in_review',created_by:user.id,machine:true}));
+        /* the app's own retelling goes live with the memory it came from: if the memory is
+           already in the forest there is nothing left to decide, and a translation nobody
+           can approve would wait for ever. A person's own words still wait. */
+        const live=(art&&art.status==='published');
+        await sbWrite(()=>sb.from('artefact_translations').insert({artefact_id:art.id,lang:l,body:out,
+          status: live?'published':'in_review', created_by:user.id, machine:true,
+          published_at: live?new Date().toISOString():null }));
       }
     }catch(e){ try{ console.warn('carryStory',e); }catch(_){ } }
   }
