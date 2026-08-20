@@ -225,7 +225,40 @@
     return rows;
   }
 
+  /* PLACE NAMES, WITHOUT MOVING A SINGLE ROW (Leon, 2026-08-20).
+     This was written down as blocked, and it was blocked for a good reason: a home stores
+     one place name for all languages, and four pages group people by that text AS A STRING.
+     Translating what is STORED would split Tel Aviv into three places holding a third of the
+     family each.
+     But place_geo already holds every place in all three languages, keyed by exactly the text
+     people type. So nothing needs to move: the stored text stays the one true key and keeps
+     the grouping intact, and only what a person READS is swapped. A place we have never seen
+     before simply shows as it was typed, which is what it does today.
+     Loaded once and kept, because it is small and every page wants it. */
+  var _placeMap=null, _placeLang=null;
+  async function places(sb, lang){
+    try{
+      if(!sb||!lang) return {};
+      if(_placeMap && _placeLang===lang) return _placeMap;
+      var res=await sb.from('place_geo').select('name,name_en,name_ru,name_he');
+      var rows=(res&&res.data)||[]; var m={};
+      for(var i=0;i<rows.length;i++){
+        var r=rows[i]; if(!r.name) continue;
+        var v = lang==='ru'?r.name_ru : lang==='he'?r.name_he : r.name_en;
+        if(v && String(v).trim()) m[r.name]=v;
+      }
+      _placeMap=m; _placeLang=lang; return m;
+    }catch(e){ return {}; }
+  }
+  function placeName(name, map){
+    if(!name) return name;
+    if(!map) return name;
+    return map[name] || map[String(name).trim()] || name;
+  }
+
   window.LFDB={
+    places:places,
+    placeName:placeName,
     stories:stories,
     img:img,
     note:note,

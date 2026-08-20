@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="lf-db.js?v=8"></script>
+<script src="lf-db.js?v=9"></script>
 <script src="lf-name.js?v=1"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
@@ -701,7 +701,10 @@
   }
   function firstName(n){ return String(n||'').trim().split(/\s+/)[0]||''; }
   const yearOf = ()=> (String((art&&art.metadata&&art.metadata.when)||'').match(/\d{4}/)||[''])[0];
-  function whereText(){ return (art&&art.metadata&&art.metadata.where)||''; }
+  /* the stored text stays the key; the reader sees their own language */
+  let PLMAP={};
+  function whereText(){ const w=(art&&art.metadata&&art.metadata.where)||'';
+    return (window.LFDB&&LFDB.placeName)?LFDB.placeName(w,PLMAP):w; }
   function whenText(){ return (art&&art.metadata&&art.metadata.when)||''; }
   function detailsList(){ return (art&&art.metadata&&Array.isArray(art.metadata.details))?art.metadata.details:[]; }
   function storyForLang(L){ const orig=(art&&art.original_language)||'en';
@@ -1730,6 +1733,7 @@
       (nf||[]).forEach(f=>{ const k=f.person_id+'|'+f.lang;
         (byPL[k]=byPL[k]||{person_id:f.person_id,lang:f.lang})[f.field]=f.value; });
       Object.values(byPL).forEach(v=>{ (vars[v.person_id]=vars[v.person_id]||[]).push(v); }); }
+    try{ if(window.LFDB&&LFDB.places) PLMAP=await LFDB.places(sb,lang); }catch(e){}
     tellerName='';
     /* WHO IS SPEAKING CHANGES THE WORDS (Leon, 2026-08-20). A story is told in the first
        person, and Hebrew and Russian inflect the verb by the speaker's gender: Leon, who is

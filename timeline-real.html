@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="lf-db.js?v=8"></script>
+<script src="lf-db.js?v=9"></script>
 <script src="lf-label.js?v=1"></script>
 <script src="lf-face.js?v=3"></script>
 <style>
@@ -179,6 +179,8 @@ async function load(){
     const arts=(artsR.data||[]).filter(a=>a.metadata && a.metadata.when);
     /* read each story in the reader's own language where one exists */
     if(window.LFDB&&LFDB.stories) await LFDB.stories(sb, arts, LG());
+    /* and each place in the reader's language - the stored text is untouched */
+    const PLMAP = (window.LFDB&&LFDB.places) ? await LFDB.places(sb, LG()) : {};
     await LFLabel.load(sb,(peopleR.data||[]).map(p=>p.id));
     const nameById={}; (peopleR.data||[]).forEach(p=> nameById[p.id]=LFLabel.of(p.id,LG())||p.called_name||'');
     const idByName={}; (peopleR.data||[]).forEach(p=> idByName[LFLabel.of(p.id,LG())||p.called_name||'']=p.id);
@@ -203,7 +205,7 @@ async function load(){
       const bucket = (y===9999) ? String(a.metadata.when) : String(y);
       if(bucket!==lastBucket){ h+='<div class="yr">'+esc(bucket)+'</div>'; lastBucket=bucket; }
       const isImg=(a.kind==='photo'||a.kind==='object') && a.storage_path;
-      const where=a.metadata.where?(' &middot; '+esc(a.metadata.where)):'';
+      const where=a.metadata.where?(' &middot; '+esc(LFDB.placeName(a.metadata.where,PLMAP))):'';
       const title = a.body ? esc(a.body.replace(/\s+/g,' ').slice(0,80)) + (a.body.length>80?'\u2026':'') : ('A '+esc(a.kind||'memory'));
       /* keep the ids: converting id -> name -> id back again through idByName loses anyone
          whose label does not round-trip exactly, and every face came out empty because of it */

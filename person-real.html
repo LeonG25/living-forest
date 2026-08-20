@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="lf-db.js?v=8"></script>
+<script src="lf-db.js?v=9"></script>
 <script src="lf-face.js?v=3"></script>
 <script src="lf-place.js?v=1"></script>
 <script src="lf-label.js?v=2"></script>
@@ -1198,7 +1198,10 @@
     if(hasv(f)&&!hasv(t)) return f+' — '+L.hPresent;
     if(!hasv(f)&&hasv(t)) return '… — '+t;
     return f+' — '+t; }
-  function homeWhere(b){ return [hv(b,'lived'),hv(b,'country')].filter(hasv).join(', '); }
+  /* a home reads in the reader's language; the stored text is the key and never moves */
+  let PLMAP={};
+  const pn=v=>(window.LFDB&&LFDB.placeName)?LFDB.placeName(v,PLMAP):v;
+  function homeWhere(b){ return [pn(hv(b,'lived')),hv(b,'country')].filter(hasv).join(', '); }
   /* who may take a home away: the keeper always; the person who suggested it while it waits;
      anyone else asks, per Rule 3. */
   function homeDelCtl(b){ const L=d(); const req=removalReq(b.group_id);
@@ -2338,7 +2341,9 @@
   }
 
   /* ---------- reload + gate + boot ---------- */
-  async function reload(){ await loadData(); seed(); render(); }
+  async function reload(){ await loadData();
+    try{ if(window.LFDB&&LFDB.places) PLMAP=await LFDB.places(sb,state.lang); }catch(e){}
+    seed(); render(); }
   function showGate(){ const L=d(); let g=$('#gate'); if(!g){ g=document.createElement('div'); g.id='gate'; $('#dev').appendChild(g); }
     g.setAttribute('style','position:absolute;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(4,7,14,.9);backdrop-filter:blur(6px)');
     g.innerHTML=`<div style="width:100%;max-width:320px;background:linear-gradient(180deg,#0e1c31,#081120);border:1px solid var(--hair);border-radius:20px;padding:24px;text-align:center">
