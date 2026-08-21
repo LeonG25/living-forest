@@ -501,7 +501,7 @@
 
   /* ---------- data ---------- */
   async function loadData(){
-    const out={ people:[], newcomers:[], facts:[], nvs:[], arts:[], trans:[], edits:[], rels:[], pubRels:[], peopleMap:{}, profMap:{}, personRow:{},
+    const out={ people:[], newcomers:[], facts:[], nvs:[], arts:[], trans:[], edits:[], editArt:{}, rels:[], pubRels:[], peopleMap:{}, profMap:{}, personRow:{},
                 pub:[], pubNvs:[], pubIdx:{}, pubAny:{}, pubGroup:{} };
     /* Seven independent reads. They used to run one after another - seven
        round-trips deep - which is why the keeper sat watching a loading line.
@@ -539,6 +539,17 @@
     out.facts=rFacts.data||[];
     out.trans=(rTrans&&rTrans.data)||[];
     out.edits=(rEdits&&rEdits.data)||[];
+    /* WHICH MEMORY IS IT? (Leon, 2026-08-21) A request to remove a memory showed no sign of
+       WHICH memory - the artefact it names is published, so it is not among the waiting ones
+       this page loads. Fetch exactly the ones the requests point at. */
+    try{
+      const aids=[...new Set((out.edits||[]).map(e=>e.artefact_id).filter(Boolean))];
+      if(aids.length){
+        const {data:ea}=await sb.from('artefacts')
+          .select('id,body,metadata,storage_path,original_language').in('id',aids);
+        (ea||[]).forEach(a=>{ out.editArt[a.id]=a; });
+      }
+    }catch(e){}
     out.nvs=rNvs.data||[];
     out.arts=(rArts.data||[]).filter(a=>a.kind==='photo'||a.kind==='voice');
     let relRows=rRels.data||[];
@@ -682,8 +693,15 @@
     });
     /* an edit somebody has asked for on a photograph */
     (pending.edits||[]).forEach(function(e){
+      const ea=(pending.editArt||{})[e.artefact_id]||null;
+      const md=(ea&&ea.metadata)||{};
+      /* name it the way a person would: its own words first, then when and where */
+      const words=(ea&&ea.body)?String(ea.body).replace(/\s+/g,' ').trim().slice(0,90):'';
+      const ww=[md.when,md.where].filter(Boolean).join(' \u00b7 ');
       items.memories.push({ kind:'aedit', id:e.id, group:'memories', artefactId:e.artefact_id,
         field:e.field, lang:e.lang, value:e.new_value, oldValue:e.old_value,
+        which: words ? ('\u201c'+words+(words.length>=90?'\u2026':'')+'\u201d'+(ww?(' \u00b7 '+ww):'')) : (ww||''),
+        thumb:(ea&&ea.storage_path)||'',
         suggester:accountName(e.created_by), created_at:e.created_at });
     });
     /* a retelling somebody wrote in another language */
@@ -777,7 +795,10 @@
        file now; both times the keeper's page died on load and showed nothing at all. */
     if(it.kind==='remreq'||it.kind==='clearreq'){ return `<span class="quiet">${esc(d().askGone)}</span>`; }
     if(it.kind==='telling'){ return `<span class="quiet">“${esc(String(it.value||'').slice(0,240))}”</span>`; }
-    if(it.kind==='aedit'){ return `<span class="quiet">${esc(it.value?String(it.value).slice(0,200):(d().askGone||''))}</span>`; }
+    if(it.kind==='aedit'){
+      const what = it.which ? `<div>${esc(it.which)}</div>` : '';
+      const to = it.value ? `<div class="quiet">${esc(String(it.value).slice(0,140))}</div>` : '';
+      return what+to || `<span class="quiet">${esc(d().askGone||'')}</span>`; }
     return esc(it.value||'—');
   }
 
