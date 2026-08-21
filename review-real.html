@@ -18,6 +18,7 @@
 <script src="lf-portrait.js?v=1"></script>
 <script src="lf-date.js?v=1"></script>
 <script src="lf-face.js?v=3"></script>
+<script src="lf-place.js?v=7"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
   html,body{ background:#04070e; }
@@ -1139,6 +1140,25 @@
     if(kind==='artefact'){ try{ await sb.from('artefact_translations')
       .update({status:'published',reviewed_by:user.id,published_at:now})
       .eq('artefact_id',id).eq('machine',true); }catch(e){} }
+    /* A PLACE LEARNS ITS NAMES WHEN THE MEMORY IS APPROVED (Leon, 2026-08-20).
+       Until now a place was only looked up when somebody opened its own page - so
+       Хабаровск sits on his father's army photograph with no names at all, and a Hebrew
+       reader sees Cyrillic until someone happens to wander there. Approving is the
+       moment a place enters the forest, and the right moment to learn it.
+       Deliberately not awaited: the lookup waits over a second between languages to be
+       polite to the map service, about three and a half seconds a place, and the keeper
+       should not sit through that. It is a place we have never seen before or nothing. */
+    if(kind==='artefact'){ try{
+      const a0=(pending.arts||[]).find(x=>x.id===id);
+      const wh=a0&&a0.metadata&&a0.metadata.where;
+      if(wh&&window.LFPlace&&LFPlace.ensure){
+        const known=await sb.from('place_geo').select('name_en,name_ru,name_he').eq('name',wh).maybeSingle();
+        const k=known&&known.data;
+        if(!k||!k.name_en||!k.name_ru||!k.name_he){
+          LFPlace.ensure(wh, state.lang||'en', sb).then(function(){},function(){});
+        }
+      }
+    }catch(e){} }
     else if(kind==='person'){ try{ await sb.from('people').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){ try{ await sb.from('people').update({status:'published'}).eq('id',id); }catch(e2){} } }
     else if(kind==='rel'){ const r=(pending.rels||[]).find(x=>x.id===id);
       if(r && matchesPublished(r)){ // removal request: delete the live tie it mirrors, then the request

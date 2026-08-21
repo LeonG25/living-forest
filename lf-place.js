@@ -7,8 +7,28 @@
     ensure: async function(name, lang, sb){
       name=String(name||'').trim(); if(!name||!sb) return null;
       try{
-        const {data:r}=await sb.from('place_geo').select('name,lat,lng,label,country').eq('name',name).maybeSingle();
+        const {data:r}=await sb.from('place_geo').select('name,lat,lng,label,country,name_en,name_ru,name_he').eq('name',name).maybeSingle();
         if(r&&r.lat!=null){
+          /* A KNOWN PLACE MISSING ITS NAMES WAS NEVER FILLED IN. This returned the moment a
+             row existed, so a place learned before the three names were being stored - or
+             one whose lookup half-failed - stayed nameless for ever and showed as typed on
+             every page. It fills the gaps now, once, in the background. */
+          if(!r.name_en||!r.name_ru||!r.name_he){
+            (async function(){ try{
+              const locs={en:'name_en',ru:'name_ru',he:'name_he'}, patch={};
+              for(const l of ['en','ru','he']){
+                if(r[locs[l]]) continue;
+                try{
+                  const rr=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=13&lat='+r.lat+'&lon='+r.lng+'&accept-language='+l);
+                  const jj=await rr.json(); const a=(jj&&jj.address)||{};
+                  const v=a.city||a.town||a.village||a.hamlet||a.municipality||a.suburb||((jj&&jj.display_name)||'').split(',')[0].trim()||null;
+                  if(v) patch[locs[l]]=v;
+                }catch(e){}
+                await new Promise(z=>setTimeout(z,1100));
+              }
+              if(Object.keys(patch).length) await sb.from('place_geo').update(patch).eq('name',name);
+            }catch(e){} })();
+          }
           if(!r.country&&r.label){ const c=r.label.split(',').pop().trim();
             if(c){ r.country=c; try{ sb.from('place_geo').update({country:c}).eq('name',name).then(()=>{},()=>{}); }catch(e){} } }
           return r;
