@@ -253,24 +253,27 @@
   </div>
 
   <div class="hud" id="tl">
-    <div class="k">The Living Forest</div>
-    <h1 class="serif">Every life<br>has a <em>light.</em></h1>
-    <p>Your family, seen from above — every place a photo was taken, every year you have of them. Turn the globe. Turn the years.</p>
+    <div class="k" id="gbK">The Living Forest</div>
+    <h1 class="serif" id="gbH"><span>Every life</span><br><span>has a </span><em>light.</em></h1>
+    <p id="gbP">Your family, seen from above — every place a photo was taken, every year you have of them. Turn the globe. Turn the years.</p>
     <div class="stats">
-      <div class="stat"><span class="v serif" id="stPeople">0</span><span class="l">people</span></div>
-      <div class="stat"><span class="v serif" id="stTies">0</span><span class="l">ties</span></div>
-      <div class="stat"><span class="v serif" id="stPlaces">0</span><span class="l">places</span></div>
+      <div class="stat"><span class="v serif" id="stPeople">0</span><span class="l" id="gbPeople">people</span></div>
+      <div class="stat"><span class="v serif" id="stTies">0</span><span class="l" id="gbTies">ties</span></div>
+      <div class="stat"><span class="v serif" id="stPlaces">0</span><span class="l" id="gbPlaces">places</span></div>
     </div>
   </div>
 
   <div class="hud" id="tr">
-    <div class="k">the year</div>
+    <!-- the globe needs its own way to change language: the gate has one, and the gate
+         is gone the moment you are through it. -->
+    <button class="langpill" data-langbtn id="gbPill" style="margin:0 0 8px;font-size:11px;padding:5px 10px">EN</button>
+    <div class="k" id="gbYear">the year</div>
     <div class="v serif" id="yr">—</div>
     <div class="note" id="yrNote"></div>
   </div>
 
   <div class="hud" id="bl">
-    <div class="cap">the more remembered, the brighter</div>
+    <div class="cap" id="gbCap">the more remembered, the brighter</div>
     <div class="rows">
       <div class="r"><span style="width:5px;height:5px;border-radius:50%;background:#ffe9c2;box-shadow:0 0 5px 1px rgba(255,210,135,.7)"></span><span class="t">a memory</span></div>
       <div class="r"><span style="width:8px;height:8px;border-radius:50%;background:#ffe4a6;box-shadow:0 0 9px 2px rgba(255,205,120,.8)"></span><span class="t">many</span></div>
@@ -280,7 +283,7 @@
     </div>
   </div>
 
-  <div class="hud" id="br"><div class="readout">drag to turn · scroll to zoom<br>spin the ring — several turns span the years</div></div>
+  <div class="hud" id="br"><div class="readout" id="gbRead">drag to turn · scroll to zoom<br>spin the ring — several turns span the years</div></div>
 
   <div id="card"><div class="panel">
     <div class="x" id="cardX">&times;</div>
@@ -488,6 +491,8 @@ async function load(){
     if(ymin>ymax){ ymin=2000; ymax=2025; }
     Y_MIN=ymin; Y_MAX=ymax;
     PEOPLE = built;
+    /* the globe's words, in whatever language the reader chose at the gate */
+    try{ paintGlobeWords(); }catch(e){}
     // ties from relationships (both endpoints placed)
     const byId={}; PEOPLE.forEach(p=>byId[p.id]=p);
     TIES = (rels.data||[]).filter(r=>byId[r.from_person] && byId[r.to_person] && !byId[r.from_person].waiting && !byId[r.to_person].waiting)
@@ -770,6 +775,42 @@ const T={
 
 function gscreen(){ return document.getElementById('gateScreen'); }
 function pill(){ return GLANG==='he'?'עב':GLANG.toUpperCase(); }
+
+/* THE FRONT DOOR SPOKE ONLY ENGLISH (Leon, 2026-08-21). The gate had a language pill and the
+   globe behind it did not - so a Russian or Hebrew reader signed in through their own
+   language and arrived at an English page with no way to change it. The words were written
+   straight into the HTML with no translation anywhere. */
+const GB={
+  en:{k:'The Living Forest',h1:'Every life',h2:'has a ',em:'light.',
+      p:'Your family, seen from above — every place a photo was taken, every year you have of them. Turn the globe. Turn the years.',
+      people:'people',ties:'ties',places:'places',year:'the year',
+      cap:'the more remembered, the brighter',
+      read:'drag to turn · scroll to zoom<br>spin the ring — several turns span the years'},
+  ru:{k:'Живой лес',h1:'У каждой жизни',h2:'есть свой ',em:'свет.',
+      p:'Ваша семья с высоты — каждое место, где снята фотография, каждый год, который у вас есть. Поверните глобус. Поверните годы.',
+      people:'людей',ties:'связей',places:'мест',year:'год',
+      cap:'чем больше помнят, тем ярче',
+      read:'ведите, чтобы повернуть · колесо — масштаб<br>крутите кольцо — несколько оборотов охватывают годы'},
+  he:{k:'היער החי',h1:'לכל חיים',h2:'יש ',em:'אור.',
+      p:'המשפחה שלכם מלמעלה — כל מקום שבו צולם תצלום, כל שנה שיש לכם מהם. סובבו את הגלובוס. סובבו את השנים.',
+      people:'אנשים',ties:'קשרים',places:'מקומות',year:'השנה',
+      cap:'ככל שזוכרים יותר, כך בוהק יותר',
+      read:'גררו כדי לסובב · גלגלו לזום<br>סובבו את הטבעת — כמה סיבובים פורשים על פני השנים'}
+};
+function paintGlobeWords(){
+  const pb=document.getElementById('gbPill');
+  if(pb){ pb.textContent=pill(); pb.onclick=openLangSheet; }
+  const g=GB[GLANG]||GB.en, set=(id,v,html)=>{ const e=document.getElementById(id); if(!e) return;
+    if(html) e.innerHTML=v; else e.textContent=v; };
+  set('gbK',g.k); set('gbP',g.p);
+  const h=document.getElementById('gbH');
+  if(h) h.innerHTML='<span>'+g.h1+'</span><br><span>'+g.h2+'</span><em>'+g.em+'</em>';
+  set('gbPeople',g.people); set('gbTies',g.ties); set('gbPlaces',g.places);
+  set('gbYear',g.year); set('gbCap',g.cap); set('gbRead',g.read,true);
+  /* Hebrew reads right to left, and the globe's panels have to turn with it */
+  document.documentElement.setAttribute('lang',GLANG);
+  document.documentElement.setAttribute('dir', GLANG==='he'?'rtl':'ltr');
+}
 function applyDir(){ const s=gscreen(); if(!s) return; s.setAttribute('dir',T[GLANG].dir); s.setAttribute('data-lang',GLANG); }
 
 function modeHTML(mode){
@@ -929,7 +970,7 @@ function buildSheet(){ const t=T[GLANG]; const sheet=document.getElementById('ga
 function openLangSheet(){ document.getElementById('gateScrim').classList.add('show'); document.getElementById('gateSheet').classList.add('show'); }
 function closeLangSheet(){ document.getElementById('gateScrim').classList.remove('show'); document.getElementById('gateSheet').classList.remove('show'); }
 function chooseLang(code){ if(GATE_LANGS.indexOf(code)<0) return; GLANG=code; try{ localStorage.setItem('lf_lang',code); }catch(e){}
- closeLangSheet(); buildSheet();
+ closeLangSheet(); buildSheet(); try{ paintGlobeWords(); }catch(e){}
  sb.auth.getSession().then(({data})=>{ const u=data&&data.session&&data.session.user; if(u) sb.from('profiles').update({ preferred_lang:code }).eq('id',u.id).then(()=>{},()=>{}); }).catch(()=>{});
  if(gateView==='form') renderGate(curMode);
  else if(gateView==='reading'||gateView==='plant'){ gscreen().innerHTML=plantingHTML(gateView); applyDir(); }
