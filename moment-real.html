@@ -164,6 +164,9 @@
     color:var(--cream); font-family:'Hanken Grotesk',sans-serif; font-size:12.5px; font-weight:600; cursor:pointer; }
   .ptool svg{ width:16px; height:16px; }
   .ptool.tag{ border-color:rgba(243,205,132,.45); color:var(--gold-hi); background:rgba(243,205,132,.10); }
+  /* the one control that takes everything looks like it: warm red, never gold */
+  .ptool.danger{ border-color:rgba(255,140,140,.42); color:#ffb4b4; background:rgba(255,120,120,.09); }
+  .ptool.danger:active{ background:rgba(255,120,120,.18); }
   .ptool.tag.on{ border-color:var(--edit); color:#efe6ff; background:rgba(201,162,255,.16); }
   .ptool.round{ width:38px; padding:0; justify-content:center; }
   .ptool.spacer{ margin-inline-start:auto; background:none; border:none; }
@@ -885,7 +888,11 @@
             <!-- Leon, 2026-08-20: 'I wanted to upload something random just for the test, but
                  then I remembered that I can't delete it.' Nothing could remove a whole
                  memory - only its photograph, leaving an empty moment behind. -->
-            <button class="ptool round" id="delMomBtn" aria-label="${esc(d.delMoment)}" title="${esc(d.delMoment)}">${sv(ICON.x,1.6)}</button>
+            <!-- Leon, 2026-08-20: an X on its own says nothing about how much it takes. This
+                 one removes the WHOLE memory - photograph, story, tags, retellings - and a
+                 bare icon beside a photograph reads as 'remove the photograph'. It carries
+                 its words now, unlike its neighbours, because it is not like its neighbours. -->
+            <button class="ptool danger" id="delMomBtn" title="${esc(d.delMoment)}">${sv(ICON.x,1.6)} <span>${esc(d.delMoment)}</span></button>
           </div>` : `<div class="phototools" id="phototools">
             <button class="ptool tag" id="replBtn">${sv(ICON.swap,1.6)} <span>${esc(d.replacePhoto)}</span></button></div>` }
           <div class="taghint">${sv(ICON.tag,1.7)} <span>${esc(d.tagHint)}</span></div>
