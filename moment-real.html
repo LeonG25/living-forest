@@ -1431,6 +1431,15 @@
      that rule is right for a country and would amputate a paragraph. */
   function cleanStory(v,lg,src){ if(v==null) return '';
     let raw=String(v).replace(/[\u00a0\ufeff]/g,' ').trim(); if(!raw) return '';
+    /* ONE LANGUAGE, ONE ALPHABET (Leon, 2026-08-21). Arabic letters reached a Hebrew story -
+       'ביافو' for Jaffa - because this counted only Latin, Cyrillic and Hebrew, and anything
+       else was invisible to it. A single character from a third script is not a translation
+       with a blemish; it is a translation that went wrong, and it is refused whole. */
+    if(/[\u0600-\u06FF\u0750-\u077F\u0370-\u03FF\u0530-\u058F\u4E00-\u9FFF\u3040-\u30FF\u0E00-\u0E7F\u0900-\u097F]/.test(raw)) return '';
+    if(lg==='he' && /[\u0400-\u04FF]/.test(raw)) return '';
+    if(lg==='ru' && /[\u0590-\u05FF]/.test(raw)) return '';
+    if(lg==='en' && /[\u0400-\u04FF\u0590-\u05FF]/.test(raw)) return '';
+
     if(/\b(as an ai|i (can('?t| ?not)|could not|am unable)|cannot translate)\b/i.test(raw)) return '';
     const cnt=x=>({lat:(x.match(/[A-Za-z]/g)||[]).length,cyr:(x.match(/[\u0400-\u04FF]/g)||[]).length,heb:(x.match(/[\u0590-\u05FF]/g)||[]).length});
     const on=c=> lg==='ru'?c.cyr : lg==='he'?c.heb : c.lat;

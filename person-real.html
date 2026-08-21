@@ -1265,6 +1265,15 @@
      it is too long or written in the wrong alphabet - refusing is safe, because the reader
      falls back to a language that does have a name. Never mix alphabets. */
   function cleanTr(v,lang){ if(!v) return '';
+    /* ONE LANGUAGE, ONE ALPHABET (Leon, 2026-08-21). Arabic reached a Hebrew story because
+       only Latin, Cyrillic and Hebrew were ever counted and a third script was invisible.
+       A single character from another alphabet means the translation went wrong, not that
+       it needs trimming - it is refused whole, here as on the story pages. */
+    if(/[\u0600-\u06FF\u0750-\u077F\u0370-\u03FF\u0530-\u058F\u4E00-\u9FFF\u3040-\u30FF\u0E00-\u0E7F\u0900-\u097F]/.test(String(v))) return '';
+    if(lang==='he' && /[\u0400-\u04FF]/.test(String(v))) return '';
+    if(lang==='ru' && /[\u0590-\u05FF]/.test(String(v))) return '';
+    if(lang==='en' && /[\u0400-\u04FF\u0590-\u05FF]/.test(String(v))) return '';
+
     let t=String(v).split(/[\r\n]+/).map(x=>x.trim()).filter(Boolean)[0]||'';
     t=t.replace(/\s*[\(\[].*$/,'').replace(/^["'\u201c\u201e]+|["'\u201d\u201c]+$/g,'').replace(/[\s.,;:!]+$/,'').trim();
     if(!t||t.length>48) return '';
@@ -1289,6 +1298,15 @@
      (padding is explanation, not translation). If nothing survives, refuse - the reader falls
      back to a language that has a value, exactly as with a country. */
   function cleanBio(v,lang,src){ if(v==null) return '';
+    /* ONE LANGUAGE, ONE ALPHABET (Leon, 2026-08-21). Arabic reached a Hebrew story because
+       only Latin, Cyrillic and Hebrew were ever counted and a third script was invisible.
+       A single character from another alphabet means the translation went wrong, not that
+       it needs trimming - it is refused whole, here as on the story pages. */
+    if(/[\u0600-\u06FF\u0750-\u077F\u0370-\u03FF\u0530-\u058F\u4E00-\u9FFF\u3040-\u30FF\u0E00-\u0E7F\u0900-\u097F]/.test(String(v))) return '';
+    if(lang==='he' && /[\u0400-\u04FF]/.test(String(v))) return '';
+    if(lang==='ru' && /[\u0590-\u05FF]/.test(String(v))) return '';
+    if(lang==='en' && /[\u0400-\u04FF\u0590-\u05FF]/.test(String(v))) return '';
+
     let raw=String(v).replace(/[\u00a0\ufeff]/g,' ').trim(); if(!raw) return '';
     if(/\b(as an ai|i (can('?t| ?not)|could not|am unable)|i'?m unable to|cannot translate)\b/i.test(raw)) return '';
     const cnt=s=>({ lat:(s.match(/[A-Za-z]/g)||[]).length, cyr:(s.match(/[\u0400-\u04FF]/g)||[]).length, heb:(s.match(/[\u0590-\u05FF]/g)||[]).length });
