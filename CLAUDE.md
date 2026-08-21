@@ -304,6 +304,19 @@ Others worth keeping:
   mini-tree in the tree's own conventions.
 - **Test data belongs to the family.** Every probe that writes must clean up, by name.
 
+## 3b · THE SHELL ON THE DROPLET
+
+Leon switched the server connector to **LG Maker MCP v2** on 2026-08-21. Use v2. The older
+"LG Maker MCP" still answers and reaches the same machine as the same user, so both appear
+to work - which is exactly why this is written down rather than left to be noticed.
+
+Verified on the day of the switch: same droplet (leons-droplet), same user (botuser), same
+checkout at /home/botuser/living-forest, same GitHub token. Nothing about the work changes;
+only which tool to call.
+
+The connector drops now and then, on either version. Re-find it with tool_search rather than
+assuming the shell is gone.
+
 ## 4 · PARKED — decided, not now (do not build unasked)
 
 *The orientation table has pointed at "§4 PARKED" since 2026-08-09 and there was no such
