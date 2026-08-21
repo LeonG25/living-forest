@@ -131,7 +131,12 @@
   #gate .screen{ position:absolute; inset:0; z-index:4; overflow:hidden; }
   #gate .gate{ position:relative; z-index:5; height:100%; max-width:440px; margin:0 auto; display:flex; flex-direction:column; padding:0 24px calc(22px + env(safe-area-inset-bottom)); overflow-y:auto; -webkit-overflow-scrolling:touch; }
   #gate .gtop{ display:flex; align-items:center; justify-content:flex-end; padding:16px 0 0; min-height:52px; }
-  #gate .langpill{ display:inline-flex; align-items:center; gap:6px; font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+  #gate .ibtn{ width:40px; height:40px; border-radius:12px; flex:0 0 auto; display:grid; place-items:center; cursor:pointer;
+  border:1px solid rgba(255,255,255,.16); background:rgba(10,20,34,.55); color:#f4ead9;
+  transition:border-color .2s,background .2s; margin:0 0 8px; }
+.ibtn:hover{ border-color:rgba(255,255,255,.34); }
+.ibtn svg{ width:18px; height:18px; }
+.langpill{ display:inline-flex; align-items:center; gap:6px; font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase;
     padding:8px 11px; border-radius:99px; cursor:pointer; border:1px solid var(--hair); background:rgba(10,20,34,.55); color:var(--muted); }
   #gate .langpill:hover{ border-color:rgba(255,255,255,.3); color:var(--cream); }
   #gate .langpill svg{ width:12px; height:12px; }
@@ -266,7 +271,7 @@
   <div class="hud" id="tr">
     <!-- the globe needs its own way to change language: the gate has one, and the gate
          is gone the moment you are through it. -->
-    <button class="langpill" data-langbtn id="gbPill" style="margin:0 0 8px;font-size:11px;padding:5px 10px">EN</button>
+    <button class="ibtn" data-langbtn id="gbPill" aria-label="Language"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></button>
     <div class="k" id="gbYear">the year</div>
     <div class="v serif" id="yr">—</div>
     <div class="note" id="yrNote"></div>
@@ -798,8 +803,11 @@ const GB={
       read:'גררו כדי לסובב · גלגלו לזום<br>סובבו את הטבעת — כמה סיבובים פורשים על פני השנים'}
 };
 function paintGlobeWords(){
+  /* the globe icon, not the letters: every other page marks language with the same
+     square button and the same drawn globe, and the front door should not be the odd
+     one out. The chosen language is shown inside the sheet it opens. */
   const pb=document.getElementById('gbPill');
-  if(pb){ pb.textContent=pill(); pb.onclick=openLangSheet; }
+  if(pb){ pb.setAttribute('aria-label', (GB[GLANG]||GB.en).k); pb.onclick=openLangSheet; }
   const g=GB[GLANG]||GB.en, set=(id,v,html)=>{ const e=document.getElementById(id); if(!e) return;
     if(html) e.innerHTML=v; else e.textContent=v; };
   set('gbK',g.k); set('gbP',g.p);
