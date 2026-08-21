@@ -372,7 +372,10 @@
     <div class="topbar">
       <button class="ibtn back" data-act="home" aria-label="Back to the globe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
       <div class="ttl"><div class="k" data-t="eyebrow">The family</div><div class="n serif" data-t="title">The family tree</div></div>
-      <button class="ibtn" data-act="lang" aria-label="Language"><span class="lang" id="langLbl">EN</span></button>
+      <!-- Leon, 2026-08-21: this said EN in letters while the globe, person, moment, curators
+           and reel pages all drew a globe. Same icon everywhere now. The chosen language is
+           named in the sheet it opens, as it is on every other page. -->
+      <button class="ibtn" data-act="lang" aria-label="Language"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></button>
     </div>
 
     <div class="viewport" id="vp">
@@ -1279,7 +1282,9 @@ function anyPopOpen(){ return $('#legendPop').classList.contains('show')||$('#un
 /* ---------- chrome ---------- */
 function applyText(){ const s=L(); document.documentElement.dir=s.dir; document.documentElement.lang=state.lang;
   document.querySelectorAll('[data-t]').forEach(n=>{ const k=n.dataset.t; if(s[k]!=null) n.textContent=s[k]; });
-  $('#langLbl').textContent=s.lbl; }
+  /* the label is gone with the letters; the icon carries no text. Guarded rather than
+     deleted so nothing else that calls this quietly breaks. */
+  const _ll=$('#langLbl'); if(_ll) _ll.textContent=s.lbl; }
 function setIcons(){ const put=(sel,ic,w)=>{ const el=$(sel); if(el) el.innerHTML=svg(ic,w); };
   put('[data-act="home"]', I.back,1.7); put('#traceBtn',I.trace); put('[data-act="me"]',I.me,1.7);
   put('[data-act="zin"]',I.plus,2); put('[data-act="zout"]',I.minus,2); put('[data-act="fit"]',I.fit,1.8);

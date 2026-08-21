@@ -1,0 +1,71 @@
+/* lf-lang.js — one language button, the same on every page.
+   Leon, 2026-08-21: 'The language selection buttons on the Tree and globe pages are
+   different.' They were, and worse: six pages had no way to change language at all — the
+   place, the timeline, search, the journal, the keeper's page and the crowd. A person
+   reading Hebrew could walk into any of them and be stranded in English.
+   A page that already draws its own button is left alone; this only fills the gaps, so
+   nothing anybody is used to moves. */
+(function(){
+  if(window.LFLang) return;
+  var LANGS=['en','ru','he'];
+  var NAMES={en:'English', ru:'Русский', he:'עברית'};
+  function cur(){ try{ return localStorage.getItem('lf_lang')||'en'; }catch(e){ return 'en'; } }
+  function css(){
+    if(document.getElementById('lfLangCss')) return;
+    var s=document.createElement('style'); s.id='lfLangCss';
+    s.textContent=
+      '.lflang-btn{position:fixed;top:max(14px,env(safe-area-inset-top));inset-inline-end:16px;z-index:40;'+
+      'width:40px;height:40px;border-radius:12px;display:grid;place-items:center;cursor:pointer;'+
+      'border:1px solid rgba(255,255,255,.16);background:rgba(10,20,34,.66);color:#f4ead9;'+
+      '-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);}'+
+      '.lflang-btn:hover{border-color:rgba(255,255,255,.34)}'+
+      '.lflang-btn svg{width:18px;height:18px}'+
+      '.lflang-sheet{position:fixed;inset:0;z-index:60;display:none;align-items:flex-end;justify-content:center;'+
+      'background:rgba(2,6,14,.62);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}'+
+      '.lflang-sheet.on{display:flex}'+
+      '.lflang-card{width:100%;max-width:440px;background:#0b1520;border:1px solid rgba(255,255,255,.13);'+
+      'border-radius:22px 22px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));color:#f4ead9}'+
+      '.lflang-card button{display:block;width:100%;text-align:start;padding:13px 14px;margin:6px 0;'+
+      'border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);'+
+      'color:#f4ead9;font:inherit;font-size:15px;cursor:pointer}'+
+      '.lflang-card button.on{border-color:rgba(243,205,132,.5);background:rgba(243,205,132,.10);color:#f3cd84}';
+    document.head.appendChild(s);
+  }
+  function sheet(){
+    var w=document.createElement('div'); w.className='lflang-sheet';
+    var c=document.createElement('div'); c.className='lflang-card';
+    LANGS.forEach(function(l){
+      var b=document.createElement('button');
+      b.textContent=NAMES[l]; if(l===cur()) b.className='on';
+      b.onclick=function(){
+        try{ localStorage.setItem('lf_lang',l); }catch(e){}
+        /* the page redraws itself in the new language; a reload is the honest way to be
+           sure every string on it changes, not only the ones somebody remembered to rewire */
+        location.reload();
+      };
+      c.appendChild(b);
+    });
+    w.appendChild(c);
+    w.onclick=function(e){ if(e.target===w) w.classList.remove('on'); };
+    document.body.appendChild(w);
+    return w;
+  }
+  function mount(){
+    if(!document.body) return;
+    /* leave a page that already has its own button exactly as it is */
+    if(document.querySelector('[data-act="lang"],#langBtn,#gbPill,[data-langbtn]')) return;
+    if(document.querySelector('.lflang-btn')) return;
+    css();
+    var sh=sheet();
+    var b=document.createElement('button');
+    b.className='lflang-btn'; b.setAttribute('aria-label','Language');
+    b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" '+
+      'stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/>'+
+      '<path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>';
+    b.onclick=function(){ sh.classList.add('on'); };
+    document.body.appendChild(b);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount);
+  else mount();
+  window.LFLang={ mount:mount, current:cur };
+})();
