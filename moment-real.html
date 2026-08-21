@@ -485,6 +485,7 @@
       leaf:'A moment, kept.',tagFace:'Tag a face',tagDone:'Done tagging',
       tagHint:'Drag a box across a face to name who’s here.',
       rotate:'Rotate',replacePhoto:'Replace',deletePhoto:'Delete',
+      delMoment:'Remove this memory', delMomentT:'Remove this whole memory?', delMomentN:'The photograph, its story, its tags and its retellings all go. Nothing is kept. The keeper decides.',
       photoReplaceN:'Choose a new photo to suggest in place of this one.',
       confirmDelT:'Remove this photograph?',confirmDelN:'The moment stays — only the photo is proposed for removal. The keeper decides.',
       whoTitle:'Who is in this box?',whoSub:'Choose a family member, or add someone new.',
@@ -521,6 +522,7 @@
       leaf:'Сохранённый момент.',tagFace:'Отметить лицо',tagDone:'Готово',
       tagHint:'Проведите рамку по лицу, чтобы отметить, кто это.',
       rotate:'Повернуть',replacePhoto:'Заменить',deletePhoto:'Удалить',
+      delMoment:'Удалить эту память', delMomentT:'Удалить эту память целиком?', delMomentN:'Фотография, рассказ, отметки и переводы — всё исчезнет. Решает хранитель.',
       photoReplaceN:'Выберите новое фото, чтобы предложить его вместо этого.',
       confirmDelT:'Убрать эту фотографию?',confirmDelN:'Момент останется — к удалению предлагается только фото. Решает хранитель.',
       whoTitle:'Кто в этой рамке?',whoSub:'Выберите члена семьи или добавьте нового.',
@@ -557,6 +559,7 @@
       leaf:'רגע, שנשמר.',tagFace:'תיוג פנים',tagDone:'סיום',
       tagHint:'גררו מלבן על פנים כדי לציין מי כאן.',
       rotate:'סיבוב',replacePhoto:'החלפה',deletePhoto:'מחיקה',
+      delMoment:'הסרת הזיכרון הזה', delMomentT:'להסיר את כל הזיכרון הזה?', delMomentN:'התצלום, הסיפור, התיוגים והתרגומים — הכל נעלם. השומר מחליט.',
       photoReplaceN:'בחרו תצלום חדש כדי להציע אותו במקום זה.',
       confirmDelT:'להסיר את התצלום הזה?',confirmDelN:'הרגע נשאר — רק התצלום מוצע להסרה. השומר מחליט.',
       whoTitle:'מי במלבן הזה?',whoSub:'בחרו בן משפחה או הוסיפו מישהו חדש.',
@@ -879,6 +882,10 @@
             <button class="ptool round" id="rotBtn" aria-label="${esc(d.rotate)}" title="${esc(d.rotate)}">${sv(ICON.rotate,1.6)}</button>
             <button class="ptool round" id="replBtn" aria-label="${esc(d.replacePhoto)}" title="${esc(d.replacePhoto)}">${sv(ICON.swap,1.6)}</button>
             <button class="ptool round" id="delBtn" aria-label="${esc(d.deletePhoto)}" title="${esc(d.deletePhoto)}">${sv(ICON.trash,1.6)}</button>
+            <!-- Leon, 2026-08-20: 'I wanted to upload something random just for the test, but
+                 then I remembered that I can't delete it.' Nothing could remove a whole
+                 memory - only its photograph, leaving an empty moment behind. -->
+            <button class="ptool round" id="delMomBtn" aria-label="${esc(d.delMoment)}" title="${esc(d.delMoment)}">${sv(ICON.x,1.6)}</button>
           </div>` : `<div class="phototools" id="phototools">
             <button class="ptool tag" id="replBtn">${sv(ICON.swap,1.6)} <span>${esc(d.replacePhoto)}</span></button></div>` }
           <div class="taghint">${sv(ICON.tag,1.7)} <span>${esc(d.tagHint)}</span></div>
@@ -1259,6 +1266,18 @@
 
   /* ---------- editor sheet (story / photo / details) ---------- */
   function openEditor(target){ const d=t();
+    if(target==='moment-delete'){
+      $('#editSheet').innerHTML=`<div class="grip"></div><h3>${esc(d.delMomentT)}</h3>
+        <div class="ed-note">${sv(ICON.info,1.7)} <span>${esc(d.delMomentN)}</span></div>
+        <div class="ed-actions"><button class="btn ghost" id="edCancel">${esc(d.cancel)}</button><button class="btn danger" id="edSend">${esc(d.delMoment)}</button></div>`;
+      show($('#editSheet')); $('#editSheet #edCancel').onclick=hide;
+      $('#editSheet #edSend').onclick=async()=>{ hide();
+        /* it always asks, the keeper included - the same rule as everywhere else since
+           2026-08-15. Removing a whole memory is the heaviest thing anyone can do here. */
+        const ok=await proposeEdit('moment_delete',{old_value:art.storage_path||''});
+        if(ok) toast(d.sent);
+      }; return;
+    }
     if(target==='photo-delete'){
       $('#editSheet').innerHTML=`<div class="grip"></div><h3>${esc(d.confirmDelT)}</h3>
         <div class="ed-note">${sv(ICON.info,1.7)} <span>${esc(d.confirmDelN)}</span></div>
@@ -1528,6 +1547,7 @@
     const rotBtn=$('#rotBtn'); if(rotBtn) rotBtn.onclick=rotatePhoto;
     const replBtn=$('#replBtn'); if(replBtn) replBtn.onclick=()=>openEditor('photo');
     const delBtn=$('#delBtn'); if(delBtn) delBtn.onclick=()=>openEditor('photo-delete');
+    const delMom=$('#delMomBtn'); if(delMom) delMom.onclick=()=>openEditor('moment-delete');
     const addDetail=$('#addDetailBtn'); if(addDetail) addDetail.onclick=()=>openEditor('detail-new');
 
     bindTagLayer(); bindZoom();

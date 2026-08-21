@@ -367,6 +367,7 @@
       stillThere:'still there',
       askToRemove:'asks to remove', askUnknown:'something already gone',
       aTelling:'A telling',
+      aedit:{ moment_delete:'Asks to remove this memory', photo_delete:'Asks to remove the photograph', photo:'Asks to replace the photograph', where:'Asks to change where', when:'Asks to change when' },
       askGone:'gone from the forest',
       fld:{ given:'given name', family:'family name', patronymic:'patronymic', maiden:'maiden name', called:'called', honorific:'honorific', nickname:'nickname', lived:'lived in', pbirth:'born in', birth:'born', death:'died', birth_prec:'date precision', living:'still living?', gender:'gender', occupation:'occupation', bio:'about', langspoken:'languages spoken', source:'source', face:'the portrait', custom:'a detail', kin:'relation', field:'detail' } },
     ru:{ dir:'ltr', native:'Русский', en:'Russian',
@@ -398,6 +399,7 @@
       stillThere:'до сих пор',
       askToRemove:'просит удалить', askUnknown:'то, чего уже нет',
       aTelling:'Рассказ',
+      aedit:{ moment_delete:'Просит удалить эту память', photo_delete:'Просит удалить фотографию', photo:'Просит заменить фотографию', where:'Просит изменить место', when:'Просит изменить дату' },
       askGone:'исчезнет из леса',
       fld:{ given:'имя', family:'фамилия', patronymic:'отчество', maiden:'девичья', called:'зовут', honorific:'титул', nickname:'прозвище', lived:'жил(а) в', pbirth:'место рождения', birth:'родился', death:'умер', birth_prec:'точность даты', living:'ещё жив?', gender:'пол', occupation:'занятие', bio:'о человеке', langspoken:'языки', source:'источник', face:'портрет', custom:'деталь', kin:'связь', field:'деталь' } },
     he:{ dir:'rtl', native:'עברית', en:'Hebrew',
@@ -429,6 +431,7 @@
       stillThere:'עד היום',
       askToRemove:'מבקש להסיר', askUnknown:'משהו שכבר איננו',
       aTelling:'סיפור',
+      aedit:{ moment_delete:'מבקש להסיר את הזיכרון', photo_delete:'מבקש להסיר את התצלום', photo:'מבקש להחליף את התצלום', where:'מבקש לשנות את המקום', when:'מבקש לשנות את התאריך' },
       askGone:'ייעלם מהיער',
       fld:{ given:'שם פרטי', family:'שם משפחה', patronymic:'שם האב', maiden:'שם נעורים', called:'קוראים', honorific:'תואר', nickname:'כינוי', lived:'גר ב', pbirth:'מקום לידה', birth:'נולד', death:'נפטר', birth_prec:'דיוק תאריך', living:'עדיין בחיים?', gender:'מגדר', occupation:'עיסוק', bio:'אודות', langspoken:'שפות', source:'מקור', face:'דיוקן', custom:'פרט', kin:'קשר', field:'פרט' } }
   };
@@ -498,12 +501,12 @@
 
   /* ---------- data ---------- */
   async function loadData(){
-    const out={ people:[], newcomers:[], facts:[], nvs:[], arts:[], trans:[], rels:[], pubRels:[], peopleMap:{}, profMap:{}, personRow:{},
+    const out={ people:[], newcomers:[], facts:[], nvs:[], arts:[], trans:[], edits:[], rels:[], pubRels:[], peopleMap:{}, profMap:{}, personRow:{},
                 pub:[], pubNvs:[], pubIdx:{}, pubAny:{}, pubGroup:{} };
     /* Seven independent reads. They used to run one after another - seven
        round-trips deep - which is why the keeper sat watching a loading line.
        They are asked for together now; the page waits for the slowest, not the sum. */
-    const [rPeople,rFacts,rNvs,rArts,rRels,rPub,rPubNvs,rTags,rNames,rTrans] = await Promise.all([
+    const [rPeople,rFacts,rNvs,rArts,rRels,rPub,rPubNvs,rTags,rNames,rTrans,rEdits] = await Promise.all([
       sb.from('people').select('*'),
       sb.from('person_facts').select('id,person_id,group_id,field,lang,value,ord,status,created_by,created_at').in('status',['in_review','draft']),
       Promise.resolve({data:[]}),   /* name_variants retired */
@@ -521,7 +524,13 @@
          a keeper who was never shown it. */
       sb.from('artefact_translations')
         .select('id,artefact_id,lang,body,status,machine,created_by,created_at')
-        .eq('status','in_review').eq('machine',false)
+        .eq('status','in_review').eq('machine',false),
+      /* THE THIRD TABLE THIS PAGE NEVER READ. Every edit anyone has proposed to a photograph -
+         replace it, delete it, change where or when - has been written to artefact_edits and
+         shown to nobody. Found while building Leon's 'remove this memory' on 2026-08-20. */
+      sb.from('artefact_edits')
+        .select('id,artefact_id,field,lang,new_value,old_value,ref_id,status,created_by,created_at')
+        .eq('status','in_review')
     ]);
     /* names first: peopleMap is built a few lines below and asks personLabel for every one */
     ((rNames&&rNames.data)||[]).forEach(f=>{ (NAMEP[f.person_id]=NAMEP[f.person_id]||[]).push(f); });
@@ -529,6 +538,7 @@
       if(p.status&&p.status!=='published') out.newcomers.push(p); });
     out.facts=rFacts.data||[];
     out.trans=(rTrans&&rTrans.data)||[];
+    out.edits=(rEdits&&rEdits.data)||[];
     out.nvs=rNvs.data||[];
     out.arts=(rArts.data||[]).filter(a=>a.kind==='photo'||a.kind==='voice');
     let relRows=rRels.data||[];
@@ -670,6 +680,12 @@
           created_at:f.created_at });
       });
     });
+    /* an edit somebody has asked for on a photograph */
+    (pending.edits||[]).forEach(function(e){
+      items.memories.push({ kind:'aedit', id:e.id, group:'memories', artefactId:e.artefact_id,
+        field:e.field, lang:e.lang, value:e.new_value, oldValue:e.old_value,
+        suggester:accountName(e.created_by), created_at:e.created_at });
+    });
     /* a retelling somebody wrote in another language */
     (pending.trans||[]).forEach(function(tr){
       items.memories.push({ kind:'telling', id:tr.id, group:'memories', artefactId:tr.artefact_id,
@@ -742,6 +758,7 @@
     if(it.kind==='group') return `${esc(L.groups.facts)} · <b>${esc(it.customLabel||L.fld.custom)}</b>`;
     if(it.kind==='remreq'||it.kind==='clearreq') return `${esc(L.groups.facts)} · <b>${esc(L.askToRemove)}</b>`;
     if(it.kind==='telling') return `${esc(L.groups.memories)} · <b>${esc(L.aTelling||'A telling')}${esc(langTag(it.lang))}</b>`;
+    if(it.kind==='aedit') return `${esc(L.groups.memories)} · <b>${esc((L.aedit&&L.aedit[it.field])||it.field)}</b>`;
     const grpName = it.group==='names'?L.groups.names:L.groups.facts;
     return `${esc(grpName)} · <b>${esc(fldLabel(it.field))}${esc(langTag(it.lang))}</b>`;
   }
@@ -760,6 +777,7 @@
        file now; both times the keeper's page died on load and showed nothing at all. */
     if(it.kind==='remreq'||it.kind==='clearreq'){ return `<span class="quiet">${esc(d().askGone)}</span>`; }
     if(it.kind==='telling'){ return `<span class="quiet">“${esc(String(it.value||'').slice(0,240))}”</span>`; }
+    if(it.kind==='aedit'){ return `<span class="quiet">${esc(it.value?String(it.value).slice(0,200):(d().askGone||''))}</span>`; }
     return esc(it.value||'—');
   }
 
@@ -1134,6 +1152,32 @@
        filed as waiting - and the keeper's page never listed them, so there was no way to
        approve one and they would have waited forever. They go live with the memory they
        came from. A person's own retelling still waits, as it always did. */
+    if(kind==='aedit'){
+      const e0=(pending.edits||[]).find(x=>x.id===id); if(!e0){ await reload(); return; }
+      const aid=e0.artefact_id;
+      if(e0.field==='moment_delete'){
+        /* the whole memory goes, and everything hanging off it - a photograph left in the
+           bucket with no row pointing at it is invisible and permanent */
+        try{ if(e0.old_value) await sb.storage.from('family').remove([e0.old_value]); }catch(x){}
+        try{ await sb.from('artefact_subjects').delete().eq('artefact_id',aid); }catch(x){}
+        try{ await sb.from('artefact_translations').delete().eq('artefact_id',aid); }catch(x){}
+        try{ await sb.from('artefact_edits').delete().eq('artefact_id',aid); }catch(x){}
+        try{ await sb.from('artefacts').delete().eq('id',aid); }catch(x){}
+        await reload(); toast(d().approved,true); return;
+      }
+      if(e0.field==='photo_delete'){
+        try{ if(e0.old_value) await sb.storage.from('family').remove([e0.old_value]); }catch(x){}
+        try{ await sb.from('artefacts').update({storage_path:null}).eq('id',aid); }catch(x){}
+      } else if(e0.field==='where'||e0.field==='when'){
+        try{ const {data:a1}=await sb.from('artefacts').select('metadata').eq('id',aid).maybeSingle();
+          const md=Object.assign({},(a1&&a1.metadata)||{}); md[e0.field]=e0.new_value;
+          await sb.from('artefacts').update({metadata:md}).eq('id',aid); }catch(x){}
+      } else if(e0.field==='photo'&&e0.new_value){
+        try{ await sb.from('artefacts').update({storage_path:e0.new_value}).eq('id',aid); }catch(x){}
+      }
+      try{ await sb.from('artefact_edits').delete().eq('id',id); }catch(x){}
+      await reload(); toast(d().approved,true); return;
+    }
     if(kind==='telling'){ try{ await sb.from('artefact_translations')
       .update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){}
       await reload(); toast(d().approved,true); return; }
@@ -1186,6 +1230,7 @@
       for(const m of mtSiblings(f0)){ try{ await sb.from('person_facts').delete().eq('id',m.id); }catch(e){} }
       try{ await sb.from('person_facts').delete().eq('id',id); }catch(e){} }
     else if(kind==='telling'){ try{ await sb.from('artefact_translations').delete().eq('id',id); }catch(e){} }
+    else if(kind==='aedit'){ try{ await sb.from('artefact_edits').delete().eq('id',id); }catch(e){} }
     else if(kind==='remreq'||kind==='clearreq'){ try{ await sb.from('person_facts').delete().eq('id',id); }catch(e){} }
     else if(kind==='group'){ for(const ff of (pending.facts||[]).filter(x=>x.group_id===id)){ try{ await sb.from('person_facts').delete().eq('id',ff.id); }catch(e){} } }
     else if(kind==='artefact'){ try{ await sb.from('artefacts').update({status:'declined'}).eq('id',id); }catch(e){} }
