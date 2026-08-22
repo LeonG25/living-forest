@@ -136,7 +136,8 @@
      itself at whatever size the panel allowed - 34px against the tree's 40. Same numbers
      as tree-real now, copied from it rather than written again: 40 square, 12 radius,
      an 18px globe, and the same hairline and background. */
-  .ibtn{ width:40px; height:40px; border-radius:12px; flex:0 0 auto; display:grid; place-items:center; cursor:pointer;
+  .ibtn{ position:fixed; top:max(14px,env(safe-area-inset-top)); inset-inline-end:16px; z-index:40;
+    width:40px; height:40px; border-radius:12px; flex:0 0 auto; display:grid; place-items:center; cursor:pointer;
     border:1px solid #ffffff18; background:rgba(10,20,34,.55); color:#f4ecdb;
     transition:border-color .2s,background .2s; margin:0 0 8px; padding:0; }
   .ibtn:focus-visible{ outline:2px solid #7fb4d8; outline-offset:2px; }
@@ -274,10 +275,13 @@
     </div>
   </div>
 
+  <!-- IT WAS INSIDE THE YEAR PANEL (Leon, 2026-08-21: "It's off the corner on the globe
+       page"). That panel carries up to 38px of padding so the whole hud can breathe, and
+       the button inherited all of it - sitting adrift above the year instead of in the
+       corner. It stands on its own now, at the same 16px from the corner as the shared
+       button on the six pages that use one, so every page agrees where language lives. -->
+  <button class="ibtn" data-langbtn id="gbPill" aria-label="Language"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></button>
   <div class="hud" id="tr">
-    <!-- the globe needs its own way to change language: the gate has one, and the gate
-         is gone the moment you are through it. -->
-    <button class="ibtn" data-langbtn id="gbPill" aria-label="Language"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></button>
     <div class="k" id="gbYear">the year</div>
     <div class="v serif" id="yr">—</div>
     <div class="note" id="yrNote"></div>
