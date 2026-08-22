@@ -131,9 +131,15 @@
   #gate .screen{ position:absolute; inset:0; z-index:4; overflow:hidden; }
   #gate .gate{ position:relative; z-index:5; height:100%; max-width:440px; margin:0 auto; display:flex; flex-direction:column; padding:0 24px calc(22px + env(safe-area-inset-bottom)); overflow-y:auto; -webkit-overflow-scrolling:touch; }
   #gate .gtop{ display:flex; align-items:center; justify-content:flex-end; padding:16px 0 0; min-height:52px; }
-  #gate .ibtn{ width:40px; height:40px; border-radius:12px; flex:0 0 auto; display:grid; place-items:center; cursor:pointer;
-  border:1px solid rgba(255,255,255,.16); background:rgba(10,20,34,.55); color:#f4ead9;
-  transition:border-color .2s,background .2s; margin:0 0 8px; }
+  /* IT LANDED INSIDE #gate AND THE GLOBE IS NOT THE GATE (Leon, 2026-08-21). The rule was
+     written as '#gate .ibtn', so the button on the globe matched nothing at all and drew
+     itself at whatever size the panel allowed - 34px against the tree's 40. Same numbers
+     as tree-real now, copied from it rather than written again: 40 square, 12 radius,
+     an 18px globe, and the same hairline and background. */
+  .ibtn{ width:40px; height:40px; border-radius:12px; flex:0 0 auto; display:grid; place-items:center; cursor:pointer;
+    border:1px solid #ffffff18; background:rgba(10,20,34,.55); color:#f4ecdb;
+    transition:border-color .2s,background .2s; margin:0 0 8px; padding:0; }
+  .ibtn:focus-visible{ outline:2px solid #7fb4d8; outline-offset:2px; }
 .ibtn:hover{ border-color:rgba(255,255,255,.34); }
 .ibtn svg{ width:18px; height:18px; }
 .langpill{ display:inline-flex; align-items:center; gap:6px; font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase;
