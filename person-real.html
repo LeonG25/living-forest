@@ -1352,7 +1352,16 @@
     const rows=facts.filter(x=>x.field===field&&(x.ord||0)===0&&hasv(x.value)&&(!ref||x.group_id===ref))
                     .sort((a,b)=>ts(a).localeCompare(ts(b)));
     return rows.length?(rows[0].lang||'und'):null; }
+  /* THE PERSON'S GENDER BELONGS TO EVERYTHING WRITTEN ABOUT THEM (Leon, 2026-08-22).
+     Names carried it; the About text, the occupations and the family's own details did
+     not - and those are the sentences that inflect: 'Она работала' against 'Он работал',
+     'היא עבדה' against 'הוא עבד'. So a woman's life was described in the masculine
+     whenever the model guessed wrong, and nothing on screen showed it. Every translation
+     on this page now carries whose life it is. */
+  function subjectSex(){ const g=S.life.gender||((person&&person.sex==='male')?'m':(person&&person.sex==='female')?'f':'');
+    return (g==='m'||g==='f')?g:null; }
   async function translateInto(ref,text,field,opt){ const L=d(); opt=opt||{};
+    if(!opt.gender) opt.gender=subjectSex();
     const from=opt.from||state.lang, kind=opt.kind||'place_name', clean=opt.clean||cleanTr;
     const grouped=opt.grouped!==false;
     /* silence, not failure: a correction to a non-source language is a normal thing to do */

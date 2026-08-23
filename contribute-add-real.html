@@ -311,6 +311,17 @@
     .photohero .ph{ filter:none; opacity:1; transform:none; }
     .photohero .devsheen{ display:none; }
   }
+  /* two answers, no third, and no way past it */
+  .sexsheet{ position:fixed; inset:0; z-index:90; display:flex; align-items:flex-end; justify-content:center;
+    background:rgba(2,6,14,.66); -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); }
+  .sexcard{ width:100%; max-width:440px; background:#0b1520; border:1px solid rgba(255,255,255,.13);
+    border-radius:22px 22px 0 0; padding:18px 18px calc(22px + env(safe-area-inset-bottom)); color:#f4ead9; }
+  .sexcard h3{ margin:0 0 6px; font-size:19px; font-weight:600; }
+  .sexwhy{ margin:0 0 14px; font-size:13.5px; line-height:1.45; opacity:.75; }
+  .sexrow{ display:flex; gap:10px; }
+  .sexrow button{ flex:1; padding:14px 10px; border-radius:13px; border:1px solid rgba(243,205,132,.32);
+    background:rgba(243,205,132,.08); color:#f3cd84; font:inherit; font-size:15px; cursor:pointer; }
+  .sexrow button:active{ background:rgba(243,205,132,.18); }
 </style>
 <script src="lf-bg.js?v=3" defer></script>
 </head>
@@ -544,6 +555,9 @@
     }catch(e){}
   }
   function subjectByKey(k){ return M.subjects.find(s=>s.key===k)||null; }
+  /* required, not optional: a new person with no gender cannot be described correctly in two
+     of the three languages this family reads */
+  function missingSex(){ return M.subjects.filter(s=>s.isNew && !s.sex); }
   function tellerSubject(){ return M.tellerKey?subjectByKey(M.tellerKey):null; }
 
   /* ---------- language ---------- */
@@ -764,9 +778,30 @@
     name=(name||'').trim(); if(!name) return;
     if(id && M.subjects.some(s=>s.id===id)) return;
     if(isNew && M.subjects.some(s=>!s.id && s.name.toLowerCase()===name.toLowerCase())) return;
-    M.subjects.push({ key:'k'+(addSubject._n=(addSubject._n||0)+1), name, id:id||null, isNew:!!isNew });
+    /* A NEW PERSON MUST SAY MAN OR WOMAN (Leon, 2026-08-22). Somebody added here arrived with
+       no gender at all - and Russian and Hebrew inflect on it, so every sentence the app later
+       writes about them is a guess. Thirty people in the archive are in that state already.
+       Two choices only, and it is required: the app cannot write a correct sentence without it,
+       and asking once here is far cheaper than correcting a name in three languages later. */
+    const k='k'+(addSubject._n=(addSubject._n||0)+1);
+    M.subjects.push({ key:k, name, id:id||null, isNew:!!isNew, sex:null });
+    if(isNew) askSex(k);
     M.searchQ=''; const si=$('#searchIn'); if(si) si.value='';
     renderPicked(); renderSug();
+  }
+
+  /* the question itself: two answers, no third, and no way past it */
+  function askSex(key){
+    const sub=subjectByKey(key); if(!sub) return;
+    const d=L(); const w=document.createElement('div'); w.className='sexsheet';
+    w.innerHTML='<div class="sexcard"><h3>'+esc((d.sexAsk||'Is {n} a man or a woman?').replace('{n}',sub.name))+'</h3>'
+      +'<p class="sexwhy">'+esc(d.sexWhy||'Russian and Hebrew change the words around a person. Without this the forest has to guess.')+'</p>'
+      +'<div class="sexrow"><button data-s="male">'+esc(d.sexM||'A man')+'</button>'
+      +'<button data-s="female">'+esc(d.sexF||'A woman')+'</button></div></div>';
+    document.body.appendChild(w);
+    w.querySelectorAll('[data-s]').forEach(function(b){
+      b.onclick=function(){ sub.sex=b.getAttribute('data-s'); w.remove(); renderPicked(); };
+    });
   }
 
   /* ---------- 4. WHO IS TELLING IT ---------- */
@@ -913,7 +948,10 @@
     const found=M.people.find(p=>(p.label||'').toLowerCase()===sub.name.toLowerCase());
     if(found){ sub.id=found.id; return found.id; }
     // proposed newcomer → pending (Rule 3); fall back to published if the status enum rejects it
-    let ins=await sb.from('people').insert({created_by:M.user.id,status:'in_review'}).select('id').single();
+    /* the answer travels with the person; without this the question would be theatre */
+    const row={created_by:M.user.id,status:'in_review'};
+    if(sub.sex==='male'||sub.sex==='female') row.sex=sub.sex;
+    let ins=await sb.from('people').insert(row).select('id').single();
     /* This used to retry as status:'published' when the in_review insert failed -
        so a contributor's new person walked straight past the keeper. A failure is
        reported now; nobody enters the forest unseen. */
@@ -926,6 +964,12 @@
     if(submitting) return;
     const hasContent = M.hasPhoto || (M.telling&&M.telling.trim()) || M.voiceBlob;
     if(!hasContent){ toast(L.needSomething); return; }
+    /* required, not optional: a new person with no gender cannot be written about
+       correctly in two of the three languages this family reads. Ask again rather than
+       let them through - the question is one tap and the alternative is a name and a life
+       described in the wrong gender for years. */
+    const noSex=missingSex();
+    if(noSex.length){ askSex(noSex[0].key); submitting=false; return; }
     submitting=true;
     const btn=$('#sendBtn'); let old='';
     if(btn){ old=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spin"></span> '+L.sending; }
