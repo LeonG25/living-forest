@@ -1008,7 +1008,10 @@
   /* 'About' is where a life gets told, and it was a single-line box the width of a name -
      which tells a contributor to write three words. A textarea, with a placeholder that
      says anything is welcome (Leon, 2026-08-13). */
-  function mlEdit(label,field,vals,listId,big){ const L=d(); const lang=state.lang; const cur=vals[lang]||''; const others=LANGS.filter(l=>l!==lang);
+  /* noOthers (Leon, 2026-08-22): the app already has one way to choose a language, at the
+     top of every page. A second way hidden beside one text box taught a different habit
+     for no gain, and he asked for it gone. */
+  function mlEdit(label,field,vals,listId,big,noOthers){ const L=d(); const lang=state.lang; const cur=vals[lang]||''; const others=LANGS.filter(l=>l!==lang);
     const lst=listId?`list="${listId}"`:'';
     const rows=others.map(l=>`<div class="mlvar ${l==='he'?'rtl':''}"><span class="tag">${l}</span><input class="inp" ${lst} data-field="${field}" data-lang="${l}" value="${esc(vals[l]||'')}" placeholder="${esc(L.addfield)}"></div>`).join('');
     return `<div class="field"><label>${esc(label)}</label>
@@ -1016,8 +1019,8 @@
         ? `<textarea class="inp" ${lst} data-field="${field}" data-lang="${lang}" rows="6"
              placeholder="${esc(L.aboutPh||'')}" style="min-height:132px;line-height:1.5;resize:vertical${lang==='he'?';direction:rtl;text-align:right':''}">${esc(cur)}</textarea>`
         : `<input class="inp name-input" ${lst} data-field="${field}" data-lang="${lang}" value="${esc(cur)}" ${lang==='he'?'style="direction:rtl;text-align:right"':''}>`}
-        <button class="mladd" data-act="ml">${sv(I.globe2,1.5)} ${esc(L.addlang)}</button></div>
-      <div class="mlvars">${rows}</div></div>`; }
+        ${noOthers?'':`<button class="mladd" data-act="ml">${sv(I.globe2,1.5)} ${esc(L.addlang)}</button>`}</div>
+      <div class="mlvars">${noOthers?'':rows}</div></div>`; }
   /* ONE send for the whole page, not one per facet. Leon opened Life and Places, saw two
      'send to the keeper' buttons, pressed both, and one stayed - because each facet drew its
      own and neither knew about the other. The button belongs to the page: it gathers every
