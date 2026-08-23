@@ -449,10 +449,15 @@
   /* a request names either one published row or a whole group (a home, an occupation) */
   /* the machine translations that came from one human row: same field, same group,
      ord=1, still waiting. They are not separate suggestions and never travel alone. */
+  /* the same fault as the card key had: names carry a fresh group id per row, so
+     matching on the group meant approving a name published the words and stranded its
+     transliterations in the queue for ever. Ungrouped fields match on the person. */
+  const MT_UNGROUPED=['given','family','called','maiden','patronymic','honorific','nickname','bio'];
   function mtSiblings(f){ if(!f) return [];
+    const loose=MT_UNGROUPED.indexOf(f.field)>=0;
     return (pending.facts||[]).filter(x=>x.id!==f.id && (x.ord||0)===1
       && x.field===f.field && x.person_id===f.person_id
-      && (x.group_id||'')===(f.group_id||'') && x.status!=='published'); }
+      && (loose || (x.group_id||'')===(f.group_id||'')) && x.status!=='published'); }
   function removeTargets(target){
     const pub=(pending.pub||[]);
     const one=pub.filter(r=>r.id===target);
@@ -671,7 +676,17 @@
          from and travel with it: approve the words and the translations go with them,
          decline and they go too. Nothing publishes itself - the keeper still decides,
          once, about the thing a person actually wrote. */
-      if((f.ord||0)===1){ const mk=f.field+'|'+(f.group_id||''); (mtByField[mk]=mtByField[mk]||[]).push(f); return; }
+      /* NAMES NEVER FOLDED IN (Leon, 2026-08-23: 'I edited Sasha's name and it sent many
+         different requests that I didn't do. Some of them look like auto translation.')
+         The key was field + group_id, which is right for a home or an occupation - those
+         share one group. But every NAME row is written with its own fresh group id, so a
+         machine transliteration could never match the human row it came from and arrived
+         as a separate request. One edit to a given name became three cards.
+         Ungrouped fields - the names, the About text - key on the PERSON instead. */
+      const UNGROUPED=['given','family','called','maiden','patronymic','honorific','nickname','bio'];
+      if((f.ord||0)===1){
+        const mk=UNGROUPED.indexOf(f.field)>=0 ? (f.field+'|p:'+f.person_id) : (f.field+'|'+(f.group_id||''));
+        (mtByField[mk]=mtByField[mk]||[]).push(f); return; }
       const grp = NAME_FIELDS.includes(f.field) ? 'names' : 'facts';
       items[grp].push({ kind:'fact', id:f.id, group:grp, field:f.field, lang:f.lang, value:factValue(f), personId:f.person_id, suggester:accountName(f.created_by), created_at:f.created_at, raw:f });
     });
@@ -681,7 +696,8 @@
     ['names','facts'].forEach(function(g){
       (items[g]||[]).forEach(function(it){
         if(it.kind!=='fact') return;
-        const k=it.field+'|'+(it.group_id||'');
+        const UNGROUPED2=['given','family','called','maiden','patronymic','honorific','nickname','bio'];
+        const k=UNGROUPED2.indexOf(it.field)>=0 ? (it.field+'|p:'+it.personId) : (it.field+'|'+(it.group_id||''));
         if(mtByField[k]&&mtByField[k].length){ it.mt=mtByField[k].slice(); delete mtByField[k]; }
       });
     });
