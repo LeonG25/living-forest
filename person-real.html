@@ -993,17 +993,50 @@
     'Lithuanian','Latvian','Georgian','Armenian','Azerbaijani','Uzbek','Kazakh','Turkish',
     'Greek','Dutch','Portuguese','Swedish','Norwegian','Danish','Finnish','Bulgarian',
     'Serbian','Croatian','Slovak','Persian','Amharic','Ladino','Aramaic'];
+  /* CHIPS STAGE, THEY DO NOT SEND (Leon, 2026-08-22). Adding a language wrote it to the
+     database on the spot and drew its own Cancel and Send - so he had to add one, send it,
+     add the next, send again, and a second 'Send to the keeper' appeared halfway down the
+     page beside the page's own. Occupations were rebuilt this way on 2026-08-15 and work;
+     this is the same shape. A chip typed here is HELD, shown as not sent yet, and goes with
+     the one Send at the foot of the page along with everything else changed in the visit. */
+  let chipDrafts={};
   function chipAddBox(field,label){ const L=d();
     const isLang=(field==='langspoken');
     const dl=isLang?`<datalist id="lfLangs">${LANGLIST.map(x=>`<option value="${x}"></option>`).join('')}</datalist>`:'';
-    return dl+`<div class="chipadd" data-for="${field}" style="display:none;margin-top:8px"><input class="inp"${isLang?' list="lfLangs" autocomplete="off"':''} placeholder="${esc(label||'')}"><div class="btnrow" style="margin-top:8px"><button class="btn ghost" data-cadd-cancel>${L.cancel}</button><button class="btn violet" data-cadd-ok="${field}">${L.send}</button></div></div>`; }
+    return dl+`<div class="chipadd" data-for="${field}" style="display:none;margin-top:8px">
+      <input class="inp"${isLang?' list="lfLangs" autocomplete="off"':''} placeholder="${esc(label||'')}">
+      <div class="btnrow" style="margin-top:8px">
+        <button class="btn ghost" data-cadd-cancel="${field}">${L.cancel}</button>
+        <button class="btn violet" data-cadd-ok="${field}">${esc(L.addMore||L.add||'Add')}</button>
+      </div></div>`; }
+  function stageChip(field){
+    const box=$(`.chipadd[data-for="${field}"]`); if(!box) return false;
+    const inp=box.querySelector('input'); const v=inp?inp.value.trim():'';
+    if(!v) return true;
+    (chipDrafts[field]=chipDrafts[field]||[]).push(v);
+    if(inp) inp.value='';
+    return true; }
+  async function flushChips(){ let good=true;
+    for(const field of Object.keys(chipDrafts)){
+      const list=chipDrafts[field]||[]; chipDrafts[field]=[];
+      for(const v of list){
+        const perLang=(field==='nickname');
+        const ord=(field==='lived'||field==='source')?pubList(field,'und').length:0;
+        if(await insFact(field, perLang?state.lang:'und', v, ord)===false) good=false;
+      }
+    }
+    return good; }
   function chipsField(field,addLabel,cool){ const L=d(); const pubs=pubList(field,'und'); const pends=pendList(field,'und');
     const pubc=pubs.map(r=>`<span class="chip ${cool?'cool':''}">${(cool&&r.ord!=null)?`<span class="ord">${String((r.ord||0)+1).padStart(2,'0')}</span>`:''}${esc(r.value)}<span class="x" data-del="${r.id}">${sv(I.x,2)}</span></span>`).join('');
     const addbtn=`<button class="chip add" data-addchip="${field}">${sv(I.plus,2)} ${esc(addLabel||'')}</button>`;
     let pend='';
     if(pends.length){ pend=pends.map(r=>`<div class="pendrow"><span class="chip ${cool?'cool':''} pending">${esc(r.value)} <span class="mono" style="font-size:9px;opacity:.8">· ${L.pendingChip}</span></span>${state.keeper?keeperInline(r.id,'fact'):''}</div>`).join('');
       if(!state.keeper) pend+=`<div class="pending" style="margin-top:6px"><span class="sp"></span>${L.bothpending}</div>`; }
-    return `<div class="chips">${pubc}${addbtn}</div>${chipAddBox(field,addLabel)}${pend}`;
+    /* what is held but not yet sent, shown as such - violet like everything waiting, but
+       with its own words, because 'not sent yet' and 'waiting for the keeper' differ */
+    const drafts=(chipDrafts[field]||[]).map((v,i)=>`<span class="chip pending">${esc(v)} <button class="np-ctl" data-dropchip="${field}:${i}" style="padding:2px 6px;margin-inline-start:6px">${sv(I.x,1.6)}</button></span>`).join('');
+    const draftNote=(chipDrafts[field]||[]).length?`<div class="pending" style="margin-top:6px"><span class="sp"></span>${esc(d().hDraft)}</div>`:'';
+    return `<div class="chips">${pubc}${drafts}${addbtn}</div>${chipAddBox(field,addLabel)}${draftNote}${pend}`;
   }
   /* 'About' is where a life gets told, and it was a single-line box the width of a name -
      which tells a contributor to write three words. A textarea, with a placeholder that
@@ -1448,6 +1481,7 @@
     let ok=true;
     /* names are written by their own function; the facet loop never touched them */
     try{ if(await submitName(true)===false) ok=false; }catch(e){ ok=false; }
+    try{ if(await flushChips()===false) ok=false; }catch(e){ ok=false; }
     for(const fid of ['name','life','places','kin','more']){
       try{ if(await submitFacet(fid,true)===false) ok=false; }catch(e){ ok=false; }
     }
@@ -2299,9 +2333,16 @@
         } return; }
       const apart=e.target.closest('[data-addpart]'); if(apart){ openAddPart(apart.getAttribute('data-addpart')); return; }
       const addc=e.target.closest('[data-addchip]'); if(addc){ const box=$(`.chipadd[data-for="${addc.getAttribute('data-addchip')}"]`); if(box){ box.style.display='block'; const i=box.querySelector('input'); if(i) i.focus(); } return; }
+      const dch=e.target.closest('[data-dropchip]');
+      if(dch){ const [f,i]=dch.getAttribute('data-dropchip').split(':');
+        if(chipDrafts[f]) chipDrafts[f].splice(+i,1);
+        render(); selectFacet(dch.closest('.facet')?dch.closest('.facet').getAttribute('data-facet'):'life'); return; }
       const cc=e.target.closest('[data-cadd-cancel]'); if(cc){ const box=cc.closest('.chipadd'); if(box) box.style.display='none'; return; }
-      const co=e.target.closest('[data-cadd-ok]'); if(co){ const field=co.getAttribute('data-cadd-ok'); const box=co.closest('.chipadd'); const val=box.querySelector('input').value.trim();
-        if(val){ const perLang=(field==='nickname'); const ord=(field==='lived'?pubList('lived','und').length:field==='source'?pubList('source','und').length:0); await insFact(field, perLang?state.lang:'und', val, ord); } await reload(); return; }
+      const co=e.target.closest('[data-cadd-ok]');
+      if(co){ const field=co.getAttribute('data-cadd-ok');
+        /* held, not sent - the page's own Send carries it with everything else */
+        stageChip(field); render(); selectFacet(co.closest('.facet')?co.closest('.facet').getAttribute('data-facet'):'life');
+        return; }
       /* THESE MUST LIVE ABOVE THE data-act GUARD. They were written below it, where the
          listener has already returned for any element without a data-act attribute - so
          Edit and Remove on a home card did nothing at all, silently, and the probe that
@@ -2389,6 +2430,8 @@
         /* gather every facet first, write, and only then re-render - once */
         /* names are written by their own function; the facet loop never touched them */
         try{ if(await submitName(true)===false) allOk=false; }catch(e){ allOk=false; }
+        /* and chips - languages spoken, sources - are held until this moment */
+        try{ if(await flushChips()===false) allOk=false; }catch(e){ allOk=false; }
         for(const fid of ['name','life','places','kin','more']){
           try{ if(await submitFacet(fid,true)===false) allOk=false; }catch(e){ allOk=false; }
         }
