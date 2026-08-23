@@ -479,8 +479,8 @@
       faceLine:'The photos she appears in. The camera on her portrait chooses the crop that represents her everywhere.', changeface:'Change the face', openPhoto:'Open this photograph',
       noFace:'No photographs are tagged to this person yet.',
       about:'About', aboutPh:'Anything at all — what they were like, what they did, a story you want kept.', occupation:'Occupation', addoccupation:'add her work', langspoken:'Languages spoken',
-      born:'Born', died:'Died', precision:'Precision', prec:['exact','month','year','approx','unknown'], living:'Still living',
-      gender:'Gender', genderHint:'Russian and Hebrew change the words around a person - names, verbs, adjectives. Without this the forest has to guess.', gopts:['Male','Female'],
+      born:'Born', died:'Died', precision:'Precision', prec:['Precise','Approximate'], living:'Still living',
+      gender:'Gender', genderHint:'', gopts:['Male','Female'],
       pbirth:'Place of birth', lived:'Places lived', addplace:'add a home',
       memories:'Stories told about her', addmemory:'add a story', stepIn:'Step into this moment', noStory:'The story of this is waiting for its teller.', askSomeone:'Ask someone who might know →',
       relations:'Relatives', addkin:'add a connection', kinApp:'The app works out how each of them connects back to you.',
@@ -526,8 +526,8 @@
       faceLine:'Фото, где она есть. Камера на портрете выбирает кадр, который представляет её везде.', changeface:'Сменить лицо', openPhoto:'Открыть фотографию',
       noFace:'К этому человеку пока не привязано ни одной фотографии.',
       about:'О человеке', aboutPh:'Что угодно — какими они были, чем занимались, история, которую хочется сохранить.', occupation:'Занятие', addoccupation:'добавить занятие', langspoken:'Языки',
-      born:'Родилась', died:'Умерла', precision:'Точность', prec:['точно','месяц','год','около','неизв.'], living:'Ещё жива',
-      gender:'Род', genderHint:'В русском и иврите от этого зависят имена, глаголы и прилагательные. Без этого лесу приходится угадывать.', gopts:['Мужской','Женский'],
+      born:'Родилась', died:'Умерла', precision:'Точность', prec:['Точно','Приблизительно'], living:'Ещё жива',
+      gender:'Род', genderHint:'', gopts:['Мужской','Женский'],
       pbirth:'Место рождения', lived:'Где жила', addplace:'добавить дом',
       memories:'Истории о ней', addmemory:'добавить историю', stepIn:'Войти в этот момент', noStory:'Эта история ждёт своего рассказчика.', askSomeone:'Спросить того, кто знает →',
       relations:'Родственники', addkin:'добавить связь', kinApp:'Приложение вычисляет, как каждый связан с вами.',
@@ -573,8 +573,8 @@
       faceLine:'התמונות שהיא מופיעה בהן. המצלמה שעל הדיוקן בוחרת את החיתוך שמייצג אותה בכל מקום.', changeface:'החלפת התמונה', openPhoto:'פתח את התצלום',
       noFace:'עדיין לא תויגו תמונות לאדם הזה.',
       about:'אודות', aboutPh:'כל דבר — איך הם היו, מה עשו, סיפור שחשוב לשמור.', occupation:'עיסוק', addoccupation:'הוספת עיסוק', langspoken:'שפות',
-      born:'נולדה', died:'נפטרה', precision:'דיוק', prec:['מדויק','חודש','שנה','בערך','לא ידוע'], living:'עדיין בחיים',
-      gender:'מין', genderHint:'ברוסית ובעברית המילים סביב אדם משתנות לפי זה. בלעדיו היער נאלץ לנחש.', gopts:['זכר','נקבה'],
+      born:'נולדה', died:'נפטרה', precision:'דיוק', prec:['מדויק','משוער'], living:'עדיין בחיים',
+      gender:'מין', genderHint:'', gopts:['זכר','נקבה'],
       pbirth:'מקום לידה', lived:'מקומות מגורים', addplace:'הוספת בית',
       memories:'סיפורים עליה', addmemory:'הוספת סיפור', stepIn:'להיכנס אל הרגע הזה', noStory:'הסיפור הזה מחכה למספר שלו.', askSomeone:'שאלו מישהו שאולי מכיר ←',
       relations:'בני משפחה', addkin:'הוספת קשר', kinApp:'האפליקציה מחשבת כיצד כל אחד קשור אליכם.',
@@ -910,7 +910,9 @@
     const perLang=f=>{ const o={}; LANGS.forEach(l=>o[l]=mineFirst(f,l)); return o; };
     S={
       life:{ bio:perLang('bio'), occupation:perLang('occupation'), birth:person.birth_date||'', death:person.death_date||'',
-        birth_prec:person.birth_certainty||'', living:!!person.is_living, /* THE FACT IS THE TRUTH, NOT THE COLUMN. This read people.sex, and every one of those is
+        birth_prec:person.birth_certainty||'', /* alive unless somebody has said otherwise: most people in a family album are,
+           and an app should not quietly assume the sadder answer */
+        living:(person.is_living===null||person.is_living===undefined)?true:!!person.is_living, /* THE FACT IS THE TRUTH, NOT THE COLUMN. This read people.sex, and every one of those is
        null - the approval writes it but the write never lands, so the gender a keeper approved
        vanished the moment the page reloaded. gender lives as a published fact in person_facts,
        language-neutral ('und'), exactly as Leon asked: one value for all languages. */
@@ -1572,19 +1574,39 @@
         <div class="chips" style="margin-top:10px"><button class="chip add" data-act="addmemory">${sv(I.plus,2)} ${L.addmemory}</button></div>
         ${gamesHTML(f)}`; }
     if(id==='life'){
+      /* THE ORDER LEON ASKED FOR (2026-08-22): gender, born, still living, died only when it
+         applies, precision, work, languages, about, then the games. It ran the other way round
+         - the long About text first and the gender last - so the two things every translation
+         depends on sat at the bottom where nobody scrolled.
+         Three things went with the reorder:
+         - STILL LIVING starts ON. Most people in a family album are alive, and a date of death
+           standing empty next to a living person is a question nobody asked.
+         - DIED is not drawn at all while that toggle is on. It used to sit there empty, and an
+           empty box invites filling.
+         - PRECISION is two answers, not five. 'exact / month / year / approx / unknown' asked a
+           person to describe a date's shape; Precise or Approximate is the thing they actually
+           know. Anything already stored that is not 'exact' reads as Approximate. */
       const rowctl=h=>h?`<div class="rowctl">${h}</div>`:'';
-      return mlEdit(L.about,'bio',S.life.bio,null,true) + waitMark('bio',lang) + rowctl(delCtl(pubRow('bio',lang)))
-        + `<div class="field"><label>${L.occupation}</label>${occBlock()}</div>`
-        + `<div class="row2"><div class="field"><label>${L.born}</label><input class="inp" type="date" data-field="birth" value="${/^\d{4}-\d{2}-\d{2}$/.test(S.life.birth)?esc(S.life.birth):''}">${rowctl(clearCtl('birth_date'))}</div>
-           <div class="field"><label>${L.died}</label><input class="inp" type="date" data-field="death" value="${/^\d{4}-\d{2}-\d{2}$/.test(S.life.death)?esc(S.life.death):''}">${rowctl(clearCtl('death_date'))}</div></div>
-        <div class="field"><div class="toggle"><span class="sw ${S.life.living?'on':''}" data-act="sw" data-field="living"></span><span style="font-size:14px">${L.living}</span></div></div>
-        <div class="field"><label>${L.precision}</label><div class="seg" data-field="birth_prec">${L.prec.map((p,i)=>{ const v=['exact','month','year','circa','unknown'][i]; return `<button class="${S.life.birth_prec===v||(!S.life.birth_prec&&i===0)?'on':''}" data-act="seg" data-v="${v}">${esc(p)}</button>`; }).join('')}</div></div>
-        <div class="field"><label>${L.gender} · <span style="text-transform:none;letter-spacing:0;color:#7f8fa8">${esc(L.genderHint)}</span></label>
-          <!-- Leon, 2026-08-22: two genders, named as genders rather than as pronouns. 'She / He /
-               They / dash' offered four answers to a question with two, and stored 'x' and empty
-               for the last pair - neither of which any translation can use. -->
+      const alive = (S.life.living===undefined||S.life.living===null) ? true : !!S.life.living;
+      const precise = (S.life.birth_prec||'exact')==='exact';
+      return `
+        <div class="field"><label>${L.gender}</label>
           <div class="seg gold" data-field="gender">${L.gopts.map((g,i)=>{ const v=['m','f'][i]; return `<button class="${S.life.gender===v?'on':''}" data-act="seg" data-v="${v}">${esc(g)}</button>`; }).join('')}</div>${waitMark('gender','und')}${rowctl(clearCtl('sex'))}</div>
+
+        <div class="field"><label>${L.born}</label><input class="inp" type="date" data-field="birth" value="${/^\d{4}-\d{2}-\d{2}$/.test(S.life.birth)?S.life.birth:''}">${rowctl(delCtl(pubRow('birth','und'))||clearCtl('birth_date'))}</div>
+
+        <div class="field"><div class="toggle"><span class="sw ${alive?'on':''}" data-act="sw" data-field="living"></span><span style="font-size:13.5px;color:var(--muted)">${esc(L.living)}</span></div></div>
+
+        ${alive ? '' : `<div class="field"><label>${L.died}</label><input class="inp" type="date" data-field="death" value="${/^\d{4}-\d{2}-\d{2}$/.test(S.life.death)?S.life.death:''}">${rowctl(delCtl(pubRow('death','und'))||clearCtl('death_date'))}</div>`}
+
+        <div class="field"><label>${L.precision}</label><div class="seg" data-field="birth_prec">${L.prec.map((p,i)=>{ const v=['exact','approx'][i]; return `<button class="${(precise?'exact':'approx')===v?'on':''}" data-act="seg" data-v="${v}">${esc(p)}</button>`; }).join('')}</div></div>
+
+        <div class="field"><label>${L.occupation}</label>${occBlock()}</div>
+
         <div class="field"><label>${L.langspoken}</label>${chipsField('langspoken',L.langspoken,false)}</div>
+
+        ${mlEdit(L.about,'bio',S.life.bio,null,true,true)}${waitMark('bio',lang)}${rowctl(delCtl(pubRow('bio',lang)))}
+
         ${facetSend('life')}${gamesHTML(f)}`;
     }
     if(id==='places'){ const placed=(hasv(S.places.pbirth)?1:0)+homeGroups().length;
