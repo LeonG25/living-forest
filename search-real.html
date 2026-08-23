@@ -285,9 +285,9 @@
       footNothing:'A gap is not a failure — it is where the family has not reached yet.',
       aMoment:'A moment', aPhoto:'A photograph',
       fld:{ display:'Name', given:'Given', family:'Family', patronymic:'Patronymic', maiden:'Maiden', called:'Called', honorific:'Title', nickname:'Nickname', lived:'Lived', where:'Place', when:'Year', who:'In this' },
-      gap:{ lived:name=>'Where did '+name+' live? Their places are still empty.',
-            birth:name=>'When was '+name+' born? Nobody has told us yet.',
-            story:name=>'No memory of '+name+' has been told yet.' } },
+      gap:{ lived:(name,g)=>'Where did '+name+' live? Their places are still empty.',
+            birth:(name,g)=>'When was '+name+' born? Nobody has told us yet.',
+            story:(name,g)=>'No memory of '+name+' has been told yet.' } },
     ru:{ dir:'ltr', code:'RU', native:'Русский', label:'Russian',
       eyebrow:'Поиск', title:'Найдите их в лесу',
       placeholder:'Имя, место, воспоминание…',
@@ -307,9 +307,9 @@
       footNothing:'Пробел — не провал, а место, куда семья ещё не дошла.',
       aMoment:'Момент', aPhoto:'Фотография',
       fld:{ display:'Имя', given:'Имя', family:'Фамилия', patronymic:'Отчество', maiden:'Девичья', called:'Зовут', honorific:'Титул', nickname:'Прозвище', lived:'Жил(а)', where:'Место', when:'Год', who:'На этом' },
-      gap:{ lived:name=>'Где жил(а) '+name+'? Места ещё не указаны.',
-            birth:name=>'Когда родился(ась) '+name+'? Нам ещё не рассказали.',
-            story:name=>'О '+name+' ещё не рассказали ни одного воспоминания.' } },
+      gap:{ lived:(name,g)=>'Где '+(g==='m'?'жил':g==='f'?'жила':'жил(а)')+' '+name+'? Места ещё не указаны.',
+            birth:(name,g)=>'Когда '+(g==='m'?'родился':g==='f'?'родилась':'родился(ась)')+' '+name+'? Нам ещё не рассказали.',
+            story:(name,g)=>'О '+name+' ещё не рассказали ни одного воспоминания.' } },
     he:{ dir:'rtl', code:'HE', native:'עברית', label:'Hebrew',
       eyebrow:'חיפוש', title:'מצא אותם ביער',
       placeholder:'שם, מקום, זיכרון…',
@@ -329,9 +329,9 @@
       footNothing:'פער אינו כישלון — הוא מקום שהמשפחה עוד לא הגיעה אליו.',
       aMoment:'רגע', aPhoto:'תצלום',
       fld:{ display:'שם', given:'שם פרטי', family:'שם משפחה', patronymic:'שם האב', maiden:'שם נעורים', called:'כינוי', honorific:'תואר', nickname:'כינוי חיבה', lived:'התגורר', where:'מקום', when:'שנה', who:'בתמונה' },
-      gap:{ lived:name=>'היכן חי '+name+'? המקומות עוד ריקים.',
-            birth:name=>'מתי נולד '+name+'? עוד לא סיפרו לנו.',
-            story:name=>'עוד לא סופר אף זיכרון על '+name+'.' } }
+      gap:{ lived:(name,g)=>'היכן '+(g==='f'?'חייתה':'חי')+' '+name+'? המקומות עוד ריקים.',
+            birth:(name,g)=>'מתי נולד '+name+'? עוד לא סיפרו לנו.',
+            story:(name,g)=>'עוד לא סופר אף זיכרון על '+name+'.' } }
   };
   function ruPlural(n,one,few,many){ const m10=n%10,m100=n%100; if(m10===1&&m100!==11)return one; if(m10>=2&&m10<=4&&(m100<10||m100>=20))return few; return many; }
   const d=()=>T[state.lang];
@@ -628,7 +628,7 @@
     if(gap){ const nm=nameFor(gap.p,state.lang); h+=secHead(L.gapEyebrow);
       h+='<div class="invite" role="button" tabindex="0" data-nav="person:'+esc(gap.p.id)+'" data-name="'+esc(nm)+'">'
         + '<div class="il">'+I.star+' '+esc(L.gapEyebrow)+'</div>'
-        + '<div class="iw'+(state.lang==='he'?' serif':'')+'">'+esc((L.gap[gap.kind]||L.gap.lived)(nm))+'</div>'
+        + '<div class="iw'+(state.lang==='he'?' serif':'')+'">'+esc((L.gap[gap.kind]||L.gap.lived)(nm,(gap.p&&gap.p.sex)==='male'?'m':(gap.p&&gap.p.sex)==='female'?'f':null))+'</div>'
         + '<span class="cta">'+esc(L.tell)+' '+I.arrow+'</span></div>';
     }
     h+='<div class="foot"><div class="l">'+esc(L.footRest)+'</div></div>';
