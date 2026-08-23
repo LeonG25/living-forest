@@ -850,7 +850,7 @@
       <div class="topbar">
         <button class="icon-btn" id="backBtn" aria-label="Back">${sv(ICON.back)}</button>
         <div class="crumb"><span class="k">${esc(d.crumb)}</span></div>
-        <button class="icon-btn" id="langBtn" aria-label="${esc(d.langTitle)}">${sv(ICON.lang,1.5)}</button>
+        <button class="icon-btn" id="langBtn" aria-label="${esc(d.langTitle)}"><span class="lang">${lang==='he'?'HE':lang.toUpperCase()}</span></button>
         <button class="icon-btn" id="editBtn" aria-label="${esc(d.suggest)}">${sv(ICON.pencil)}</button>
       </div>
       ${keeperStrip}

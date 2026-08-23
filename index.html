@@ -280,7 +280,7 @@
        the button inherited all of it - sitting adrift above the year instead of in the
        corner. It stands on its own now, at the same 16px from the corner as the shared
        button on the six pages that use one, so every page agrees where language lives. -->
-  <button class="ibtn" data-langbtn id="gbPill" aria-label="Language"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></button>
+  <button class="ibtn" data-langbtn id="gbPill" aria-label="Language"><span class="lang">EN</span></button>
   <div class="hud" id="tr">
     <div class="k" id="gbYear">the year</div>
     <div class="v serif" id="yr">—</div>
@@ -817,7 +817,9 @@ function paintGlobeWords(){
      square button and the same drawn globe, and the front door should not be the odd
      one out. The chosen language is shown inside the sheet it opens. */
   const pb=document.getElementById('gbPill');
-  if(pb){ pb.setAttribute('aria-label', (GB[GLANG]||GB.en).k); pb.onclick=openLangSheet; }
+  /* letters, so a reader sees which language they are in without opening anything */
+  if(pb){ const sp=pb.querySelector('.lang'); if(sp) sp.textContent=(GLANG==='he'?'HE':GLANG.toUpperCase());
+    pb.setAttribute('aria-label',(GB[GLANG]||GB.en).k); pb.onclick=openLangSheet; }
   const g=GB[GLANG]||GB.en, set=(id,v,html)=>{ const e=document.getElementById(id); if(!e) return;
     if(html) e.innerHTML=v; else e.textContent=v; };
   set('gbK',g.k); set('gbP',g.p);

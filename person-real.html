@@ -425,6 +425,7 @@
   body{ gap:0; padding:0; }
   .stagewrap{ gap:0; width:100%; }
   .device{ width:100vw!important; height:100dvh!important; max-width:none!important; border-radius:0!important; border:none!important; box-shadow:none!important; }
+  .lang{ font-family:'Azeret Mono',monospace; font-size:12px; letter-spacing:.08em; }
 </style>
 </head>
 <body>
@@ -1630,7 +1631,7 @@
     const screen=$('.screen'); if(screen) screen.setAttribute('dir',L.dir);
     $('.topbar').innerHTML=`<button class="ibtn" data-act="back" aria-label="Back">${sv(I.back)}</button>
       <div class="ttl"><div class="k">${esc(L.eyebrow)}</div><div class="n serif">${esc(nameLabel())}</div></div>
-      <button class="ibtn" data-act="lang" aria-label="${esc(L.langtitle)}">${sv(I.globe,1.5)}</button>`;
+      <button class="ibtn" data-act="lang" aria-label="${esc(L.langtitle)}"><span class="lang">${state.lang==='he'?'HE':state.lang.toUpperCase()}</span></button>`;
     const kn=$('.keeper-note'); if(state.keeper){ kn.style.display='flex'; kn.innerHTML=`${sv(I.keeper,1.5)}<span>${esc(L.keeper)}</span>`; } else { kn.style.display='none'; kn.innerHTML=''; }
     $('.pad').innerHTML=newPersonBanner()+ringShell();
     /* the page's single send, appended after the facets rather than inside each one */

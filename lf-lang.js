@@ -9,6 +9,10 @@
   if(window.LFLang) return;
   var LANGS=['en','ru','he'];
   var NAMES={en:'English', ru:'Русский', he:'עברית'};
+  /* Leon, 2026-08-22: LETTERS, not a globe. He wants to see WHICH language he is in
+     without opening anything. A globe says 'language lives here' and tells you nothing
+     about where you already are. */
+  var SHORT={en:'EN', ru:'RU', he:'HE'};
   function cur(){ try{ return localStorage.getItem('lf_lang')||'en'; }catch(e){ return 'en'; } }
   function css(){
     if(document.getElementById('lfLangCss')) return;
@@ -19,7 +23,7 @@
       'border:1px solid rgba(255,255,255,.16);background:rgba(10,20,34,.66);color:#f4ead9;'+
       '-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);}'+
       '.lflang-btn:hover{border-color:rgba(255,255,255,.34)}'+
-      '.lflang-btn svg{width:18px;height:18px}'+
+      '.lflang-btn{font-family:"Azeret Mono",ui-monospace,monospace;font-size:12px;letter-spacing:.08em}'+
       '.lflang-sheet{position:fixed;inset:0;z-index:60;display:none;align-items:flex-end;justify-content:center;'+
       'background:rgba(2,6,14,.62);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}'+
       '.lflang-sheet.on{display:flex}'+
@@ -59,9 +63,7 @@
     var sh=sheet();
     var b=document.createElement('button');
     b.className='lflang-btn'; b.setAttribute('aria-label','Language');
-    b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" '+
-      'stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/>'+
-      '<path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>';
+    b.textContent=SHORT[cur()]||'EN';
     b.onclick=function(){ sh.classList.add('on'); };
     document.body.appendChild(b);
   }
