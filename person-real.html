@@ -1109,7 +1109,12 @@
     out+=`<div class="np-langs" hidden>${editable.map(k=>`<div class="mlgrp"><div class="np-lab">${esc(L[k]||k)}</div>
         ${k==='called'?`<button type="button" class="np-ctl" data-copygiven style="margin:2px 0 6px">${sv(I.plus,1.6)} ${esc(L.copyGiven||'Same as the given name')}</button>`:''}
         ${LANGS.map(l=>`<div class="mlvar ${l==='he'?'rtl':''}"><span class="tag">${l}</span><input class="inp" data-field="${k}" data-lang="${l}" value="${esc((NAME[k]&&NAME[k][l])||'')}" placeholder="${L.addfield}"></div>`).join('')}
-      </div>`).join('')}<div class="btnrow" style="margin-top:4px"><button class="btn ghost" data-act="revert">${L.cancel}</button><button class="btn violet" data-act="nmsend">${L.send}</button></div></div>`;
+      </div>`).join('')}</div>`;
+  /* ONE SEND FOR THE WHOLE PAGE (Leon, 2026-08-22). The name editor drew its own Cancel and
+     Send, and the page draws one underneath - so he met two Send buttons on one screen and
+     had to guess. The page's own Send has gathered every facet since 2026-08-15, names
+     included, so the inner pair was not only confusing but redundant: pressing either did
+     the same thing. Removed, and the page keeps the one that means what it says. */
     out+=`<div class="np-addmenu" hidden>${unset.map(k=>`<button class="add-opt" data-addpart="${k}"><span class="ic">${sv(I.plus,1.8)}</span><span><span class="nm">${esc(L[k]||k)}</span><span class="ds">${L.addpartHint}</span></span></button>`).join('')}</div>`;
     out+=chipAddBox('nickname',L.nickname);
     return out;
@@ -1436,6 +1441,8 @@
     if(!stageHomeForm()) return;                  /* invalid - the error is already showing */
     const box=homeFormBox(); if(box) box.style.display='none';
     let ok=true;
+    /* names are written by their own function; the facet loop never touched them */
+    try{ if(await submitName(true)===false) ok=false; }catch(e){ ok=false; }
     for(const fid of ['name','life','places','kin','more']){
       try{ if(await submitFacet(fid,true)===false) ok=false; }catch(e){ ok=false; }
     }
@@ -2113,7 +2120,12 @@
          home. It belongs to a home now and is sent by homesend. */ }
     if(!quiet){ await reload(); if(ok) toast(d().sent); }
     return ok; }
-  async function submitName(){ if(!user) return; const card=$('.facet[data-facet="name"]'); if(!card) return;
+  /* THE PAGE'S SEND NEVER WROTE NAMES. submitFacet knows only 'life' and 'places', so the
+     loop over all five facets quietly did nothing for the name one - names were saved
+     ONLY by the button inside the name editor. Removing that button as redundant would
+     have stopped name editing working altogether, silently. It is folded in properly
+     now: quiet when the page is sending everything, and it speaks for itself otherwise. */
+  async function submitName(quiet){ if(!user) return true; const card=$('.facet[data-facet="name"]'); if(!card) return true;
     const read=(f,l)=>{ const el=card.querySelector(`.np-langs [data-field="${f}"][data-lang="${l}"]`); return el?el.value.trim():null; };
     let ok=true;
     /* name parts are person_facts ROWS — name_variants is retiring, do not write to it */
@@ -2133,7 +2145,8 @@
     for(const c of changed){
       if(await translateInto(PERSON_ID,c.v,c.f,
            {from:c.l,kind:'name_full',clean:cleanTr,grouped:false,gender:gsex})===false) ok=false; }
-    await reload(); if(ok) toast(d().sent); }
+    if(!quiet){ await reload(); if(ok) toast(d().sent); }
+    return ok; }
 
   /* ---------- keeper: per-field approve / decline (Rule 3) ---------- */
   async function approveRef(ref){ if(!user) return; const [kind,id]=ref.split(':'); const now=new Date().toISOString();
@@ -2320,6 +2333,8 @@
       if(act==='sendall'){
         let allOk=true;
         /* gather every facet first, write, and only then re-render - once */
+        /* names are written by their own function; the facet loop never touched them */
+        try{ if(await submitName(true)===false) allOk=false; }catch(e){ allOk=false; }
         for(const fid of ['name','life','places','kin','more']){
           try{ if(await submitFacet(fid,true)===false) allOk=false; }catch(e){ allOk=false; }
         }
@@ -2327,7 +2342,7 @@
         toast(allOk?L.sent:L.saveFail, !allOk);
         return;
       }
-      if(act==='nmsend'){ await submitName(); return; }
+      if(act==='nmsend'){ await submitName(); return; }   /* kept: other callers may use it */
       if(act==='revert'){ seed(); render(); return; }
       if(act==='watch'){ const q=(person&&person.id)?('?id='+encodeURIComponent(person.id)):''; location.href='reel-real.html'+q; return; }
       if(act==='addmemory'){ location.href='contribute-add-real.html'; return; }
