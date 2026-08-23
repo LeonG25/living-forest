@@ -2124,7 +2124,18 @@
           {from:bioSrc.lang,kind:'artefact_body',clean:cleanBio,grouped:false,skip:bioTouched})===false) ok=false; }
       stageOccForm(); if(!await flushOccDrafts()) ok=false;
       const b=read('birth'); if(b!=null&&b!==''&&b!==newestVal('birth','und')) await put('birth','und',b);
-      const de=read('death'); if(de!=null&&de!==''&&de!==newestVal('death','und')) await put('death','und',de);
+      /* a death date removed by saying 'still living' has to travel to the keeper too -
+         hiding the box without asking for the removal would leave the old date published
+         and the page showing something different from the archive. */
+      const liveNow=$('.facet[data-facet="life"] .sw[data-field="living"]');
+      const aliveNow=liveNow?liveNow.classList.contains('on'):true;
+      if(aliveNow){
+        const hadDeath=pubRow('death','und');
+        if(hadDeath && !removalReq(hadDeath.id)){
+          if(await insFact('remove_request','und',hadDeath.id)===false) ok=false; }
+      } else {
+        const de=read('death'); if(de!=null&&de!==''&&de!==newestVal('death','und')) await put('death','und',de);
+      }
       const seg=card.querySelector('.seg[data-field="birth_prec"] .on');
       if(seg && seg.getAttribute('data-v')!==(newestVal('birth_prec','und')||S.life.birth_prec||'exact')) await put('birth_prec','und',seg.getAttribute('data-v'));
       const liv=card.querySelector('.sw[data-field="living"]');
@@ -2354,7 +2365,22 @@
       if(act==='ml'){ const v=a.parentElement.parentElement.querySelector('.mlvars'); if(v) v.classList.toggle('open'); return; }
       if(act==='nmlang'){ const b=a.closest('.fbody').querySelector('.np-langs'); if(b) b.hidden=!b.hidden; a.classList.toggle('on'); return; }
       if(act==='nmadd'){ const b=a.closest('.fbody').querySelector('.np-addmenu'); if(b) b.hidden=!b.hidden; a.classList.toggle('on'); return; }
-      if(act==='sw'){ a.classList.toggle('on'); return; }
+      if(act==='sw'){
+        a.classList.toggle('on');
+        /* STILL LIVING DECIDES WHETHER THERE IS A DEATH DATE AT ALL (Leon, 2026-08-22).
+           The toggle only flipped a class, and whether the Died box exists is decided when
+           the page draws - so turning it off did nothing visible until a reload. Now the
+           facet redraws at once: off and the box appears, on and it goes, and any date
+           that was in it is cleared rather than left waiting invisibly to be sent.
+           Nothing here reaches the family: like every change on this page it is a
+           suggestion until the keeper approves it. */
+        if(a.getAttribute('data-field')==='living'){
+          const alive=a.classList.contains('on');
+          S.life.living=alive;
+          if(alive) S.life.death='';
+          render(); selectFacet('life');
+        }
+        return; }
       if(act==='seg'){ [...a.parentElement.children].forEach(x=>x.classList.remove('on')); a.classList.add('on'); return; }
       if(act==='send'){ await submitFacet(a.dataset.facet); return; }
       /* one button, every facet: whatever was changed anywhere on the page goes together */
