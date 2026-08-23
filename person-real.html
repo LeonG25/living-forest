@@ -480,7 +480,7 @@
       noFace:'No photographs are tagged to this person yet.',
       about:'About', aboutPh:'Anything at all — what they were like, what they did, a story you want kept.', occupation:'Occupation', addoccupation:'add her work', langspoken:'Languages spoken',
       born:'Born', died:'Died', precision:'Precision', prec:['exact','month','year','approx','unknown'], living:'Still living',
-      gender:'Gender', genderHint:'Helps translate her names correctly.', gopts:['She','He','They','—'],
+      gender:'Gender', genderHint:'Russian and Hebrew change the words around a person - names, verbs, adjectives. Without this the forest has to guess.', gopts:['Male','Female'],
       pbirth:'Place of birth', lived:'Places lived', addplace:'add a home',
       memories:'Stories told about her', addmemory:'add a story', stepIn:'Step into this moment', noStory:'The story of this is waiting for its teller.', askSomeone:'Ask someone who might know →',
       relations:'Relatives', addkin:'add a connection', kinApp:'The app works out how each of them connects back to you.',
@@ -527,7 +527,7 @@
       noFace:'К этому человеку пока не привязано ни одной фотографии.',
       about:'О человеке', aboutPh:'Что угодно — какими они были, чем занимались, история, которую хочется сохранить.', occupation:'Занятие', addoccupation:'добавить занятие', langspoken:'Языки',
       born:'Родилась', died:'Умерла', precision:'Точность', prec:['точно','месяц','год','около','неизв.'], living:'Ещё жива',
-      gender:'Пол', genderHint:'Помогает правильно склонять имена.', gopts:['Она','Он','Они','—'],
+      gender:'Род', genderHint:'В русском и иврите от этого зависят имена, глаголы и прилагательные. Без этого лесу приходится угадывать.', gopts:['Мужской','Женский'],
       pbirth:'Место рождения', lived:'Где жила', addplace:'добавить дом',
       memories:'Истории о ней', addmemory:'добавить историю', stepIn:'Войти в этот момент', noStory:'Эта история ждёт своего рассказчика.', askSomeone:'Спросить того, кто знает →',
       relations:'Родственники', addkin:'добавить связь', kinApp:'Приложение вычисляет, как каждый связан с вами.',
@@ -574,7 +574,7 @@
       noFace:'עדיין לא תויגו תמונות לאדם הזה.',
       about:'אודות', aboutPh:'כל דבר — איך הם היו, מה עשו, סיפור שחשוב לשמור.', occupation:'עיסוק', addoccupation:'הוספת עיסוק', langspoken:'שפות',
       born:'נולדה', died:'נפטרה', precision:'דיוק', prec:['מדויק','חודש','שנה','בערך','לא ידוע'], living:'עדיין בחיים',
-      gender:'מגדר', genderHint:'עוזר לתרגם את שמותיה נכון.', gopts:['היא','הוא','הם','—'],
+      gender:'מין', genderHint:'ברוסית ובעברית המילים סביב אדם משתנות לפי זה. בלעדיו היער נאלץ לנחש.', gopts:['זכר','נקבה'],
       pbirth:'מקום לידה', lived:'מקומות מגורים', addplace:'הוספת בית',
       memories:'סיפורים עליה', addmemory:'הוספת סיפור', stepIn:'להיכנס אל הרגע הזה', noStory:'הסיפור הזה מחכה למספר שלו.', askSomeone:'שאלו מישהו שאולי מכיר ←',
       relations:'בני משפחה', addkin:'הוספת קשר', kinApp:'האפליקציה מחשבת כיצד כל אחד קשור אליכם.',
@@ -1580,7 +1580,10 @@
         <div class="field"><div class="toggle"><span class="sw ${S.life.living?'on':''}" data-act="sw" data-field="living"></span><span style="font-size:14px">${L.living}</span></div></div>
         <div class="field"><label>${L.precision}</label><div class="seg" data-field="birth_prec">${L.prec.map((p,i)=>{ const v=['exact','month','year','circa','unknown'][i]; return `<button class="${S.life.birth_prec===v||(!S.life.birth_prec&&i===0)?'on':''}" data-act="seg" data-v="${v}">${esc(p)}</button>`; }).join('')}</div></div>
         <div class="field"><label>${L.gender} · <span style="text-transform:none;letter-spacing:0;color:#7f8fa8">${esc(L.genderHint)}</span></label>
-          <div class="seg gold" data-field="gender">${L.gopts.map((g,i)=>{ const v=['f','m','x',''][i]; return `<button class="${S.life.gender===v||(!S.life.gender&&i===3)?'on':''}" data-act="seg" data-v="${v}">${esc(g)}</button>`; }).join('')}</div>${waitMark('gender','und')}${rowctl(clearCtl('sex'))}</div>
+          <!-- Leon, 2026-08-22: two genders, named as genders rather than as pronouns. 'She / He /
+               They / dash' offered four answers to a question with two, and stored 'x' and empty
+               for the last pair - neither of which any translation can use. -->
+          <div class="seg gold" data-field="gender">${L.gopts.map((g,i)=>{ const v=['m','f'][i]; return `<button class="${S.life.gender===v?'on':''}" data-act="seg" data-v="${v}">${esc(g)}</button>`; }).join('')}</div>${waitMark('gender','und')}${rowctl(clearCtl('sex'))}</div>
         <div class="field"><label>${L.langspoken}</label>${chipsField('langspoken',L.langspoken,false)}</div>
         ${facetSend('life')}${gamesHTML(f)}`;
     }
