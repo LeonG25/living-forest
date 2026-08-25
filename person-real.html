@@ -1260,7 +1260,9 @@
   function homeDelCtl(b){ const L=d(); const req=removalReq(b.group_id);
     if(req) return `<span class="remreq">${esc(state.keeper?L.askremove:L.removeAsked)}</span>`;
     const mine=b.rows.every(r=>canDelete(r));
-    return `<button class="np-ctl ${mine?'':'warn'}" data-delhome="${b.group_id}">${sv(mine?I.trash:I.x,1.7)} ${esc(mine?L.remove:L.askremove)}</button>`; }
+    /* Leon, 2026-08-24: no ask-to-remove anywhere on these pages. A home is edited, not
+       un-asked. The handler stays; only the button is gone. */
+    return ''; }
   function homeCard(b){ const L=d(); const pend=hPending(b);
     const where=homeWhere(b)||'—', yrs=homeYears(b);
     const style=pend?' style="border-color:rgba(201,162,255,.34);background:rgba(201,162,255,.06)"':'';
@@ -1524,7 +1526,7 @@
   function occDelCtl(b){ const L=d(); const req=removalReq(b.group_id);
     if(req) return `<span class="remreq">${esc(state.keeper?L.askremove:L.removeAsked)}</span>`;
     const mine=b.rows.every(r=>canDelete(r));
-    return `<button class="np-ctl ${mine?'':'warn'}" data-delocc="${b.group_id}">${sv(mine?I.trash:I.x,1.7)} ${esc(mine?L.remove:L.askremove)}</button>`; }
+    return ''; }
   function occCard(b){ const L=d(); const pend=occPending(b);
     const style=pend?' style="border-color:rgba(201,162,255,.34);background:rgba(201,162,255,.06)"':'';
     return `<div class="detailrow"${style}>
@@ -1679,7 +1681,7 @@
           <div class="rk">${esc(kindText(r))}</div><div class="rn">${esc(r.name)}</div>
           <div class="rc">${esc(L.certs[r.certainty]||r.certainty)}${r.note?' · '+esc(r.note):''}</div>
           <div class="rowctl"><button class="np-ctl" data-reledit="${r.id}">${sv(I.pen,1.7)} ${L.edit}</button>
-            <button class="np-ctl warn" data-reldel="${r.id}">${sv(I.trash,1.7)} ${esc(L.askremove)}</button></div>
+            </div>
         </div></div>`).join('');
       /* free-text kin rows written before connections were typed */
       const legacy=pubList('kin','und').filter(r=>!parseKin(r.value)).map(r=>`<div class="relrow"><div>
@@ -1706,7 +1708,7 @@
     /* more */
     let h=S.more.custom.map(c=>`<div class="detailrow"><div><div class="dl">${esc(c.label[lang]||c.label.en||c.label.ru||c.label.he||'')}</div><div class="dv">${esc(c.value[lang]||c.value.en||c.value.ru||c.value.he||'')}</div>
         <div class="rowctl"><button class="np-ctl" data-editgroup="${c.group_id}">${sv(I.pen,1.7)} ${L.edit}</button>
-          <button class="np-ctl warn" data-delgroup="${c.group_id}">${sv(I.trash,1.7)} ${esc(L.askremove)}</button></div></div></div>`).join('');
+          </div></div></div>`).join('');
     h+=pendingCustomRows();
     h+=`<div class="adddetail"><button class="plus" data-act="adddetail">${sv(I.plus,1.8)} ${L.adddetail}</button></div>`;
     h+=`<div class="field" style="margin-top:14px"><label>${L.source}</label>${chipsField('source',L.source,true)}</div>`;
