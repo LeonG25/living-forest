@@ -711,7 +711,15 @@
     return row.status!=='published' && !!user && row.created_by===user.id; }
   /* a contributor cannot delete a published row — they ask, and the keeper decides */
   function removalReq(targetId){ return facts.find(x=>x.field==='remove_request'&&x.status!=='published'&&x.value===targetId)||null; }
-  function delCtl(row,label){ if(!row) return ''; const L=d(); const req=removalReq(row.id);
+  /* Leon, 2026-08-24: 'These ask to remove buttons are not needed. Gender - ask to remove?
+     Occupation - ask to remove while you can edit? Just remove them all.'
+     Both draw nothing now. The call sites stay: they are threaded through every field's
+     markup, and cutting nine holes in those templates to delete an empty string is how a
+     page quietly breaks. Everything BEHIND the button is untouched - the request kinds,
+     the keeper's handling of them - so restoring a way to remove a field later is a line
+     of markup rather than a rebuild. */
+  function delCtl(){ return ''; }
+  function _unusedDelCtl(row,label){ if(!row) return ''; const L=d(); const req=removalReq(row.id);
     /* a pending removal is itself a per-field keeper decision (Rule 3) */
     if(req) return state.keeper
       ? `<span class="remreq">${esc(L.askremove)}</span>${keeperInline(req.id,'remreq')}`
@@ -729,7 +737,8 @@
      older entries only ever reached the column. */
   const CLEARCOL={ birth:'birth_date', death:'death_date', gender:'sex' };
   function clearReq(field){ return facts.find(x=>x.field==='clear_request'&&x.status!=='published'&&x.value===field)||null; }
-  function clearCtl(col){ const L=d();
+  function clearCtl(){ return ''; }
+  function _unusedClearCtl(col){ const L=d();
     const field=Object.keys(CLEARCOL).find(k=>CLEARCOL[k]===col)||col;
     const hasCol=person&&person[col]!=null&&person[col]!=='';
     const hasFact=facts.some(x=>x.field===field&&x.status==='published'&&hasv(x.value));
