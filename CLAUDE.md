@@ -190,66 +190,76 @@ was never adopted. `botuser` now has sudo for `snap`, `apt`, `systemctl`, `journ
 owns `/var/snap/caddy/common`. **The drops were never explained**: four theories tested and
 all four disproved, and they cleared on their own.
 
-## 2 · WHAT TO FIX NEXT (in order, 2026-08-14)
+## 2 · WHAT TO FIX NEXT — the handover (2026-08-24, live at `7c884b5`)
 
-### A. WAITING FOR LEON RIGHT NOW
-Two facts in the review queue, both his own, both about where he has lived:
-`lived = Tel Aviv` and `country = Israel`. They are **two loose rows with nothing binding
-them together and no years at all** - which is exactly the problem item B1 describes.
+This section IS the handover. There is no separate handover file: Leon asked on 2026-08-24
+that CLAUDE.md be the only document, and a `docs/HANDOVER.md` written that day was deleted
+rather than left to disagree with this one.
 
-### B. THE EDITING MODEL - Leon's instructions, 2026-08-14
+### Finished and verified in the stretch to 2026-08-24
+- **Three languages everywhere.** Every page, and every field a family writes: names, About,
+  occupations, countries, custom details, stories, place names. The front door too.
+- **Gender reaches every translation.** The translate function honours it (it tested for
+  'male'/'female' while every caller sent 'm'/'f', so no gender instruction had EVER been
+  sent); the person page passes the subject's, the story pages the teller's. Contribution
+  now REQUIRES it for a new person and will not send while anyone is unanswered.
+- **Places translate without moving a row.** `place_geo` maps every typed spelling to three
+  names; a DB trigger keeps one spelling per language; a place learns its names on approval.
+- **A whole moment can be removed**, through the keeper.
+- **One language button per page**, showing EN/RU/HE.
+- **One Send on the person page.** Chips, occupations, homes and names all stage and go
+  together. No "ask to remove" anywhere.
 
-**B1. Homes must be repeatable and structured.** A person may have lived in many places.
-Each home needs **place name, country, start year, end year** - every field optional, each
-validated - and a person must be able to add as many as they want. Today `lived` and
-`country` are separate flat facts with no years and no link between them, so "Tel Aviv,
-Israel, 1998-2004" cannot be expressed at all. This needs a grouped structure (one
-`group_id` per home, as `person_facts` already supports) and a repeating editor.
+### 1. The contribution flow — twelve findings, ONE review
+The largest real work outstanding and the part the family actually touches. Leon asked that
+it be **walked end to end** rather than patched finding by finding. The twelve are recorded
+in §4 under *REVIEW THE WHOLE CONTRIBUTION FLOW*, in his words.
+Walk it as a contributor who is **not** the keeper, in Russian, on a phone.
 
-**B2. ONE "send to the keeper" per page, gathering everything.** Done on person-real
-(2026-08-13): each facet used to draw its own button, so Leon saw two, pressed both, and one
-stayed. **The same consolidation is still needed on every other editing page** - moment,
-contribute, place. A contributor should make all their changes and send once.
+### 2. Removal has no path left (Leon's decision, 2026-08-24)
+The ask-to-remove buttons are gone at his instruction — six of them, from six different
+builders. Nothing replaced them: emptying a field and sending does nothing, because a blank
+write is skipped. So a published occupation, home, kin tie or About text can be **edited but
+not taken away**. Everything behind the buttons still works. The shape Leon preferred when it
+came up: **a cleared field means removal.** His call.
 
-**B3. Show what is waiting, per field.** After sending, the contributor should see which of
-their edits are pending - and *only* those still awaiting approval. This already exists on
-some fields (the violet "waiting" treatment); extend it to the rest.
+### 3. Queues nobody can reach — a pattern, not a bug
+Four times something was written correctly and shown to no one: machine translations of
+facts; story retellings; `artefact_edits`; and name transliterations that could never fold
+into their human row. Every one was found by Leon noticing something did not arrive.
+**Nothing checks that everything written as "waiting" is reachable and clearable.** One pass
+— for each waiting kind: fetched? shown? approvable? declinable? — closes the whole class.
 
-**B4. Everything that can be multiple needs the same treatment.** Audited in
-`person_facts`: **`lived` + `country` (homes), `langspoken`, `source`, `occupation`,
-`kin`, `face`** are all repeatable. `langspoken` and `source` already use `chipsField` and
-work; `occupation` is single today and should not be; homes are the broken case.
+### 4. Names still English-only for ~30 people
+47 have names; 18 have Russian, 17 have Hebrew. Leon's rule: **anything manually entered is
+auto-translated once into the others; if someone edits any part in any language, that stays.**
+Genders are correct now, which he wanted settled first.
+Six of the thirty are **notes, not names** — `Masha mom of Naum`, `Boris [Kustanovich?]`,
+`[Wife of Shay] Ruah`. Transliterating those produces nonsense. His preference: do the 24
+clean ones, list the six for him to rewrite.
 
-### C. A-NEXT (faces beside names) - BLOCKED ON A QUESTION
-Done: timeline, curators, contribute-add. **Do not survey the rest blindly** - it is not
-true that all the remaining pages show a placeholder circle, and an hour was lost assuming
-so. Ask Leon: *which screens do you see a person's name without their face?*
+### 5. Two people have no gender
+**Sasha Dymarsky** and **Sasha Tserlin** — Alexander or Alexandra, genuinely either. Left
+unset rather than guessed. Two taps from Leon.
 
-### D. THE STRUCTURAL QUEUE - untouched for a week, and the largest
-1. **Responsive rollout: 1 of 15 pages.** Only the tree is off the fake 390px phone frame.
-   Leon uses an iPad; every other page shows him a phone-shaped strip. The designer's
-   layouts have been ready since 2026-08-06 and `lf-layout.css` holds the token set,
-   linked everywhere but deliberately inert. Order: canvas → subject → list → flow → games.
-2. **`lf-auth` on the remaining pages.** Gate fields still differ (`#gPw`/`#gGo` on index,
-   `#gPass`/`#gBtn` elsewhere) - every QC probe special-cases it, which is the smell of drift.
-3. **Cold-open performance.** ~800ms of a person page is the session check before any query
-   can run. Service worker; defer the 3D world past the gate.
+### 6. Unsent work is lost silently
+The person page holds changes until Send, and nothing warns before leaving. On a phone the
+back gesture is easy to hit. Small to build, and it is what makes the one-Send model safe.
 
-### E. FINISH THE RETIREMENT
-`people.display_name_retired`, `people.called_name_retired` and `name_variants_retired` are
-renamed, not dropped, so anything still reaching for them fails loudly. **Drop them once
-Leon has used the app for a day with no red "some of this did not load" bar.** A full audit
-on 2026-08-14 found and fixed 21 readers; nine pages then swept clean with zero errors.
+### 7. Gendered wording outside the person page
+The person page is swept (21 strings). The **reel** still says *"She grows brighter every
+time someone says her name"* — but the reel is parked for redesign, so its words are about to
+be rewritten anyway. Roughly 50 other matches are **false positives**: Russian `её` about a
+photograph, Hebrew `שלהם` which is already plural, `אותה שנה` meaning "the same year". Do not
+break correct grammar to satisfy a search.
 
-### F. SMALLER, KNOWN, UNBUILT
-- Face tagging exists only on the moment page. Contribute now hands over to it, so this is
-  answered - but the **reel** still has no "step into this moment" from its stories.
-- The keeper's BUNDLE card: a new person and their tie still arrive as separate queue items.
-- Nothing warns that a proposal was previously **declined** (duplicates of *waiting* ones
-  are refused).
-- `tree-bg-demo.html` is a design preview living in the app directory; delete when Leon says.
-- The 18-item verification list from 2026-08-09 was never walked past item 3, though many
-  items have since been fixed incidentally.
+### 8. Responsive: `person-real`
+The last page still boxed into a narrow column on the iPad. Every other page is done.
+
+### 9. Declined facts leave no trace
+Declining a fact DELETES the row, so nothing can warn that a proposal was already refused.
+Fixing it means 23 places across five files that read "not published" as "waiting" would start
+showing declined suggestions as pending. A schema change with a sweep behind it.
 
 ## 3 · THE HARD-WON LESSONS (do not relearn these)
 
