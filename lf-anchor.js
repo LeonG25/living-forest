@@ -22,12 +22,12 @@
     'Content-Type':'application/json'},opts.headers||{});
     return fetch(SB_URL+'/rest/v1/'+path,opts); }
 
-  var lang='en'; try{ var l=localStorage.getItem('lf_lang'); if(l==='ru'||l==='he') lang=l; }catch(e){}
+  var uiLang='en'; try{ var l=localStorage.getItem('lf_lang'); if(l==='ru'||l==='he') uiLang=l; }catch(e){}
   var T={
     en:{eyebrow:'THE FOREST ASKS ONCE',q:'Who are you in this forest?',sub:'Choose yourself on the tree. The forest welcomes you at once; a keeper simply confirms it later.',find:'Find your name\u2026',are:function(n){return 'You are <b>'+n+'</b>?';},yes:"That's me",no:'Not me',done:function(n){return 'Welcome home, '+n+'.'},dir:'ltr'},
     ru:{eyebrow:'\u041b\u0415\u0421 \u0421\u041f\u0420\u0410\u0428\u0418\u0412\u0410\u0415\u0422 \u041e\u0414\u0418\u041d \u0420\u0410\u0417',q:'\u041a\u0442\u043e \u0442\u044b \u0432 \u044d\u0442\u043e\u043c \u043b\u0435\u0441\u0443?',sub:'\u0412\u044b\u0431\u0435\u0440\u0438 \u0441\u0435\u0431\u044f \u043d\u0430 \u0434\u0435\u0440\u0435\u0432\u0435. \u041b\u0435\u0441 \u043f\u0440\u0438\u043d\u0438\u043c\u0430\u0435\u0442 \u0441\u0440\u0430\u0437\u0443; \u0445\u0440\u0430\u043d\u0438\u0442\u0435\u043b\u044c \u043f\u0440\u043e\u0441\u0442\u043e \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442 \u043f\u043e\u0437\u0436\u0435.',find:'\u041d\u0430\u0439\u0434\u0438 \u0441\u0432\u043e\u0451 \u0438\u043c\u044f\u2026',are:function(n){return '\u0422\u044b \u2014 <b>'+n+'</b>?';},yes:'\u042d\u0442\u043e \u044f',no:'\u041d\u0435 \u044f',done:function(n){return '\u0421 \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0435\u043d\u0438\u0435\u043c \u0434\u043e\u043c\u043e\u0439, '+n+'.'},dir:'ltr'},
     he:{eyebrow:'\u05d4\u05d9\u05e2\u05e8 \u05e9\u05d5\u05d0\u05dc \u05e4\u05e2\u05dd \u05d0\u05d7\u05ea',q:'\u05de\u05d9 \u05d0\u05ea\u05dd \u05d1\u05d9\u05e2\u05e8 \u05d4\u05d6\u05d4?',sub:'\u05d1\u05d7\u05e8\u05d5 \u05d0\u05ea \u05e2\u05e6\u05de\u05db\u05dd \u05e2\u05dc \u05d4\u05e2\u05e5. \u05d4\u05d9\u05e2\u05e8 \u05de\u05e7\u05d1\u05dc \u05de\u05d9\u05d3; \u05e9\u05d5\u05de\u05e8 \u05e4\u05e9\u05d5\u05d8 \u05de\u05d0\u05e9\u05e8 \u05d0\u05d7\u05e8 \u05db\u05da.',find:'\u05de\u05e6\u05d0\u05d5 \u05d0\u05ea \u05d4\u05e9\u05dd \u05e9\u05dc\u05db\u05dd\u2026',are:function(n){return '\u05d0\u05ea\u05dd <b>'+n+'</b>?';},yes:'\u05d6\u05d4 \u05d0\u05e0\u05d9',no:'\u05dc\u05d0 \u05d0\u05e0\u05d9',done:function(n){return '\u05d1\u05e8\u05d5\u05db\u05d9\u05dd \u05d4\u05d1\u05d0\u05d9\u05dd \u05d4\u05d1\u05d9\u05ea\u05d4, '+n+'.'},dir:'rtl'}
-  }; var L=T[lang];
+  }; var L=T[uiLang];
 
   var css='#lfanch{position:fixed;inset:0;z-index:70;background:radial-gradient(140% 90% at 50% -8%,#101d33 0%,#0a1424 46%,#04070e 100%);color:#e9eef8;font-family:\'Hanken Grotesk\',system-ui,sans-serif;overflow-y:auto;}'
    +'#lfanch .aur{position:fixed;border-radius:50%;filter:blur(46px);opacity:.5;pointer-events:none;}'

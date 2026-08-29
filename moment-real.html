@@ -716,7 +716,10 @@
   function storyForLang(L){ const orig=(art&&art.original_language)||'en';
     if(art&&art.body && L===orig) return {kind:'human', text:art.body};
     const tr=translations.find(x=>x.lang===L); if(tr) return {kind:'human', text:tr.body};
-    if(art&&art.body) return {kind:'machine', text:(autoStory[L]!=null?autoStory[L]:'')};
+    if(art&&art.body){ const m=(autoStory[L]!=null?autoStory[L]:'');
+      /* an empty box taught nothing while a translation waited unseen for the keeper;
+         until it is welcomed, the original telling stands — human words, gold */
+      return m?{kind:'machine',text:m}:{kind:'human',text:art.body}; }
     return {kind:'empty'}; }
 
   /* ---------- build the view model from real data ---------- */

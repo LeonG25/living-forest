@@ -374,7 +374,7 @@
       quill:"Your voice · in gold, like a living person's telling",
       whenwhereLab:'When and where', whenwhereOpt:'you can skip',
       whenK:'When', whereK:'Where', whenEmpty:'Add a time', whereEmpty:'Add a place',
-      whenPh:'e.g. about 1955', wherePh:'e.g. Tel Aviv',
+      whenPh:'e.g. about 1955', wherePh:'e.g. Tel Aviv', countryPh:'Which country? (a place the forest is meeting for the first time)',
       nextWho:'Next — who is in it', footDevelop:'One photograph is enough. The rest is a gift, not a duty.',
       searchPh:'Tap a name, or search…', suglab:'People the forest already knows',
       proposeNew:'Someone new', proposeSub:'Propose a person', proposeAs:'Propose',
@@ -423,7 +423,7 @@
       quill:'Ваш голос · золотом, как рассказ живого человека',
       whenwhereLab:'Когда и где', whenwhereOpt:'можно пропустить',
       whenK:'Когда', whereK:'Где', whenEmpty:'Добавить время', whereEmpty:'Добавить место',
-      whenPh:'напр. около 1955', wherePh:'напр. Тель-Авив',
+      whenPh:'напр. около 1955', wherePh:'напр. Тель-Авив', countryPh:'В какой стране? (лес встречает это место впервые)',
       nextWho:'Дальше — кто на фото', footDevelop:'Достаточно одной фотографии. Остальное — подарок, а не обязанность.',
       searchPh:'Коснитесь имени или найдите…', suglab:'Люди, которых лес уже знает',
       proposeNew:'Новый человек', proposeSub:'Предложить человека', proposeAs:'Предложить',
@@ -472,7 +472,7 @@
       quill:'הקול שלכם · בזהב, כמו סיפור של אדם חי',
       whenwhereLab:'מתי ואיפה', whenwhereOpt:'אפשר לדלג',
       whenK:'מתי', whereK:'איפה', whenEmpty:'הוספת זמן', whereEmpty:'הוספת מקום',
-      whenPh:'למשל בערך 1955', wherePh:'למשל תל אביב',
+      whenPh:'למשל בערך 1955', wherePh:'למשל תל אביב', countryPh:'באיזו מדינה? (מקום חדש ליער)',
       nextWho:'הבא — מי בתמונה', footDevelop:'מספיק תצלום אחד. השאר הוא מתנה, לא חובה.',
       searchPh:'הקישו על שם, או חפשו…', suglab:'אנשים שהיער כבר מכיר',
       proposeNew:'מישהו חדש', proposeSub:'הצעת אדם', proposeAs:'להציע',
@@ -597,7 +597,7 @@
   function go(step){ M.step=step; try{ $('#screen').scrollTop=0; }catch(e){} render(); }
   function goBack(){
     if(M.step==='develop') return go('invite');
-    if(M.step==='who') return go('develop');
+    if(M.step==='who'){ if(M.tellerSearch){ M.tellerSearch=false; return go('teller'); } return go('develop'); }
     if(M.step==='teller') return go('who');
     if(M.step==='voice') return go(M.fromReturn);
     if(M.step==='receipt'){ resetAll(); return go('invite'); }
@@ -671,7 +671,7 @@
         softChip('when',L.whenK,M.when,L.whenEmpty)+
         softChip('where',L.whereK,M.where,L.whereEmpty)+
       '</div>'+
-      '<div class="softedit" id="softEdit"><div id="whenPick"></div><input id="whereIn" list="knownPlaces" autocomplete="off" placeholder="'+esc(L.wherePh)+'" value="'+esc(M.where)+'"><datalist id="knownPlaces"></datalist></div>'+
+      '<div class="softedit" id="softEdit"><div id="whenPick"></div><input id="whereIn" list="knownPlaces" autocomplete="off" placeholder="'+esc(L.wherePh)+'" value="'+esc(M.where)+'"><datalist id="knownPlaces"></datalist><input id="countryIn" autocomplete="off" placeholder="'+esc(L.countryPh)+'" value="'+esc(M.country||'')+'" style="display:'+(M.countryOpen?'block':'none')+';margin-top:8px;width:100%"></div>'+
       '<button class="primary" id="toWho"><svg class="ar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg> '+L.nextWho+'</button>'+
       '<div class="foot"><div class="l">'+L.footDevelop+'</div></div>';
 
@@ -702,7 +702,10 @@
       const hit=(M.places||[]).find(pl=>norm(pl)===norm(raw));
       M.where = hit || raw;            /* snap to the known spelling when it is the same place */
       M.whenOpen=true;
+      const ci=$('#countryIn'); M.countryOpen=!!(raw.trim()&&!hit);
+      if(ci) ci.style.display=M.countryOpen?'block':'none';
     };
+    const ci0=$('#countryIn'); if(ci0) ci0.oninput=()=>{ M.country=ci0.value; };
     if(!M.places){
       M.places=[];
       (async()=>{ try{
@@ -741,6 +744,7 @@
     const si=$('#searchIn'); si.oninput=()=>{ M.searchQ=si.value; renderPicked(); renderSug(); };
     renderPicked(); renderSug();
     $('#toTeller').onclick=()=>{
+      M.tellerSearch=false;
       if(M.tellerKey && !subjectByKey(M.tellerKey)) M.tellerKey=null;
       if(!M.tellerKey && M.subjects.length) M.tellerKey=M.subjects[0].key;
       go('teller');
@@ -756,7 +760,7 @@
   function renderSug(){
     const row=$('#sugrow'); if(!row) return;
     const q=(M.searchQ||'').trim().toLowerCase();
-    const taken=new Set(M.subjects.filter(s=>s.id).map(s=>s.id));
+    const taken=M.tellerSearch?new Set():new Set(M.subjects.filter(s=>s.id).map(s=>s.id));
     let list=M.people.filter(p=>!taken.has(p.id));
     if(q) list=list.filter(p=>((p.search||p.label||'').toLowerCase()).includes(q));
     list=list.slice(0,8);
@@ -779,6 +783,8 @@
     /* picked while looking for a teller: they told it, they are not necessarily in it */
     if(M.tellerSearch){
       M.tellerSearch=false;
+      const already=id?M.subjects.find(s=>s.id===id):null;
+      if(already){ M.tellerKey=already.key; go('teller'); return; }
       const k='t'+(addSubject._n=(addSubject._n||0)+1);
       const tknown=id?((M.people.find(p=>p.id===id)||{}).sex||null):null;
       M.subjects.push({ key:k, name, id:id||null, isNew:!!isNew, tellerOnly:true, sex:tknown });
@@ -1004,7 +1010,11 @@
       if(M.when&&M.when.trim()) meta.when=M.when.trim();
       /* the machine-readable half, so the forest can order and search by it later */
       if(M.whenDate){ meta.when_date=M.whenDate; meta.when_precision=M.whenPrec||'year'; }
-      if(M.where&&M.where.trim()) meta.where=M.where.trim();
+      if(M.where&&M.where.trim()){ meta.where=M.where.trim();
+        /* a country typed for a brand-new place travels with its name */
+        const c=(M.country||'').trim();
+        if(c && meta.where.indexOf(',')<0 && !(M.places||[]).some(pl=>pl.trim().toLowerCase()===meta.where.toLowerCase()))
+          meta.where=meta.where+', '+c; }
 
       let photoPath=null;
       if(M.hasPhoto&&M.photoFile){ const pf=await lfDownscaleImage(M.photoFile); const tp=(pf.type||''); const ext = tp==='image/jpeg'?'jpg':tp==='image/png'?'png':tp==='image/webp'?'webp':((M.photoFile.name.split('.').pop())||'jpg').toLowerCase(); photoPath=await uploadBlob(pf,ext); }
