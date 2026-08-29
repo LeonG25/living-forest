@@ -217,8 +217,10 @@
   #gate .scrim.show{ opacity:1; pointer-events:auto; }
   #gate .sheet{ position:absolute; z-index:31; inset-inline:0; bottom:0; background:linear-gradient(180deg,#0f1e33,#081120);
     border:1px solid var(--hair); border-bottom:none; border-radius:22px 22px 0 0; padding:10px 20px calc(22px + env(safe-area-inset-bottom));
-    transform:translateY(103%); transition:transform .34s cubic-bezier(.16,.8,.28,1); box-shadow:0 -24px 70px -30px #000; max-width:440px; margin:0 auto; }
-  #gate .sheet.show{ transform:translateY(0); }
+    transform:translateY(103%); visibility:hidden; pointer-events:none;
+    transition:transform .34s cubic-bezier(.16,.8,.28,1), visibility 0s .34s; box-shadow:0 -24px 70px -30px #000; max-width:440px; margin:0 auto; }
+  #gate .sheet.show{ transform:translateY(0); visibility:visible; pointer-events:auto;
+    transition:transform .34s cubic-bezier(.16,.8,.28,1), visibility 0s 0s; }
   #gate .grip{ width:40px; height:4px; border-radius:99px; background:rgba(255,255,255,.2); margin:6px auto 15px; }
   #gate .sheet h3{ font-family:'Newsreader',serif; font-weight:400; font-size:21px; color:#fbf5e8; margin-bottom:4px; }
   #gate .sheet .ssub{ font-size:12.5px; color:var(--muted); margin-bottom:16px; }
@@ -847,7 +849,7 @@ function modeHTML(mode){
  const arrow = t.dir==='rtl'?IC_ARROW_RTL:IC_ARROW;
  const alt = mode==='up'
    ? '<div class="altrow single"><button class="link" data-gosign>'+t.haveAcc+' <b>'+t.signin+'</b></button></div>'
-   : '<div class="altrow"><button class="link" data-goreg>'+t.newHere+' <b>'+t.createAcc+'</b></button><button class="link ghost" data-forgot>'+t.forgot+'</button></div>';
+   : '<div class="altrow single"><button class="link ghost" data-forgot>'+t.forgot+'</button></div>';
  const foot = mode==='up'?'':t.footIn;
  return '<div class="gate">'
   +'<div class="gtop"><button class="ibtn" data-langbtn aria-label="Language"><span class="lang">'+pill()+'</span></button></div>'
