@@ -190,7 +190,7 @@ was never adopted. `botuser` now has sudo for `snap`, `apt`, `systemctl`, `journ
 owns `/var/snap/caddy/common`. **The drops were never explained**: four theories tested and
 all four disproved, and they cleared on their own.
 
-## 2 · WHAT TO FIX NEXT — the handover (2026-08-24, live at `7c884b5`)
+## 2 · WHAT TO FIX NEXT — the handover (2026-08-29, live at `ef3844c`)
 
 This section IS the handover. There is no separate handover file: Leon asked on 2026-08-24
 that CLAUDE.md be the only document, and a `docs/HANDOVER.md` written that day was deleted
@@ -210,7 +210,51 @@ rather than left to disagree with this one.
 - **One Send on the person page.** Chips, occupations, homes and names all stage and go
   together. No "ask to remove" anywhere.
 
-### 1. The contribution flow — twelve findings, ONE review
+### 1. The contribution flow — WALKED 2026-08-29; first fixes shipped
+The end-to-end walk Leon asked for was done: as qc-rig (member, not keeper), Russian,
+phone profile, live site. Full log + screenshots: droplet `~/qc/walk-out/`. Probes:
+`~/qc/walk-contrib.js` (NOSEND=1 reruns without writing), `walk5.js` (gate errand).
+Test data was written and FULLY CLEANED (rows via execute_sql; storage via Storage API
+with the rig's own token — execute_sql cannot delete storage objects, confirmed again).
+
+**Shipped and verified live (`d73c23f`, `4259212`, `ef3844c`):**
+- People picker draws names again (it displayed a column never fetched — the retired
+  display column; now the shared label) and small faces in the suggestion row.
+- Picker search matches every language a person has a name in, not just the reader's.
+- Known-places list reads place_geo (name + three language names, deduped): 3 → 57
+  entries. Same fix applied to the moment page's place list.
+- Sign-in keeps the errand: contribute pages bounce to `index.html?next=<page>`; the
+  gate honours a validated `next` after sign-in; the anchor-chooser detour carries it
+  too (captured at load, because tree-real strips the query the moment its own chooser
+  opens). Verified: with an anchor, sign-in lands on contribute-add in ~1s. Without an
+  anchor, the errand survives into the chooser; the post-choose hop is code-reviewed
+  but not machine-walked (completing it would write a player_anchor for the rig).
+- Teller wording: RU now gender-neutral («Рассказано своими словами»); HE has a
+  feminine form chosen by the teller's recorded gender; existing people picked from the
+  forest now carry their recorded gender into the flow.
+
+**Findings still open (walk evidence):**
+- Findings 1 (no country field), 4 (tagger UX), 7 (empty story box over a waiting
+  translation), 10/11 (tagging is only choosing pre-send; boxes drawn post-send on the
+  moment page) — untouched, as listed below.
+- Teller "__other" search can strand: tagged people are filtered out of it; an empty
+  result leaves the contributor on the who-step in teller mode, and the next person
+  tapped silently becomes the teller.
+- `tree-real.html` throws `TypeError: lang is not a function` on every load (attributed
+  by probe; harmless-looking but unexamined).
+- TWO anchor choosers coexist: tree-real's own `whoami` sheet and lf-anchor's overlay
+  both open on `?choose=1`. Duplication + the query-strip race; needs consolidation.
+- «Наум» unfindable in RU is DATA, not search: he has only an English note-name — one
+  of the six notes-not-names in item 4 below.
+- UNEXPLAINED, evidence kept: one anonymous load of contribute-real rendered the tree
+  with real names and no gate (`~/qc/walk-out/00-hub.png`). Three deliberate reruns:
+  gate holds; anon REST reads on people/person_facts/relationships/artefacts all `[]`.
+  Not reproduced, not understood, not closed.
+
+Original twelve findings, in Leon's words, remain in §4 under *REVIEW THE WHOLE
+CONTRIBUTION FLOW* — items above cross-reference them.
+
+#### (superseded heading) 1. The contribution flow — twelve findings, ONE review
 The largest real work outstanding and the part the family actually touches. Leon asked that
 it be **walked end to end** rather than patched finding by finding. The twelve are recorded
 in §4 under *REVIEW THE WHOLE CONTRIBUTION FLOW*, in his words.
@@ -331,6 +375,31 @@ assuming the shell is gone.
 
 *The orientation table has pointed at "§4 PARKED" since 2026-08-09 and there was no such
 section: it was lost in the consolidation. Restored 2026-08-14.*
+
+### The Family Trip — a game on the globe (Leon, 2026-08-29) — PARKED, do not build unasked
+
+A guided journey across the globe, visiting your family. Fen guides it, as all games,
+telling you what to do at each step. Two alternating steps, repeated until you stop:
+
+**Choose where to go from here.** On the globe page. You start at your own home — the
+latest, ideally current, home on your Person page. Fen offers a list of destinations:
+places where family members live (their current-or-latest homes, the same ones their
+Person pages show). Choosing a destination opens that Place page (every place in the
+tree should have one). You may also tap a lit point on the globe directly — Fen names
+the point (location including country) and asks you to confirm; refuse and you are back
+to choosing from the globe or the list.
+
+**Choose who to visit at this place.** Fen tells you who lived here and in which years,
+and who lives here now, then asks whom you would like to visit and lists the people of
+this place. Choosing one opens their Person page. Then Fen iterates the two steps again.
+Fen always offers a way to stop the game at any moment.
+
+**A second, related idea — "Time Machine":** background of what happened at this place
+in different years — general (a war) and specific to the people who lived there. Leon:
+"I don't know how to do it" — the shape is open. Check whether something like it is
+already in this parking lot before designing; review together later.
+
+Standing rules apply: designer pass before engineering; rounds generated from live data.
 
 ### Automatic translation of every text field (Leon, 2026-08-14) — PARKED
 
