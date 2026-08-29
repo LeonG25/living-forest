@@ -273,6 +273,28 @@ probe: signup returns an instant session, no letter; test user deleted, read-bac
 Registration is now instant for everyone — no email quota in the path. If confirmation
 is ever re-enabled, custom SMTP must come with it.
 
+**Onboarding funnel (Leon, 2026-08-29 evening; live `e198609`):**
+- NO language choice at the gate: language follows the device (ru/he/iw mapped, else
+  en), persisted to lf_lang on first visit (index + lf-nav for direct entries), so
+  inner pages agree with the gate. The gate's language pill removed from all gate
+  screens; the language sheet is CSS-hidden while the gate is up (it was leaking over
+  the knock screen). In-app language switching elsewhere untouched.
+- IDENTIFY-FIRST LOCK in lf-nav (v32, all 23 pages): a signed-in MEMBER with no
+  person_id and no living anchor gets only tree-real?choose=1 and the contribute pages;
+  any other page redirects to the chooser; #lfBud/#lfnav hidden via body.lf-lock.
+  Non-members are sent back to index (the knock). Fail-open on token refresh.
+- The knock (membership approval) KEPT deliberately: with email confirmation off it is
+  the only wall between a stranger with the URL and the family. New registrants wait at
+  "You are at the gate" until the keeper welcomes them (Review).
+- Verified by funnel probe (ru-RU locale): device language ru stored, Russian gate, no
+  pill, instant registration, Russian knock screen, no sheet; after membership granted:
+  sign-in lands on the chooser (47 names), person-real bounces to the chooser, bud and
+  nav hidden. Test account deleted, read-back 0.
+- MISSING piece of Leon's spec (designer first): the chooser has no "I am not in the
+  tree yet" path — a new member who cannot find themselves must be led into a
+  contribution flow that creates THEIR OWN Person (in_review) and anchors them to it.
+  New flow; Claude Design pass required before engineering.
+
 **Findings still open (walk evidence):**
 - Findings 4 (tagger UX) and 10/11 (tagging is only choosing pre-send) remain: these
   are design-level changes to a shipped surface — Claude Design pass FIRST, then build.
