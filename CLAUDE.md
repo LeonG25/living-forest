@@ -268,9 +268,10 @@ All verified by lean-gate.js probe: two fields only, nothing leaks, no watchdog.
 **DISCOVERED, matters for onboarding:** the built-in Supabase email service rate-limits
 confirmation letters to a few per hour — signup then fails with English
 "email rate limit exceeded" and NO user row is created. This plausibly explains Rita's
-failed registration. Fix is a dashboard decision (Leon): either disable "Confirm email"
-in Auth settings (family product, invited members — reasonable) or configure custom
-SMTP. Claude cannot change auth settings via MCP.
+failed registration. RESOLVED 2026-08-29: Leon disabled "Confirm email" in the dashboard. Verified by
+probe: signup returns an instant session, no letter; test user deleted, read-back 0.
+Registration is now instant for everyone — no email quota in the path. If confirmation
+is ever re-enabled, custom SMTP must come with it.
 
 **Findings still open (walk evidence):**
 - Findings 4 (tagger UX) and 10/11 (tagging is only choosing pre-send) remain: these
