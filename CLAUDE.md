@@ -256,6 +256,22 @@ with the rig's own token — execute_sql cannot delete storage objects, confirme
   translation, and manufacturing the state means briefly publishing test content.
   Applies to future submissions whose translations wait in review.
 
+**Gate slimming (Leon, 2026-08-29 evening; live `642ab71`):** registration is email +
+password only (name field, TOLD BY YOU chip, open-registration note, register footer
+line all removed; doRegister no longer sends display_name — profiles show the email
+until anchored). The taking-long watchdog speaks only over a genuinely loading screen
+and is cleared when a form renders (the orphan "Try again" over the register form is
+gone). The gate hides the world's floating chrome while up (body.lf-gateup hides
+#lfBud/#lfnav via MutationObserver; gate z-index raised, which also covers the EN pill).
+All verified by lean-gate.js probe: two fields only, nothing leaks, no watchdog.
+
+**DISCOVERED, matters for onboarding:** the built-in Supabase email service rate-limits
+confirmation letters to a few per hour — signup then fails with English
+"email rate limit exceeded" and NO user row is created. This plausibly explains Rita's
+failed registration. Fix is a dashboard decision (Leon): either disable "Confirm email"
+in Auth settings (family product, invited members — reasonable) or configure custom
+SMTP. Claude cannot change auth settings via MCP.
+
 **Findings still open (walk evidence):**
 - Findings 4 (tagger UX) and 10/11 (tagging is only choosing pre-send) remain: these
   are design-level changes to a shipped surface — Claude Design pass FIRST, then build.
