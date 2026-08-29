@@ -444,6 +444,10 @@ let loadTries=0;
 async function load(){
   const { data:{ session } } = await sb.auth.getSession();
   if(!session){ showSignIn(); return; }
+  /* the doorkeeper stands BEFORE the forest: a plain page-open or a reload must meet
+     the same knock/chooser gates as sign-in does — an unwelcomed member reading the
+     forest gets a correct empty answer, which the old boot mistook for a failure */
+  if(await funnelGate()) return;
   try{ await ensureProfile(session.user); }catch(e){ diag('ensureProfile threw: '+(e&&e.message)); }
   try{
     const [ppl, rels, arts, subs] = await Promise.all([
