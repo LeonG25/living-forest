@@ -1247,7 +1247,9 @@
 
   /* ---------- place (where) ---------- */
   async function loadPlaces(){ if(places) return;
-    try{ const {data}=await sb.from('places').select('name').order('name'); places=(data||[]).map(p=>p.name).filter(Boolean); }catch(e){ places=[]; }
+    try{ const {data}=await sb.from('place_geo').select('name,name_en,name_ru,name_he');
+      const seen=new Set(); (data||[]).forEach(x=>['name','name_en','name_ru','name_he'].forEach(f=>{ const v=(x[f]||'').trim(); if(v) seen.add(v); }));
+      places=[...seen].sort((a,b)=>a.localeCompare(b)); }catch(e){ places=[]; }
     // fold in places already named on moments
     try{ const {data:aa}=await sb.from('artefacts').select('metadata').eq('kind','photo'); (aa||[]).forEach(a=>{ const w=a.metadata&&a.metadata.where; if(w&&!places.includes(w)) places.push(w); }); }catch(e){}
   }

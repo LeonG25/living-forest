@@ -431,7 +431,7 @@
       nextTeller:'Дальше — кто рассказывает', noOnePicked:'Пока никто не отмечен',
       tellTitle:'Чей это голос, чья история?',
       tellSub:'Человек, которому она принадлежит, — тот, кто это пережил или рассказал. Лес помнит именно его, а не того, кто набрал текст.',
-      toldWords:'Рассказано его словами', noTeller:'Никто конкретно', otherTeller:'Кто-то другой — искать в лесу', otherTellerHint:'Кто рассказал эту историю?', noTellerSub:'Память без одного рассказчика', change:'Изменить',
+      toldWords:'Рассказано своими словами', noTeller:'Никто конкретно', otherTeller:'Кто-то другой — искать в лесу', otherTellerHint:'Кто рассказал эту историю?', noTellerSub:'Память без одного рассказчика', change:'Изменить',
       identK:'Сохранено · этим аккаунтом', identV:'Вы вошли как <b>%s</b>. Вы храните эту память — не присваиваете её себе.',
       addVoiceLab:'Добавить голос', addVoiceOpt:'то, что переживёт всё остальное',
       voiceN:'Записать рассказ', voiceNScoped:'Записать, как рассказывает %s', voiceS:'Пусть семья услышит — одно касание, без таймера',
@@ -480,7 +480,7 @@
       nextTeller:'הבא — מי מספר', noOnePicked:'עדיין לא תויג אף אחד',
       tellTitle:'של מי הקול, של מי הסיפור?',
       tellSub:'האדם שהזיכרון שייך לו — זה שחי אותו או סיפר אותו. את זה היער זוכר, לא את מי שהקליד.',
-      toldWords:'סופר במילותיו', noTeller:'לא מישהו מסוים', otherTeller:'מישהו אחר — לחפש ביער', otherTellerHint:'מי סיפר את הסיפור הזה?', noTellerSub:'זיכרון בלי מספר יחיד', change:'שינוי',
+      toldWords:'סופר במילותיו', toldWordsF:'סופר במילותיה', noTeller:'לא מישהו מסוים', otherTeller:'מישהו אחר — לחפש ביער', otherTellerHint:'מי סיפר את הסיפור הזה?', noTellerSub:'זיכרון בלי מספר יחיד', change:'שינוי',
       identK:'נשמר · על ידי חשבון זה', identV:'התחברתם כ־<b>%s</b>. אתם שומרים על הזיכרון — לא מנכסים אותו לעצמכם.',
       addVoiceLab:'הוספת קול', addVoiceOpt:'הדבר ששורד את כל השאר',
       voiceN:'הקליטו את הסיפור', voiceNScoped:'הקליטו את %s מספר/ת', voiceS:'שהמשפחה תשמע — נגיעה אחת, בלי שעון',
@@ -543,9 +543,12 @@
          markup already says. */
       const els=[]; const byEl=new Map();
       document.querySelectorAll('[data-k] .av, .sug .av').forEach(el=>{
-        const holder=el.closest('[data-k]'); if(!holder) return;
-        const subj=subjectByKey(holder.getAttribute('data-k'));
-        if(subj&&subj.id){ els.push(el); byEl.set(el,subj.id); }
+        const holder=el.closest('[data-k],[data-id]'); if(!holder) return;
+        let pid=null;
+        const k=holder.getAttribute('data-k');
+        if(k){ const subj=subjectByKey(k); if(subj&&subj.id) pid=subj.id; }
+        else pid=holder.getAttribute('data-id');
+        if(pid){ els.push(el); byEl.set(el,pid); }
       });
       const ids=[...new Set([...byEl.values()])];
       if(!ids.length) return;
@@ -578,10 +581,13 @@
   /* ---------- data ---------- */
   async function loadPeople(){
     try{
-      const {data}=await sb.from('people').select('id').eq('status','published');
+      const {data}=await sb.from('people').select('id,sex').eq('status','published');
       M.people=(data||[]);
       try{ await LFLabel.load(sb,M.people.map(p=>p.id)); }catch(e){}
-      M.people.forEach(p=>{ p.label=LFLabel.of(p.id,M.lang||'en')||p.called_name||p.display_name||''; });
+      /* the label is what the reader sees; the search string holds every language the
+         person has a name in, so a Russian typist finds an English-only name and back */
+      M.people.forEach(p=>{ p.label=LFLabel.of(p.id,M.lang||'en')||'';
+        p.search=['en','ru','he'].map(l=>LFLabel.of(p.id,l)||'').join(' ').toLowerCase(); });
       M.people=M.people.filter(p=>p.label);
     }catch(e){ M.people=[]; }
   }
@@ -700,8 +706,10 @@
     if(!M.places){
       M.places=[];
       (async()=>{ try{
-        const {data}=await sb.from('places').select('name').order('name');
-        M.places=(data||[]).map(x=>x.name).filter(Boolean);
+        const {data}=await sb.from('place_geo').select('name,name_en,name_ru,name_he');
+        const seen=new Set();
+        (data||[]).forEach(x=>['name','name_en','name_ru','name_he'].forEach(f=>{ const v=(x[f]||'').trim(); if(v) seen.add(v); }));
+        M.places=[...seen].sort((a,b)=>a.localeCompare(b));
         const dl=$('#knownPlaces');
         if(dl) dl.innerHTML=M.places.map(n=>'<option value="'+esc(n)+'"></option>').join('');
       }catch(e){} })();
@@ -750,10 +758,10 @@
     const q=(M.searchQ||'').trim().toLowerCase();
     const taken=new Set(M.subjects.filter(s=>s.id).map(s=>s.id));
     let list=M.people.filter(p=>!taken.has(p.id));
-    if(q) list=list.filter(p=>(p.label||'').toLowerCase().includes(q));
+    if(q) list=list.filter(p=>((p.search||p.label||'').toLowerCase()).includes(q));
     list=list.slice(0,8);
     let h=list.map(p=>
-      '<button class="sug" data-id="'+p.id+'" data-nm="'+esc(p.label||'')+'"><span class="av" style="background:'+avatarBG(p.display_name)+'">'+esc(initial(p.display_name))+'</span><span class="sn">'+esc(p.display_name)+'</span><span class="plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></button>'
+      '<button class="sug" data-id="'+p.id+'" data-nm="'+esc(p.label||'')+'"><span class="av" style="background:'+avatarBG(p.label)+'">'+esc(initial(p.label))+'</span><span class="sn">'+esc(p.label)+'</span><span class="plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></button>'
     ).join('');
     const exists=q && M.people.some(p=>(p.label||'').toLowerCase()===q);
     const proposeName=(M.searchQ||'').trim();
@@ -772,7 +780,8 @@
     if(M.tellerSearch){
       M.tellerSearch=false;
       const k='t'+(addSubject._n=(addSubject._n||0)+1);
-      M.subjects.push({ key:k, name, id:id||null, isNew:!!isNew, tellerOnly:true });
+      const tknown=id?((M.people.find(p=>p.id===id)||{}).sex||null):null;
+      M.subjects.push({ key:k, name, id:id||null, isNew:!!isNew, tellerOnly:true, sex:tknown });
       M.tellerKey=k; go('teller'); return;
     }
     name=(name||'').trim(); if(!name) return;
@@ -784,7 +793,8 @@
        Two choices only, and it is required: the app cannot write a correct sentence without it,
        and asking once here is far cheaper than correcting a name in three languages later. */
     const k='k'+(addSubject._n=(addSubject._n||0)+1);
-    M.subjects.push({ key:k, name, id:id||null, isNew:!!isNew, sex:null });
+    const known=id?((M.people.find(p=>p.id===id)||{}).sex||null):null;
+    M.subjects.push({ key:k, name, id:id||null, isNew:!!isNew, sex:known });
     if(isNew) askSex(k);
     M.searchQ=''; const si=$('#searchIn'); if(si) si.value='';
     renderPicked(); renderSug();
@@ -811,7 +821,7 @@
       ? '<span class="av" style="background:'+avatarBG(ts.name)+'">'+esc(initial(ts.name))+'</span>'
       : '<span class="av"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6"/><circle cx="12" cy="8" r="3.6"/></svg></span>';
     const name = ts?esc(ts.name):esc(L.noTeller);
-    const sub = ts?esc(L.toldWords):esc(L.noTellerSub);
+    const sub = ts?esc((ts.sex==='female'&&L.toldWordsF)?L.toldWordsF:L.toldWords):esc(L.noTellerSub);
     const vdone=!!M.voiceBlob;
     const vN = ts?fmt(L.voiceNScoped,esc(ts.name)):L.voiceN;
     $('#pad').innerHTML=
@@ -1168,7 +1178,7 @@
     if(stored&&T[stored]) M.lang=stored;
     else { const dl=(navigator.language||'en').slice(0,2); if(T[dl]) M.lang=dl; }
     const {data:{session}}=await sb.auth.getSession();
-    if(!session){ location.replace('index.html'); return; }
+    if(!session){ location.replace('index.html?next=contribute-add-real.html'); return; }
     M.user=session.user;
     M.accountName=(session.user.user_metadata&&(session.user.user_metadata.name||session.user.user_metadata.full_name))||
       (session.user.email?session.user.email.split('@')[0]:'')||'—';

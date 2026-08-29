@@ -748,7 +748,7 @@
     const stored=(function(){ try{ return localStorage.getItem('lf_lang'); }catch(e){ return null; } })();
     if(stored&&T[stored]) state.lang=stored; else { const dl=(navigator.language||'en').slice(0,2); if(T[dl]) state.lang=dl; }
     const {data:{session}}=await sb.auth.getSession();
-    if(!session){ location.replace('index.html'); return; }
+    if(!session){ location.replace('index.html?next=contribute-real.html'); return; }
     user=session.user;
     try{ const {data:pr}=await sb.from('profiles').select('display_name,preferred_lang').eq('id',user.id).maybeSingle(); if(pr&&pr.preferred_lang&&!stored&&T[pr.preferred_lang]) state.lang=pr.preferred_lang; }catch(e){}
     await loadData();

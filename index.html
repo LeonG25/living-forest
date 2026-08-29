@@ -921,12 +921,15 @@ document.addEventListener('focusin', function(e){
     setTimeout(function(){ try{ e.target.scrollIntoView({block:'center', behavior:'smooth'}); }catch(err){} }, 350);
   }
 });
+/* the gate remembers why you came: ?next=<page> set by a page that bounced you here */
+function gotoNext(){ try{ const n=new URLSearchParams(location.search).get('next')||'';
+  if(/^[a-z0-9-]+\.html$/.test(n)){ location.href=n; return true; } }catch(e){} return false; }
 async function doSignIn(){ clearErr(); const t=T[GLANG];
  const email=(gscreen().querySelector('#gEmail').value||'').trim(), password=gscreen().querySelector('#gPass').value;
  if(!email||!password){ fieldError(t.needBoth); return; }
  const { error }=await sb.auth.signInWithPassword({ email, password });
  if(error){ fieldError(/invalid|credential|password|not found/i.test(error.message||'')?t.badPw:error.message); return; }
- showPlanting('plant'); if(await anchorGate()) return; load();
+ showPlanting('plant'); if(await anchorGate()) return; if(gotoNext()) return; load();
 }
 async function doRegister(){ clearErr(); const t=T[GLANG];
  const name=(gscreen().querySelector('#gName').value||'').trim(), email=(gscreen().querySelector('#gEmail').value||'').trim(), password=gscreen().querySelector('#gPass').value;
@@ -934,11 +937,11 @@ async function doRegister(){ clearErr(); const t=T[GLANG];
  if(password.length<6){ fieldError(t.shortPw); return; }
  const { data, error }=await sb.auth.signUp({ email, password, options:{ data:{ display_name:name } } });
  if(error){ fieldError(error.message); return; }
- if(data && data.session){ showPlanting('plant'); if(await anchorGate()) return; load(); return; }
+ if(data && data.session){ showPlanting('plant'); if(await anchorGate()) return; if(gotoNext()) return; load(); return; }
  // Open registration: no approval gate. If no session came back the project may want
  // email confirmation — try an immediate sign-in in case it isn't actually enforced.
  const { data:si }=await sb.auth.signInWithPassword({ email, password });
- if(si && si.session){ showPlanting('plant'); if(await anchorGate()) return; load(); return; }
+ if(si && si.session){ showPlanting('plant'); if(await anchorGate()) return; if(gotoNext()) return; load(); return; }
  // Confirmation genuinely required — still open, just point the way (no keeper step).
  infoMsg(t.madeConfirm);
 }
