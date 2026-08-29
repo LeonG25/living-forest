@@ -302,6 +302,19 @@ is ever re-enabled, custom SMTP must come with it.
   contribution flow that creates THEIR OWN Person (in_review) and anchors them to it.
   New flow; Claude Design pass required before engineering.
 
+**Limbo loop at the gate (Leon hit it live 2026-08-29 ~22:00; fixed, live `a628f34`):**
+Root cause: index boot (line ~1062 `load()`) and every reload ("Try again"/"Knock
+again" both call location.reload) checked only for a session and NEVER consulted
+funnelGate — an unwelcomed member (or a ghost session of a deleted account) went
+straight to reading the forest, got a CORRECT empty answer (RLS), and the EMPTY-200
+guard threw "The forest answered empty" forever. Probes had missed it because they
+always entered via doRegister/doSignIn, which do call anchorGate. Fix: one line in
+load() — `if(await funnelGate()) return;` before any forest read. Safety-checked all
+four existing accounts first (Leon + qc-keeper have person_id, la.lutine has an active
+anchor — none detoured). Verified by limbo-test.js: register→knock, Knock-again→knock,
+plain re-open→knock, empty-error never shown. Lesson for probes: every gate state must
+be exercised through RELOAD and PLAIN OPEN, not only through the buttons that set it.
+
 **Findings still open (walk evidence):**
 - Findings 4 (tagger UX) and 10/11 (tagging is only choosing pre-send) remain: these
   are design-level changes to a shipped surface — Claude Design pass FIRST, then build.
