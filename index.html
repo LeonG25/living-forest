@@ -846,7 +846,7 @@ function modeHTML(mode){
    : '<div class="altrow"><button class="link" data-goreg>'+t.newHere+' <b>'+t.createAcc+'</b></button><button class="link ghost" data-forgot>'+t.forgot+'</button></div>';
  const foot = mode==='up'?'':t.footIn;
  return '<div class="gate">'
-  +'<div class="gtop"></div>'
+  +'<div class="gtop"><button class="ibtn" data-langbtn aria-label="Language"><span class="lang">'+pill()+'</span></button></div>'
   +'<div class="gmid">'
    +'<div class="brand">'+IC_MARK+'<div class="eyebrow">'+t.eyebrow+'</div><div class="head">'+(mode==='up'?t.regHead:t.signHead)+'</div><div class="sub">'+(mode==='up'?t.regSub:t.signSub)+'</div></div>'
    +'<div class="card">'
@@ -885,7 +885,7 @@ function wireMode(mode){ const s=gscreen();
 /* the gate owns the screen: the world's floating buttons hide while it is up */
 (function(){
   const st=document.createElement('style');
-  st.textContent='body.lf-gateup #lfBud, body.lf-gateup #lfnav{ display:none !important; } body.lf-gateup #gateSheet, body.lf-gateup #gateScrim{ display:none !important; }';
+  st.textContent='body.lf-gateup #lfBud, body.lf-gateup #lfnav{ display:none !important; }';
   document.head.appendChild(st);
   const g=document.getElementById('gate'); if(!g) return;
   const sync=()=>{ document.body.classList.toggle('lf-gateup', g.style.display!=='none'); };
@@ -907,9 +907,20 @@ async function funnelGate(){ try{
  if(st.ok==='broken'){ renderGate('signin'); try{ fieldError(SESSION_LOST[GLANG]||SESSION_LOST.en); }catch(e){} return true; }
  if(st.ok==='slow'){ return false; }  /* proceed; loads retry; the watchdog offers the way out */
  if(st.ok==='waiting'){
+   renderWaiting();
+   return true;
+ }
+ if(!st.profile.person_id && (!st.anchor || st.anchor.status==='declined')){
+   const nn=(new URLSearchParams(location.search).get('next')||'');
+   location.href='tree-real.html?choose=1'+(/^[a-z0-9-]+\.html$/.test(nn)?('&next='+nn):''); return true; }
+}catch(e){} return false; }
+
+function renderWaiting(){
    const L=GATE_WAIT[GLANG]||GATE_WAIT.en;
-   $('#gate').style.display=''; $('#gate').classList.remove('loading');
-   gscreen().innerHTML=`<div class="gmid" ${GLANG==='he'?'dir="rtl"':''} style="text-align:center">
+   gateView='waiting';
+   $('#gate').style.display=''; $('#gate').classList.remove('loading'); ensureAtmosphere();
+   gscreen().innerHTML=`<button class="ibtn" data-langbtn aria-label="Language"><span class="lang">${pill()}</span></button>
+     <div class="gmid" ${GLANG==='he'?'dir="rtl"':''} style="text-align:center">
      <div class="serif" style="font-size:26px">${L.ttl}</div>
      <div style="font-size:14.5px;line-height:1.6;color:#b8c6d4;max-width:340px;margin:0 auto">${L.body('Leon')}</div>
      <div style="display:flex;gap:10px;justify-content:center;margin-top:14px">
@@ -919,12 +930,8 @@ async function funnelGate(){ try{
    applyDir();
    const k=document.getElementById('gKnock'); if(k) k.onclick=async()=>{ location.reload(); };
    const o=document.getElementById('gOut'); if(o) o.onclick=async()=>{ await sb.auth.signOut(); location.reload(); };
-   return true;
- }
- if(!st.profile.person_id && (!st.anchor || st.anchor.status==='declined')){
-   const nn=(new URLSearchParams(location.search).get('next')||'');
-   location.href='tree-real.html?choose=1'+(/^[a-z0-9-]+\.html$/.test(nn)?('&next='+nn):''); return true; }
-}catch(e){} return false; }
+   gscreen().querySelectorAll('[data-langbtn]').forEach(b=>b.onclick=openLangSheet);
+}
 async function anchorGate(){ return funnelGate(); }
 /* iPhone keyboards cover the lower gate: any focused field scrolls itself into view */
 document.addEventListener('focusin', function(e){
@@ -965,7 +972,7 @@ async function doForgot(){ const t=T[GLANG]; const el=gscreen().querySelector('#
 function plantingHTML(kind){ const t=T[GLANG];
  const title = kind==='reading' ? t.reading : (t.plantT+'<em>'+t.plantEm+'</em>…');
  const sub = kind==='reading' ? '' : t.plantS;
- return '<div class="gate"><div class="gtop"></div><div class="gmid">'
+ return '<div class="gate"><div class="gtop"><button class="ibtn" data-langbtn aria-label="Language"><span class="lang">'+pill()+'</span></button></div><div class="gmid">'
    +'<div class="brand">'+IC_MARK+'<div class="eyebrow">'+t.eyebrow+'</div></div>'
    +'<div class="card"><div class="planting">'
      +'<div class="sproutwrap"><span class="leaf l"></span><span class="leaf r"></span><span class="stem"></span></div>'
@@ -1008,6 +1015,7 @@ function chooseLang(code){ if(GATE_LANGS.indexOf(code)<0) return; GLANG=code; tr
  closeLangSheet(); buildSheet(); try{ paintGlobeWords(); }catch(e){}
  sb.auth.getSession().then(({data})=>{ const u=data&&data.session&&data.session.user; if(u) sb.from('profiles').update({ preferred_lang:code }).eq('id',u.id).then(()=>{},()=>{}); }).catch(()=>{});
  if(gateView==='form') renderGate(curMode);
+ else if(gateView==='waiting') renderWaiting();
  else if(gateView==='reading'||gateView==='plant'){ gscreen().innerHTML=plantingHTML(gateView); applyDir(); }
 }
 
@@ -1045,7 +1053,7 @@ async function ensureProfile(user){
   }catch(e){ /* profile is best-effort; never block entry to the globe */ }
 }
 function gateError(msg){ gateView='error'; $('#gate').classList.remove('loading'); $('#gate').style.display=''; ensureAtmosphere(); const t=T[GLANG];
- gscreen().innerHTML='<div class="gate"><div class="gtop"></div><div class="gmid"><div class="brand">'+IC_MARK+'<div class="eyebrow">'+t.eyebrow+'</div><div class="head">'+t.hmm+'</div><div class="sub">'+(msg||'')+'</div></div><div class="card"><button class="enter" onclick="location.reload()">'+t.tryAgain+'</button></div></div><div class="foot"><div class="l">'+t.footIn+'</div></div></div>';
+ gscreen().innerHTML='<div class="gate"><div class="gtop"><button class="ibtn" data-langbtn aria-label="Language"><span class="lang">'+pill()+'</span></button></div><div class="gmid"><div class="brand">'+IC_MARK+'<div class="eyebrow">'+t.eyebrow+'</div><div class="head">'+t.hmm+'</div><div class="sub">'+(msg||'')+'</div></div><div class="card"><button class="enter" onclick="location.reload()">'+t.tryAgain+'</button></div></div><div class="foot"><div class="l">'+t.footIn+'</div></div></div>';
  applyDir(); gscreen().querySelectorAll('[data-langbtn]').forEach(b=>b.onclick=openLangSheet);
 }
 
