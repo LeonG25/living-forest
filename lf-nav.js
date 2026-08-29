@@ -193,6 +193,38 @@
       return uid? {token:tok, uid:uid} : null;
     }catch(e){ return null; }
   }
+  /* language follows the device until the person chooses otherwise */
+  try{ if(!localStorage.getItem('lf_lang')){ var _dl=(navigator.language||'en').slice(0,2).toLowerCase();
+    localStorage.setItem('lf_lang', _dl==='ru'?'ru':(_dl==='he'||_dl==='iw')?'he':'en'); } }catch(e){}
+
+  /* the identify-first lock (Leon, 2026-08-29): until a member has said who they are
+     (a person on their profile, or a living anchor), the forest offers only two rooms:
+     the tree with the chooser open, and the contribution flow. No menu, no Fen. */
+  (function(){
+    try{
+      var st=document.createElement('style');
+      st.textContent='body.lf-lock #lfBud, body.lf-lock #lfnav{ display:none !important; }';
+      (document.head||document.documentElement).appendChild(st);
+    }catch(e){}
+    var page=(location.pathname.split('/').pop()||'index.html');
+    var ALLOWED=/^(index|tree-real|contribute-real|contribute-add-real)\.html$/;
+    var s=storedSession(); if(!s) return;               // signed out: the gate handles it
+    var H={ headers:{ apikey:SB_KEY, Authorization:'Bearer '+s.token, Accept:'application/json' } };
+    Promise.all([
+      fetch(SB_URL+'/rest/v1/profiles?select=is_member,person_id&limit=1&id=eq.'+encodeURIComponent(s.uid),H).then(function(r){return r.ok?r.json():null;}),
+      fetch(SB_URL+'/rest/v1/player_anchors?select=status&user_id=eq.'+encodeURIComponent(s.uid),H).then(function(r){return r.ok?r.json():[];})
+    ]).then(function(rr){
+      if(!rr[0]) return;                                 // token mid-refresh: do not lock on doubt
+      var p=rr[0][0]||{};
+      var anchored=!!p.person_id || (rr[1]||[]).some(function(a){ return a && a.status!=='declined'; });
+      if(anchored) return;
+      if(!p.is_member){ if(page!=='index.html') location.replace('index.html'); return; }  // still knocking
+      document.body.classList.add('lf-lock');
+      if(!ALLOWED.test(page)) location.replace('tree-real.html?choose=1');
+      else if(page==='tree-real.html' && !/[?&]choose=1/.test(location.search)) location.replace('tree-real.html?choose=1');
+    }).catch(function(){});
+  })();
+
   function keeperCheck(tries){
     var s=storedSession();
     if(!s){ setKeeper(false); return; }                        // signed out \u2192 never show

@@ -699,6 +699,7 @@ tick();
 const GATE_LANGS=['en','ru','he'];
 let GLANG=(localStorage.getItem('lf_lang')||(navigator.language||'en').slice(0,2).toLowerCase());
 if(GATE_LANGS.indexOf(GLANG)<0) GLANG='en';
+try{ if(!localStorage.getItem('lf_lang')) localStorage.setItem('lf_lang',GLANG); }catch(e){} /* the device chooses; the forest remembers */
 let gateView='reading', curMode='in', atmoBuilt=false;
 
 const IC_MARK='<svg class="mk" viewBox="0 0 48 48" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M24 45V21" stroke="#8fd6a0" stroke-width="2.4"/><path d="M24 27C24 27 17 26 14 20C20 19 24 24 24 24" fill="#8fd6a0" opacity=".9"/><path d="M24 23C24 23 31 21 34 15C28 14 24 20 24 20" fill="#f3cd84" opacity=".9"/><path d="M24 33C24 33 18 33 15 28C21 27 24 31 24 31" fill="#7fb4d8" opacity=".85"/><circle cx="24" cy="12" r="3" fill="#ffe6ad"/></svg>';
@@ -845,7 +846,7 @@ function modeHTML(mode){
    : '<div class="altrow"><button class="link" data-goreg>'+t.newHere+' <b>'+t.createAcc+'</b></button><button class="link ghost" data-forgot>'+t.forgot+'</button></div>';
  const foot = mode==='up'?'':t.footIn;
  return '<div class="gate">'
-  +'<div class="gtop"><button class="langpill" data-langbtn>'+pill()+' '+IC_CHEV+'</button></div>'
+  +'<div class="gtop"></div>'
   +'<div class="gmid">'
    +'<div class="brand">'+IC_MARK+'<div class="eyebrow">'+t.eyebrow+'</div><div class="head">'+(mode==='up'?t.regHead:t.signHead)+'</div><div class="sub">'+(mode==='up'?t.regSub:t.signSub)+'</div></div>'
    +'<div class="card">'
@@ -884,7 +885,7 @@ function wireMode(mode){ const s=gscreen();
 /* the gate owns the screen: the world's floating buttons hide while it is up */
 (function(){
   const st=document.createElement('style');
-  st.textContent='body.lf-gateup #lfBud, body.lf-gateup #lfnav{ display:none !important; }';
+  st.textContent='body.lf-gateup #lfBud, body.lf-gateup #lfnav{ display:none !important; } body.lf-gateup #gateSheet, body.lf-gateup #gateScrim{ display:none !important; }';
   document.head.appendChild(st);
   const g=document.getElementById('gate'); if(!g) return;
   const sync=()=>{ document.body.classList.toggle('lf-gateup', g.style.display!=='none'); };
@@ -1044,7 +1045,7 @@ async function ensureProfile(user){
   }catch(e){ /* profile is best-effort; never block entry to the globe */ }
 }
 function gateError(msg){ gateView='error'; $('#gate').classList.remove('loading'); $('#gate').style.display=''; ensureAtmosphere(); const t=T[GLANG];
- gscreen().innerHTML='<div class="gate"><div class="gtop"><button class="langpill" data-langbtn>'+pill()+' '+IC_CHEV+'</button></div><div class="gmid"><div class="brand">'+IC_MARK+'<div class="eyebrow">'+t.eyebrow+'</div><div class="head">'+t.hmm+'</div><div class="sub">'+(msg||'')+'</div></div><div class="card"><button class="enter" onclick="location.reload()">'+t.tryAgain+'</button></div></div><div class="foot"><div class="l">'+t.footIn+'</div></div></div>';
+ gscreen().innerHTML='<div class="gate"><div class="gtop"></div><div class="gmid"><div class="brand">'+IC_MARK+'<div class="eyebrow">'+t.eyebrow+'</div><div class="head">'+t.hmm+'</div><div class="sub">'+(msg||'')+'</div></div><div class="card"><button class="enter" onclick="location.reload()">'+t.tryAgain+'</button></div></div><div class="foot"><div class="l">'+t.footIn+'</div></div></div>';
  applyDir(); gscreen().querySelectorAll('[data-langbtn]').forEach(b=>b.onclick=openLangSheet);
 }
 
