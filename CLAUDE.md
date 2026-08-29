@@ -190,7 +190,7 @@ was never adopted. `botuser` now has sudo for `snap`, `apt`, `systemctl`, `journ
 owns `/var/snap/caddy/common`. **The drops were never explained**: four theories tested and
 all four disproved, and they cleared on their own.
 
-## 2 · WHAT TO FIX NEXT — the handover (2026-08-29, live at `ef3844c`)
+## 2 · WHAT TO FIX NEXT — the handover (2026-08-29, live at `db74b6f`+)
 
 This section IS the handover. There is no separate handover file: Leon asked on 2026-08-24
 that CLAUDE.md be the only document, and a `docs/HANDOVER.md` written that day was deleted
@@ -233,17 +233,32 @@ with the rig's own token — execute_sql cannot delete storage objects, confirme
   feminine form chosen by the teller's recorded gender; existing people picked from the
   forest now carry their recorded gender into the flow.
 
+**Second batch, shipped and verified live (`db74b6f`):**
+- lf-anchor chooser was BROKEN for first-time members: `var lang` (ui language) shadowed
+  `function lang()` in the same scope — every name lookup threw, the list drew empty,
+  and the page error Leon's walk flagged was this. Renamed the variable; probe now
+  draws 47 names, no page errors. This also explains why the duplicate chooser
+  "worked": tree-real's own `whoami` sheet was silently covering for the broken one.
+- The duplicate chooser is retired: tree-real's auto-open on `?choose=1` stands down
+  (lf-anchor owns it); `openWhoAmI` stays for the "find me" button. Probe: exactly one
+  sheet opens.
+- Teller "__other" search: already-tagged people are no longer filtered out (choosing
+  one reuses their entry — DB shows exactly 1 subject row, no duplicate); the back
+  button returns from teller-search to the teller step; walked end to end.
+- Country for a brand-new place: a second field appears under "where" only when the
+  typed place matches nothing known (all three languages); the country travels into
+  `metadata.where` as "Place, Country". Walked: «Биробиджан» + «Россия» stored as
+  «Биробиджан, Россия»; field hides for known «Хабаровск». Test record cleaned, rows
+  and storage, verified empty.
+- Story box (finding 7): when the reader's language has no published translation and no
+  machine text, the ORIGINAL body now stands in gold instead of an empty box. Live and
+  code-reviewed; NOT probe-walked — no published artefact currently lacks a published
+  translation, and manufacturing the state means briefly publishing test content.
+  Applies to future submissions whose translations wait in review.
+
 **Findings still open (walk evidence):**
-- Findings 1 (no country field), 4 (tagger UX), 7 (empty story box over a waiting
-  translation), 10/11 (tagging is only choosing pre-send; boxes drawn post-send on the
-  moment page) — untouched, as listed below.
-- Teller "__other" search can strand: tagged people are filtered out of it; an empty
-  result leaves the contributor on the who-step in teller mode, and the next person
-  tapped silently becomes the teller.
-- `tree-real.html` throws `TypeError: lang is not a function` on every load (attributed
-  by probe; harmless-looking but unexamined).
-- TWO anchor choosers coexist: tree-real's own `whoami` sheet and lf-anchor's overlay
-  both open on `?choose=1`. Duplication + the query-strip race; needs consolidation.
+- Findings 4 (tagger UX) and 10/11 (tagging is only choosing pre-send) remain: these
+  are design-level changes to a shipped surface — Claude Design pass FIRST, then build.
 - «Наум» unfindable in RU is DATA, not search: he has only an English note-name — one
   of the six notes-not-names in item 4 below.
 - UNEXPLAINED, evidence kept: one anonymous load of contribute-real rendered the tree
