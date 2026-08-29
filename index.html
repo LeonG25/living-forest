@@ -881,6 +881,16 @@ function wireMode(mode){ const s=gscreen();
  s.querySelectorAll('input').forEach(inp=>inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); go&&go.click(); } }));
 }
 
+/* the gate owns the screen: the world's floating buttons hide while it is up */
+(function(){
+  const st=document.createElement('style');
+  st.textContent='body.lf-gateup #lfBud, body.lf-gateup #lfnav{ display:none !important; }';
+  document.head.appendChild(st);
+  const g=document.getElementById('gate'); if(!g) return;
+  const sync=()=>{ document.body.classList.toggle('lf-gateup', g.style.display!=='none'); };
+  try{ new MutationObserver(sync).observe(g,{attributes:true,attributeFilter:['style','class']}); }catch(e){}
+  sync();
+})();
 function fieldError(text){ const box=document.getElementById('gErr'); if(box) box.innerHTML='<div class="errline">'+IC_ALERT+text+'</div>'; const fin=document.getElementById('gPassFin'); if(fin) fin.classList.add('wrong'); }
 function infoMsg(text){ const box=document.getElementById('gErr'); if(box) box.innerHTML='<div class="infoline">'+text+'</div>'; const fin=document.getElementById('gPassFin'); if(fin) fin.classList.remove('wrong'); }
 function clearErr(){ const box=document.getElementById('gErr'); if(box) box.innerHTML=''; const fin=document.getElementById('gPassFin'); if(fin) fin.classList.remove('wrong'); }
