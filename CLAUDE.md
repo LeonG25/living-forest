@@ -315,6 +315,20 @@ anchor — none detoured). Verified by limbo-test.js: register→knock, Knock-ag
 plain re-open→knock, empty-error never shown. Lesson for probes: every gate state must
 be exercised through RELOAD and PLAIN OPEN, not only through the buttons that set it.
 
+**The peeking language sheet — SOLVED for real (live `d08e293`):** every "huge language
+tool" sighting tonight (17:36 register form, 19:24 + 22:15 + 22:20 knock) was ONE bug:
+#gateSheet hides only by translateY(103%), and on the knock screen the geometry comes
+up ~90px short — the sheet's grip+title strip peeks, uninvited. Empirically pinned by
+sheet-xray.js (rectTop 542-551 vs viewport 639, transform applied yet visible; at the
+sign-in form the same math clears fully — screen-dependent, which is why probes
+checking only the .show class called it "closed"). Fix: :not(.show) is
+visibility:hidden + pointer-events:none with a delayed visibility transition so the
+close animation still plays. Verified on the knock: computed visibility hidden; chip
+open/close still works (pill-test green). ALSO: sign-in footer "New here? Create an
+account" removed (Leon; the segmented control above already offers it) — footer keeps
+only "Forgot password?". Probe lesson recorded: verify hidden-ness by GEOMETRY and
+computed style, never by a class name.
+
 **Findings still open (walk evidence):**
 - Findings 4 (tagger UX) and 10/11 (tagging is only choosing pre-send) remain: these
   are design-level changes to a shipped surface — Claude Design pass FIRST, then build.
