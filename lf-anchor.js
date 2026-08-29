@@ -5,6 +5,9 @@
 (function(){
   if(window.__lfAnchor) return; window.__lfAnchor=1;
   if(!/[?&]choose=1/.test(location.search)) return;
+  /* capture the errand NOW: the tree strips the query the moment its own chooser wakes */
+  var NEXT=''; try{ NEXT=(new URLSearchParams(location.search).get('next')||''); }catch(e0){}
+  if(!/^[a-z0-9-]+\.html$/.test(NEXT)) NEXT='';
   var SB_URL='https://oabcdrktuikifbormjip.supabase.co';
   var SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
   var SB_STORE='sb-oabcdrktuikifbormjip-auth-token';
@@ -109,10 +112,8 @@
         var name=nameOf(pick.id)||pick.display_name||'';
         box.querySelector('.in').innerHTML='<div style="min-height:60vh;display:grid;place-items:center;text-align:center">'
           +'<div><div style="font-family:Georgia,serif;font-size:24px;color:#f3cd84">'+esc(L.done(name))+'</div></div></div>';
-        var nn=''; try{ nn=(new URLSearchParams(location.search).get('next')||''); }catch(e3){}
-        if(!/^[a-z0-9-]+\.html$/.test(nn)) nn='';
         try{ history.replaceState(null,'',location.pathname); }catch(e2){}
-        setTimeout(function(){ if(nn){ location.href=nn; } else { box.remove(); } },1800);
+        setTimeout(function(){ if(NEXT){ location.href=NEXT; } else { box.remove(); } },1800);
       });
     }
   });
