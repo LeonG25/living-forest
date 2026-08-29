@@ -79,7 +79,7 @@
   #card .grid .val.mono{font-family:'Azeret Mono',monospace;font-size:11.5px;}
 
   /* ===== sign-in gate — designed "alive" port (screens/Login - alive.html) ===== */
-  #gate{ position:absolute; inset:0; z-index:20; overflow:hidden; height:100dvh;
+  #gate{ position:absolute; inset:0; z-index:60; overflow:hidden; height:100dvh; /* above all world chrome: the signed-out gate shows nothing of the signed-in page */
     --cream:#f4ecdb; --muted:#9db0cc; --dim:#6f83a3; --hair:#ffffff18; --panel:#ffffff0b;
     --gold:#f3cd84; --gold-hi:#ffe6ad; --cool:#7fb4d8; --cool-hi:#a9d2ee;
     --edit:#c9a2ff; --edit-hi:#ddc6ff; --leaf:#8fd6a0; --coral:#ff9d8f;
@@ -835,17 +835,15 @@ function applyDir(){ const s=gscreen(); if(!s) return; s.setAttribute('dir',T[GL
 
 function modeHTML(mode){
  const t=T[GLANG];
- const nameField = mode==='up'
-   ? '<label class="field"><span class="fl">'+t.name+' <span class="prov gold"><span class="d"></span>'+t.toldByYou+'</span></span><div class="fin">'+IC_USER+'<input id="gName" type="text" placeholder="'+t.namePh+'" autocomplete="name"></div></label>'
-   : '';
+ const nameField = ''; /* Leon, 2026-08-29: email and password are enough; the tree tells the forest who you are */
  const pwPh = mode==='up'?t.pwPhUp:t.pwPhIn;
- const opennote = mode==='up' ? '<div class="opennote">'+IC_LEAF+t.open+'</div>' : '';
+ const opennote = '';
  const enter = mode==='up'?t.enterUp:t.enterIn;
  const arrow = t.dir==='rtl'?IC_ARROW_RTL:IC_ARROW;
  const alt = mode==='up'
    ? '<div class="altrow single"><button class="link" data-gosign>'+t.haveAcc+' <b>'+t.signin+'</b></button></div>'
    : '<div class="altrow"><button class="link" data-goreg>'+t.newHere+' <b>'+t.createAcc+'</b></button><button class="link ghost" data-forgot>'+t.forgot+'</button></div>';
- const foot = mode==='up'?t.footUp:t.footIn;
+ const foot = mode==='up'?'':t.footIn;
  return '<div class="gate">'
   +'<div class="gtop"><button class="langpill" data-langbtn>'+pill()+' '+IC_CHEV+'</button></div>'
   +'<div class="gmid">'
@@ -862,11 +860,11 @@ function modeHTML(mode){
      +alt
    +'</div>'
   +'</div>'
-  +'<div class="foot"><div class="l">'+foot+'</div></div>'
+  +(foot?'<div class="foot"><div class="l">'+foot+'</div></div>':'')
  +'</div>';
 }
 
-function renderGate(mode){ gateView='form'; curMode=mode; pauseWorld(true); $('#gate').classList.remove('loading'); $('#gate').style.display=''; ensureAtmosphere(); gscreen().innerHTML=modeHTML(mode); applyDir(); wireMode(mode); }
+function renderGate(mode){ clearTimeout(readingWatch); const _o=document.getElementById('gRetry'); if(_o&&_o.parentNode) _o.parentNode.remove(); gateView='form'; curMode=mode; pauseWorld(true); $('#gate').classList.remove('loading'); $('#gate').style.display=''; ensureAtmosphere(); gscreen().innerHTML=modeHTML(mode); applyDir(); wireMode(mode); }
 function showSignIn(){ renderGate('in'); }
 
 function wireMode(mode){ const s=gscreen();
@@ -934,10 +932,10 @@ async function doSignIn(){ clearErr(); const t=T[GLANG];
  showPlanting('plant'); if(await anchorGate()) return; if(gotoNext()) return; load();
 }
 async function doRegister(){ clearErr(); const t=T[GLANG];
- const name=(gscreen().querySelector('#gName').value||'').trim(), email=(gscreen().querySelector('#gEmail').value||'').trim(), password=gscreen().querySelector('#gPass').value;
- if(!name||!email||!password){ fieldError(t.needAll); return; }
+ const email=(gscreen().querySelector('#gEmail').value||'').trim(), password=gscreen().querySelector('#gPass').value;
+ if(!email||!password){ fieldError(t.needBoth); return; }
  if(password.length<6){ fieldError(t.shortPw); return; }
- const { data, error }=await sb.auth.signUp({ email, password, options:{ data:{ display_name:name } } });
+ const { data, error }=await sb.auth.signUp({ email, password });
  if(error){ fieldError(error.message); return; }
  if(data && data.session){ showPlanting('plant'); if(await anchorGate()) return; if(gotoNext()) return; load(); return; }
  // Open registration: no approval gate. If no session came back the project may want
@@ -973,6 +971,7 @@ function armReadingWatch(){ clearTimeout(readingWatch);
   readingWatch=setTimeout(()=>{ try{
     const g=document.getElementById('gate');
     if(!g||g.style.display==='none') return;
+    if(!g.classList.contains('loading')) return; /* a form is up: nothing is loading, say nothing */
     if(document.getElementById('gRetry')) return;
     const M={en:['The forest is taking long…','Try again'],ru:['Лес что-то долго…','Попробовать снова'],he:['היער מתעכב…','לנסות שוב']}[GLANG]||['The forest is taking long…','Try again'];
     const d=document.createElement('div');
