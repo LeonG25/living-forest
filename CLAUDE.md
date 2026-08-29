@@ -274,7 +274,14 @@ Registration is now instant for everyone — no email quota in the path. If conf
 is ever re-enabled, custom SMTP must come with it.
 
 **Onboarding funnel (Leon, 2026-08-29 evening; live `e198609`):**
-- NO language choice at the gate: language follows the device (ru/he/iw mapped, else
+- Gate language (revised same evening, live `bfd41e6`): the SMALL round language chip
+  (.ibtn, same as everywhere) sits in the gate's top corner on all gate screens —
+  sign-in, register, error, and the knock — opening the normal language sheet on tap
+  only; choosing redraws the current screen (renderWaiting handles the knock). Default
+  still follows the device. During the repair the funnel's anchor-detour branch was
+  briefly stranded outside its function (caught by inline_check + probe, fixed same
+  commit-chain, regression-verified: unanchored member still lands on the chooser).
+- NO language choice step at the gate: language follows the device (ru/he/iw mapped, else
   en), persisted to lf_lang on first visit (index + lf-nav for direct entries), so
   inner pages agree with the gate. The gate's language pill removed from all gate
   screens; the language sheet is CSS-hidden while the gate is up (it was leaking over
