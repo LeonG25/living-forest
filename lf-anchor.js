@@ -109,8 +109,10 @@
         var name=nameOf(pick.id)||pick.display_name||'';
         box.querySelector('.in').innerHTML='<div style="min-height:60vh;display:grid;place-items:center;text-align:center">'
           +'<div><div style="font-family:Georgia,serif;font-size:24px;color:#f3cd84">'+esc(L.done(name))+'</div></div></div>';
+        var nn=''; try{ nn=(new URLSearchParams(location.search).get('next')||''); }catch(e3){}
+        if(!/^[a-z0-9-]+\.html$/.test(nn)) nn='';
         try{ history.replaceState(null,'',location.pathname); }catch(e2){}
-        setTimeout(function(){ box.remove(); },1800);
+        setTimeout(function(){ if(nn){ location.href=nn; } else { box.remove(); } },1800);
       });
     }
   });

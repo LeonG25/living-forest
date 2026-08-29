@@ -912,7 +912,9 @@ async function funnelGate(){ try{
    const o=document.getElementById('gOut'); if(o) o.onclick=async()=>{ await sb.auth.signOut(); location.reload(); };
    return true;
  }
- if(!st.profile.person_id && (!st.anchor || st.anchor.status==='declined')){ location.href='tree-real.html?choose=1'; return true; }
+ if(!st.profile.person_id && (!st.anchor || st.anchor.status==='declined')){
+   const nn=(new URLSearchParams(location.search).get('next')||'');
+   location.href='tree-real.html?choose=1'+(/^[a-z0-9-]+\.html$/.test(nn)?('&next='+nn):''); return true; }
 }catch(e){} return false; }
 async function anchorGate(){ return funnelGate(); }
 /* iPhone keyboards cover the lower gate: any focused field scrolls itself into view */
