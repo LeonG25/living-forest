@@ -925,14 +925,16 @@ function renderWaiting(){
    const L=GATE_WAIT[GLANG]||GATE_WAIT.en;
    gateView='waiting';
    $('#gate').style.display=''; $('#gate').classList.remove('loading'); ensureAtmosphere();
-   gscreen().innerHTML=`<button class="ibtn" data-langbtn aria-label="Language"><span class="lang">${pill()}</span></button>
-     <div class="gmid" ${GLANG==='he'?'dir="rtl"':''} style="text-align:center">
+   /* the same .gate frame every other screen wears — without it the content drifts
+      above the viewport and only the buttons poke into view */
+   gscreen().innerHTML=`<div class="gate"><div class="gtop"><button class="ibtn" data-langbtn aria-label="Language"><span class="lang">${pill()}</span></button></div>
+     <div class="gmid" ${GLANG==='he'?'dir="rtl"':''} style="text-align:center;justify-content:center">
      <div class="serif" style="font-size:26px">${L.ttl}</div>
      <div style="font-size:14.5px;line-height:1.6;color:#b8c6d4;max-width:340px;margin:0 auto">${L.body('Leon')}</div>
      <div style="display:flex;gap:10px;justify-content:center;margin-top:14px">
        <button id="gKnock" class="btn" style="padding:11px 18px;border-radius:12px;border:1px solid rgba(243,205,132,.5);background:rgba(243,205,132,.12);color:#f3cd84;cursor:pointer;font-family:inherit">${L.again}</button>
        <button id="gOut" style="padding:11px 18px;border-radius:12px;border:1px solid rgba(143,163,184,.4);background:none;color:#8fa3b8;cursor:pointer;font-family:inherit">${L.out}</button>
-     </div></div>`;
+     </div></div></div>`;
    applyDir();
    const k=document.getElementById('gKnock'); if(k) k.onclick=async()=>{ location.reload(); };
    const o=document.getElementById('gOut'); if(o) o.onclick=async()=>{ await sb.auth.signOut(); location.reload(); };
