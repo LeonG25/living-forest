@@ -329,6 +329,23 @@ account" removed (Leon; the segmented control above already offers it) — foote
 only "Forgot password?". Probe lesson recorded: verify hidden-ness by GEOMETRY and
 computed style, never by a class name.
 
+**The invisible knock text (Leon's "weird empty page", 2026-08-30; fixed live
+`11a44cc`):** the waiting screen's title/body have ALWAYS rendered off the top of the
+viewport (measured: title top -46px) — only the buttons row poked into view. Cause:
+renderWaiting (and the older inline waiting render before it) skipped the `.gate`
+wrapper frame every other gate screen wears; without it .gmid drifts above the screen.
+Fix: same wrapper + gtop for the chip + justify-content:center; verified by geometry
+(title now top:134 on a 639px viewport). Probe rule now firm: text presence in
+innerText proves NOTHING — assert visible geometry.
+
+**Flow question OPEN (Leon, 2026-08-30):** Leon expects the choose-yourself /
+make-a-new-Person step at the knock stage. Current order is knock → keeper welcomes →
+chooser, because RLS hides all names from unwelcomed accounts (the only wall since
+email confirmation went off; choosing pre-welcome would expose the family list to any
+registrant). Options sketched for Leon: keep order with the now-legible knock; or ask
+the knocker to TYPE their name free-text (keeper sees who knocks, no list leak) and
+fold it into the designer pass for the "I'm not in the tree yet" self-Person flow.
+
 **Findings still open (walk evidence):**
 - Findings 4 (tagger UX) and 10/11 (tagging is only choosing pre-send) remain: these
   are design-level changes to a shipped surface — Claude Design pass FIRST, then build.
