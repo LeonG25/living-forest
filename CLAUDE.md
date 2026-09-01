@@ -338,6 +338,15 @@ Fix: same wrapper + gtop for the chip + justify-content:center; verified by geom
 (title now top:134 on a 639px viewport). Probe rule now firm: text presence in
 innerText proves NOTHING — assert visible geometry.
 
+**Keeper-side welcome — bug found and fixed, then USED FOR REAL (2026-09-01, live
+`74a3ab0`):** review-real never called loadGate() at boot (only after an approve/
+decline), so "At the gate" was invisible on a quiet day; also drew display_name it never
+selected. Fixed both; probe (gate-review.js as qc-keeper) shows the section with names.
+The probe revealed RITA had self-registered at 16:03 UTC and was waiting. Leon welcomed
+Rita AND the test knocker from Review on his own phone; DB confirms both is_member=true.
+Knocker erased. Accounts now: Leon, Zoya, Rita, qc-keeper, qc-rig. Rita's next step:
+open the forest → chooser → "That's me" (Rita's person is unlinked and free).
+
 **Onboarding WALKED BY LEON 2026-09-01, on his phone, end to end: register (instant) →
 knock screen (legible) → welcomed (via DB this once; Rita's will be from Review) →
 chooser → "That's me" on Rita → app unlocked. Leon: "It worked well now." Test account
