@@ -1319,7 +1319,7 @@
      One tap opens the whole forest to them — the funnel's other half. */
   let atGate=[];
   async function loadGate(){ try{
-      const {data}=await sb.from('profiles').select('id,created_at,is_member,is_keeper');
+      const {data}=await sb.from('profiles').select('id,display_name,created_at,is_member,is_keeper');
       atGate=(data||[]).filter(p=>!p.is_member&&!p.is_keeper);
     }catch(e){ atGate=[]; } }
   function gateSection(){ const L=d();
@@ -1340,7 +1340,7 @@
       toast(L.welcomed(nm));
       await loadGate(); render();
     }); }
-  async function reload(){ await loadData(); await loadGate(); await loadGate(); render(); }
+  async function reload(){ await loadData(); await loadGate(); render(); }
   function showGate(){ const L=d(); let g=$('#gate'); if(!g){ g=document.createElement('div'); g.id='gate'; g.className='gate'; $('#dev').appendChild(g); }
     g.innerHTML=`<div class="card">
       <h3>${esc(L.gateTitle)}</h3><div class="gsub">${esc(L.gateSub)}</div>
@@ -1357,7 +1357,7 @@
     try{ const {data:pr}=await sb.from('profiles').select('is_keeper,preferred_lang').eq('id',user.id).maybeSingle();
       if(pr){ state.keeper=!!pr.is_keeper; if(state.keeper){ window.__lfKeeper=true; try{document.dispatchEvent(new Event('lf-keeper-ready'));}catch(e){} } if(pr.preferred_lang&&!stored&&T[pr.preferred_lang]) state.lang=pr.preferred_lang; } }catch(e){}
     if(!state.keeper){ render(); return; }
-    await loadData(); render();
+    await loadData(); await loadGate(); render();   /* the gate is asked on every open, not only after an approval */
   }
   wire(); boot();
 })();
