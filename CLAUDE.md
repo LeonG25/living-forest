@@ -338,6 +338,12 @@ Fix: same wrapper + gtop for the chip + justify-content:center; verified by geom
 (title now top:134 on a 639px viewport). Probe rule now firm: text presence in
 innerText proves NOTHING — assert visible geometry.
 
+**Onboarding WALKED BY LEON 2026-09-01, on his phone, end to end: register (instant) →
+knock screen (legible) → welcomed (via DB this once; Rita's will be from Review) →
+chooser → "That's me" on Rita → app unlocked. Leon: "It worked well now." Test account
+and its Rita anchor erased afterwards, verified: no test accounts, nobody linked to
+Rita. Still unwalked by Leon: the keeper-side welcome from Review.
+
 **Flow DECIDED (Leon, 2026-09-01): Option 1 — keep knock → keeper welcomes → chooser.**
 The wall stays. Name-typing at the knock and the self-Person path remain designer
 material for later. All Leon's +test accounts erased 2026-09-01 (three of them:
