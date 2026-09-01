@@ -338,7 +338,13 @@ Fix: same wrapper + gtop for the chip + justify-content:center; verified by geom
 (title now top:134 on a 639px viewport). Probe rule now firm: text presence in
 innerText proves NOTHING — assert visible geometry.
 
-**Flow question OPEN (Leon, 2026-08-30):** Leon expects the choose-yourself /
+**Flow DECIDED (Leon, 2026-09-01): Option 1 — keep knock → keeper welcomes → chooser.**
+The wall stays. Name-typing at the knock and the self-Person path remain designer
+material for later. All Leon's +test accounts erased 2026-09-01 (three of them:
++test2, +test3, +test); accounts table back to the four known: Leon, Zoya, qc-keeper,
+qc-rig. Leon restarts registration from scratch.
+
+**Flow question (for history, 2026-08-30):** Leon expects the choose-yourself /
 make-a-new-Person step at the knock stage. Current order is knock → keeper welcomes →
 chooser, because RLS hides all names from unwelcomed accounts (the only wall since
 email confirmation went off; choosing pre-welcome would expose the family list to any
