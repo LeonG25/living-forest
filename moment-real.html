@@ -1754,6 +1754,9 @@
     user=session.user;
     try{const {data:pr}=await sb.from('profiles').select('is_keeper,preferred_lang').eq('id',user.id).maybeSingle();
       if(pr){ isKeeper=!!pr.is_keeper; if(isKeeper){ window.__lfKeeper=true; try{document.dispatchEvent(new Event('lf-keeper-ready'));}catch(e){} } if(pr.preferred_lang&&!stored&&UI[pr.preferred_lang]) lang=pr.preferred_lang; }}catch(e){}
+    /* ONE MEMORY PAGE (Leon, 2026-09-01): with ?create=1 this page opens empty and
+       fillable — the creation module owns the wrap; no artefact is fetched or made. */
+    if((new URLSearchParams(location.search)).get('create')==='1' && window.LFCreate){ LFCreate.boot(); return; }
     await loadMoment();
   }
   async function loadMoment(){
@@ -1798,5 +1801,6 @@
   boot();
 })();
 </script>
+<script src="lf-create.js?v=1"></script>
 <script src="lf-nav.js?v=32" data-here="" data-parent="index.html"></script>
 </body></html>
