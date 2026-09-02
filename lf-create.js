@@ -60,7 +60,7 @@
 
   function missing(){
     var m=[];
-    if(!(M.photoFile||M.voiceBlob||(M.story&&M.story.trim()))) m.push(L.mSubst);
+    if(!(M.photoFile||(M.story&&M.story.trim()))) m.push(L.mSubst); /* voice has its own door on the contribution page */
     if(!(M.when&&M.when.trim())) m.push(L.mWhen);
     if(!(M.people&&M.people.length)) m.push(L.mWho);
     if(!(M.where&&M.where.trim())) m.push(L.mWhere);
@@ -82,7 +82,6 @@
       '<div style="max-width:560px;margin:0 auto;padding:18px 16px 90px">'
       +'<div class="serif" style="font-size:30px;color:#f2ead9;margin:14px 2px 4px">'+esc(L.newT)+'</div>'
       +'<div style="color:var(--muted,#8fa0b3);font-size:14px;margin:0 2px 8px">'+esc(L.sub)+'</div>'
-      +secT(L.voiceT,false)+voiceBlock
       +secT('\u2014',false).replace('\u2014','')+photoBlock
       +secT(L.storyT,false)
       +'<textarea id="cStory" rows="5" placeholder="'+esc(L.storyPh)+'" style="'+inputCss+';resize:vertical">'+esc(M.story)+'</textarea>'
