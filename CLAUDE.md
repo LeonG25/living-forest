@@ -355,6 +355,16 @@ Rules, complete and final:
 - Send refuses with an honest list of what is missing. Exit before Send = nothing saved
   anywhere (creation state is client-side only; no draft rows).
 
+STAGE A SHIPPED DARK (2026-09-01, live `1964439`): `lf-create.js?v=1` + a two-line
+branch in moment-real boot — `moment-real.html?create=1` renders the empty memory:
+photo slot with local preview/change/remove, voice recorder (record/redo/discard,
+local blob), story, when, where with the 57-place list and the country question for
+unknown places, three required chips, and a Send that refuses with an honest missing
+list (verified in RU by create-a.js probe: refusal listed exactly the two truly
+missing items; zero page errors; zero DB writes — the module contains no insert code).
+Not yet in it: the who section (people/tagging — Stage B) and the real Send (Stage C).
+No entry links point at it; the family flow is untouched.
+
 Build stages (each dark-launched behind ?create=1 until verified; entry links switch
 only at the end):
 - A: creation shell in moment-real — empty slots; photo (upload/rotate, reuse existing
