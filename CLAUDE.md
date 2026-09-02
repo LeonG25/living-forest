@@ -355,6 +355,12 @@ Rules, complete and final:
 - Send refuses with an honest list of what is missing. Exit before Send = nothing saved
   anywhere (creation state is client-side only; no draft rows).
 
+STAGE A APPROVED by Leon on his phone, 2026-09-02 ("Ok, looks good"). Voice removed
+from creation same day (live `5a2022e`, module v2): voice keeps its own door on the
+contribution page; substance rule is now photo OR story. Next: STAGE B (the who —
+tagger ported onto the local photo, existing-people fallback, Propose-a-person
+pointer), then C (real Send), then D (the hub's "Add" card switches here).
+
 STAGE A SHIPPED DARK (2026-09-01, live `1964439`): `lf-create.js?v=1` + a two-line
 branch in moment-real boot — `moment-real.html?create=1` renders the empty memory:
 photo slot with local preview/change/remove, voice recorder (record/redo/discard,
