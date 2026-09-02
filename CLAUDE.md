@@ -338,6 +338,37 @@ Fix: same wrapper + gtop for the chip + justify-content:center; verified by geom
 (title now top:134 on a 639px viewport). Probe rule now firm: text presence in
 innerText proves NOTHING — assert visible geometry.
 
+**DECIDED (Leon, 2026-09-01): ONE MEMORY PAGE — the unified contribution rebuild.**
+No designer pass (Leon's explicit call, option 2): built in the page's existing design
+language. The Memory page serves both lives: empty at birth (creation mode), the same
+page forever after. The step-by-step journey (contribute-add) retires when parity lands.
+
+Rules, complete and final:
+- REQUIRED: when (approx or precise), who (>=1 person — from face tags, else picked
+  from EXISTING people; an empty-street memory is incomplete by definition), where
+  (choose-or-create with country — existing mechanism reused).
+- SUBSTANCE: at least one of photo, story, voice (voice already exists in the flow).
+- Teller optional (defaults to contributor). No new-person creation inside a memory —
+  the "Someone new" side-doors (add-flow who-step AND the memory tagger) are replaced
+  by a plain pointer to the hub's existing "Propose a person" path. The person-page
+  relative door STAYS (tree-building, not memory-making; Leon confirmed).
+- Send refuses with an honest list of what is missing. Exit before Send = nothing saved
+  anywhere (creation state is client-side only; no draft rows).
+
+Build stages (each dark-launched behind ?create=1 until verified; entry links switch
+only at the end):
+- A: creation shell in moment-real — empty slots; photo (upload/rotate, reuse existing
+  machinery locally), story/when/where editors writing LOCAL state, voice recorder
+  ported; required marks visible.
+- B: the tagger on a local, unsent photo (boxes in local state); fallback existing-
+  people list; side-doors → hub pointer (view mode too).
+- C: Send — port the proven submit engine (storage upload, artefact + voice rows,
+  subjects carrying box details), required-check refusal; after Send the page becomes
+  its own view mode.
+- D: switch entries (hub "Add a memory" → moment-real?create=1; identify-first lock's
+  allowed list follows), retire contribute-add.
+- E: full contributor re-walk (RU, phone profile) + connectedness checks + CLAUDE.md.
+
 **Keeper-side welcome — bug found and fixed, then USED FOR REAL (2026-09-01, live
 `74a3ab0`):** review-real never called loadGate() at boot (only after an approve/
 decline), so "At the gate" was invisible on a quiet day; also drew display_name it never
