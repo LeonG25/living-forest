@@ -190,11 +190,11 @@ was never adopted. `botuser` now has sudo for `snap`, `apt`, `systemctl`, `journ
 owns `/var/snap/caddy/common`. **The drops were never explained**: four theories tested and
 all four disproved, and they cleared on their own.
 
-## 2 · WHAT TO FIX NEXT — the handover (2026-09-02, live at `32b4463`)
+## 2 · WHAT TO FIX NEXT — the handover (2026-09-03, live at `12dd3f6`)
 
-### SESSION CLOSE 2026-09-02 — state and the very next work
+### SESSION CLOSE 2026-09-03 — state and the very next work
 
-**DONE this arc (2026-08-29 → 09-02), all live and probe-verified:**
+**DONE this arc (2026-08-29 → 09-03), all live and probe-verified:**
 - Contribution flow mechanically finished (picker names/faces, cross-language search,
   places 3→57, country-for-new-place, teller recovery+gender, story-box fallback,
   errand-keeping sign-in, chooser fixed and deduplicated).
@@ -203,28 +203,33 @@ all four disproved, and they cleared on their own.
   loop dead (funnelGate guards boot and every reload), review shows "At the gate" on
   open. Email confirmation OFF (keeper wall = membership knock).
 - Onboarding REAL: Rita registered, was welcomed by Leon from Review, is a member.
-- ONE MEMORY PAGE decided and Stage A APPROVED: moment-real.html?create=1 (dark)
-  renders the empty memory — photo (local preview), story, when, where+country,
-  3 required chips, honest refuse-list on Send. No voice here (own hub door).
-  Substance = photo OR story. NOTHING touches the DB until Send (decided, recorded).
+- ONE MEMORY PAGE: Stage A APPROVED; Stage B LIVE DARK at `12dd3f6` (lf-create.js?v=3),
+  moment-real.html?create=1. The who is real: "Name the faces" arms a create-mode
+  tagger on the LOCAL photo (draw / move / resize, min 5% each way; boxes kept as
+  {x,y,w,h} fractions in M.people — the exact shape Stage C hands to
+  artefact_subjects.detail). With no photo, "Choose from the forest" picks from the
+  published people (LFName labels in reader language, cross-language search, search
+  box built once so the keyboard survives, already-used people excluded). Numbered
+  gold chips under WHO with remove; tapping a box's number re-names or removes it;
+  changing/removing the photo clears boxes but keeps the people as picked. No
+  new-person door — a plain pointer to the hub's "Propose a person" (opens in a new
+  tab so the local draft survives). Voice dead code from Stage A removed (was never
+  rendered). Probe evidence (2026-09-03, ~/qc/create-a.js extended, all 17 checks
+  green, zero page errors): picker lists 47 people; searching Rita in Russian
+  filters to exactly 1; the drawn box lands at 0.30×0.30 of the stage (GEOMETRY
+  asserted, not class names); the missing-list drops the who-line after tagging;
+  DB row counts identical before and after the whole walk (artefacts 26, subjects
+  82, people 47, place_geo 21, person_facts 443). Zero writes before Send holds.
 
-**NEXT — Stage B (start of next session), the who:**
-1. Port the face-tagger onto the LOCAL photo in create mode — source of truth:
-   moment-real's own tagger (boxes as % of image, stored per person in
-   artefact_subjects.detail at Send time) + prototype-reference.html mechanics.
-   In create mode boxes/names live in the lf-create.js model (M.people gains
-   {id,label,box}); NO DB writes.
-2. Fallback when no photo: pick-from-existing-people list (port loadPeople pattern
-   from contribute-add-real: select id,sex + LFLabel labels in reader language +
-   cross-language search string).
-3. NO new-person door anywhere in creation: a plain pointer to the hub's
-   "Propose a person". (The view-mode tagger's new-person door is removed in Stage D
-   together with the entry switch.)
-4. Verify: extend ~/qc/create-a.js — tag on photo, pick from list, missing-list
-   updates, still zero DB writes. Then Stage C (Send: port submit engine from
-   contribute-add — storage upload, artefact+subjects insert in_review, boxes in
-   subjects detail), Stage D (hub "Add" card → ?create=1; retire contribute-add;
-   lock's allowed list follows), Stage E (full RU phone re-walk + connectedness).
+**NEXT — Stage C (start of next session), the real Send:**
+1. Port the submit engine from contribute-add-real: storage upload of the local
+   photo, artefact + artefact_subjects inserted as in_review (keeper edits insert
+   in_review, never published — RLS silently rejects published), boxes from
+   M.people straight into subjects detail; then the page reloads into its own
+   view mode on the new memory.
+2. Then Stage D (hub "Add" card → ?create=1; retire contribute-add; lock's allowed
+   list follows; remove the view-mode tagger's new-person door), Stage E (full RU
+   phone re-walk + connectedness).
 
 **Standing:** designer parked items (none open for this build — Leon waived);
 anomaly (anon tree names screenshot) still unexplained; two language buttons on the
@@ -412,7 +417,8 @@ local blob), story, when, where with the 57-place list and the country question 
 unknown places, three required chips, and a Send that refuses with an honest missing
 list (verified in RU by create-a.js probe: refusal listed exactly the two truly
 missing items; zero page errors; zero DB writes — the module contains no insert code).
-Not yet in it: the who section (people/tagging — Stage B) and the real Send (Stage C).
+STAGE B SHIPPED (2026-09-03, `12dd3f6`): the who is in — local face tagger + pick-from-forest,
+still zero DB writes. Not yet in it: the real Send (Stage C).
 No entry links point at it; the family flow is untouched.
 
 Build stages (each dark-launched behind ?create=1 until verified; entry links switch
