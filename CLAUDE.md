@@ -190,7 +190,46 @@ was never adopted. `botuser` now has sudo for `snap`, `apt`, `systemctl`, `journ
 owns `/var/snap/caddy/common`. **The drops were never explained**: four theories tested and
 all four disproved, and they cleared on their own.
 
-## 2 · WHAT TO FIX NEXT — the handover (2026-08-29, live at `db74b6f`+)
+## 2 · WHAT TO FIX NEXT — the handover (2026-09-02, live at `32b4463`)
+
+### SESSION CLOSE 2026-09-02 — state and the very next work
+
+**DONE this arc (2026-08-29 → 09-02), all live and probe-verified:**
+- Contribution flow mechanically finished (picker names/faces, cross-language search,
+  places 3→57, country-for-new-place, teller recovery+gender, story-box fallback,
+  errand-keeping sign-in, chooser fixed and deduplicated).
+- Gate overhauled: lean register (email+password only), device language + small chip
+  on every gate screen, sheet can never peek, knock screen legible and framed, limbo
+  loop dead (funnelGate guards boot and every reload), review shows "At the gate" on
+  open. Email confirmation OFF (keeper wall = membership knock).
+- Onboarding REAL: Rita registered, was welcomed by Leon from Review, is a member.
+- ONE MEMORY PAGE decided and Stage A APPROVED: moment-real.html?create=1 (dark)
+  renders the empty memory — photo (local preview), story, when, where+country,
+  3 required chips, honest refuse-list on Send. No voice here (own hub door).
+  Substance = photo OR story. NOTHING touches the DB until Send (decided, recorded).
+
+**NEXT — Stage B (start of next session), the who:**
+1. Port the face-tagger onto the LOCAL photo in create mode — source of truth:
+   moment-real's own tagger (boxes as % of image, stored per person in
+   artefact_subjects.detail at Send time) + prototype-reference.html mechanics.
+   In create mode boxes/names live in the lf-create.js model (M.people gains
+   {id,label,box}); NO DB writes.
+2. Fallback when no photo: pick-from-existing-people list (port loadPeople pattern
+   from contribute-add-real: select id,sex + LFLabel labels in reader language +
+   cross-language search string).
+3. NO new-person door anywhere in creation: a plain pointer to the hub's
+   "Propose a person". (The view-mode tagger's new-person door is removed in Stage D
+   together with the entry switch.)
+4. Verify: extend ~/qc/create-a.js — tag on photo, pick from list, missing-list
+   updates, still zero DB writes. Then Stage C (Send: port submit engine from
+   contribute-add — storage upload, artefact+subjects insert in_review, boxes in
+   subjects detail), Stage D (hub "Add" card → ?create=1; retire contribute-add;
+   lock's allowed list follows), Stage E (full RU phone re-walk + connectedness).
+
+**Standing:** designer parked items (none open for this build — Leon waived);
+anomaly (anon tree names screenshot) still unexplained; two language buttons on the
+contribute hub header (Leon saw, low priority); qc probes must assert GEOMETRY, not
+class names.
 
 This section IS the handover. There is no separate handover file: Leon asked on 2026-08-24
 that CLAUDE.md be the only document, and a `docs/HANDOVER.md` written that day was deleted
