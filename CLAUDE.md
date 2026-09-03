@@ -355,6 +355,11 @@ Rules, complete and final:
 - Send refuses with an honest list of what is missing. Exit before Send = nothing saved
   anywhere (creation state is client-side only; no draft rows).
 
+DECIDED by Claude at Leon's instruction (2026-09-02): the empty memory lives on the
+phone only — the database holds nothing until Send (no draft rows, no husks, no sweep
+jobs; the whole class of ghost-state bugs stays impossible). The page is the same
+Memory page; its tools keep boxes and fields local until Send in creation mode.
+
 STAGE A APPROVED by Leon on his phone, 2026-09-02 ("Ok, looks good"). Voice removed
 from creation same day (live `5a2022e`, module v2): voice keeps its own door on the
 contribution page; substance rule is now photo OR story. Next: STAGE B (the who —
