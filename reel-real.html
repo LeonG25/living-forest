@@ -280,9 +280,9 @@
       topK:'A life, assembled', topN:'Story Reel', eyebrow:'Story Reel',
       keeper:'Nothing reaches the family until the keeper approves it.', signin:'Sign in',
       facet:{ name:'Name', face:'Face', life:'Life', places:'Places', story:'Story', kin:'Kin', reel:'Reel', more:'More' },
-      playingBack:'Playing back', lightsOf:n=>`${n} lights of eight`,
+      playingBack:'Playing back', lightsOf:n=>`${n} lights of seven`,
       sceneOf:(i,n)=>`Scene ${i} of ${n}`,
-      kindledA:'kindled', ofEight:'of eight facets kindled', ringOf:'of eight facets', nee:'was', stillDark:n=>n===1?'one still dark':`${n} still dark`, allLit:'all eight alight',
+      kindledA:'kindled', ofEight:'of seven facets kindled', ringOf:'of seven facets', nee:'was', stillDark:n=>n===1?'one still dark':`${n} still dark`, allLit:'all seven alight',
       provGold:'Gold — a person told us this', provCool:'Cool — the app worked this out', provViolet:'Violet — still gathering, held for the keeper',
       toldBy:'Told by', openPhoto:'Open this photograph',
       stepIn:'Step into this moment',
@@ -306,9 +306,9 @@
       topK:'Жизнь, собранная воедино', topN:'Лента жизни', eyebrow:'Лента жизни',
       keeper:'Ничто не дойдёт до семьи, пока хранитель не одобрит.', signin:'Войти',
       facet:{ name:'Имя', face:'Лицо', life:'Жизнь', places:'Места', story:'Рассказы', kin:'Родня', reel:'Лента', more:'Ещё' },
-      playingBack:'Проигрывается', lightsOf:n=>`${n} огней из восьми`,
+      playingBack:'Проигрывается', lightsOf:n=>`${n} огней из семи`,
       sceneOf:(i,n)=>`Сцена ${i} из ${n}`,
-      kindledA:'зажжено', ofEight:'из восьми граней зажжены', ringOf:'из восьми граней', nee:'урожд.', stillDark:n=>n===1?'одна ещё тёмная':`ещё ${n} тёмных`, allLit:'все восемь горят',
+      kindledA:'зажжено', ofEight:'из семи граней зажжены', ringOf:'из семи граней', nee:'урожд.', stillDark:n=>n===1?'одна ещё тёмная':`ещё ${n} тёмных`, allLit:'все семь горят',
       provGold:'Золото — это рассказал человек', provCool:'Синее — приложение вычислило', provViolet:'Фиолетовое — ещё собирается, ждёт хранителя',
       toldBy:'Рассказал(а)', openPhoto:'Открыть фотографию',
       stepIn:'Войти в этот момент',
@@ -332,9 +332,9 @@
       topK:'חיים שנאספים', topN:'סרט החיים', eyebrow:'סרט החיים',
       keeper:'שום דבר לא יגיע למשפחה עד שהשומר יאשר.', signin:'כניסה',
       facet:{ name:'שם', face:'פנים', life:'חיים', places:'מקומות', story:'סיפורים', kin:'משפחה', reel:'סרט', more:'עוד' },
-      playingBack:'מתנגן', lightsOf:n=>`${n} אורות מתוך שמונה`,
+      playingBack:'מתנגן', lightsOf:n=>`${n} אורות מתוך שבעה`,
       sceneOf:(i,n)=>`סצנה ${i} מתוך ${n}`,
-      kindledA:'נדלקו', ofEight:'מתוך שמונה גרנים נדלקו', ringOf:'מתוך שמונה', nee:'לבית', stillDark:n=>n===1?'אחת עדיין חשוכה':`${n} עדיין חשוכות`, allLit:'כל השבע דולקות',
+      kindledA:'נדלקו', ofEight:'מתוך שבעה גרנים נדלקו', ringOf:'מתוך שבעה', nee:'לבית', stillDark:n=>n===1?'אחת עדיין חשוכה':`${n} עדיין חשוכות`, allLit:'כל השבע דולקות',
       provGold:'זהב — אדם סיפר לנו את זה', provCool:'כחול — האפליקציה חישבה זאת', provViolet:'סגול — עדיין נאסף, שמור לשומר',
       toldBy:'סיפר/ה', openPhoto:'פתח את התצלום',
       stepIn:'להיכנס לרגע הזה',
@@ -744,7 +744,6 @@
 
   function facetSummary(f){ const L=d();
     if(f==='name') return fullName();
-    if(f==='face') return LIT.face?d().appearsIn(tagged.length):d().untold;
     if(f==='life'){ const by=person.birth_date?String(person.birth_date).slice(0,4):''; const dy=person.death_date?String(person.death_date).slice(0,4):''; const occ=pubNewest('occupation',state.lang)||pubNewest('occupation','en');
       return [by?d().born+' '+by:'',dy?d().died+' '+dy:'',occ].filter(Boolean).join(' · ')||(LIT.life?d().facet.life:d().untold); }
     if(f==='story') return LIT.story?(d().facet.story+' · '+memories.length):d().untold;
