@@ -33,7 +33,7 @@
         send:'Send to the keeper', missT:'Not complete yet',
         missLead:'A moment needs a little more before it can go to the keeper:',
         mWhen:'when it happened', mWhere:'where it happened', mWho:'who is in it',
-        mSubst:'a photograph, a story, or a voice', ok:'Understood' },
+        mSubst:'a photograph, a story, or a voice', ok:'Understood', sending:'Sending\u2026', sendFail:'That could not be sent. Nothing was lost \u2014 try again.' },
    ru:{ dir:'ltr', newT:'\u041d\u043e\u0432\u044b\u0439 \u043c\u043e\u043c\u0435\u043d\u0442', sub:'\u0417\u0430\u043f\u043e\u043b\u043d\u0438\u0442\u0435 \u0442\u0430\u043a, \u043a\u0430\u043a \u0440\u0430\u0441\u0441\u043a\u0430\u0437\u0430\u043b\u0430 \u0431\u044b \u0441\u0435\u043c\u044c\u044f. \u041d\u0438\u0447\u0435\u0433\u043e \u043d\u0435 \u0441\u043e\u0445\u0440\u0430\u043d\u044f\u0435\u0442\u0441\u044f, \u043f\u043e\u043a\u0430 \u0432\u044b \u043d\u0435 \u043e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u0435.',
         reqd:'\u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u043e', addPhoto:'\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u0444\u043e\u0442\u043e\u0433\u0440\u0430\u0444\u0438\u044e', changePhoto:'\u0417\u0430\u043c\u0435\u043d\u0438\u0442\u044c \u0444\u043e\u0442\u043e', removePhoto:'\u0423\u0431\u0440\u0430\u0442\u044c',
         storyT:'\u0418\u0441\u0442\u043e\u0440\u0438\u044f', storyPh:'\u0427\u0442\u043e \u043f\u0440\u043e\u0438\u0437\u043e\u0448\u043b\u043e \u2014 \u0447\u044c\u0438\u043c\u0438 \u0441\u043b\u043e\u0432\u0430\u043c\u0438 \u044d\u0442\u043e \u0440\u0430\u0441\u0441\u043a\u0430\u0437\u0430\u043d\u043e\u2026',
@@ -51,7 +51,7 @@
         send:'\u041e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c \u0445\u0440\u0430\u043d\u0438\u0442\u0435\u043b\u044e', missT:'\u041f\u043e\u043a\u0430 \u043d\u0435 \u0433\u043e\u0442\u043e\u0432\u043e',
         missLead:'\u041c\u043e\u043c\u0435\u043d\u0442\u0443 \u043d\u0443\u0436\u043d\u043e \u0435\u0449\u0451 \u043d\u0435\u043c\u043d\u043e\u0433\u043e, \u043f\u0440\u0435\u0436\u0434\u0435 \u0447\u0435\u043c \u043e\u043d \u0443\u0439\u0434\u0451\u0442 \u043a \u0445\u0440\u0430\u043d\u0438\u0442\u0435\u043b\u044e:',
         mWhen:'\u043a\u043e\u0433\u0434\u0430 \u044d\u0442\u043e \u0431\u044b\u043b\u043e', mWhere:'\u0433\u0434\u0435 \u044d\u0442\u043e \u0431\u044b\u043b\u043e', mWho:'\u043a\u0442\u043e \u0432 \u043d\u0451\u043c',
-        mSubst:'\u0444\u043e\u0442\u043e\u0433\u0440\u0430\u0444\u0438\u044f, \u0438\u0441\u0442\u043e\u0440\u0438\u044f \u0438\u043b\u0438 \u0433\u043e\u043b\u043e\u0441', ok:'\u041f\u043e\u043d\u044f\u0442\u043d\u043e' },
+        mSubst:'\u0444\u043e\u0442\u043e\u0433\u0440\u0430\u0444\u0438\u044f, \u0438\u0441\u0442\u043e\u0440\u0438\u044f \u0438\u043b\u0438 \u0433\u043e\u043b\u043e\u0441', ok:'\u041f\u043e\u043d\u044f\u0442\u043d\u043e', sending:'\u041e\u0442\u043f\u0440\u0430\u0432\u043b\u044f\u0435\u0442\u0441\u044f\u2026', sendFail:'\u041d\u0435 \u043f\u043e\u043b\u0443\u0447\u0438\u043b\u043e\u0441\u044c \u043e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c. \u041d\u0438\u0447\u0435\u0433\u043e \u043d\u0435 \u043f\u043e\u0442\u0435\u0440\u044f\u043b\u043e\u0441\u044c \u2014 \u043f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0435\u0449\u0451 \u0440\u0430\u0437.' },
    he:{ dir:'rtl', newT:'\u05e8\u05d2\u05e2 \u05d7\u05d3\u05e9', sub:'\u05de\u05dc\u05d0\u05d5 \u05db\u05e4\u05d9 \u05e9\u05d4\u05de\u05e9\u05e4\u05d7\u05d4 \u05d4\u05d9\u05d9\u05ea\u05d4 \u05de\u05e1\u05e4\u05e8\u05ea. \u05d3\u05d1\u05e8 \u05dc\u05d0 \u05e0\u05e9\u05de\u05e8 \u05e2\u05d3 \u05d4\u05e9\u05dc\u05d9\u05d7\u05d4.',
         reqd:'\u05e0\u05d3\u05e8\u05e9', addPhoto:'\u05dc\u05d4\u05d5\u05e1\u05d9\u05e3 \u05ea\u05e6\u05dc\u05d5\u05dd', changePhoto:'\u05dc\u05d4\u05d7\u05dc\u05d9\u05e3 \u05ea\u05e6\u05dc\u05d5\u05dd', removePhoto:'\u05dc\u05d4\u05e1\u05d9\u05e8',
         storyT:'\u05d4\u05e1\u05d9\u05e4\u05d5\u05e8', storyPh:'\u05de\u05d4 \u05e7\u05e8\u05d4 \u2014 \u05d1\u05de\u05d9\u05dc\u05d9\u05dd \u05e9\u05dc \u05de\u05d9 \u05e9\u05e1\u05d9\u05e4\u05e8\u2026',
@@ -69,7 +69,7 @@
         send:'\u05dc\u05e9\u05dc\u05d5\u05d7 \u05dc\u05e9\u05d5\u05de\u05e8', missT:'\u05e2\u05d3\u05d9\u05d9\u05df \u05dc\u05d0 \u05de\u05d5\u05db\u05df',
         missLead:'\u05dc\u05e8\u05d2\u05e2 \u05d3\u05e8\u05d5\u05e9 \u05e2\u05d5\u05d3 \u05de\u05e2\u05d8 \u05dc\u05e4\u05e0\u05d9 \u05e9\u05d9\u05d2\u05d9\u05e2 \u05d0\u05dc \u05d4\u05e9\u05d5\u05de\u05e8:',
         mWhen:'\u05de\u05ea\u05d9 \u05d6\u05d4 \u05e7\u05e8\u05d4', mWhere:'\u05d0\u05d9\u05e4\u05d4 \u05d6\u05d4 \u05e7\u05e8\u05d4', mWho:'\u05de\u05d9 \u05de\u05d5\u05e4\u05d9\u05e2 \u05d1\u05d5',
-        mSubst:'\u05ea\u05e6\u05dc\u05d5\u05dd, \u05e1\u05d9\u05e4\u05d5\u05e8 \u05d0\u05d5 \u05e7\u05d5\u05dc', ok:'\u05d4\u05d1\u05e0\u05ea\u05d9' }
+        mSubst:'\u05ea\u05e6\u05dc\u05d5\u05dd, \u05e1\u05d9\u05e4\u05d5\u05e8 \u05d0\u05d5 \u05e7\u05d5\u05dc', ok:'\u05d4\u05d1\u05e0\u05ea\u05d9', sending:'\u05e0\u05e9\u05dc\u05d7\u2026', sendFail:'\u05d4\u05e9\u05dc\u05d9\u05d7\u05d4 \u05dc\u05d0 \u05d4\u05e6\u05dc\u05d9\u05d7\u05d4. \u05d3\u05d1\u05e8 \u05dc\u05d0 \u05d0\u05d1\u05d3 \u2014 \u05e0\u05e1\u05d5 \u05e9\u05d5\u05d1.' }
   };
   var L=T[lang]||T.en;
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -187,8 +187,7 @@
         box.innerHTML=esc(L.missLead)+'<ul style="margin:8px 0 0;padding-inline-start:20px">'+m.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>';
         box.scrollIntoView({behavior:'smooth',block:'center'}); return; }
       box.style.display='none';
-      /* Stage C brings the real Send; until then a complete memory simply reports itself complete. */
-      box.style.display='block'; box.textContent='\u2713';
+      sendReal();
     };
     bindTagger();
     fillPlaces();
@@ -366,6 +365,119 @@
       var seen={}; (r.data||[]).forEach(function(x){ ['name','name_en','name_ru','name_he'].forEach(function(k){ var v=(x[k]||'').trim(); if(v) seen[v]=1; }); });
       places=Object.keys(seen).sort(); fillPlaces();
     });
+  }
+
+  /* ---------- Stage C: the real Send ----------
+     Ported from the contribution engine: downscale + upload the local photo,
+     insert the artefact and its subjects as in_review (never published - RLS
+     silently rejects that), boxes travel from M.people straight into
+     artefact_subjects.detail, the story is carried into the other two
+     languages, and the page reloads into its own view mode on the new moment.
+     Until the very last line, nothing here has touched the database. */
+  async function lfDown(blob){ var maxDim=1600,q=0.85;
+    try{
+      if(!blob || !/^image\//.test(blob.type||'')) return blob;
+      var W,H,src,bmp=null;
+      try{ bmp=await createImageBitmap(blob); W=bmp.width; H=bmp.height; src=bmp; }
+      catch(_){ src=await new Promise(function(res,rej){ var u=URL.createObjectURL(blob),i=new Image();
+        i.onload=function(){URL.revokeObjectURL(u);res(i);}; i.onerror=function(){URL.revokeObjectURL(u);rej(0);}; i.src=u; });
+        W=src.naturalWidth; H=src.naturalHeight; }
+      if(!W||!H){ if(bmp&&bmp.close)bmp.close(); return blob; }
+      var scale=Math.min(1, maxDim/Math.max(W,H));
+      if(scale===1 && blob.size<=512000){ if(bmp&&bmp.close)bmp.close(); return blob; }
+      var cw=Math.max(1,Math.round(W*scale)), ch=Math.max(1,Math.round(H*scale));
+      var c=document.createElement('canvas'); c.width=cw; c.height=ch; c.getContext('2d').drawImage(src,0,0,cw,ch);
+      if(bmp&&bmp.close)bmp.close();
+      var out=await new Promise(function(r){c.toBlob(r,'image/jpeg',q);});
+      if(!out || out.size<20480) return blob;
+      return out.size < blob.size ? out : blob;
+    }catch(e){ return blob; }
+  }
+  /* refuse a translation that came back wrong: wrong alphabet, refusal text, or
+     bloat. Ported verbatim from the contribution engine (one language, one alphabet). */
+  function cleanOut(v,lg,src){ if(v==null) return '';
+    var raw=String(v).replace(/[\u00a0\ufeff]/g,' ').trim(); if(!raw) return '';
+    if(/[\u0600-\u06FF\u0750-\u077F\u0370-\u03FF\u0530-\u058F\u4E00-\u9FFF\u3040-\u30FF\u0E00-\u0E7F\u0900-\u097F]/.test(raw)) return '';
+    if(lg==='he' && /[\u0400-\u04FF]/.test(raw)) return '';
+    if(lg==='ru' && /[\u0590-\u05FF]/.test(raw)) return '';
+    if(lg==='en' && /[\u0400-\u04FF\u0590-\u05FF]/.test(raw)) return '';
+    if(/\b(as an ai|i (can('?t| ?not)|could not|am unable)|cannot translate)\b/i.test(raw)) return '';
+    var cnt=function(x){return {lat:(x.match(/[A-Za-z]/g)||[]).length,cyr:(x.match(/[\u0400-\u04FF]/g)||[]).length,heb:(x.match(/[\u0590-\u05FF]/g)||[]).length};};
+    var on=function(c){return lg==='ru'?c.cyr : lg==='he'?c.heb : c.lat;};
+    var off=function(c){return lg==='ru'?(c.lat+c.heb) : lg==='he'?(c.lat+c.cyr) : (c.cyr+c.heb);};
+    var kept=raw.split(/\r?\n/).map(function(x){return x.trim();}).filter(function(line){ if(!line) return false;
+      var c=cnt(line), o=on(c), f=off(c);
+      if(o===0&&f===0) return true; return o>0 && o>=f; });
+    var out=kept.join('\n').replace(/\n{3,}/g,'\n\n').trim();
+    if(!out) return '';
+    if(on(cnt(out))===0) return '';
+    if(out.length > (String(src||'').length*3 + 80)) return '';
+    return out; }
+  var sending=false;
+  async function sendReal(){
+    if(sending) return; sending=true;
+    var btn=document.getElementById('cSend'); var oldBtn=btn?btn.innerHTML:'';
+    if(btn){ btn.disabled=true; btn.innerHTML=esc(L.sending); }
+    var box=document.getElementById('cMiss');
+    try{
+      var s=sbc();
+      var gu=await s.auth.getUser(); var user=gu&&gu.data&&gu.data.user;
+      if(!user) throw new Error('no user');
+      var meta={};
+      if(M.when&&M.when.trim()) meta.when=M.when.trim();
+      if(M.where&&M.where.trim()){ meta.where=M.where.trim();
+        /* a country typed for a brand-new place travels with its name (engine rule) */
+        var co=(M.country||'').trim();
+        if(co && meta.where.indexOf(',')<0 && !(places||[]).some(function(pl){ return pl.trim().toLowerCase()===meta.where.toLowerCase(); }))
+          meta.where=meta.where+', '+co; }
+      var photoPath=null;
+      if(M.photoFile){
+        var pf=await lfDown(M.photoFile);
+        var tp=pf.type||'';
+        var ext= tp==='image/jpeg'?'jpg': tp==='image/png'?'png': tp==='image/webp'?'webp': (((M.photoFile.name||'').split('.').pop())||'jpg').toLowerCase();
+        var path=user.id+'/'+(crypto.randomUUID?crypto.randomUUID():('x'+Date.now()+Math.random().toString(36).slice(2)))+'.'+ext;
+        var up=await s.storage.from('family').upload(path,pf,{contentType:tp||undefined});
+        if(up.error) throw up.error;
+        photoPath=path;
+      }
+      var ins=await s.from('artefacts').insert({
+        kind: M.photoFile?'photo':'text', storage_path:photoPath,
+        body:(M.story&&M.story.trim())||null, original_language:lang,
+        contributor_id:null, contributor_user:user.id, certainty:'remembered',
+        status:'in_review', metadata:meta }).select('id').single();
+      if(ins.error) throw ins.error;
+      var artId=ins.data.id;
+      if(M.people.length){
+        var rows=M.people.map(function(p){ return { artefact_id:artId, person_id:p.id,
+          detail:(p.box?{x:p.box.x,y:p.box.y,w:p.box.w,h:p.box.h}:null) }; });
+        var sr=await s.from('artefact_subjects').insert(rows);
+        if(sr.error) throw sr.error;
+      }
+      /* the story crosses into the other two languages at first telling - the
+         only telling most stories ever get. Refused translations are skipped;
+         they wait as in_review and go live only when the moment does. */
+      var told=(M.story&&M.story.trim())||'';
+      if(told){
+        var langs=['en','ru','he'];
+        for(var i=0;i<langs.length;i++){ var l2=langs[i]; if(l2===lang) continue;
+          var out='';
+          try{ var tr=await s.functions.invoke('translate',{body:{target_lang:l2,items:[{kind:'artefact_body',ref:String(artId),text:told}]}});
+            if(!tr.error&&tr.data&&tr.data.results&&tr.data.results[0]) out=tr.data.results[0].text||''; }
+          catch(e2){ out=''; }
+          out=cleanOut(out,l2,told);
+          if(!out) continue;
+          try{ await s.from('artefact_translations').insert({artefact_id:artId,lang:l2,body:out,
+                 status:'in_review',created_by:user.id,machine:true}); }catch(e3){}
+        }
+      }
+      location.replace('moment-real.html?id='+encodeURIComponent(artId));
+    }catch(err){
+      sending=false;
+      if(btn){ btn.disabled=false; btn.innerHTML=oldBtn; }
+      if(box){ box.style.display='block'; box.textContent=L.sendFail;
+        box.scrollIntoView({behavior:'smooth',block:'center'}); }
+      try{ console.warn('[create] send failed',err); }catch(_){}
+    }
   }
 
   window.LFCreate={ boot:function(){ render(); } };
