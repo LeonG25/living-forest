@@ -243,12 +243,28 @@ app renamed memory→moment in EN/RU/HE (moment/момент/רגע), search's s
 now Stories/Истории/סיפורים, provenance labels "По памяти/מהזיכרון" deliberately
 kept (facts, not nostalgia), HE keeper titles normalized to שומר.
 
-**NEXT — Stage D (start of next session):**
-1. Hub "Add" card → moment-real.html?create=1; retire contribute-add-real (entry
-   links only — the page stays in the repo until Leon confirms); lock screens'
-   allowed "add" links follow; remove the view-mode tagger's new-person door.
-2. Then Stage E (full RU phone re-walk + connectedness audit — Leon's top final-QC
-   priority).
+**STAGE D SHIPPED (2026-09-05, `4a9b774`) — every door opens onto the one page.**
+Repointed to moment-real.html?create=1: the hub Add card (contribute-real), the
+person page's add-a-story action, the journal's empty-state CTA, and both invite
+links in game-what-happened-next (their old ?id=<person> param was DEAD — the old
+add page never read it, so nothing was lost dropping it; passing it on would have
+been read as a MOMENT id and broken the page). The identify-first lock's ALLOWED
+list dropped contribute-add-real and now admits moment-real ONLY with ?create=1
+(never the whole moment page); lf-nav.js bumped v=32→v=33 across all 23 pages.
+The view-mode tagger's new-person door is closed: the "Someone new" button is gone
+from the picker sheet (the pid==='__new' guards remain as unreachable dead code;
+ensurePerson stays — the review-apply path still needs it when the keeper approves
+a contributor's new-name tag). contribute-add-real.html stays in the repo, dark,
+until Leon confirms deletion. Probe evidence (~/qc/qc-d.js): keeper tapped the hub
+Add card → landed on moment-real.html?create=1 titled "A new moment", zero page
+errors. Live greps: zero contribute-add-real links remain outside the page itself
+and lf-nav's page-recognition regex (deliberately kept — the page still exists).
+
+**NEXT — Stage E (start of next session):**
+Full RU phone re-walk + end-to-end connectedness audit (Leon's top final-QC
+priority): no orphans, every link lands somewhere real, back always works, the
+⊕ menu consistent on every page, empty states consistent. Also pending Leon:
+may contribute-add-real.html be deleted from the repo?
 
 **Standing:** designer parked items (none open for this build — Leon waived);
 anomaly (anon tree names screenshot) still unexplained; two language buttons on the
