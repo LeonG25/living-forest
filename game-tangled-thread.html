@@ -509,7 +509,7 @@
     cands.forEach(function(c){ if(pairIds.indexOf(c.id)>=0 && !seen[c.id]){ chosen.push(c); seen[c.id]=1; } });
     cands.forEach(function(c){ if(!seen[c.id] && classOf(c.id)==='warm' && chosen.length<CAP){ chosen.push(c); seen[c.id]=1; } });
     cands.forEach(function(c){ if(!seen[c.id] && chosen.length<CAP){ chosen.push(c); seen[c.id]=1; } });
-    chosen=window.LFGames._util.shuffle(chosen, window.LFGames._util.resolveSeed(res.seed));
+    chosen=window.LFGames._util.shuffle(chosen, window.LFGames._util.makeRng(window.LFGames._util.resolveSeed(res.seed)));
 
     var pos=layout(chosen.length, res.seed);
     var tmap=$('tmap');
