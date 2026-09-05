@@ -300,7 +300,38 @@ flips (.conn/.opic/.pendpin) deleted; page chrome (back arrow, popovers, search
 padding, dock framing) still flips under RTL. Geometry-verified: 39 cards in the
 same left-to-right order in EN and HE, dir=rtl on the HE page, zero errors.
 
-**NEXT:** Leon's own phone walk in RU and HE (the probe cannot replace his eyes);
+**NEXT WORKSTREAM — THE PERSON REEL REBUILT (agreed with Leon 2026-09-05).**
+The reel celebrates the person: warm, a little fun, never dry. Core principle:
+THE PHOTOS ARE THE FILM — one continuous stream from earliest photo to latest,
+small text riding on top, Instagram-reel feel, no sound. No sections. Agreed
+content (each element appears ONLY if data exists — no placeholders, no mention
+of what's missing):
+1. OPENING: earliest photo, all the person's names written on it, plus the
+   meaning and origin of the given name — written once per person by the AI
+   engine IN ALL THREE LANGUAGES, entering through Review for Leon's approval
+   (never hard-coded; skipped for placeholder names like "[Wife of Shay]").
+2. KIN: the drawn tree-path from this person to the current user + the
+   relationship named. Proper terms for close relations (двоюродная бабушка);
+   DESCRIPTIVE CHAINS for distant ones (брат прадеда твоей мамы) — Leon's
+   ruling. All three languages. For the user themself: "Это ты!" + sparkle.
+   If a photo exists with both of them: the earliest such photo on this slide.
+3. PLACES: mini-map in the night-globe style, CONFINED to this person's places
+   (Minsk-only life shows Minsk + a little around, never the world), thin gold
+   lines connecting places in life order, years and place names small.
+4. THEIR OWN WORDS: a line from a story told BY this person, gold, over their
+   photo (and voice recordings if any exist) — ONLY for people who have any in
+   the database; no placeholders and no mention otherwise (Leon's ruling).
+5. AGE STAMPS on dated photos ("Рите здесь 9"), small.
+6. CAPTIONS: professions, life facts, story fragments as small text at the
+   right years. Gold = human-told, cool blue = facts (the two-truths guardrail).
+7. LIVING ENDING: latest photo (or animated forest) + "И это ещё не всё —
+   добавь момент" → moment-real.html?create=1.
+8. Sparse archives: one photo may repeat with different captions and a slow
+   breathing drift (gentle zoom); zero photos → animated forest background.
+PROCESS: designer pass FIRST (firm rule), then build. Brief handed to Leon
+2026-09-05 for Claude Design.
+
+**ALSO NEXT:** Leon's own phone walk in RU and HE (the probe cannot replace his eyes);
 then whatever he rules next. Journal-as-simple-log via the designer remains
 parked on the horizon.
 
