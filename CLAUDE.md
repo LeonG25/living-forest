@@ -260,11 +260,30 @@ Add card → landed on moment-real.html?create=1 titled "A new moment", zero pag
 errors. Live greps: zero contribute-add-real links remain outside the page itself
 and lf-nav's page-recognition regex (deliberately kept — the page still exists).
 
-**NEXT — Stage E (start of next session):**
-Full RU phone re-walk + end-to-end connectedness audit (Leon's top final-QC
-priority): no orphans, every link lands somewhere real, back always works, the
-⊕ menu consistent on every page, empty states consistent. Also pending Leon:
-may contribute-add-real.html be deleted from the repo?
+**STAGE E AUDIT DONE (2026-09-05, `2c926b7`+`d9242ae`).** contribute-add-real.html
+DELETED (Leon confirmed; nav regex cleaned, lf-nav v33→v34 on all 22 pages, zero
+references remain). Static link audit: ZERO dead links (every internal .html
+reference resolves). Rendered RU crawl of all 22 pages signed in as keeper:
+zero page errors after fixes; ⊕ menu (#lfnav) present on all 22; Fen's bud
+(#lfBud) on tree/person/index ONLY — BY DESIGN (approved 2026-07-31), not a gap.
+FIXED during audit: (1) game-tangled-thread was CRASHING at renderPlay —
+_util.shuffle was handed a SEED where it needs an RNG FUNCTION (rng is not a
+function); wrapped with makeRng; the game reaches its play map for the first
+time, verified rendered. (2) vocabulary residue the sweep missed because
+crowd-real stores RU/HE as \uXXXX escapes INSIDE the html (scan html decoded
+too, not only js!): crowd kickers a remembering/воспоминание/זכירה → a moment/
+момент/רגע; curators HE keeperOnlySub בזכרונות→ברגעי; journal HE cMem
+זכרונות נוספו→רגעים נוספו; where-was-this EN chipOnly; globe tagline in 3
+langs → "the more moments, the brighter". OPEN FINDINGS for Leon: (a) two
+orphan pages nothing links to — home-real (the star-sky home, EN-only) and
+optimize-photos (keeper photo-cleanup utility, EN-only): wire in, translate, or
+retire? (b) place-real shows ENGLISH in RU mode (THE YEAR / PLACE / COORDINATES
+— the page has no i18n dictionary): needs a translation pass.
+
+**NEXT:** Leon's own RU phone walk (the probe cannot replace his eyes — hand him
+a walk list); Leon's decisions on the two orphans + place-real translation; then
+whatever he rules next. Journal-as-simple-log via the designer remains parked on
+the horizon.
 
 **Standing:** designer parked items (none open for this build — Leon waived);
 anomaly (anon tree names screenshot) still unexplained; two language buttons on the
