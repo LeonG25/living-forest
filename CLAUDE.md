@@ -293,6 +293,13 @@ errors, all chrome Hebrew; remaining Latin words on games/crowd/timeline are
 FAMILY-ENTERED CONTENT (stories/labels stored in English), which by rule shows
 as stored — not a chrome gap.
 
+**TREE STAYS LTR IN HEBREW (Leon's ruling 2026-09-05, `5e073d9`).** The family
+tree keeps the identical left-to-right layout in every language: the RTL canvas
+mirror was removed (node positions no longer flip) and the three card-pin CSS
+flips (.conn/.opic/.pendpin) deleted; page chrome (back arrow, popovers, search
+padding, dock framing) still flips under RTL. Geometry-verified: 39 cards in the
+same left-to-right order in EN and HE, dir=rtl on the HE page, zero errors.
+
 **NEXT:** Leon's own phone walk in RU and HE (the probe cannot replace his eyes);
 then whatever he rules next. Journal-as-simple-log via the designer remains
 parked on the horizon.
