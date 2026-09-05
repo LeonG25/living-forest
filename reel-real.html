@@ -89,6 +89,10 @@
   .who .wn .rsub{ font-family:'Azeret Mono',monospace; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-top:5px; }
 
   /* ===== THE REEL HERO — the SIGNATURE cinematic frame ===== */
+  /* the photographs breathe: a slow drift so even a single reused photo feels alive (Leon 2026-09-05) */
+  .reelhero .im img{ animation:lfBreathe 16s ease-in-out infinite alternate; transform-origin:50% 40%; }
+  @keyframes lfBreathe{ from{ transform:scale(1); } to{ transform:scale(1.07); } }
+  @media (prefers-reduced-motion: reduce){ .reelhero .im img{ animation:none; } }
   .reelhero{ position:relative; border-radius:18px; overflow:hidden; margin:12px 0 2px; height:300px;
     border:1px solid rgba(255,244,214,.7); box-shadow:0 0 26px -8px rgba(255,232,180,.55), 0 26px 70px -44px #000; }
   .scene{ position:absolute; inset:0; z-index:0; }
@@ -295,7 +299,9 @@
       addMemory:name=>`Add a moment about ${name}`, tagPhoto:name=>`Tag ${name} in a photo`,
       footPlay:'She grows brighter every time someone says her name aloud.', footPlayN:'They grow brighter every time someone says their names aloud.',
       footEnd:'The reel never ends — it waits for the next to remember.', footGather:'The forest is dark until someone bothers to tell of her.', footGatherN:'The forest is dark until someone bothers to tell of them.',
-      aBack:'Back', aPrev:'Previous scene', aPlay:'Play', aPause:'Pause', aNext:'Next scene', aLang:'Language' },
+      aBack:'Back', aPrev:'Previous scene', aPlay:'Play', aPause:'Pause', aNext:'Next scene', aLang:'Language',
+      facetEnd:'onward', itsYou:'It’s you! ✨', ownWordsF:'In her own words', ownWordsM:'In his own words', ownWordsN:'In their own words',
+      ageAt:(a,g)=>`Aged ${a} here`, addMoment:'Add a moment', endingCap:'And this is not everything —' },
     ru:{ dir:'ltr', native:'Русский', label:'Russian',
       topK:'Жизнь, собранная воедино', topN:'Лента жизни', eyebrow:'Лента жизни',
       keeper:'Ничто не дойдёт до семьи, пока хранитель не одобрит.', signin:'Войти',
@@ -319,14 +325,16 @@
       addMemory:name=>`Добавить момент о ${name}`, tagPhoto:name=>`Отметить ${name} на фото`,
       footPlay:'Она становится ярче каждый раз, когда её называют вслух.', footPlayN:'Они становятся ярче каждый раз, когда их называют вслух.',
       footEnd:'Лента никогда не заканчивается — она ждёт следующего, кто вспомнит.', footGather:'Лес тёмен, пока кто-то не расскажет о ней.', footGatherN:'Лес тёмен, пока кто-то не расскажет о них.',
-      aBack:'Назад', aPrev:'Предыдущая сцена', aPlay:'Играть', aPause:'Пауза', aNext:'Следующая сцена', aLang:'Язык' },
+      aBack:'Назад', aPrev:'Предыдущая сцена', aPlay:'Играть', aPause:'Пауза', aNext:'Следующая сцена', aLang:'Язык',
+      facetEnd:'дальше', itsYou:'Это ты! ✨', ownWordsF:'Её собственные слова', ownWordsM:'Его собственные слова', ownWordsN:'Собственные слова',
+      ageAt:(a,g)=>g==='f'?`Ей здесь ${a}`:(g==='m'?`Ему здесь ${a}`:`Возраст здесь: ${a}`), addMoment:'Добавить момент', endingCap:'И это ещё не всё —' },
     he:{ dir:'rtl', native:'עברית', label:'Hebrew',
       topK:'חיים שנאספים', topN:'סרט החיים', eyebrow:'סרט החיים',
       keeper:'שום דבר לא יגיע למשפחה עד שהשומר יאשר.', signin:'כניסה',
       facet:{ name:'שם', face:'פנים', life:'חיים', places:'מקומות', story:'סיפורים', kin:'משפחה', reel:'סרט', more:'עוד' },
       playingBack:'מתנגן', lightsOf:n=>`${n} אורות מתוך שמונה`,
       sceneOf:(i,n)=>`סצנה ${i} מתוך ${n}`,
-      kindledA:'נדלקו', ofEight:'מתוך שמונה גרנים נדלקו', ringOf:'מתוך שמונה', nee:'לבית', stillDark:n=>n===1?'אחת עדיין חשוכה':`${n} עדיין חשוכות`, allLit:'כל השמונה דולקות',
+      kindledA:'נדלקו', ofEight:'מתוך שמונה גרנים נדלקו', ringOf:'מתוך שמונה', nee:'לבית', stillDark:n=>n===1?'אחת עדיין חשוכה':`${n} עדיין חשוכות`, allLit:'כל השבע דולקות',
       provGold:'זהב — אדם סיפר לנו את זה', provCool:'כחול — האפליקציה חישבה זאת', provViolet:'סגול — עדיין נאסף, שמור לשומר',
       toldBy:'סיפר/ה', openPhoto:'פתח את התצלום',
       stepIn:'להיכנס לרגע הזה',
@@ -343,7 +351,9 @@
       addMemory:name=>`הוסיפו רגע על ${name}`, tagPhoto:name=>`תייגו את ${name} בתצלום`,
       footPlay:'היא מאירה יותר בכל פעם שמישהו מזכיר אותה.', footPlayN:'הם מאירים יותר בכל פעם שמישהו מזכיר אותם.',
       footEnd:'הסרט לעולם לא נגמר — הוא ממתין לבא שייזכר.', footGather:'היער חשוך עד שמישהו טורח לספר עליה.', footGatherN:'היער חשוך עד שמישהו טורח לספר עליהם.',
-      aBack:'חזרה', aPrev:'סצנה קודמת', aPlay:'נגן', aPause:'השהה', aNext:'סצנה הבאה', aLang:'שפה' }
+      aBack:'חזרה', aPrev:'סצנה קודמת', aPlay:'נגן', aPause:'השהה', aNext:'סצנה הבאה', aLang:'שפה',
+      facetEnd:'הלאה', itsYou:'זה את/ה! ✨', ownWordsF:'במילים שלה', ownWordsM:'במילים שלו', ownWordsN:'במילים שלהם',
+      ageAt:(a,g)=>g==='f'?`בת ${a} כאן`:(g==='m'?`בן ${a} כאן`:`גיל ${a} כאן`), addMoment:'הוספת רגע', endingCap:'וזה עוד לא הכול —' }
   };
   const d=()=>T[state.lang];
 
@@ -385,7 +395,7 @@
   let NAME={}, scenes=[], LIT={}, urlCache={};
   let timer=null;
 
-  const FACET_ORDER=['name','face','life','places','story','kin','reel','more'];
+  const FACET_ORDER=['name','life','places','story','kin','reel','more'];
   const COOL=new Set(['life','places','kin','reel']);
   const hasv=v=>v&&String(v).trim()!=='';
   const isFem=()=>/^f/i.test(person&&person.sex||''); // explicit female → feminine voice; else neutral/plural (never misgender)
@@ -417,15 +427,29 @@
         if(cids.length){ try{ if(window.LFLabel) await LFLabel.load(sb,cids); }catch(e){}
           try{ const {data:pp}=await sb.from('people').select('id').in('id',cids); (pp||[]).forEach(x=>contribNames[x.id]=(window.LFLabel&&LFLabel.of(x.id,(localStorage.getItem('lf_lang')||'en')))||''); }catch(e){} }
       } }catch(e){}
-    rels=[];
-    try{ const {data:rp}=await sb.from('relationships').select('id,from_person,to_person').or('from_person.eq.'+PERSON_ID+',to_person.eq.'+PERSON_ID);
-      rels=(rp||[]).map(r=>({id:r.id})); }catch(e){ rels=[]; }
+    rels=[]; EDGES=[]; SEXOF={}; ME=null; GEO=[]; bothPhotos=[];
+    /* who is watching: the viewer's own person - the thread of kinship starts from them */
+    try{ const u2=await sb.auth.getUser(); const uid=u2&&u2.data&&u2.data.user&&u2.data.user.id;
+      if(uid){ const {data:pr}=await sb.from('profiles').select('person_id').eq('id',uid).maybeSingle(); ME=(pr&&pr.person_id)||null; } }catch(e){}
+    /* the whole published web of kinship, not just this person's edges - paths need it */
+    try{ const {data:rp}=await sb.from('relationships').select('from_person,to_person,kind,status');
+      EDGES=(rp||[]).filter(r=>r.status==null||r.status==='published')
+        .map(r=>({from:r.from_person,to:r.to_person,k:(r.kind==null||r.kind===''||r.kind==='parent')?'parent':'partner'}));
+      rels=EDGES.filter(e=>e.from===PERSON_ID||e.to===PERSON_ID).map((e,i)=>({id:i})); }catch(e){ rels=[]; }
+    try{ const {data:pp2}=await sb.from('people').select('id,sex'); (pp2||[]).forEach(x=>SEXOF[x.id]=x.sex||''); }catch(e){}
+    try{ const {data:gg}=await sb.from('place_geo').select('name,lat,lng,label,name_en,name_ru,name_he'); GEO=gg||[]; }catch(e){}
     /* The reel called a date and a place a story, exactly as the person page did - the
        artefacts query never asked for `body`. The words are the story; when and where
        are a caption beneath them. */
     memories=tagged.map(t=>({ id:t.artefact_id, storage_path:t.storage_path, cap:(t.body||'').trim(),
       whenwhere:[t.meta&&t.meta.when,t.meta&&t.meta.where].filter(Boolean).join(' · '),
+      yr:yearOf(t.meta), contributor:t.contributor_id||null,
       teller:t.contributor_id?(contribNames[t.contributor_id]||''):'' }));
+    /* the photos ARE the film: earliest to latest; the undated wait at the end */
+    memories.sort((a,b)=>{ const A=a.yr==null?9e9:a.yr, B=b.yr==null?9e9:b.yr; return A-B; });
+    if(ME&&ME!==PERSON_ID&&memories.length){ try{ const ids2=memories.map(m=>m.id);
+      const {data:s2}=await sb.from('artefact_subjects').select('artefact_id').eq('person_id',ME).in('artefact_id',ids2);
+      const set2=new Set((s2||[]).map(x=>x.artefact_id)); bothPhotos=memories.filter(m=>set2.has(m.id)); }catch(e){} }
   }
 
   /* ---------- name resolution (built from person_facts, newest-published wins) ---------- */
@@ -448,14 +472,13 @@
     const placesHas = pubList('lived','und').length>0 || hasv(pubNewest('pbirth','und')) || hasv(pubNewest('pbirth','en'));
     const moreHas = facts.some(x=>(x.field==='custom_value'||x.field==='source')&&x.status==='published');
     L.name = hasv(fullName());
-    L.face = tagged.length>0;
     L.life = lifeHas;
     L.places = placesHas;
     L.story = memories.length>0;
     L.kin = rels.length>0;
     L.more = moreHas;
     // Reel is lit once three or more content facets are alight — there is a real reel to play.
-    const contentLit=['name','face','life','places','story','kin','more'].filter(k=>L[k]).length;
+    const contentLit=['name','life','places','story','kin','more'].filter(k=>L[k]).length;
     L.reel = contentLit>=3;
     // waiting (violet) — has pending suggestions but not yet published
     L._wait = {
@@ -470,29 +493,170 @@
   }
   const litCount=()=>FACET_ORDER.filter(k=>LIT[k]).length;
 
+  /* ---------- the film's engine: years, kinship, geography (agreed with Leon 2026-09-05) ---------- */
+  let EDGES=[], SEXOF={}, GEO=[], ME=null, bothPhotos=[];
+  function yearOf(meta){ if(!meta) return null;
+    const dd=meta.when_date?String(meta.when_date).slice(0,4):'';
+    if(/^\d{4}$/.test(dd)) return +dd;
+    const m=String(meta.when||'').match(/\b(1[89]\d\d|20\d\d)\b/); return m?+m[1]:null; }
+  function birthYear(){ const b=person.birth_date?String(person.birth_date).slice(0,4):String(pubNewest('birth','und')||'').slice(0,4);
+    return /^\d{4}$/.test(b)?+b:null; }
+  function sexOf(id){ const s=SEXOF[id]||(id===PERSON_ID?(person&&person.sex||''):''); return /^f/i.test(s)?'f':(/^m/i.test(s)?'m':'n'); }
+  const upOf=x=>EDGES.filter(e=>e.k==='parent'&&e.to===x).map(e=>e.from);
+  const downOf=x=>EDGES.filter(e=>e.k==='parent'&&e.from===x).map(e=>e.to);
+  const sideOf=x=>EDGES.filter(e=>e.k!=='parent'&&(e.from===x||e.to===x)).map(e=>e.from===x?e.to:e.from);
+  function kinPath(a,b){ if(!a||!b) return null; if(a===b) return [];
+    const prev={}; prev[a]={p:null}; let q=[a];
+    for(let guard=0; guard<40 && q.length && !prev[b]; guard++){ const nq=[];
+      for(const x of q){ const push=(y,tp)=>{ if(y&&!prev[y]){ prev[y]={p:x,t:tp}; nq.push(y); } };
+        upOf(x).forEach(y=>push(y,'up')); downOf(x).forEach(y=>push(y,'down')); sideOf(x).forEach(y=>push(y,'partner')); }
+      q=nq; }
+    if(!prev[b]) return null;
+    const steps=[]; let cur=b; while(prev[cur]&&prev[cur].p!=null){ steps.unshift({t:prev[cur].t,node:cur}); cur=prev[cur].p; }
+    const out=[]; for(let i=0;i<steps.length;i++){
+      if(steps[i].t==='up'&&steps[i+1]&&steps[i+1].t==='down'){ out.push({t:'sib',node:steps[i+1].node}); i++; }
+      else out.push(steps[i]); }
+    return out; }
+  /* step words: RU keeps [nominative, genitive, "your X"], the rest keep one word */
+  const KW={
+    en:{up:{f:'mother',m:'father',n:'parent'},down:{f:'daughter',m:'son',n:'child'},sib:{f:'sister',m:'brother',n:'sibling'},partner:{f:'wife',m:'husband',n:'partner'}},
+    ru:{up:{f:['мама','мамы','твоей мамы'],m:['папа','папы','твоего папы'],n:['родитель','родителя','твоего родителя']},
+        down:{f:['дочь','дочери','твоей дочери'],m:['сын','сына','твоего сына'],n:['ребёнок','ребёнка','твоего ребёнка']},
+        sib:{f:['сестра','сестры','твоей сестры'],m:['брат','брата','твоего брата'],n:['брат или сестра','брата или сестры','твоего брата или сестры']},
+        partner:{f:['жена','жены','твоей жены'],m:['муж','мужа','твоего мужа'],n:['спутник','спутника','твоего спутника']}},
+    he:{up:{f:'אמא',m:'אבא',n:'הורה'},down:{f:'בת',m:'בן',n:'ילד'},sib:{f:'אחות',m:'אח',n:'אח או אחות'},partner:{f:'אישה',m:'בעל',n:'בן זוג'}}};
+  /* proper terms for close relations (Leon's ruling); anything further falls to the chain */
+  const KCLOSE={
+    en:{'up':{f:'Your mother',m:'Your father',n:'Your parent'},'down':{f:'Your daughter',m:'Your son',n:'Your child'},
+        'sib':{f:'Your sister',m:'Your brother',n:'Your sibling'},'partner':{f:'Your wife',m:'Your husband',n:'Your partner'},
+        'up,up':{f:'Your grandmother',m:'Your grandfather',n:'Your grandparent'},
+        'up,up,up':{f:'Your great-grandmother',m:'Your great-grandfather',n:'Your great-grandparent'},
+        'down,down':{f:'Your granddaughter',m:'Your grandson',n:'Your grandchild'},
+        'down,down,down':{f:'Your great-granddaughter',m:'Your great-grandson',n:'Your great-grandchild'},
+        'up,sib':{f:'Your aunt',m:'Your uncle',n:'Your aunt or uncle'},
+        'sib,down':{f:'Your niece',m:'Your nephew',n:'Your niece or nephew'},
+        'up,sib,down':{f:'Your cousin',m:'Your cousin',n:'Your cousin'},
+        'up,up,sib':{f:'Your great-aunt',m:'Your great-uncle',n:'Your great-aunt or great-uncle'}},
+    ru:{'up':{f:'Твоя мама',m:'Твой папа',n:'Твой родитель'},'down':{f:'Твоя дочь',m:'Твой сын',n:'Твой ребёнок'},
+        'sib':{f:'Твоя сестра',m:'Твой брат',n:'Твои брат или сестра'},'partner':{f:'Твоя жена',m:'Твой муж',n:'Твой спутник'},
+        'up,up':{f:'Твоя бабушка',m:'Твой дедушка',n:'Твои бабушка или дедушка'},
+        'up,up,up':{f:'Твоя прабабушка',m:'Твой прадедушка',n:'Твои прабабушка или прадедушка'},
+        'down,down':{f:'Твоя внучка',m:'Твой внук',n:'Твои внуки'},
+        'down,down,down':{f:'Твоя правнучка',m:'Твой правнук',n:'Твои правнуки'},
+        'up,sib':{f:'Твоя тётя',m:'Твой дядя',n:'Твои тётя или дядя'},
+        'sib,down':{f:'Твоя племянница',m:'Твой племянник',n:'Твои племянники'},
+        'up,sib,down':{f:'Твоя двоюродная сестра',m:'Твой двоюродный брат',n:'Твои двоюродные'},
+        'up,up,sib':{f:'Твоя двоюродная бабушка',m:'Твой двоюродный дедушка',n:'Твои двоюродные бабушка или дедушка'}},
+    he:{'up':{f:'אמא שלך',m:'אבא שלך',n:'ההורה שלך'},'down':{f:'הבת שלך',m:'הבן שלך',n:'הילד/ה שלך'},
+        'sib':{f:'אחותך',m:'אחיך',n:'אח או אחות שלך'},'partner':{f:'אשתך',m:'בעלך',n:'בן/בת הזוג שלך'},
+        'up,up':{f:'סבתא שלך',m:'סבא שלך',n:'סבא או סבתא שלך'},
+        'up,up,up':{f:'סבתא רבתא שלך',m:'סבא רבא שלך',n:'סבא רבא או סבתא רבתא שלך'},
+        'down,down':{f:'הנכדה שלך',m:'הנכד שלך',n:'הנכד/ה שלך'},
+        'down,down,down':{f:'הנינה שלך',m:'הנין שלך',n:'הנין/ה שלך'},
+        'up,sib':{f:'דודה שלך',m:'דוד שלך',n:'דוד או דודה שלך'},
+        'sib,down':{f:'האחיינית שלך',m:'האחיין שלך',n:'האחיין/ית שלך'},
+        'up,sib,down':{f:'בת הדודה שלך',m:'בן הדוד שלך',n:'בן/בת הדוד שלך'}}};
+  function kinCaption(){
+    if(!ME) return null;
+    if(ME===PERSON_ID) return {self:true, cap:d().itsYou};
+    const path=kinPath(ME,PERSON_ID); if(!path||!path.length) return null;
+    const key=path.map(s=>s.t).join(','); const g=sexOf(PERSON_ID);
+    const close=(KCLOSE[state.lang]||{})[key]; if(close) return {cap:close[g]||close.n};
+    if(path.length>5) return null;
+    if(state.lang==='ru'){ const parts=[];
+      for(let i=path.length-1;i>=0;i--){ const st=path[i]; const trip=KW.ru[st.t][sexOf(st.node)]||KW.ru[st.t].n;
+        parts.push(i===path.length-1?trip[0]:(i===0?trip[2]:trip[1])); }
+      const s=parts.join(' '); return {cap:s.charAt(0).toUpperCase()+s.slice(1)}; }
+    if(state.lang==='he'){ const ws=path.map(st=>KW.he[st.t][sexOf(st.node)]||KW.he[st.t].n);
+      return {cap:ws.slice().reverse().join(' של ')+' שלך'}; }
+    const ws=path.map(st=>KW.en[st.t][sexOf(st.node)]||KW.en[st.t].n);
+    return {cap:'Your '+ws.map((w,i)=>i<ws.length-1?w+'’s':w).join(' ')};
+  }
+  /* the mini-map: only this person's world, never more (Leon's ruling) */
+  const livedRows=()=>pubList('lived','und').map(x=>String(x.value||'').trim()).filter(Boolean);
+  function geoFind(nmv){ const s=nmv.toLowerCase(); let best=null;
+    GEO.forEach(gr=>{ if(best) return; ['name','label','name_en','name_ru','name_he'].forEach(k=>{ if(best) return;
+      const v=String(gr[k]||'').toLowerCase(); if(!v) return;
+      if(s===v||s.indexOf(v)>=0||v.indexOf(s)>=0) best=gr; }); }); return best; }
+  const geoLabel=gr=>gr['name_'+state.lang]||gr.name_en||gr.name||gr.label||'';
+  function placesMapSVG(){
+    const src=livedRows(); const pb=pubNewest('pbirth','und')||pubNewest('pbirth','en');
+    if(pb&&!src.some(v=>v.toLowerCase().indexOf(pb.toLowerCase())>=0)) src.unshift(pb);
+    const rows=src.map(v=>{ const gr=geoFind(v);
+      const ym=v.match(/\b(1[89]\d\d|20\d\d)(\s*[–\-—]\s*(1[89]\d\d|20\d\d))?\b/);
+      return {v:v, g:gr, yrs:ym?ym[0].replace(/\s+/g,''):''}; });
+    const pts=rows.filter(r=>r.g&&isFinite(+r.g.lat)&&isFinite(+r.g.lng));
+    if(!pts.length) return null;
+    let la1=Math.min(...pts.map(r=>+r.g.lat)), la2=Math.max(...pts.map(r=>+r.g.lat));
+    let lo1=Math.min(...pts.map(r=>+r.g.lng)), lo2=Math.max(...pts.map(r=>+r.g.lng));
+    const MINS=0.6;
+    if(la2-la1<MINS){ const c=(la1+la2)/2; la1=c-MINS/2; la2=c+MINS/2; }
+    if(lo2-lo1<MINS){ const c=(lo1+lo2)/2; lo1=c-MINS/2; lo2=c+MINS/2; }
+    const padY=(la2-la1)*0.3, padX=(lo2-lo1)*0.3; la1-=padY; la2+=padY; lo1-=padX; lo2+=padX;
+    const W=100,H=66, X=lng=>((lng-lo1)/(lo2-lo1))*W, Y=lat=>H-((lat-la1)/(la2-la1))*H;
+    const seen={}, uniq=[];
+    pts.forEach(r=>{ const k=r.g.name; if(seen[k]){ if(r.yrs) seen[k].yrs=[seen[k].yrs,r.yrs].filter(Boolean).join(', '); return; } seen[k]=r; uniq.push(r); });
+    const line=uniq.length>1?`<polyline points="${uniq.map(r=>X(+r.g.lng).toFixed(1)+','+Y(+r.g.lat).toFixed(1)).join(' ')}" fill="none" stroke="rgba(243,205,132,.7)" stroke-width=".7" stroke-dasharray="1.7 1.4"/>`:'';
+    const dots=uniq.map(r=>{ const x=X(+r.g.lng), y=Y(+r.g.lat); const anch=x>W*0.62?'end':'start'; const dx=anch==='end'?-2.4:2.4;
+      return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.7" fill="#f3cd84"/>`+
+        `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.4" fill="none" stroke="rgba(243,205,132,.35)" stroke-width=".5"/>`+
+        `<text x="${(x+dx).toFixed(1)}" y="${(y-2.2).toFixed(1)}" text-anchor="${anch}" font-size="3.6" fill="#eadfc4">${esc(geoLabel(r.g))}</text>`+
+        (r.yrs?`<text x="${(x+dx).toFixed(1)}" y="${(y+3).toFixed(1)}" text-anchor="${anch}" font-size="2.8" fill="rgba(169,210,238,.92)">${esc(r.yrs)}</text>`:''); }).join('');
+    return `<svg viewBox="0 0 100 66" preserveAspectRatio="xMidYMid slice"><rect width="100" height="66" fill="#0e1c2e"/>${line}${dots}</svg>`;
+  }
+  function forestSVG(){
+    const trees=[8,22,37,52,66,80,92].map((x,i)=>`<path d="M${x} 62 L${x-6} 62 L${x-1} ${34+(i%3)*4} Z"/><path d="M${x} 62 L${x+6} 62 L${x+1} ${34+(i%3)*4} Z"/>`).join('');
+    const fires=[15,30,48,63,77,88].map((x,i)=>`<circle cx="${x}" cy="${14+(i*7)%18}" r=".7" opacity=".8"/>`).join('');
+    return `<svg viewBox="0 0 100 66" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="fbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#122438"/><stop offset="1" stop-color="#0b1626"/></linearGradient></defs><rect width="100" height="66" fill="url(#fbg)"/><g fill="#1d3450">${trees}</g><g fill="#f3cd84">${fires}</g></svg>`;
+  }
+
   /* ---------- assemble the reel from real data (engine-driven, Rule 8) ---------- */
   function buildScenes(){
-    const L=d(); scenes=[]; const l=state.lang;
-    if(LIT.name){ scenes.push({facet:'name', prov:'gold', tile:()=>nameSVG(nameInitial()),
-      cap:isFem()?d().capName:d().capNameN }); }
-    if(LIT.face){ scenes.push({facet:'face', prov:'gold', photo:(person.primary_asset||(tagged[0]&&tagged[0].storage_path)||''), seed:0,
-      artId:(tagged[0]&&tagged[0].artefact_id)||'', cap:d().appearsIn(tagged.length) }); }
+    /* the photos ARE the film (Leon 2026-09-05): earliest to latest, captions riding on top;
+       no placeholders - what has no data simply does not appear */
+    const L=d(); scenes=[]; const l=state.lang; const by=birthYear(); const gSex=sexOf(PERSON_ID);
+    const ph=memories.slice();
+    const first=ph[0]||null, last=ph.length?ph[ph.length-1]:null;
+    const agePart=m=>{ if(by==null||m.yr==null) return ''; const a=m.yr-by; return (a>=0&&a<=110)?d().ageAt(a,gSex):''; };
+    const ww=m=>[agePart(m),m.whenwhere].filter(Boolean).join(' · ');
+    if(LIT.name){
+      const g=nm('given'), pt=nm('patronymic'), f=nm('family'), md=nm('maiden'), cl=nm('called');
+      const names=[]; const main=[g,pt,f].filter(Boolean).join(' '); if(main) names.push(main);
+      if(md&&md!==f) names.push(d().nee+' '+md);
+      if(cl&&cl!==g) names.push('«'+cl+'»');
+      const meaning=pubNewest('name_meaning',l)||'';
+      scenes.push({facet:'name', prov:'gold', photo:first?first.storage_path:'', seed:0, tile:()=>nameSVG(nameInitial()),
+        artId:first?first.id:'', cap:names.join(' · ')||fullName(), whenwhere:meaning||(first?ww(first):'') });
+    }
     if(LIT.life){
-      const parts=[]; const by=person.birth_date?String(person.birth_date).slice(0,4):(pubNewest('birth','und')?String(pubNewest('birth','und')).slice(0,4):'');
+      const parts=[]; const byS=by!=null?String(by):'';
       const dy=person.death_date?String(person.death_date).slice(0,4):(pubNewest('death','und')?String(pubNewest('death','und')).slice(0,4):'');
       const occ=pubNewest('occupation',l)||pubNewest('occupation','en');
       const pb=pubNewest('pbirth','und')||pubNewest('pbirth','en');
-      if(by) parts.push(d().born+' '+by+(pb?(' · '+pb):'')); if(dy) parts.push(d().died+' '+dy);
+      if(byS) parts.push(d().born+' '+byS+(pb?(' · '+pb):'')); if(dy) parts.push(d().died+' '+dy);
       if(occ) parts.push(occ);
-      scenes.push({facet:'life', prov:'cool', tile:lifeSVG, cap:parts.join(' · ')||d().facet.life });
+      let lp=null; if(by!=null){ let bd=1e9; ph.forEach(m=>{ if(m.yr!=null){ const dd2=Math.abs(m.yr-by); if(dd2<bd){ bd=dd2; lp=m; } } }); }
+      scenes.push({facet:'life', prov:'cool', photo:lp?lp.storage_path:'', seed:2, tile:lifeSVG,
+        artId:lp?lp.id:'', cap:parts.join(' · ')||d().facet.life, whenwhere:lp?ww(lp):'' });
     }
-    if(LIT.places){ const lived=pubList('lived','und').map(x=>x.value).filter(Boolean);
-      const pb=pubNewest('pbirth','und')||pubNewest('pbirth','en');
+    if(LIT.places){
+      const mapSVG=placesMapSVG();
+      const lived=livedRows(); const pb=pubNewest('pbirth','und')||pubNewest('pbirth','en');
       const line=(pb?d().pbirth+' '+pb:'')+((pb&&lived.length)?' · ':'')+(lived.length?d().livedIn+' '+lived.join(', '):'');
-      scenes.push({facet:'places', prov:'cool', tile:placeSVG, cap:line||d().facet.places }); }
-    memories.forEach((m,i)=>{ scenes.push({facet:'story', prov:'gold', photo:m.storage_path, seed:i+1,
-      artId:m.id||'', cap:m.cap||'', whenwhere:m.whenwhere||'', teller:m.teller }); });
-    if(LIT.kin){ scenes.push({facet:'kin', prov:'cool', tile:kinSVG, cap:d().kinLine(rels.length) }); }
+      scenes.push({facet:'places', prov:'cool', tile:mapSVG?()=>mapSVG:placeSVG, cap:line||d().facet.places });
+    }
+    ph.forEach((m,i)=>{ const own=!!(m.contributor&&m.contributor===PERSON_ID);
+      scenes.push({facet:'story', prov:'gold', photo:m.storage_path, seed:i+1,
+        artId:m.id||'', cap:m.cap||'', whenwhere:ww(m), teller:own?'':m.teller, own:own }); });
+    if(LIT.kin){
+      const kc=kinCaption(); const bp=bothPhotos[0]||null;
+      scenes.push({facet:'kin', prov:'cool', photo:bp?bp.storage_path:'', seed:3, tile:kinSVG,
+        artId:bp?bp.id:'', cap:(kc&&kc.cap)||d().kinLine(rels.length), whenwhere:bp?ww(bp):'' });
+    }
+    if(scenes.length){
+      scenes.push({facet:'end', prov:'gold', photo:last?last.storage_path:'', seed:9, tile:forestSVG,
+        artId:'', cap:d().endingCap, cta:'moment-real.html?create=1', ctaLabel:d().addMoment });
+    }
     if(state.idx>=scenes.length) state.idx=Math.max(0,scenes.length-1);
   }
 
@@ -524,9 +688,9 @@
       <span class="rname serif">${esc(fullName())}${maiden&&maiden!==nm('family')?`<span class="maiden">${esc(L.nee)} ${esc(maiden)}</span>`:''}</span>
       <span class="rsub">${esc(sub)}</span></span></div>`; }
 
-  function kindleSpine(){ const L=d(); const n=litCount(); const dark=8-n;
-    const kt=n===8?`<b>${n}</b> — ${esc(L.allLit)}`:`<b>${n}</b> ${esc(L.ofEight)}`;
-    const kn=n===8?'':esc(L.stillDark(dark));
+  function kindleSpine(){ const L=d(); const n=litCount(); const dark=7-n;
+    const kt=n===7?`<b>${n}</b> — ${esc(L.allLit)}`:`<b>${n}</b> ${esc(L.ofEight)}`;
+    const kn=n===7?'':esc(L.stillDark(dark));
     const beads=FACET_ORDER.map(k=>{ let cls='';
       if(LIT[k]) cls='lit'+(COOL.has(k)?' cool':'');
       else if(LIT._wait&&LIT._wait[k]) cls='wait';
@@ -539,10 +703,12 @@
   function renderPlay(){ const L=d(); const s=scenes[state.idx]||scenes[0]; const cool=s.prov==='cool';
     const provCls=s.prov==='gold'?'g':(s.prov==='cool'?'c':'v');
     const provTxt=s.prov==='gold'?L.provGold:(s.prov==='cool'?L.provCool:L.provViolet);
-    const told=(s.facet==='story'&&s.teller)?`<span class="toldby"><span class="flame"></span><span>${esc(L.toldBy)} <b>${esc(s.teller)}</b></span></span>`:'';
+    const gSex=sexOf(PERSON_ID);
+    const ownTxt=gSex==='f'?L.ownWordsF:(gSex==='m'?L.ownWordsM:L.ownWordsN);
+    const told=(s.facet==='story'&&(s.own||s.teller))?`<span class="toldby"><span class="flame"></span><span>${s.own?esc(ownTxt):`${esc(L.toldBy)} <b>${esc(s.teller)}</b>`}</span></span>`:'';
     const pct=Math.round(((state.idx+1)/scenes.length)*100);
     // scrubber: one thumb per scene, plus violet wait thumbs for un-lit content facets
-    let thumbs=scenes.map((sc,i)=>`<div class="thumb ${i===state.idx?'now':''}" data-seek="${i}"><span class="thumbim" data-scene="${i}">${sc.photo?galSVG(sc.seed):sc.tile()}</span><span class="tl">${esc(L.facet[sc.facet])}</span></div>`).join('');
+    let thumbs=scenes.map((sc,i)=>`<div class="thumb ${i===state.idx?'now':''}" data-seek="${i}"><span class="thumbim" data-scene="${i}">${sc.photo?galSVG(sc.seed):sc.tile()}</span><span class="tl">${esc(L.facet[sc.facet]||L.facetEnd)}</span></div>`).join('');
     ['places','more'].forEach(f=>{ if(!LIT[f] && LIT._wait && LIT._wait[f]) thumbs+=`<div class="thumb wait"><span class="wi">${sv(I[f]||I.places,1.6)}</span><span class="tl">${esc(L.facet[f])}</span></div>`; });
     const heroSVG=s.photo?galSVG(s.seed):s.tile();
     const footL=isFem()?L.footPlay:L.footPlayN;
@@ -552,7 +718,7 @@
         <div class="scene on"><div class="im" id="heroIm" data-hero="${state.idx}"${(s.photo&&s.artId)?` data-act="open-moment" data-art="${esc(s.artId)}" role="button" tabindex="0" aria-label="${esc(L.openPhoto)}" style="cursor:pointer"`:''}>${heroSVG}</div><div class="tint"></div></div>
         <div class="leak"></div><div class="grain"></div><div class="vig"></div>
         <div class="gate top">${gatesRow()}</div><div class="gate bot">${gatesRow()}</div>
-        <div class="sceneno ${cool?'cool':''}"><span class="dot"></span> ${esc(L.sceneOf(state.idx+1,scenes.length))} · ${esc(L.facet[s.facet])}</div>
+        <div class="sceneno ${cool?'cool':''}"><span class="dot"></span> ${esc(L.sceneOf(state.idx+1,scenes.length))} · ${esc(L.facet[s.facet]||L.facetEnd)}</div>
         <div class="rcap">
           ${s.cap?`<div class="telling"><p>${esc(s.cap)}</p></div>`:''}
           ${s.whenwhere?`<div class="whenwhere" style="opacity:.72;font-size:12px;margin-top:2px">${esc(s.whenwhere)}</div>`:''}
@@ -561,6 +727,7 @@
                without a photograph had no way in at all. Now it is a plain link on every
                story that has a moment behind it. -->
           ${s.artId?`<a class="stepin" href="moment-real.html?id=${esc(s.artId)}">${esc(L.stepIn)}</a>`:''}
+          ${s.cta?`<a class="stepin" href="${esc(s.cta)}">${esc(s.ctaLabel||'')}</a>`:''}
         </div>
       </div>
       <div class="provline"><span class="lp ${provCls}"></span> ${esc(provTxt)}</div>
@@ -586,13 +753,13 @@
     if(f==='more') return LIT.more?d().facet.more:d().untold;
     return '';
   }
-  function renderEnd(){ const L=d(); const n=litCount(); const turn=(n/8).toFixed(3);
-    const rows=['name','face','life','story','kin','places','more'].map(f=>{
+  function renderEnd(){ const L=d(); const n=litCount(); const turn=(n/7).toFixed(3);
+    const rows=['name','life','story','kin','places','more'].map(f=>{
       const lit=LIT[f]; const wait=!lit && LIT._wait && LIT._wait[f];
       const cls=lit?(COOL.has(f)?'litc':'lit'):(wait?'wait':'wait');
       const endIcon=lit?sv(I.check,2):sv(I.plus,1.8);
       return `<div class="frow ${cls}"><span class="fi">${sv(I[f])}</span><span class="ft"><span class="fl">${esc(L.facet[f])}</span><span class="fs">${esc(facetSummary(f))}</span></span><span class="fe">${endIcon}</span></div>`; }).join('');
-    const firstDark=['places','more','life','kin','story','face'].find(f=>!LIT[f]);
+    const firstDark=['places','more','life','kin','story'].find(f=>!LIT[f]);
     const ghost=firstDark?`<button class="ghostbtn" data-act="go-add"><span>${sv(I.upload)}</span> ${esc(L.addToLight(L.facet[firstDark]))}</button>`:'';
     const footL=L.footEnd;
     const conic=`background:conic-gradient(from -90deg, var(--gold) 0turn ${turn}turn, rgba(255,255,255,.08) ${turn}turn 1turn)`;
@@ -601,7 +768,7 @@
       <div class="endwrap">
         <div class="ring" style="${conic}"><span class="spark"></span><div class="rc"><div class="big">${n}</div><div class="of">${esc(L.ringOf)}</div></div></div>
         <div class="endt">${esc(L.endTitle(fullName()))}<em>${esc(L.endAssembled)}</em>.</div>
-        <div class="ends">${esc(n===8?L.endSubFull:L.endSub)}</div>
+        <div class="ends">${esc(n===7?L.endSubFull:L.endSub)}</div>
       </div>
       <div class="facetlist">${rows}</div>
       <button class="primary" data-act="replay">${sv(I.replay,1.8)} ${esc(L.watchAgain)}</button>
