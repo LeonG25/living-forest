@@ -221,15 +221,34 @@ all four disproved, and they cleared on their own.
   DB row counts identical before and after the whole walk (artefacts 26, subjects
   82, people 47, place_geo 21, person_facts 443). Zero writes before Send holds.
 
-**NEXT — Stage C (start of next session), the real Send:**
-1. Port the submit engine from contribute-add-real: storage upload of the local
-   photo, artefact + artefact_subjects inserted as in_review (keeper edits insert
-   in_review, never published — RLS silently rejects published), boxes from
-   M.people straight into subjects detail; then the page reloads into its own
-   view mode on the new memory.
-2. Then Stage D (hub "Add" card → ?create=1; retire contribute-add; lock's allowed
-   list follows; remove the view-mode tagger's new-person door), Stage E (full RU
-   phone re-walk + connectedness).
+**STAGE C SHIPPED (2026-09-05, `e022a59`, lf-create.js?v=5) — the Send is real.**
+sendReal() ported from the contribution engine: lfDown downscale + upload to the
+family bucket, artefact inserted as in_review (kind photo/text, original_language =
+UI language, certainty remembered, contributor_id null — the create page has no
+teller question), artefact_subjects rows carry M.people boxes straight into detail
+as {x,y,w,h} fractions, the story crosses into the other two languages at first
+telling (cleanOut alphabet guard ported verbatim; refused translations skipped),
+then location.replace to moment-real.html?id=<new>. Double-submit guarded; failure
+restores the button and shows L.sendFail in the refuse box; nothing touches the DB
+before the upload line. End-to-end probe evidence (~/qc/qc-c.js): keeper filled
+photo+story+when+where, tagged Rita at 0.30/0.30, pressed Send → landed on
+moment-real.html?id=5f94965c…, page showed "Waiting for the keeper", the 1999 chip,
+tag counter 1, the story text, zero page errors. SQL verified the rows exactly
+(artefact in_review with metadata {when,where}, subject detail box as drawn,
+he+ru translations in_review machine:true), then the probe moment was fully
+removed: rows deleted by SQL, the photo via the Storage API as the signed-in
+keeper (direct SQL delete from storage.objects is BLOCKED by a protect trigger —
+always use the Storage API). Also this session (`d060db0`, `94ae1e8`): the whole
+app renamed memory→moment in EN/RU/HE (moment/момент/רגע), search's story group
+now Stories/Истории/סיפורים, provenance labels "По памяти/מהזיכרון" deliberately
+kept (facts, not nostalgia), HE keeper titles normalized to שומר.
+
+**NEXT — Stage D (start of next session):**
+1. Hub "Add" card → moment-real.html?create=1; retire contribute-add-real (entry
+   links only — the page stays in the repo until Leon confirms); lock screens'
+   allowed "add" links follow; remove the view-mode tagger's new-person door.
+2. Then Stage E (full RU phone re-walk + connectedness audit — Leon's top final-QC
+   priority).
 
 **Standing:** designer parked items (none open for this build — Leon waived);
 anomaly (anon tree names screenshot) still unexplained; two language buttons on the
@@ -417,8 +436,8 @@ local blob), story, when, where with the 57-place list and the country question 
 unknown places, three required chips, and a Send that refuses with an honest missing
 list (verified in RU by create-a.js probe: refusal listed exactly the two truly
 missing items; zero page errors; zero DB writes — the module contains no insert code).
-STAGE B SHIPPED (2026-09-03, `12dd3f6`): the who is in — local face tagger + pick-from-forest,
-still zero DB writes. Not yet in it: the real Send (Stage C).
+STAGE B SHIPPED (2026-09-03, `12dd3f6`): the who is in — local face tagger + pick-from-forest.
+STAGE C SHIPPED (2026-09-05, `e022a59`): the Send is real — see the handover above.
 No entry links point at it; the family flow is untouched.
 
 Build stages (each dark-launched behind ?create=1 until verified; entry links switch
