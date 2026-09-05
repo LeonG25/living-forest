@@ -207,7 +207,7 @@
       (document.head||document.documentElement).appendChild(st);
     }catch(e){}
     var page=(location.pathname.split('/').pop()||'index.html');
-    var ALLOWED=/^(index|tree-real|contribute-real|contribute-add-real)\.html$/;
+    var ALLOWED=/^(index|tree-real|contribute-real)\.html$/;
     var s=storedSession(); if(!s) return;               // signed out: the gate handles it
     var H={ headers:{ apikey:SB_KEY, Authorization:'Bearer '+s.token, Accept:'application/json' } };
     Promise.all([
@@ -220,7 +220,7 @@
       if(anchored) return;
       if(!p.is_member){ if(page!=='index.html') location.replace('index.html'); return; }  // still knocking
       document.body.classList.add('lf-lock');
-      if(!ALLOWED.test(page)) location.replace('tree-real.html?choose=1');
+      if(!ALLOWED.test(page) && !(page==='moment-real.html' && /[?&]create=1/.test(location.search))) location.replace('tree-real.html?choose=1');
       else if(page==='tree-real.html' && !/[?&]choose=1/.test(location.search)) location.replace('tree-real.html?choose=1');
     }).catch(function(){});
   })();

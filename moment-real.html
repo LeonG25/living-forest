@@ -1128,9 +1128,6 @@
         ${list.map(p=>`<button class="popt" data-pick="${esc(p.id)}">
           <span class="pc">${faceSVG(label(p)||'')}</span>
           <span><span class="pn">${esc(label(p)||nameFor(p.id,lang)||'')}</span></span></button>`).join('')}
-        <button class="popt newp" data-pick="__new">
-          <span class="pc">${sv(ICON.plus,2)}</span>
-          <span><span class="pn">${q?esc(q):esc(d.someoneNew)}</span><span class="pr">${esc(d.someoneNew)}</span></span></button>
       </div>`;
     if(listOnly){
       /* the input keeps its focus, its caret and the keyboard: only the names change */
@@ -1802,5 +1799,5 @@
 })();
 </script>
 <script src="lf-create.js?v=5"></script>
-<script src="lf-nav.js?v=32" data-here="" data-parent="index.html"></script>
+<script src="lf-nav.js?v=33" data-here="" data-parent="index.html"></script>
 </body></html>

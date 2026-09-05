@@ -647,7 +647,7 @@
       gapP=L.gapPOpen;
     }
 
-    const addHref='contribute-add-real.html'+(res.person_id?('?id='+encodeURIComponent(res.person_id)):'');
+    const addHref='moment-real.html?create=1';
     $('#reveal').innerHTML=`
       ${ribbon}
       <div class="gapcard">
@@ -699,7 +699,7 @@
         </div>
         <div class="tag">${esc(L.tag)}</div>
       </div>
-      <a class="invite-cta serif" href="contribute-add-real.html${PERSON_ID?('?id='+encodeURIComponent(PERSON_ID)):''}">${sv(I.plus,1.6)}${esc(L.invite)}</a>
+      <a class="invite-cta serif" href="moment-real.html?create=1">${sv(I.plus,1.6)}${esc(L.invite)}</a>
       <div class="locked-foot serif">${L.lockFoot}</div>`;
   }
 
@@ -784,6 +784,6 @@
   wire(); boot();
 })();
 </script>
-<script src="lf-nav.js?v=32" data-here="" data-parent="person-real.html"></script>
+<script src="lf-nav.js?v=33" data-here="" data-parent="person-real.html"></script>
 <script src="lf-fen.js?v=25"></script>
 </body></html>

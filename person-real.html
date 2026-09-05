@@ -2453,7 +2453,7 @@
       if(act==='nmsend'){ await submitName(); return; }   /* kept: other callers may use it */
       if(act==='revert'){ seed(); render(); return; }
       if(act==='watch'){ const q=(person&&person.id)?('?id='+encodeURIComponent(person.id)):''; location.href='reel-real.html'+q; return; }
-      if(act==='addmemory'){ location.href='contribute-add-real.html'; return; }
+      if(act==='addmemory'){ location.href='moment-real.html?create=1'; return; }
       if(act==='addhome'){ if(!stageHomeForm()) return; render(); openHome(null); return; }
       if(act==='addocc'){ stageOccForm(); render(); openOcc(null); return; }
       if(act==='homecancel'){ const box=$('.facet[data-facet="places"] [data-homeadd]'); if(box) box.style.display='none'; return; }
@@ -2521,5 +2521,5 @@
   atmosphere($('#dev .atmo')); wireOnce(); boot();
 })();
 </script>
-<script src="lf-nav.js?v=32" data-here="" data-parent="index.html"></script>
+<script src="lf-nav.js?v=33" data-here="" data-parent="index.html"></script>
 </body></html>
