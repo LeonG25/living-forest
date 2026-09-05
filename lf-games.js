@@ -223,7 +223,7 @@
         status: 'ok',
         game: 'missingVoice',
         seed: seed,
-        prompt: { memory_text: bodyText(memory), question: 'Whose voice is this? Who told this memory?' },
+        prompt: { memory_text: bodyText(memory), question: 'Whose voice is this? Who told this moment?' },
         options: built.options,
         answer_index: built.answer_index,
         answer_id: built.answer_id,
@@ -564,7 +564,7 @@
           source: 'artefacts',
           source_id: a.id,
           kind: 'memory',
-          label: bodyText(a) || whereOf(a) || 'A memory',
+          label: bodyText(a) || whereOf(a) || 'A moment',
           when: d.label,
           year: d.year,
           precision: d.precision,
@@ -730,7 +730,7 @@
       function toOption(x) {
         return {
           id: x.art.id,
-          label: bodyText(x.art) || whereOf(x.art) || 'A memory',
+          label: bodyText(x.art) || whereOf(x.art) || 'A moment',
           has_photo: !!x.art.storage_path,
           storage_path: x.art.storage_path || null,        // play screen resolves a signed URL
           where: whereOf(x.art) || null

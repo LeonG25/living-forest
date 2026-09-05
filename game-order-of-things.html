@@ -307,7 +307,7 @@
       revSome:(r,t)=>`${r} of ${t} were already in place. The rest moved gently into theirs — nothing is lost by getting it wrong first.`,
       legGold:'Gold years: a person told us', legCool:'Blue: the app worked it out',
       another:'Another life', toReel:'Add to their Reel', reelnote:'Saved to your Journal',
-      born:'Born', died:'Died', amemory:'A memory',
+      born:'Born', died:'Died', amemory:'A moment',
       lockK:'Not enough years yet', lockH:'Not enough dated moments yet',
       lockBody:'There is no order to find until at least <em>three of their moments carry a year</em>. Add a few dates and this comes alive.',
       needL:'It’s waiting for', haveH:'What the app can see so far',
@@ -338,7 +338,7 @@
       revSome:(r,t)=>`${r} из ${t} уже стояли верно. Остальные мягко встали на свои места — ошибиться сначала ничего не стоит.`,
       legGold:'Золотые годы: рассказал человек', legCool:'Синее: приложение вычислило',
       another:'Ещё одна жизнь', toReel:'В его Плёнку', reelnote:'Сохранено в ваш Журнал',
-      born:'Родился', died:'Умер', amemory:'Воспоминание',
+      born:'Родился', died:'Умер', amemory:'Момент',
       lockK:'Пока не хватает годов', lockH:'Пока мало моментов с датами',
       lockBody:'Порядок нельзя найти, пока хотя бы <em>у трёх моментов не будет года</em>. Добавьте несколько дат — и игра оживёт.',
       needL:'Ждёт', haveH:'Что приложение видит сейчас',
@@ -369,7 +369,7 @@
       revSome:(r,t)=>`${r} מתוך ${t} כבר היו במקום. השאר עברו בעדינות למקומם — אין הפסד בטעות ראשונה.`,
       legGold:'שנים בזהב: מישהו סיפר לנו', legCool:'בכחול: האפליקציה חישבה',
       another:'חיים נוספים', toReel:'אל הסרט שלהם', reelnote:'נשמר ביומן שלכם',
-      born:'נולד', died:'נפטר', amemory:'זיכרון',
+      born:'נולד', died:'נפטר', amemory:'רגע',
       lockK:'עדיין חסרות שנים', lockH:'עדיין אין מספיק רגעים מתוארכים',
       lockBody:'אין סדר למצוא עד ש<em>לשלושה רגעים לפחות תהיה שנה</em>. הוסיפו כמה תאריכים והמשחק יתעורר.',
       needL:'ממתין ל', haveH:'מה האפליקציה רואה עד כה',
@@ -377,7 +377,7 @@
       hPeople:n=>`ל-${n} אנשים יש לפחות רגע מתוארך אחד`,
       hPlayable:n=>`${n} אנשים מוכנים למשחק`,
       hNone:'לשאר עוד ממתינה שנה',
-      invite:'הוסיפו שנה לרגע', keeperOnly:'ממתין למנהל הזיכרון',
+      invite:'הוסיפו שנה לרגע', keeperOnly:'ממתין לשומר',
       lockFoot:'השנה השלישית שתוסיפו היא זו<br>שהופכת את זה למשחק.',
       errK:'משהו הסתבך', errH:'השנים מחוץ להישג',
       errB:'המשחק לא הצליח לאסוף את הרגעים כרגע. נסו שוב בעוד רגע.', retry:'נסו שוב',
@@ -462,14 +462,14 @@
      label itself, having no human telling for it. */
   function isCool(o){
     const label=String(o.label==null?'':o.label).trim();
-    return o.kind==='memory' && (label==='' || label==='A memory');
+    return o.kind==='memory' && (label==='' || label==='A moment');
   }
   function cardText(o){
     const L=d();
     if(o.kind==='birth') return L.born;
     if(o.kind==='death') return L.died;
     const label=String(o.label==null?'':o.label).trim();
-    return (label && label!=='A memory') ? label : L.amemory;
+    return (label && label!=='A moment') ? label : L.amemory;
   }
 
   /* ---------- PLAY ---------- */

@@ -362,7 +362,7 @@ function openCard(p){
   $('#cName').textContent=p.name;
   { const mt=document.getElementById('cMeet'); if(mt) mt.href='person-real.html?id='+encodeURIComponent(p.id); }
   $('#cLine').textContent=[p.place].filter(Boolean).join(' \u00b7 ') || 'in your forest';
-  $('#cRel').textContent = p.remembered? (p.memoryCount+' '+(p.memoryCount===1?'memory':'memories')) : 'waiting to be remembered';
+  $('#cRel').textContent = p.remembered? (p.memoryCount+' '+(p.memoryCount===1?'moment':'moments')) : 'waiting for a first moment';
   $('#cPlace').textContent=p.place||'\u2014';
   $('#cCoords').textContent=(p.lat!=null)?fmtCoord(p.lat,p.lng):'\u2014';
   const recs=p.records||[]; let rec=recs.find(r=>r.art&&r.art.body)||recs[0];
