@@ -292,11 +292,11 @@
   <div class="hud" id="bl">
     <div class="cap" id="gbCap">the more moments, the brighter</div>
     <div class="rows">
-      <div class="r"><span style="width:5px;height:5px;border-radius:50%;background:#ffe9c2;box-shadow:0 0 5px 1px rgba(255,210,135,.7)"></span><span class="t">a moment</span></div>
-      <div class="r"><span style="width:8px;height:8px;border-radius:50%;background:#ffe4a6;box-shadow:0 0 9px 2px rgba(255,205,120,.8)"></span><span class="t">many</span></div>
-      <div class="r"><span style="position:relative;width:13px;height:13px;display:inline-flex;align-items:center;justify-content:center"><span style="position:absolute;width:22px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,225,160,.8),transparent)"></span><span style="position:absolute;width:1px;height:22px;background:linear-gradient(180deg,transparent,rgba(255,225,160,.8),transparent)"></span><span style="width:9px;height:9px;border-radius:50%;background:#fff3d6;box-shadow:0 0 12px 3px rgba(255,215,140,.95)"></span></span><span class="t">the eldest</span></div>
+      <div class="r"><span style="width:5px;height:5px;border-radius:50%;background:#ffe9c2;box-shadow:0 0 5px 1px rgba(255,210,135,.7)"></span><span class="t" id="lgMoment">a moment</span></div>
+      <div class="r"><span style="width:8px;height:8px;border-radius:50%;background:#ffe4a6;box-shadow:0 0 9px 2px rgba(255,205,120,.8)"></span><span class="t" id="lgMany">many</span></div>
+      <div class="r"><span style="position:relative;width:13px;height:13px;display:inline-flex;align-items:center;justify-content:center"><span style="position:absolute;width:22px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,225,160,.8),transparent)"></span><span style="position:absolute;width:1px;height:22px;background:linear-gradient(180deg,transparent,rgba(255,225,160,.8),transparent)"></span><span style="width:9px;height:9px;border-radius:50%;background:#fff3d6;box-shadow:0 0 12px 3px rgba(255,215,140,.95)"></span></span><span class="t" id="lgEldest">the eldest</span></div>
       <div class="sep"></div>
-      <div class="r"><span style="width:6px;height:6px;border-radius:50%;background:#7fb4d8;box-shadow:0 0 5px 1px rgba(127,180,216,.5)"></span><span class="t">waiting</span></div>
+      <div class="r"><span style="width:6px;height:6px;border-radius:50%;background:#7fb4d8;box-shadow:0 0 5px 1px rgba(127,180,216,.5)"></span><span class="t" id="lgWaiting">waiting</span></div>
     </div>
   </div>
 
@@ -312,8 +312,8 @@
     <div class="story" id="cStory" style="display:none"></div>
     <div class="prov" id="cProv" style="display:none"></div>
     <div class="grid">
-      <div><div class="k">place</div><div class="val" id="cPlace"></div></div>
-      <div><div class="k">coordinates</div><div class="val mono" id="cCoords"></div></div>
+      <div><div class="k" id="kPlace">place</div><div class="val" id="cPlace"></div></div>
+      <div><div class="k" id="kCoords">coordinates</div><div class="val mono" id="cCoords"></div></div>
     </div>
     </div>
   </div></div>
@@ -638,7 +638,7 @@ async function faceInto(disc, art, box){
   disc.innerHTML='';
   try{
     const s = await sb.storage.from('family').createSignedUrl(art.storage_path, 3600, LFDB.img(art.storage_path,600));
-    const url = s.data && s.data.signedUrl; if(!url){ disc.textContent='photo'; return; }
+    const url = s.data && s.data.signedUrl; if(!url){ disc.textContent=(GB[GLANG]||GB.en).photo||'photo'; return; }
     const img = new Image(); img.crossOrigin='anonymous';
     img.onload = ()=>{ const cv=document.createElement('canvas'); cv.width=cv.height=128; const g=cv.getContext('2d');
       if(box && box.w>0 && box.h>0){ const pad=0.35; let bx=(box.x-box.w*pad), by=(box.y-box.h*pad), bw=box.w*(1+2*pad), bh=box.h*(1+2*pad);
@@ -647,9 +647,9 @@ async function faceInto(disc, art, box){
         g.drawImage(img, sx,sy, ss,ss, 0,0,128,128);
       } else { const side=Math.min(img.naturalWidth,img.naturalHeight); g.drawImage(img,(img.naturalWidth-side)/2,(img.naturalHeight-side)/2,side,side,0,0,128,128); }
       disc.appendChild(cv); };
-    img.onerror=()=>{ disc.textContent='photo'; };
+    img.onerror=()=>{ disc.textContent=(GB[GLANG]||GB.en).photo||'photo'; };
     img.src=url;
-  }catch(e){ disc.textContent='photo'; }
+  }catch(e){ disc.textContent=(GB[GLANG]||GB.en).photo||'photo'; }
 }
 function openCard(p){
   $('#cName').textContent=p.name;
@@ -667,7 +667,7 @@ function openCard(p){
     const bits=[who?'told by '+who:'', cert].filter(Boolean).join(' \u00b7 ');
     if(bits){ cProv.style.display='block'; cProv.innerHTML='<span>'+bits+'</span>'; } else cProv.style.display='none'; }
   else { cStory.style.display='none'; cProv.style.display='none'; }
-  const disc=$('#cDisc'); disc.textContent='photo';
+  const disc=$('#cDisc'); disc.textContent=(GB[GLANG]||GB.en).photo||'photo';
   if(rec) faceInto(disc, rec.art, rec.box);
   $('#card').classList.add('show');
   const cb=document.querySelector('#card .cbody'); if(cb) cb.scrollTop=0;
@@ -807,16 +807,19 @@ const GB={
       p:'Your family, seen from above — every place a photo was taken, every year you have of them. Turn the globe. Turn the years.',
       people:'people',ties:'ties',places:'places',year:'the year',
       cap:'the more moments, the brighter',
+      lgMoment:'a moment',lgMany:'many',lgEldest:'the eldest',lgWaiting:'waiting',photo:'photo',meet:'meet them \u2192',kPlace:'place',kCoords:'coordinates',
       read:'drag to turn · scroll to zoom<br>spin the ring — several turns span the years'},
   ru:{k:'Живой лес',h1:'У каждой жизни',h2:'есть свой ',em:'свет.',
       p:'Ваша семья с высоты — каждое место, где снята фотография, каждый год, который у вас есть. Поверните глобус. Поверните годы.',
       people:'людей',ties:'связей',places:'мест',year:'год',
       cap:'чем больше моментов, тем ярче',
+      lgMoment:'момент',lgMany:'много',lgEldest:'старшие',lgWaiting:'ждёт',photo:'фото',meet:'познакомиться \u2192',kPlace:'место',kCoords:'координаты',
       read:'ведите, чтобы повернуть · колесо — масштаб<br>крутите кольцо — несколько оборотов охватывают годы'},
   he:{k:'היער החי',h1:'לכל חיים',h2:'יש ',em:'אור.',
       p:'המשפחה שלכם מלמעלה — כל מקום שבו צולם תצלום, כל שנה שיש לכם מהם. סובבו את הגלובוס. סובבו את השנים.',
       people:'אנשים',ties:'קשרים',places:'מקומות',year:'השנה',
       cap:'ככל שיש יותר רגעים, כך בוהק יותר',
+      lgMoment:'רגע',lgMany:'הרבה',lgEldest:'הוותיקים',lgWaiting:'ממתין',photo:'תצלום',meet:'להכיר אותם \u2190',kPlace:'מקום',kCoords:'קואורדינטות',
       read:'גררו כדי לסובב · גלגלו לזום<br>סובבו את הטבעת — כמה סיבובים פורשים על פני השנים'}
 };
 function paintGlobeWords(){
@@ -834,6 +837,9 @@ function paintGlobeWords(){
   if(h) h.innerHTML='<span>'+g.h1+'</span><br><span>'+g.h2+'</span><em>'+g.em+'</em>';
   set('gbPeople',g.people); set('gbTies',g.ties); set('gbPlaces',g.places);
   set('gbYear',g.year); set('gbCap',g.cap); set('gbRead',g.read,true);
+  set('lgMoment',g.lgMoment); set('lgMany',g.lgMany); set('lgEldest',g.lgEldest); set('lgWaiting',g.lgWaiting);
+  set('cMeet',g.meet); set('kPlace',g.kPlace); set('kCoords',g.kCoords);
+  { const d=document.getElementById('cDisc'); if(d&&d.children.length===0&&g.photo) d.textContent=g.photo; }
   /* Hebrew reads right to left, and the globe's panels have to turn with it */
   document.documentElement.setAttribute('lang',GLANG);
   document.documentElement.setAttribute('dir', GLANG==='he'?'rtl':'ltr');

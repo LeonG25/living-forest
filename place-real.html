@@ -338,7 +338,7 @@
     <div class="coords" id="pCoords"></div>
     <div class="heroprov" id="pPlacement"></div>
   </div>
-  <div class="scrollcue" id="pScrollcue">the story
+  <div class="scrollcue" id="pScrollcue"><span id="pScrollTxt">the story</span>
     <svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
   </div>
 </div>
@@ -829,7 +829,7 @@ load();
   if(!localStorage.getItem('lf_lang')){ const d=(navigator.language||'en').slice(0,2); if(T[d]) lang=d; }
   window.PLACE_T=T;
   (function(){ const t=T[lang];
-    [['hudApp',t.appName],['lPeople',t.stPeople],['lTies',t.stTies],['lPlaces',t.stPlaces],['hudYear',t.theyear],['cMeet',t.meet],['kPlace',t.kPlace],['kCoords',t.kCoords],['gateReading',t.reading]]
+    [['hudApp',t.appName],['lPeople',t.stPeople],['lTies',t.stTies],['lPlaces',t.stPlaces],['hudYear',t.theyear],['cMeet',t.meet],['kPlace',t.kPlace],['kCoords',t.kCoords],['gateReading',t.reading],['cDisc',t.photo],['pOnglobe',t.onglobe],['tNames',t.names],['tMoments',t.moments],['tSeen',t.seen],['pScrollTxt',t.story]]
       .forEach(function(p){ var e=document.getElementById(p[0]); if(e&&p[1]) e.textContent=p[1]; });
   })();
   let isKeeper=false;              /* default view = family; flips only for the keeper */
@@ -899,7 +899,7 @@ load();
     $('pPlacement').innerHTML=pv('cool', t.locatedapp);
     $('pLeaf').textContent=t.leaf;
     $('tNames').textContent=t.names; $('tMoments').textContent=t.moments; $('tSeen').textContent=t.seen;
-    [['hudApp',t.appName],['lPeople',t.stPeople],['lTies',t.stTies],['lPlaces',t.stPlaces],['hudYear',t.theyear],['cMeet',t.meet],['kPlace',t.kPlace],['kCoords',t.kCoords],['gateReading',t.reading]]
+    [['hudApp',t.appName],['lPeople',t.stPeople],['lTies',t.stTies],['lPlaces',t.stPlaces],['hudYear',t.theyear],['cMeet',t.meet],['kPlace',t.kPlace],['kCoords',t.kCoords],['gateReading',t.reading],['cDisc',t.photo],['pOnglobe',t.onglobe],['tNames',t.names],['tMoments',t.moments],['tSeen',t.seen],['pScrollTxt',t.story]]
       .forEach(function(p){ var e=document.getElementById(p[0]); if(e&&p[1]) e.textContent=p[1]; });
     document.querySelector('#pScrollcue').childNodes[0].nodeValue=t.story+' ';
 
