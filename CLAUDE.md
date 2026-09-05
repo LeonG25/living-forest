@@ -669,6 +669,33 @@ assuming the shell is gone.
 
 ## 4 · PARKED — decided, not now (do not build unasked)
 
+### Person page — three analysis features (Leon, 2026-09-05) — PARKED, do not build unasked
+
+**1. Who is this person similar to?** The user picks one image of THIS person
+(from the Person page) and one other image from their visible tree in which
+other people appear. The app analyzes the similarity of this person's face (from
+the first image) to EACH person tagged in the second photo, and shows the scores
+as a columns Pareto chart: x-axis = the people in the second photo, y-axis =
+similarity score 0–100%. The app instructs the user to choose images where the
+whole face is shown well from the front, and analyzes ONLY faces that are fully
+shown from the front. If no good face is found, the app says so and does NOT run
+the analysis. Similarity is based on face features only — never hairstyle or
+hair colour.
+
+**2. Who is the most similar to this person?** The app analyzes ALL images of
+this person and ALL images of all other people in the database visible to the
+user, and finds the 2 photos in which this person is most similar to somebody
+else. It shows both persons' faces from those 2 photos, with their similarity
+score 0–100%.
+
+**3. Emotional analysis.** The app analyzes all the stories written by this
+person and the emotions in them, and shows a columns Pareto chart: x-axis =
+emotions (between 3 and 10 different emotions), y-axis = percentage across all
+the stories told by this person.
+
+(House rules apply when built: dynamic from live data, never hard-coded; designer
+pass before any page work; face rules above are hard constraints.)
+
 ### Two orphan pages — wait until the work is finished (Leon, 2026-09-05)
 Nothing links to these two pages; both are English-only. Leon ruled: leave them
 as they are until the build is done, then decide (wire in / translate / retire).
