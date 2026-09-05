@@ -92,17 +92,15 @@
     display:grid; place-items:center; cursor:pointer; color:#1a0f2e; border:2px solid #04070e;
     background:linear-gradient(180deg,var(--edit-hi),var(--edit)); box-shadow:0 4px 12px -2px #000; transition:transform .18s; }
   .pcard .conn:hover{ transform:scale(1.12); }
-  [dir="rtl"] .pcard .conn{ right:auto; left:-11px; }
+  /* tree canvas stays LTR in every language (Leon 2026-09-05): card pins do not flip */
   .pcard .conn svg{ width:15px; height:15px; }
   .pcard .opic{ position:absolute; top:-9px; left:-9px; width:27px; height:27px; border-radius:50%; z-index:6;
     display:grid; place-items:center; cursor:pointer; color:#1a0f2e; border:2px solid #04070e;
     background:linear-gradient(180deg,#f7dfa4,var(--gold,#f3cd84)); box-shadow:0 4px 12px -2px #000; transition:transform .18s; }
   .pcard .opic:hover{ transform:scale(1.12); }
-  [dir="rtl"] .pcard .opic{ left:auto; right:-9px; }
   .pcard .opic svg{ width:14px; height:14px; }
   .pcard .pendpin{ position:absolute; top:-6px; right:-6px; width:17px; height:17px; border-radius:50%; z-index:5;
     background:var(--edit); border:2px solid #04070e; display:grid; place-items:center; }
-  [dir="rtl"] .pcard .pendpin{ right:auto; left:-6px; }
   .pcard .pendpin svg{ width:10px; height:10px; color:#1a0f2e; }
 
   /* controls dock */
@@ -1097,8 +1095,8 @@ function computeLayout(){
   // normalise: leftmost card-left → PADX
   const xs=placed.map(id=>pos[id].x); const minx=Math.min(...xs);
   const shift=(PADX+CW/2)-minx; placed.forEach(id=>{ pos[id].x+=shift; });
-  // RTL mirror
-  if(rtl()){ const mx=Math.max(...placed.map(id=>pos[id].x)); placed.forEach(id=>{ pos[id].x=(PADX+CW/2)+(mx-pos[id].x); }); }
+  /* Leon's ruling 2026-09-05: the tree keeps the same left-to-right layout in every
+     language. Page chrome still flips under RTL; the forest itself does not. */
 }
 
 function worldBBox(){ let maxX=0,maxY=0,minX=1e9,minY=1e9; const placed=[...placedSet];
