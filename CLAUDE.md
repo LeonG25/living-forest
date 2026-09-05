@@ -280,10 +280,22 @@ optimize-photos (keeper photo-cleanup utility, EN-only): wire in, translate, or
 retire? (b) place-real shows ENGLISH in RU mode (THE YEAR / PLACE / COORDINATES
 — the page has no i18n dictionary): needs a translation pass.
 
-**NEXT:** Leon's own RU phone walk (the probe cannot replace his eyes — hand him
-a walk list); Leon's decisions on the two orphans + place-real translation; then
-whatever he rules next. Journal-as-simple-log via the designer remains parked on
-the horizon.
+**PLACE PAGE SPEAKS THREE TONGUES (2026-09-05, `3926eaa`+`e693212`).** Leon ruled:
+orphans wait in §4 PARKED until the build is done; place-real translated NOW.
+Done: place-real's T dict extended (globe HUD, year note, photo card, gate,
+error box, scroll cue, lightbox link) and wired via window.PLACE_T + a PT()
+helper in the globe scope + an early labeler + relabel-on-switch; the same card
+and legend statics on index.html got ids + GB keys (legend: a moment/many/the
+eldest/waiting; card: photo/meet/place/coordinates) painted in paintGlobeWords;
+HE keeper title on place normalized מנהל→שומר. Verified rendered in RU and HE on
+both pages, zero errors. FULL HEBREW CRAWL of all 20 flow pages: zero page
+errors, all chrome Hebrew; remaining Latin words on games/crowd/timeline are
+FAMILY-ENTERED CONTENT (stories/labels stored in English), which by rule shows
+as stored — not a chrome gap.
+
+**NEXT:** Leon's own phone walk in RU and HE (the probe cannot replace his eyes);
+then whatever he rules next. Journal-as-simple-log via the designer remains
+parked on the horizon.
 
 **Standing:** designer parked items (none open for this build — Leon waived);
 anomaly (anon tree names screenshot) still unexplained; two language buttons on the
