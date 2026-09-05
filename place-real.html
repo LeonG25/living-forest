@@ -285,16 +285,16 @@
   </div>
 
   <div class="hud" id="tl">
-    <div class="k">The Living Forest</div>
+    <div class="k" id="hudApp">The Living Forest</div>
     <div class="stats">
-      <div class="stat"><span class="v serif" id="stPeople">0</span><span class="l">people</span></div>
-      <div class="stat"><span class="v serif" id="stTies">0</span><span class="l">ties</span></div>
-      <div class="stat"><span class="v serif" id="stPlaces">0</span><span class="l">places</span></div>
+      <div class="stat"><span class="v serif" id="stPeople">0</span><span class="l" id="lPeople">people</span></div>
+      <div class="stat"><span class="v serif" id="stTies">0</span><span class="l" id="lTies">ties</span></div>
+      <div class="stat"><span class="v serif" id="stPlaces">0</span><span class="l" id="lPlaces">places</span></div>
     </div>
   </div>
 
   <div class="hud" id="tr">
-    <div class="k">the year</div>
+    <div class="k" id="hudYear">the year</div>
     <div class="v serif" id="yr">—</div>
     <div class="note" id="yrNote"></div>
   </div>
@@ -312,13 +312,13 @@
     <div class="story" id="cStory" style="display:none"></div>
     <div class="prov" id="cProv" style="display:none"></div>
     <div class="grid">
-      <div><div class="k">place</div><div class="val" id="cPlace"></div></div>
-      <div><div class="k">coordinates</div><div class="val mono" id="cCoords"></div></div>
+      <div><div class="k" id="kPlace">place</div><div class="val" id="cPlace"></div></div>
+      <div><div class="k" id="kCoords">coordinates</div><div class="val mono" id="cCoords"></div></div>
     </div>
     </div>
   </div></div>
 
-  <div id="gate"><div class="box" id="gateBox"><div class="spin"></div><p style="margin-top:16px">Reading your forest…</p></div></div>
+  <div id="gate"><div class="box" id="gateBox"><div class="spin"></div><p style="margin-top:16px" id="gateReading">Reading your forest…</p></div></div>
 </div>
 
 <div class="veil"></div>
@@ -400,6 +400,7 @@
    ========================================================================= */
 const $ = s => document.querySelector(s);
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const PT = () => (window.PLACE_T && window.PLACE_T[(window.curLang&&window.curLang())||'en']) || {};
 
 const SUPABASE_URL = 'https://oabcdrktuikifbormjip.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
@@ -599,7 +600,7 @@ function updateHandle(){ handleEl.setAttribute('transform',`rotate(${accAngle*18
 function setYear(y, force){ y=Math.max(Y_MIN,Math.min(Y_MAX,Math.round(y)));
   if(!force && y===YEAR){ updateHandle(); return; }
   YEAR=y; if(force) setupWheel();
-  $('#yr').textContent=y; $('#yrNote').textContent = y>=Y_MAX?'the latest we have':(y<=Y_MIN?'the earliest photograph':'');
+  $('#yr').textContent=y; $('#yrNote').textContent = y>=Y_MAX?(PT().latest||'the latest we have'):(y<=Y_MIN?(PT().earliest||'the earliest photograph'):'');
   updateHandle(); updateTime(y);
   if(window.__lfOnYear) window.__lfOnYear(y); }
 function pAng(cx,cy){ const r=dialSvg.getBoundingClientRect(); return Math.atan2(cy-(r.top+r.height/2), cx-(r.left+r.width/2)); }
@@ -665,7 +666,7 @@ async function faceInto(disc, art, box){
   disc.innerHTML='';
   try{
     const s = await sb.storage.from('family').createSignedUrl(art.storage_path, 3600, LFDB.img(art.storage_path,1000));
-    const url = s.data && s.data.signedUrl; if(!url){ disc.textContent='photo'; return; }
+    const url = s.data && s.data.signedUrl; if(!url){ disc.textContent=PT().photo||'photo'; return; }
     const img = new Image(); img.crossOrigin='anonymous';
     img.onload = ()=>{ const cv=document.createElement('canvas'); cv.width=cv.height=128; const g=cv.getContext('2d');
       if(box && box.w>0 && box.h>0){ const pad=0.35; let bx=(box.x-box.w*pad), by=(box.y-box.h*pad), bw=box.w*(1+2*pad), bh=box.h*(1+2*pad);
@@ -674,9 +675,9 @@ async function faceInto(disc, art, box){
         g.drawImage(img, sx,sy, ss,ss, 0,0,128,128);
       } else { const side=Math.min(img.naturalWidth,img.naturalHeight); g.drawImage(img,(img.naturalWidth-side)/2,(img.naturalHeight-side)/2,side,side,0,0,128,128); }
       disc.appendChild(cv); };
-    img.onerror=()=>{ disc.textContent='photo'; };
+    img.onerror=()=>{ disc.textContent=PT().photo||'photo'; };
     img.src=url;
-  }catch(e){ disc.textContent='photo'; }
+  }catch(e){ disc.textContent=PT().photo||'photo'; }
 }
 function openCard(p){
   $('#cName').textContent=p.name;
@@ -693,7 +694,7 @@ function openCard(p){
     const bits=[who?'told by '+who:'', cert].filter(Boolean).join(' · ');
     if(bits){ cProv.style.display='block'; cProv.innerHTML='<span>'+bits+'</span>'; } else cProv.style.display='none'; }
   else { cStory.style.display='none'; cProv.style.display='none'; }
-  const disc=$('#cDisc'); disc.textContent='photo';
+  const disc=$('#cDisc'); disc.textContent=PT().photo||'photo';
   if(rec) faceInto(disc, rec.art, rec.box);
   $('#card').classList.add('show');
   const cb=document.querySelector('#card .cbody'); if(cb) cb.scrollTop=0;
@@ -746,18 +747,18 @@ tick();
 /* ---- sign-in gate (shares the app's session; same origin) ---- */
 function showSignIn(){
   const box=$('#gateBox');
-  box.innerHTML='<h2 class="serif">Your forest</h2><p>Sign in with your keeper account to see your real family on the globe.</p>'+
+  box.innerHTML='<h2 class="serif">'+(PT().gateT2||'Your forest')+'</h2><p>'+(PT().gateP2||'Sign in with your keeper account to see your real family on the globe.')+'</p>'+
     '<input id="gEmail" type="email" placeholder="you@example.com" autocomplete="email"/>'+
     '<input id="gPass" type="password" placeholder="password" autocomplete="current-password"/>'+
-    '<button id="gBtn">Sign in</button><div class="msg" id="gMsg"></div>';
+    '<button id="gBtn">'+(PT().signIn||'Sign in')+'</button><div class="msg" id="gMsg"></div>';
   $('#gBtn').onclick=async()=>{ const email=$('#gEmail').value.trim(), password=$('#gPass').value; const m=$('#gMsg');
     if(!email||!password){ m.textContent='Enter your email and password.'; return; }
     m.style.color='rgba(206,221,240,.65)'; m.textContent='Signing in…';
     const { error }=await sb.auth.signInWithPassword({email,password});
     if(error){ m.style.color='#ff9a8f'; m.textContent=error.message; }
-    else { box.innerHTML='<div class="spin"></div><p style="margin-top:16px">Reading your forest…</p>'; load(); } };
+    else { box.innerHTML='<div class="spin"></div><p style="margin-top:16px">'+(PT().reading||'Reading your forest…')+'</p>'; load(); } };
 }
-function gateError(msg){ $('#gate').style.display='flex'; $('#gateBox').innerHTML='<h2 class="serif">Hmm</h2><p>'+msg+'</p><button onclick="location.reload()">Try again</button>'; }
+function gateError(msg){ $('#gate').style.display='flex'; $('#gateBox').innerHTML='<h2 class="serif">'+(PT().hmm||'Hmm')+'</h2><p>'+msg+'</p><button onclick="location.reload()">'+(PT().tryAgain||'Try again')+'</button>'; }
 
 load();
 </script>
@@ -787,7 +788,12 @@ load();
       dSeen:'Everyone seen here', dSeenS:'The people recognised here.',
       dMoments:'Moments & stories', dMomentsS:'Every photograph kept from here.',
       nomoments:'No photographs from here have been gathered yet.', noseen:'No one has been recognised here yet.',
-      leaf:'The place remembers.', more:'more', region:'a place' },
+      leaf:'The place remembers.', more:'more', region:'a place',
+      appName:'The Living Forest', stPeople:'people', stTies:'ties', stPlaces:'places', theyear:'the year',
+      latest:'the latest we have', earliest:'the earliest photograph', photo:'photo', meet:'meet them →',
+      kPlace:'place', kCoords:'coordinates', reading:'Reading your forest…', gateT2:'Your forest',
+      gateP2:'Sign in with your keeper account to see your real family on the globe.', signIn:'Sign in',
+      hmm:'Hmm', tryAgain:'Try again', openMoment:'Open the full moment →' },
     ru:{ story:'история', onglobe:'На глобусе', names:'Имена этого места', moments:'Моменты здесь', seen:'Здесь бывали', ways:'Куда дальше',
       told:'Рассказала семья', toldby:'Со слов', locatedapp:'Найдено приложением', waitingkeeper:'Ждёт хранителя',
       suggestedby:'Предложил', waiting:'ждёт', approve:'Принять', decline:'Отклонить', you:'вы', lang:{en:'Английский',ru:'Русский',he:'Иврит'},
@@ -797,9 +803,14 @@ load();
       dSeen:'Все, кто здесь был', dSeenS:'Люди, узнанные здесь.',
       dMoments:'Моменты и истории', dMomentsS:'Все фотографии отсюда.',
       nomoments:'Фотографий отсюда пока не собрано.', noseen:'Здесь пока никого не узнали.',
-      leaf:'Место помнит.', more:'ещё', region:'место' },
+      leaf:'Место помнит.', more:'ещё', region:'место',
+      appName:'Живой лес', stPeople:'людей', stTies:'связей', stPlaces:'мест', theyear:'год',
+      latest:'самое свежее, что есть', earliest:'самая ранняя фотография', photo:'фото', meet:'познакомиться →',
+      kPlace:'место', kCoords:'координаты', reading:'Читаем ваш лес…', gateT2:'Ваш лес',
+      gateP2:'Войдите с аккаунтом хранителя, чтобы увидеть свою семью на глобусе.', signIn:'Войти',
+      hmm:'Хм', tryAgain:'Попробовать ещё раз', openMoment:'Открыть весь момент →' },
     he:{ story:'הסיפור', onglobe:'על הגלובוס', names:'שמות המקום', moments:'רגעים כאן', seen:'מי שהיה כאן', ways:'לאן ממשיכים',
-      told:'המשפחה סיפרה', toldby:'מפי', locatedapp:'אותר על-ידי היישום', waitingkeeper:'ממתין למנהל',
+      told:'המשפחה סיפרה', toldby:'מפי', locatedapp:'אותר על-ידי היישום', waitingkeeper:'ממתין לשומר',
       suggestedby:'הוצע על-ידי', waiting:'ממתין', approve:'לאשר', decline:'לדחות', you:'אתם', lang:{en:'אנגלית',ru:'רוסית',he:'עברית'},
       photographs:'תצלומים', person:'איש', people:'אנשים', years:'שנים', year:'שנה', photograph:'תצלום',
       emptyw:'הסיפור של הרגע הזה מחכה למספר שלו.', emptyc:'שאלו מישהו שמכיר ←',
@@ -807,10 +818,20 @@ load();
       dSeen:'כל מי שהיה כאן', dSeenS:'האנשים שזוהו כאן.',
       dMoments:'רגעים וסיפורים', dMomentsS:'כל התצלומים ששמורים מכאן.',
       nomoments:'עדיין לא נאספו תצלומים מכאן.', noseen:'עדיין לא זוהה כאן איש.',
-      leaf:'המקום זוכר.', more:'עוד', region:'מקום' }
+      leaf:'המקום זוכר.', more:'עוד', region:'מקום',
+      appName:'היער החי', stPeople:'אנשים', stTies:'קשרים', stPlaces:'מקומות', theyear:'השנה',
+      latest:'העדכני ביותר שיש', earliest:'התצלום המוקדם ביותר', photo:'תצלום', meet:'להכיר אותם ←',
+      kPlace:'מקום', kCoords:'קואורדינטות', reading:'קוראים את היער שלכם…', gateT2:'היער שלכם',
+      gateP2:'התחברו עם חשבון השומר כדי לראות את המשפחה על הגלובוס.', signIn:'להתחבר',
+      hmm:'המ…', tryAgain:'לנסות שוב', openMoment:'לפתוח את הרגע המלא ←' }
   };
   let lang='en'; try{ const s=localStorage.getItem('lf_lang'); if(s&&T[s]) lang=s; }catch(e){}
   if(!localStorage.getItem('lf_lang')){ const d=(navigator.language||'en').slice(0,2); if(T[d]) lang=d; }
+  window.PLACE_T=T;
+  (function(){ const t=T[lang];
+    [['hudApp',t.appName],['lPeople',t.stPeople],['lTies',t.stTies],['lPlaces',t.stPlaces],['hudYear',t.theyear],['cMeet',t.meet],['kPlace',t.kPlace],['kCoords',t.kCoords],['gateReading',t.reading]]
+      .forEach(function(p){ var e=document.getElementById(p[0]); if(e&&p[1]) e.textContent=p[1]; });
+  })();
   let isKeeper=false;              /* default view = family; flips only for the keeper */
   let model=null;                  /* built once from the DB, re-rendered on lang/keeper change */
 
@@ -878,6 +899,8 @@ load();
     $('pPlacement').innerHTML=pv('cool', t.locatedapp);
     $('pLeaf').textContent=t.leaf;
     $('tNames').textContent=t.names; $('tMoments').textContent=t.moments; $('tSeen').textContent=t.seen;
+    [['hudApp',t.appName],['lPeople',t.stPeople],['lTies',t.stTies],['lPlaces',t.stPlaces],['hudYear',t.theyear],['cMeet',t.meet],['kPlace',t.kPlace],['kCoords',t.kCoords],['gateReading',t.reading]]
+      .forEach(function(p){ var e=document.getElementById(p[0]); if(e&&p[1]) e.textContent=p[1]; });
     document.querySelector('#pScrollcue').childNodes[0].nodeValue=t.story+' ';
 
     /* side stats (real counts) */
@@ -934,7 +957,7 @@ load();
     lb.querySelector('.lx-ppl').innerHTML = (mo.pplList||[]).map(n=>'<span class="tag">'+esc(n)+'</span>').join('');
     lb.querySelector('.lx-story').innerHTML = mo.body ? '“'+esc(mo.body)+'”' : '<span style="color:rgba(205,191,164,.85);font-style:italic">'+t.emptyw+'</span>';
     lb.querySelector('.lx-told').innerHTML = (mo.body && mo.teller) ? (t.toldby+' <b>'+esc(mo.teller)+'</b>') : '';
-    const nEl=$('lxNote'); if(nEl) nEl.innerHTML = mo.id ? '<a href="moment-real.html?id='+encodeURIComponent(mo.id)+'" style="color:#f3cd84;text-decoration:none;font-weight:600;font-size:13.5px;">Open the full moment →</a>' : '';
+    const nEl=$('lxNote'); if(nEl) nEl.innerHTML = mo.id ? '<a href="moment-real.html?id='+encodeURIComponent(mo.id)+'" style="color:#f3cd84;text-decoration:none;font-weight:600;font-size:13.5px;">'+(t.openMoment||'Open the full moment →')+'</a>' : '';
     lb.classList.add('show');
     if(mo.path){ const u=await signedUrl(mo.path); const im=lb.querySelector('.lx-img img'); if(im&&u) im.src=u; }
   }

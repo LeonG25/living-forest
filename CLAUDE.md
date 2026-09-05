@@ -650,6 +650,12 @@ assuming the shell is gone.
 
 ## 4 · PARKED — decided, not now (do not build unasked)
 
+### Two orphan pages — wait until the work is finished (Leon, 2026-09-05)
+Nothing links to these two pages; both are English-only. Leon ruled: leave them
+as they are until the build is done, then decide (wire in / translate / retire).
+- home-real — the star-sky home: https://leong25.github.io/living-forest/home-real.html
+- optimize-photos — keeper photo-cleanup utility: https://leong25.github.io/living-forest/optimize-photos.html
+
 *The orientation table has pointed at "§4 PARKED" since 2026-08-09 and there was no such
 section: it was lost in the consolidation. Restored 2026-08-14.*
 
