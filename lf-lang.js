@@ -19,7 +19,9 @@
     var s=document.createElement('style'); s.id='lfLangCss';
     /* one switcher per page (Leon 2026-09-06): where this shared button lives,
        any page-local language pill steps aside - no more twin pills. */
-    var hide='#langBtn,.langpill{display:none !important;}';
+    /* Leon 2026-09-06: the pages carry NO language button - only the menu's
+       bottom row opens the list. The hidden button still answers the menu's call. */
+    var hide='#langBtn,.langpill,.lflang-btn{display:none !important;}';
     s.textContent=
       '.lflang-btn{position:fixed;top:max(14px,env(safe-area-inset-top));inset-inline-end:16px;z-index:40;'+
       'width:40px;height:40px;border-radius:12px;display:grid;place-items:center;cursor:pointer;'+
