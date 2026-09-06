@@ -122,15 +122,20 @@
   .sceneno .dot{ width:6px; height:6px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px 1px var(--gold); animation:flick 3.4s ease-in-out infinite; }
   .sceneno.cool{ border-color:rgba(127,180,216,.34); } .sceneno.cool .dot{ background:var(--cool); box-shadow:0 0 8px 1px var(--cool); }
   @keyframes flick{ 0%,100%{opacity:.7; transform:scale(.9);} 45%{opacity:1; transform:scale(1.14);} }
-  .rcap{ position:absolute; inset-inline:14px; bottom:14px; z-index:4; }
+  /* Instagram style (Leon 2026-09-05): the words live UNDER the photograph.
+     On the glass itself only a few small words - the when-and-where chip. */
+  .wwchip{ position:absolute; inset-inline-start:12px; bottom:12px; z-index:4; font-size:11px; color:#efe6cd;
+    letter-spacing:.02em; padding:5px 11px; border-radius:99px; background:rgba(6,10,22,.55);
+    backdrop-filter:blur(8px); border:1px solid rgba(243,205,132,.3); }
+  .rcapx{ margin:12px 2px 0; }
   /* the reel had no style for this at all; the person page's, so one app looks like one app */
-  .rcap .stepin{ margin-top:10px; display:inline-flex; align-items:center; gap:7px; font-size:12.5px;
+  .rcapx .stepin{ margin-top:10px; margin-inline-end:8px; display:inline-flex; align-items:center; gap:7px; font-size:12.5px;
     color:var(--gold,#f3cd84); text-decoration:none; border:1px solid rgba(243,205,132,.3);
     border-radius:11px; padding:7px 12px; background:rgba(243,205,132,.06); }
-  .rcap .stepin:after{ content:"\2192"; }
-  .screen[dir="rtl"] .rcap .stepin:after{ content:"\2190"; }
-  .rcap .telling p{ font-family:'Newsreader',serif; font-size:19px; line-height:1.34; color:#f8efdb; text-shadow:0 2px 18px rgba(0,0,0,.7); }
-  .rcap .telling p em{ color:var(--gold-hi); font-style:italic; }
+  .rcapx .stepin:after{ content:"\2192"; }
+  .screen[dir="rtl"] .rcapx .stepin:after{ content:"\2190"; }
+  .rcapx .telling p{ font-family:'Newsreader',serif; font-size:17px; line-height:1.42; color:#f2e8d2; }
+  .rcapx .telling p em{ color:var(--gold-hi); font-style:italic; }
   .toldby{ display:inline-flex; align-items:center; gap:8px; margin-top:11px; padding:6px 12px 6px 12px; border-radius:99px; background:rgba(6,10,22,.6); backdrop-filter:blur(8px); border:1px solid rgba(243,205,132,.4); }
   .toldby .flame{ width:7px; height:7px; border-radius:50%; background:var(--gold); box-shadow:0 0 9px 2px rgba(243,205,132,.8); animation:flick 3.4s ease-in-out infinite; }
   .toldby span{ font-size:11.5px; color:var(--gold-hi); } .toldby span b{ font-family:'Newsreader',serif; font-weight:400; color:#fbf5e8; }
@@ -721,16 +726,16 @@
         <div class="leak"></div><div class="grain"></div><div class="vig"></div>
         <div class="gate top">${gatesRow()}</div><div class="gate bot">${gatesRow()}</div>
         <div class="sceneno ${cool?'cool':''}"><span class="dot"></span> ${esc(L.sceneOf(state.idx+1,scenes.length))} · ${esc(L.facet[s.facet]||L.facetEnd)}</div>
-        <div class="rcap">
-          ${s.cap?`<div class="telling"><p>${esc(s.cap)}</p></div>`:''}
-          ${s.whenwhere?`<div class="whenwhere" style="opacity:.72;font-size:12px;margin-top:2px">${esc(s.whenwhere)}</div>`:''}
-          ${told}
-          <!-- Stepping in was a tap on the photograph with nothing to say so, and a story
-               without a photograph had no way in at all. Now it is a plain link on every
-               story that has a moment behind it. -->
-          ${s.artId?`<a class="stepin" href="moment-real.html?id=${esc(s.artId)}">${esc(L.stepIn)}</a>`:''}
-          ${s.cta?`<a class="stepin" href="${esc(s.cta)}">${esc(s.ctaLabel||'')}</a>`:''}
-        </div>
+        ${s.whenwhere?`<div class="wwchip">${esc(s.whenwhere)}</div>`:''}
+      </div>
+      <div class="rcapx">
+        ${s.cap?`<div class="telling"><p>${esc(s.cap)}</p></div>`:''}
+        ${told}
+        <!-- Stepping in was a tap on the photograph with nothing to say so, and a story
+             without a photograph had no way in at all. Now it is a plain link on every
+             story that has a moment behind it. -->
+        ${s.artId?`<a class="stepin" href="moment-real.html?id=${esc(s.artId)}">${esc(L.stepIn)}</a>`:''}
+        ${s.cta?`<a class="stepin" href="${esc(s.cta)}">${esc(s.ctaLabel||'')}</a>`:''}
       </div>
       <div class="provline"><span class="lp ${provCls}"></span> ${esc(provTxt)}</div>
       ${kindleSpine()}
