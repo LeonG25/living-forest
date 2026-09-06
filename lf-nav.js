@@ -130,6 +130,9 @@
   + '#lfnav.open #lfnavPanel{display:flex;}'
   + '#lfnavPanel a{display:flex;gap:10px;align-items:center;color:#e8eef8;text-decoration:none;font-size:14.5px;padding:10px 12px;border-radius:10px;line-height:1;}'
   + '#lfnavPanel a:active{background:rgba(243,205,132,.16);}'
+  /* breathing room at every page's end (Leon 2026-09-06): scrolling content can
+     always rise clear of the fixed menu corner - nothing is ever stuck beneath it */
+  + 'body{padding-bottom:calc(92px + env(safe-area-inset-bottom));}'
   + '#lfnavPanel a.cur{color:#f3cd84;}'
   + '#lfnavPanel a .ic{width:18px;text-align:center;opacity:.9;}'
   + '#lfnavBtn{touch-action:none;width:48px;height:48px;border-radius:50%;border:1px solid rgba(243,205,132,.5);background:rgba(9,16,30,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#f3cd84;font-size:20px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0;flex:0 0 auto;box-sizing:border-box;box-shadow:0 4px 18px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;}'
