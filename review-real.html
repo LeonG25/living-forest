@@ -370,7 +370,7 @@
       aTelling:'A telling',
       aedit:{ moment_delete:'Asks to remove this moment', photo_delete:'Asks to remove the photograph', photo:'Asks to replace the photograph', where:'Asks to change where', when:'Asks to change when' },
       askGone:'gone from the forest',
-      fld:{ given:'given name', family:'family name', patronymic:'patronymic', maiden:'maiden name', called:'called', honorific:'honorific', nickname:'nickname', lived:'lived in', pbirth:'born in', birth:'born', death:'died', birth_prec:'date precision', living:'still living?', gender:'gender', occupation:'occupation', bio:'about', langspoken:'languages spoken', source:'source', face:'the portrait', custom:'a detail', kin:'relation', field:'detail' } },
+      fld:{ given:'given name', family:'family name', patronymic:'patronymic', maiden:'maiden name', called:'called', honorific:'honorific', nickname:'nickname', lived:'lived in', pbirth:'born in', birth:'born', death:'died', birth_prec:'date precision', living:'still living?', gender:'gender', occupation:'occupation', name_meaning:'name meaning', bio:'about', langspoken:'languages spoken', source:'source', face:'the portrait', custom:'a detail', kin:'relation', field:'detail' } },
     ru:{ dir:'ltr', native:'Русский', en:'Russian',
       topK:'Хранитель', topN:'Ждёт вас',
       gateTitle:'Врата хранителя', gateSub:'Войдите, чтобы увидеть, что семья ждёт одобрить.', signin:'Войти',
@@ -402,7 +402,7 @@
       aTelling:'Рассказ',
       aedit:{ moment_delete:'Просит удалить этот момент', photo_delete:'Просит удалить фотографию', photo:'Просит заменить фотографию', where:'Просит изменить место', when:'Просит изменить дату' },
       askGone:'исчезнет из леса',
-      fld:{ given:'имя', family:'фамилия', patronymic:'отчество', maiden:'девичья', called:'зовут', honorific:'титул', nickname:'прозвище', lived:'жил(а) в', pbirth:'место рождения', birth:'родился', death:'умер', birth_prec:'точность даты', living:'ещё жив?', gender:'пол', occupation:'занятие', bio:'о человеке', langspoken:'языки', source:'источник', face:'портрет', custom:'деталь', kin:'связь', field:'деталь' } },
+      fld:{ given:'имя', family:'фамилия', patronymic:'отчество', maiden:'девичья', called:'зовут', honorific:'титул', nickname:'прозвище', lived:'жил(а) в', pbirth:'место рождения', birth:'родился', death:'умер', birth_prec:'точность даты', living:'ещё жив?', gender:'пол', occupation:'занятие', name_meaning:'значение имени', bio:'о человеке', langspoken:'языки', source:'источник', face:'портрет', custom:'деталь', kin:'связь', field:'деталь' } },
     he:{ dir:'rtl', native:'עברית', en:'Hebrew',
       topK:'שומר', topN:'מחכה לך',
       gateTitle:'שער השומר', gateSub:'היכנסו כדי לראות מה המשפחה מחכה שיתקבל.', signin:'כניסה',
@@ -434,7 +434,7 @@
       aTelling:'סיפור',
       aedit:{ moment_delete:'מבקש להסיר את הרגע', photo_delete:'מבקש להסיר את התצלום', photo:'מבקש להחליף את התצלום', where:'מבקש לשנות את המקום', when:'מבקש לשנות את התאריך' },
       askGone:'ייעלם מהיער',
-      fld:{ given:'שם פרטי', family:'שם משפחה', patronymic:'שם האב', maiden:'שם נעורים', called:'קוראים', honorific:'תואר', nickname:'כינוי', lived:'גר ב', pbirth:'מקום לידה', birth:'נולד', death:'נפטר', birth_prec:'דיוק תאריך', living:'עדיין בחיים?', gender:'מגדר', occupation:'עיסוק', bio:'אודות', langspoken:'שפות', source:'מקור', face:'דיוקן', custom:'פרט', kin:'קשר', field:'פרט' } }
+      fld:{ given:'שם פרטי', family:'שם משפחה', patronymic:'שם האב', maiden:'שם נעורים', called:'קוראים', honorific:'תואר', nickname:'כינוי', lived:'גר ב', pbirth:'מקום לידה', birth:'נולד', death:'נפטר', birth_prec:'דיוק תאריך', living:'עדיין בחיים?', gender:'מגדר', occupation:'עיסוק', name_meaning:'משמעות השם', bio:'אודות', langspoken:'שפות', source:'מקור', face:'דיוקן', custom:'פרט', kin:'קשר', field:'פרט' } }
   };
   const d=()=>T[state.lang];
   function num(n,l){ if(l==='ru'){ const m={0:'Ноль',1:'Один',2:'Два',3:'Три',4:'Четыре',5:'Пять',6:'Шесть',7:'Семь',8:'Восемь',9:'Девять'}; return m[n]||String(n); }
