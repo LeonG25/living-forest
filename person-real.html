@@ -2525,7 +2525,22 @@
   /* ---------- reload + gate + boot ---------- */
   async function reload(){ await loadData();
     try{ if(window.LFDB&&LFDB.places) PLMAP=await LFDB.places(sb,state.lang); }catch(e){}
-    seed(); render(); }
+    seed(); render(); localizePlaceBoxes(); }
+  /* THE BIRTHPLACE BOX SPOKE THE SPELLING IT WAS TYPED IN (Leon, 2026-09-06: his Russian page
+     said Basya was born in לובוניצ'י). Wrapping the value in pn() at render time was not
+     enough on its own - the card can be drawn before the place table has arrived, and a card
+     already on screen is not redrawn when it does. So the boxes are relabelled here, once,
+     after the table is certainly loaded. It only ever REPLACES a stored spelling with the
+     same place's name in the reader's language; a box the reader is typing in is left alone. */
+  function localizePlaceBoxes(){
+    try{
+      document.querySelectorAll('[data-field="pbirth"],[data-newhome],[data-field="lived"]').forEach(function(el){
+        if(!el || el===document.activeElement) return;
+        var v=(el.value||'').trim(); if(!v) return;
+        var loc=pn(v); if(loc && loc!==v) el.value=loc;
+      });
+    }catch(e){}
+  }
   function showGate(){ const L=d(); let g=$('#gate'); if(!g){ g=document.createElement('div'); g.id='gate'; $('#dev').appendChild(g); }
     g.setAttribute('style','position:absolute;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(4,7,14,.9);backdrop-filter:blur(6px)');
     g.innerHTML=`<div style="width:100%;max-width:320px;background:linear-gradient(180deg,#0e1c31,#081120);border:1px solid var(--hair);border-radius:20px;padding:24px;text-align:center">
