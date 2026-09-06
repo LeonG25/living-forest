@@ -362,6 +362,14 @@ lives UNDER the hero frame; ON the glass only a few small words remain — the
 when-and-where chip (.wwchip, 11px pill bottom-left: «Ей здесь 8 · 1992 · ...»)
 and the top scene chip. Geometry-verified: rcapx.top(468) > hero.bottom(456),
 chip inside the frame, zero errors.
+MAP GETS ITS REGION (Leon 2026-09-06, `4426b64`): a lone town no longer floats
+on black — the mini-map window opens to at least 8° of latitude (aspect-corrected
+for the frame), and country shapes are drawn beneath (fill #142639, thin cool
+borders) from the SAME world-atlas countries-110m topojson the globes fetch
+(topojson-client script added to reel-real head; BORDERS loaded in loadData,
+graceful fallback to the plain dark map if the fetch fails). Probe: Bobruisk's
+places scene renders 9 country shapes under the gold dot, label localized
+(Бобруйск in RU), zero errors.
 
 **NAME MEANINGS PIPELINE SHIPPED (2026-09-05, `ace5691`).** 21 people with
 published given names now have AI-written name meanings in ALL THREE languages
