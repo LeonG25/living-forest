@@ -979,6 +979,63 @@ the stories told by this person.
 (House rules apply when built: dynamic from live data, never hard-coded; designer
 pass before any page work; face rules above are hard constraints.)
 
+### THE MAILBOX - decided by Leon 2026-09-06, DESIGNER PASS NEXT (not built)
+
+Leon's feature, his words: a mailbox fully inside the app - no mail leaves or enters. Every
+registered user has one. This section is the spec; the designer brief is at the end of it.
+NOTHING IS BUILT YET. Two questions were still open when this was written (marked OPEN).
+
+**Who can be written to.** A person who is (a) registered in the app - an account anchored
+to them, since an unanchored account has no mailbox - (b) ALIVE, and (c) in the writer's
+visible tree. Dead people never appear as recipients; nor does anyone who registered but has
+not yet been welcomed through the gate (Leon agreed: no messages before you are in).
+
+**Privacy - Leon ruled twice, plainly.** Messages are PRIVATE between the two people. A
+keeper may NOT read them. A parent may NOT read a child's. There is to be no keeper view of
+messages anywhere in the app, and RLS must allow SELECT only to the sender and the recipient
+- not to keepers, who can read almost everything else. HONEST LIMIT, told to Leon: this is
+privacy inside the APP; anyone holding the database's own keys (Leon) could still read rows,
+as with any system. It is not end-to-end encrypted and must never be described as such.
+
+**The message.** Text only. One recipient only - no groups. May contain links, and links are
+IN-APP ONLY (Leon: yes) - a path inside the forest, never the outside internet; anything
+else is shown as plain text, not made tappable.
+
+**Language.** Leon agreed with Claude's recommendation: show the message AS WRITTEN, with a
+'translate' tap. The app never silently rewrites what one person wrote to another - this is
+the one place where the original words matter more than the reader's convenience.
+
+**The list.** Incoming and outgoing in ONE list, visibly different from each other. Unread
+incoming pinned to the TOP and in bold. Old-style SMS: simple, flat, plain.
+
+**Read state.** A message becomes read when it has been FULLY SHOWN (Leon) - not on opening
+the mailbox, and not on a half-scrolled long message.
+
+**Actions.** Reply and FORWARD (Leon added forward). Delete: the owner may delete anything
+from their own mailbox, and what is deleted is REALLY deleted - a hard delete, no trash, no
+hidden row. OPEN Q: does deleting a message I SENT remove it from the recipient's mailbox
+too, or does each side own their own copy? Claude's recommendation: each side owns its copy,
+because otherwise a sender can erase what the other person was told.
+
+**The menu button.** A mailbox row in the (+) menu, SECOND FROM THE BOTTOM - the language row
+stays last. With an unread message the button becomes a special icon; it returns to normal
+the moment no unread messages remain. OPEN Q: a count on the icon as well, or the changed
+icon alone?
+
+**Claude's engineering notes (not Leon's to decide).** One table (sender, recipient, body,
+sent_at, read_at, plus a per-side delete). The unread check is one small count query at page
+load in lf-nav, so the icon is right on every page; no polling unless it proves needed.
+Forward carries the text and marks it as forwarded rather than faking a new original.
+
+**DESIGNER BRIEF (Claude Design, before any engineering - firm house rule).**
+Draw: (1) the mailbox list with all four states in one view - unread incoming bold at top,
+read incoming, outgoing, and empty; (2) one message opened, with reply / forward / delete;
+(3) the write screen, including choosing the one recipient from the living registered people
+of the visible tree; (4) the (+) menu showing the mailbox row in its place, both icons -
+normal and 'you have mail'. Three languages including Hebrew RTL. House rules: dark base,
+alive background, and the truth guardrail - a message is a PERSON's words, so gold, never
+the cool blue of app-made facts. It must feel like an old SMS list: plain, quick, unclever.
+
 ### Twelve ideas for the children (Claude's list, 2026-09-06) - PARKED, discuss before building
 
 Leon: his sons are 10 and 12; the app with its six games is "not fun enough, not game-like
