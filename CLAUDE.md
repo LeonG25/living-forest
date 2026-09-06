@@ -415,6 +415,9 @@ current language (EN/RU/HE letters + native name) and opens the SAME list sheet
 (LFLang.open added). The on-page top-right button stays, per Leon.
 MENU HEIGHT (Leon 2026-09-06): the panel clipped its new bottom row - max-height
 min(68vh,520px) -> calc(100vh - 150px), lf-nav v39; still scrolls if ever taller.
+NO ON-PAGE LANGUAGE BUTTONS (Leon 2026-09-06, lf-lang v6): .lflang-btn hidden
+too - the menu row is the ONLY visible switcher; it still clicks the hidden
+button, so the sheet works unchanged. All pages, all languages, one rule.
 (Бобруйск in RU), zero errors.
 
 **NAME MEANINGS PIPELINE SHIPPED (2026-09-05, `ace5691`).** 21 people with
