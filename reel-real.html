@@ -449,7 +449,8 @@
        artefacts query never asked for `body`. The words are the story; when and where
        are a caption beneath them. */
     memories=tagged.map(t=>({ id:t.artefact_id, storage_path:t.storage_path, cap:(t.body||'').trim(),
-      whenwhere:[t.meta&&t.meta.when,t.meta&&t.meta.where].filter(Boolean).join(' · '),
+      /* the small chip on the glass names a place too - the reader's spelling there as well */
+      whenwhere:[t.meta&&t.meta.when,plc(t.meta&&t.meta.where)].filter(Boolean).join(' · '),
       yr:yearOf(t.meta), contributor:t.contributor_id||null,
       teller:t.contributor_id?(contribNames[t.contributor_id]||''):'' }));
     /* the photos ARE the film: earliest to latest; the undated wait at the end */
@@ -597,6 +598,13 @@
       const v=String(gr[k]||'').toLowerCase(); if(!v) return;
       if(s===v||s.indexOf(v)>=0||v.indexOf(s)>=0) best=gr; }); }); return best; }
   const geoLabel=gr=>gr['name_'+state.lang]||gr.name_en||gr.name||gr.label||'';
+  /* THE MAP SPOKE RUSSIAN AND THE LINE UNDER IT SPOKE HEBREW (Leon, 2026-09-06). The dot on
+     the mini-map was already labelled Любоничи by geoLabel, while the caption printed the
+     stored spelling raw - the same place, two alphabets, one screen. Every place named in a
+     caption goes through here now: the forest's name for it in the reader's language, and
+     the words as typed only when the forest does not know the place at all. */
+  function plc(v){ v=String(v||'').trim(); if(!v) return v;
+    const gr=geoFind(v); const nm=gr?geoLabel(gr):''; return nm||v; }
   function placesMapSVG(){
     const src=livedRows(); const pb=pubNewest('pbirth','und')||pubNewest('pbirth','en');
     if(pb&&!src.some(v=>v.toLowerCase().indexOf(pb.toLowerCase())>=0)) src.unshift(pb);
@@ -665,7 +673,7 @@
       const dy=person.death_date?String(person.death_date).slice(0,4):(pubNewest('death','und')?String(pubNewest('death','und')).slice(0,4):'');
       const occ=pubNewest('occupation',l)||pubNewest('occupation','en');
       const pb=pubNewest('pbirth','und')||pubNewest('pbirth','en');
-      if(byS) parts.push(d().born+' '+byS+(pb?(' · '+pb):'')); if(dy) parts.push(d().died+' '+dy);
+      if(byS) parts.push(d().born+' '+byS+(pb?(' · '+plc(pb)):'')); if(dy) parts.push(d().died+' '+dy);
       if(occ) parts.push(occ);
       let lp=null; if(by!=null){ let bd=1e9; ph.forEach(m=>{ if(m.yr!=null){ const dd2=Math.abs(m.yr-by); if(dd2<bd){ bd=dd2; lp=m; } } }); }
       scenes.push({facet:'life', prov:'cool', photo:lp?lp.storage_path:'', seed:2, tile:lifeSVG,
@@ -674,7 +682,7 @@
     if(LIT.places){
       const mapSVG=placesMapSVG();
       const lived=livedRows(); const pb=pubNewest('pbirth','und')||pubNewest('pbirth','en');
-      const line=(pb?d().pbirth+' '+pb:'')+((pb&&lived.length)?' · ':'')+(lived.length?d().livedIn+' '+lived.join(', '):'');
+      const line=(pb?d().pbirth+' '+plc(pb):'')+((pb&&lived.length)?' · ':'')+(lived.length?d().livedIn+' '+lived.map(plc).join(', '):'');
       scenes.push({facet:'places', prov:'cool', tile:mapSVG?()=>mapSVG:placeSVG, cap:line||d().facet.places });
     }
     ph.forEach((m,i)=>{ const own=!!(m.contributor&&m.contributor===PERSON_ID);
@@ -781,7 +789,7 @@
       return [by?d().born+' '+by:'',dy?d().died+' '+dy:'',occ].filter(Boolean).join(' · ')||(LIT.life?d().facet.life:d().untold); }
     if(f==='story') return LIT.story?(d().facet.story+' · '+memories.length):d().untold;
     if(f==='kin') return LIT.kin?d().kinLine(rels.length):d().untold;
-    if(f==='places'){ if(LIT.places){ const lived=pubList('lived','und').map(x=>x.value); return lived.length?lived.join(', '):(pubNewest('pbirth','und')||pubNewest('pbirth','en')); } return d().placesGathering; }
+    if(f==='places'){ if(LIT.places){ const lived=pubList('lived','und').map(x=>plc(x.value)); return lived.length?lived.join(', '):plc(pubNewest('pbirth','und')||pubNewest('pbirth','en')); } return d().placesGathering; }
     if(f==='more') return LIT.more?d().facet.more:d().untold;
     return '';
   }
