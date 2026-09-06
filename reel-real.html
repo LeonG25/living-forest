@@ -434,7 +434,7 @@
     /* the whole published web of kinship, not just this person's edges - paths need it */
     try{ const {data:rp}=await sb.from('relationships').select('from_person,to_person,kind,status');
       EDGES=(rp||[]).filter(r=>r.status==null||r.status==='published')
-        .map(r=>({from:r.from_person,to:r.to_person,k:(r.kind==null||r.kind===''||r.kind==='parent')?'parent':'partner'}));
+        .map(r=>({from:r.from_person,to:r.to_person,k:(r.kind==null||r.kind===''||r.kind==='parent')?'parent':(r.kind==='sibling'?'sib':'partner')}));
       rels=EDGES.filter(e=>e.from===PERSON_ID||e.to===PERSON_ID).map((e,i)=>({id:i})); }catch(e){ rels=[]; }
     try{ const {data:pp2}=await sb.from('people').select('id,sex'); (pp2||[]).forEach(x=>SEXOF[x.id]=x.sex||''); }catch(e){}
     try{ const {data:gg}=await sb.from('place_geo').select('name,lat,lng,label,name_en,name_ru,name_he'); GEO=gg||[]; }catch(e){}
@@ -504,12 +504,13 @@
   function sexOf(id){ const s=SEXOF[id]||(id===PERSON_ID?(person&&person.sex||''):''); return /^f/i.test(s)?'f':(/^m/i.test(s)?'m':'n'); }
   const upOf=x=>EDGES.filter(e=>e.k==='parent'&&e.to===x).map(e=>e.from);
   const downOf=x=>EDGES.filter(e=>e.k==='parent'&&e.from===x).map(e=>e.to);
-  const sideOf=x=>EDGES.filter(e=>e.k!=='parent'&&(e.from===x||e.to===x)).map(e=>e.from===x?e.to:e.from);
+  const sideOf=x=>EDGES.filter(e=>e.k==='partner'&&(e.from===x||e.to===x)).map(e=>e.from===x?e.to:e.from);
+  const sibsOf=x=>EDGES.filter(e=>e.k==='sib'&&(e.from===x||e.to===x)).map(e=>e.from===x?e.to:e.from);
   function kinPath(a,b){ if(!a||!b) return null; if(a===b) return [];
     const prev={}; prev[a]={p:null}; let q=[a];
     for(let guard=0; guard<40 && q.length && !prev[b]; guard++){ const nq=[];
       for(const x of q){ const push=(y,tp)=>{ if(y&&!prev[y]){ prev[y]={p:x,t:tp}; nq.push(y); } };
-        upOf(x).forEach(y=>push(y,'up')); downOf(x).forEach(y=>push(y,'down')); sideOf(x).forEach(y=>push(y,'partner')); }
+        upOf(x).forEach(y=>push(y,'up')); downOf(x).forEach(y=>push(y,'down')); sibsOf(x).forEach(y=>push(y,'sib')); sideOf(x).forEach(y=>push(y,'partner')); }
       q=nq; }
     if(!prev[b]) return null;
     const steps=[]; let cur=b; while(prev[cur]&&prev[cur].p!=null){ steps.unshift({t:prev[cur].t,node:cur}); cur=prev[cur].p; }
@@ -647,7 +648,8 @@
     }
     ph.forEach((m,i)=>{ const own=!!(m.contributor&&m.contributor===PERSON_ID);
       scenes.push({facet:'story', prov:'gold', photo:m.storage_path, seed:i+1,
-        artId:m.id||'', cap:m.cap||'', whenwhere:ww(m), teller:own?'':m.teller, own:own }); });
+        artId:m.id||'', cap:(function(s){ s=String(s||''); if(s.length<=140) return s;
+          var c=s.slice(0,140); var sp=c.lastIndexOf(' '); if(sp>90) c=c.slice(0,sp); return c+'\u2026'; })(m.cap), whenwhere:ww(m), teller:own?'':m.teller, own:own }); });
     if(LIT.kin){
       const kc=kinCaption(); const bp=bothPhotos[0]||null;
       scenes.push({facet:'kin', prov:'cool', photo:bp?bp.storage_path:'', seed:3, tile:kinSVG,
