@@ -391,6 +391,14 @@ counters untouched — Leon's specific worry). Remaining hits were in-flow
 scrolling content passing the corner, cured generically: lf-nav now adds
 body{padding-bottom:92px+safe-area} so page ends always scroll clear. Probe rig
 note: the overlap scanner is ~/qc/qc-navspot.js.
+FOLLOW-UP (Leon 2026-09-06, `99b5b24`): the button was STILL floating because it
+was DRAGGABLE with a remembered dock (localStorage lf-nav-pos, applyPos) - the
+hand-dock is retired, applyPos now only FORGETS any stored position; lf-nav
+v36->v37. AND games showed stories in the wrong language: lf-games engines never
+asked for retellings - q() now passes every artefacts batch through
+LFDB.stories() (sb handed via window.__lfGamesSb at the five call sites);
+lf-games v9->v10 on all six games. Deployed + node-checked; Leon's phone is the
+rendered check.
 (Бобруйск in RU), zero errors.
 
 **NAME MEANINGS PIPELINE SHIPPED (2026-09-05, `ace5691`).** 21 people with
