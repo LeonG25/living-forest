@@ -418,6 +418,27 @@ min(68vh,520px) -> calc(100vh - 150px), lf-nav v39; still scrolls if ever taller
 NO ON-PAGE LANGUAGE BUTTONS (Leon 2026-09-06, lf-lang v6): .lflang-btn hidden
 too - the menu row is the ONLY visible switcher; it still clicks the hidden
 button, so the sheet works unchanged. All pages, all languages, one rule.
+
+**NEXT WORKSTREAM - NAMES AND PLACES IN ALL TONGUES (Leon 2026-09-06, NOT STARTED):**
+Leon ruled, after the HE search page showed 'Andrey Belyakov' in Latin (cause:
+missing per-language name facts; the fallback surfaces on 15 pages + the games
+engine - audited):
+1. BACKFILL PEOPLE: check every person, AI-transliterate every missing
+   given/family(/patronymic/maiden/called) fact into every missing language,
+   save as PUBLISHED (Leon: no approval for name translations). Path: generate
+   like the name-meanings run (roster -> gen script -> browser-door insert
+   in_review via qc keeper), then ONE SQL update publishes the just-inserted
+   name-field rows (RLS blocks direct published inserts from the door).
+2. BACKFILL PLACES: place_geo rows missing name_en/ru/he - AI-fill, SQL update
+   (reference data, no review flow).
+3. INPUT FLOWS - NAMES: wherever a person name is entered/saved (person page
+   name facts, propose-a-person, review ensurePerson apply), on save the app
+   auto-translates missing languages and saves them WITHOUT approval. RLS
+   question to resolve first: person_facts published inserts by keeper are
+   rejected - either a policy change or insert-then-self-publish pattern.
+4. INPUT FLOWS - PLACES: same for new place names (where facts 'lived'/pbirth
+   and place_geo entries are born) - auto-fill all languages, no approval.
+NOTHING of this has run yet - next session starts here.
 (Бобруйск in RU), zero errors.
 
 **NAME MEANINGS PIPELINE SHIPPED (2026-09-05, `ace5691`).** 21 people with
