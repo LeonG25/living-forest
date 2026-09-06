@@ -13,6 +13,24 @@
      without opening anything. A globe says 'language lives here' and tells you nothing
      about where you already are. */
   var SHORT={en:'EN', ru:'RU', he:'HE'};
+  /* EVERY PAGE'S OWN LANGUAGE BUTTON, HIDDEN BEFORE IT CAN BE SEEN (Leon, 2026-09-06).
+     Two faults, one cause. The globe flashed its pill for an instant on every load, and the
+     tree kept one UNDER the menu button - because the old code hid them with an inline
+     style from mount(), which runs after DOMContentLoaded (too late to stop the flash) and
+     is wiped the moment a page redraws its own chrome (which the tree does). A stylesheet
+     cannot be out-raced or redrawn away: it goes in the instant this file is parsed, in the
+     head, before the body exists. The list is every local switcher in the app - pills,
+     letter rows, the reel's dropdown and its trigger - swept once here, not page by page. */
+  var HIDE_SEL='#langBtn,#gbPill,#langsw,#pLang,.langpill,.langsw,.langset,.langmenu,'+
+               '[data-act="lang"],[data-langbtn],.lflang-btn';
+  function earlyHide(){
+    if(document.getElementById('lfLangHide')) return;
+    var h=document.head||document.getElementsByTagName('head')[0]; if(!h) return;
+    var s=document.createElement('style'); s.id='lfLangHide';
+    s.textContent=HIDE_SEL+'{display:none !important;}';
+    h.appendChild(s);
+  }
+  earlyHide();
   function cur(){ try{ return localStorage.getItem('lf_lang')||'en'; }catch(e){ return 'en'; } }
   function css(){
     if(document.getElementById('lfLangCss')) return;
@@ -21,7 +39,7 @@
        any page-local language pill steps aside - no more twin pills. */
     /* Leon 2026-09-06: the pages carry NO language button - only the menu's
        bottom row opens the list. The hidden button still answers the menu's call. */
-    var hide='#langBtn,.langpill,.lflang-btn{display:none !important;}';
+    var hide=HIDE_SEL+'{display:none !important;}';
     s.textContent=
       '.lflang-btn{position:fixed;top:max(14px,env(safe-area-inset-top));inset-inline-end:16px;z-index:40;'+
       'width:40px;height:40px;border-radius:12px;display:grid;place-items:center;cursor:pointer;'+

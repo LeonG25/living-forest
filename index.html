@@ -460,6 +460,11 @@ async function load(){
     ]);
     const errs=[ppl,rels,arts,subs].map((r,i)=>r.error?(['people','rels','arts','subs'][i]+':'+r.error.message):null).filter(Boolean);
     if(errs.length) throw new Error(errs.join(' | '));
+    /* THE GLOBE SHOWED THE STORY AS FIRST TYPED (Leon, 2026-09-06): he tapped a light in
+       Russian and read English. Every other page asks LFDB.stories for the retelling in the
+       reader's language; the globe never did, because it fetches its own artefacts here.
+       Failure is silent inside the helper - a story in the wrong tongue beats no story. */
+    try{ if(window.LFDB&&LFDB.stories) await LFDB.stories(sb, arts.data||[], GLANG); }catch(e){}
     if(!(ppl.data||[]).length){
       /* a member can never truly see an empty forest — this is a failure wearing
          success's clothes. Report it, retry once, then say so out loud. */
@@ -656,7 +661,7 @@ function openCard(p){
   { const mt=document.getElementById('cMeet'); if(mt) mt.href='person-real.html?id='+encodeURIComponent(p.id); }
   $('#cLine').textContent=[p.born, p.place].filter(Boolean).join(' \u00b7 ');
   const rels={parent:'parent',spouse:'married',sibling:'sibling'};
-  $('#cRel').textContent = p.waiting?'waiting to be placed':'';
+  $('#cRel').textContent = p.waiting?((GB[GLANG]||GB.en).waiting||''):'';
   $('#cPlace').textContent=p.place||'—';
   $('#cCoords').textContent=(p.lat||p.lng)?fmtCoord(p.lat,p.lng):'—';
   // pick the photo with a story, else first
@@ -664,7 +669,11 @@ function openCard(p){
   const cStory=$('#cStory'), cProv=$('#cProv');
   if(rec && rec.art.body){ cStory.style.display='block'; cStory.textContent=rec.art.body;
     const who=(rec.art.contributor_id&&PEOPLE._prov&&PEOPLE._prov[rec.art.contributor_id])||''; const cert=rec.art.certainty||'';
-    const bits=[who?'told by '+who:'', cert].filter(Boolean).join(' \u00b7 ');
+    /* the card spoke English inside a Russian page: the teller's label and the certainty
+       were literals, and the story itself was the ORIGINAL row (see loadStories). */
+    const GBL=(GB[GLANG]||GB.en);
+    const certTxt=(GBL.certs&&GBL.certs[cert])||cert;
+    const bits=[who?(GBL.told||'told by')+' '+who:'', certTxt].filter(Boolean).join(' \u00b7 ');
     if(bits){ cProv.style.display='block'; cProv.innerHTML='<span>'+bits+'</span>'; } else cProv.style.display='none'; }
   else { cStory.style.display='none'; cProv.style.display='none'; }
   const disc=$('#cDisc'); disc.textContent=(GB[GLANG]||GB.en).photo||'photo';
@@ -808,18 +817,24 @@ const GB={
       people:'people',ties:'ties',places:'places',year:'the year',
       cap:'the more moments, the brighter',
       lgMoment:'a moment',lgMany:'many',lgEldest:'the eldest',lgWaiting:'waiting',photo:'photo',meet:'meet them \u2192',kPlace:'place',kCoords:'coordinates',
+      told:'told by',waiting:'waiting to be placed',
+      certs:{documented:'Documented',remembered:'Remembered',uncertain:'Uncertain'},
       read:'drag to turn · scroll to zoom<br>spin the ring — several turns span the years'},
   ru:{k:'Живой лес',h1:'У каждой жизни',h2:'есть свой ',em:'свет.',
       p:'Ваша семья с высоты — каждое место, где снята фотография, каждый год, который у вас есть. Поверните глобус. Поверните годы.',
       people:'людей',ties:'связей',places:'мест',year:'год',
       cap:'чем больше моментов, тем ярче',
       lgMoment:'момент',lgMany:'много',lgEldest:'старшие',lgWaiting:'ждёт',photo:'фото',meet:'познакомиться \u2192',kPlace:'место',kCoords:'координаты',
+      told:'рассказал(а)',waiting:'ждёт своего места',
+      certs:{documented:'Документально',remembered:'По памяти',uncertain:'Неточно'},
       read:'ведите, чтобы повернуть · колесо — масштаб<br>крутите кольцо — несколько оборотов охватывают годы'},
   he:{k:'היער החי',h1:'לכל חיים',h2:'יש ',em:'אור.',
       p:'המשפחה שלכם מלמעלה — כל מקום שבו צולם תצלום, כל שנה שיש לכם מהם. סובבו את הגלובוס. סובבו את השנים.',
       people:'אנשים',ties:'קשרים',places:'מקומות',year:'השנה',
       cap:'ככל שיש יותר רגעים, כך בוהק יותר',
       lgMoment:'רגע',lgMany:'הרבה',lgEldest:'הוותיקים',lgWaiting:'ממתין',photo:'תצלום',meet:'להכיר אותם \u2190',kPlace:'מקום',kCoords:'קואורדינטות',
+      told:'סופר על ידי',waiting:'ממתין למקומו',
+      certs:{documented:'מתועד',remembered:'מהזיכרון',uncertain:'לא בטוח'},
       read:'גררו כדי לסובב · גלגלו לזום<br>סובבו את הטבעת — כמה סיבובים פורשים על פני השנים'}
 };
 function paintGlobeWords(){
@@ -1075,7 +1090,7 @@ function gateError(msg){ gateView='error'; $('#gate').classList.remove('loading'
 ensureAtmosphere(); showPlanting('reading');
 load();
 </script>
-  <script src="lf-lang.js?v=6"></script>
+  <script src="lf-lang.js?v=7"></script>
 <script src="lf-nav.js?v=39" data-here="map"></script>
 </body>
 </html>

@@ -326,6 +326,9 @@ async function load(){
       sb.from('relationships').select('from_person,to_person,kind'),
     ]);
     if(arts.error) throw arts.error;
+    /* the reader's tongue, here too (Leon, 2026-09-06): the crowd printed each story as
+       first typed. Same helper every other page uses; silent if there is no retelling. */
+    try{ if(window.LFDB&&LFDB.stories) await LFDB.stories(sb, arts.data||[], LG()); }catch(e){}
     await LFLabel.load(sb,(ppl.data||[]).map(p=>p.id));
     (ppl.data||[]).forEach(p=> NAME[p.id]=LFLabel.of(p.id,LG())||p.called_name||'Someone');
     // the teller is a person (contributor_id), never the uploading account
@@ -560,6 +563,6 @@ load();
 </script>
   <script src="lf-nav.js?v=39" data-here="play" data-parent="index.html"></script>
 <script src="lf-fen.js?v=25"></script>
-<script src="lf-lang.js?v=6"></script>
+<script src="lf-lang.js?v=7"></script>
 </body>
 </html>
