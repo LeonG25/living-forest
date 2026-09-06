@@ -409,6 +409,10 @@ own pill was dead AND Leon ruled the switcher must OPEN A LIST, never cycle.
 lf-lang now loads on ALL 22 pages, always injects (the skip-if-local-pill guard
 became hide-the-local-pill), letters button top-right opens the EN/RU/HE sheet,
 reloads on choice. Every legacy tap-to-cycle pill is hidden with it.
+LANGUAGE IN THE MENU TOO (Leon 2026-09-06, `3eee33d`, lf-lang v5, lf-nav v38):
+a row at the BOTTOM of the ⊕ menu (flex order:99, divider above) shows the
+current language (EN/RU/HE letters + native name) and opens the SAME list sheet
+(LFLang.open added). The on-page top-right button stays, per Leon.
 (Бобруйск in RU), zero errors.
 
 **NAME MEANINGS PIPELINE SHIPPED (2026-09-05, `ace5691`).** 21 people with
