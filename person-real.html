@@ -1645,7 +1645,10 @@
            know. Anything already stored that is not 'exact' reads as Approximate. */
       const rowctl=h=>h?`<div class="rowctl">${h}</div>`:'';
       const alive = (S.life.living===undefined||S.life.living===null) ? true : !!S.life.living;
-      const precise = (S.life.birth_prec||'exact')==='exact';
+      /* the fact is the truth, not the column (the same rule gender already follows): a
+         published birth_prec outranks whatever people.birth_certainty happens to hold */
+      const precRow = newestVal('birth_prec','und');
+      const precise = (precRow || S.life.birth_prec || 'exact')==='exact';
       return `
         <div class="field"><label>${L.gender}</label>
           <div class="seg gold" data-field="gender">${L.gopts.map((g,i)=>{ const v=['m','f'][i]; return `<button class="${S.life.gender===v?'on':''}" data-act="seg" data-v="${v}">${esc(g)}</button>`; }).join('')}</div>${waitMark('gender','und')}${rowctl(clearCtl('sex'))}</div>
@@ -2255,7 +2258,12 @@
           await reload(); toast(d().approve+' ✓'); return; } }
       if(f){ const patch={};
         if(f.field==='birth')patch.birth_date=f.value||null; if(f.field==='death')patch.death_date=f.value||null;
-        if(f.field==='birth_prec')patch.birth_certainty=({exact:'documented',month:'remembered',year:'remembered',circa:'uncertain',unknown:'uncertain'})[f.value]||null; if(f.field==='living')patch.is_living=(f.value==='1');
+        /* THE SEGMENT SAYS exact/approx AND THE MAP HAD NO 'approx' (found 2026-09-06 on Basya
+           Shapiro). Approving 'approximately' therefore wrote NULL to the column, the page read
+           the NULL back as 'approximately', the archive still said 'exactly', and every Send
+           after that asked the keeper for the same change again - eight birth_prec rows on one
+           person in twenty minutes. */
+        if(f.field==='birth_prec')patch.birth_certainty=({exact:'documented',approx:'remembered',month:'remembered',year:'remembered',circa:'uncertain',unknown:'uncertain'})[f.value]||null; if(f.field==='living')patch.is_living=(f.value==='1');
         if(f.field==='gender')patch.sex=({f:'female',m:'male'})[f.value]||null;   /* words, not letters */ if(f.field==='face'){ try{ const fv=JSON.parse(f.value); patch.primary_asset=fv.storage_path;
           /* A HUMAN'S FRAMING OUTRANKS A DETECTOR'S GUESS. A face fact carries both the
              tagger's detection box AND the zoom/px/py a person set by hand; this read the
