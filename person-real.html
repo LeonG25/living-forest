@@ -930,7 +930,16 @@
       kin:pubList('kin','und'),
       more:{ custom:groupCustom(true), sources:pubList('source','und') }
     };
+    /* THE 'STILL LIVING' SWITCH COULD NEVER BE SENT (Leon found it on Basya Shapiro,
+       2026-09-06). Tapping it sets S.life.living at once, so the page can redraw and show
+       the Died box - and submitFacet then compared the switch against S.life.living, the
+       value the tap had ALREADY changed. now and was were therefore always equal and the
+       change never reached the keeper: he turned her switch off again and again, saw the
+       Died box appear, pressed Send, and nothing about it went to Review. The seeded value
+       is kept here, untouched by any tap, and that is what a send compares against. */
+    SEEDED_LIVING = S.life.living ? '1' : '0';
   }
+  let SEEDED_LIVING='1';
 
   /* ---------- kindle + pending + game gates ---------- */
   const hasv=v=>v&&String(v).trim()!=='';
@@ -2184,7 +2193,9 @@
       const seg=card.querySelector('.seg[data-field="birth_prec"] .on');
       if(seg && seg.getAttribute('data-v')!==(newestVal('birth_prec','und')||S.life.birth_prec||'exact')) await put('birth_prec','und',seg.getAttribute('data-v'));
       const liv=card.querySelector('.sw[data-field="living"]');
-      if(liv){ const now=liv.classList.contains('on')?'1':'0'; const was=newestVal('living','und')||(S.life.living?'1':'0'); if(now!==was) await put('living','und',now); }
+      if(liv){ const now=liv.classList.contains('on')?'1':'0';
+        const was=newestVal('living','und')||SEEDED_LIVING;   /* as seeded, never as tapped */
+        if(now!==was) await put('living','und',now); }
       const gseg=card.querySelector('.seg[data-field="gender"] .on'); const gval=gseg?(gseg.getAttribute('data-v')||''):'';
       /* An empty gender is not an answer, and writing it as one destroys a real value.
          Sofia's 'f' became '' five minutes later: saving anything on this facet wrote
