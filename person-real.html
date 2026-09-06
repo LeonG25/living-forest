@@ -1932,8 +1932,12 @@
   let KINME=null, KINEDGES=[], KINSEX={};
   async function loadKinToMe(){
     try{
-      const {data:{user:u}}=await sb.auth.getUser(); if(!u) return;
-      const {data:pr}=await sb.from('profiles').select('person_id').eq('id',u.id).maybeSingle();
+      /* the page already holds the signed-in account; asking the auth client again from
+         inside the load race answered null and left the reader unplaced */
+      let uid=(user&&user.id)||null;
+      if(!uid){ try{ const {data:{user:u}}=await sb.auth.getUser(); uid=u&&u.id; }catch(e){} }
+      if(!uid) return;
+      const {data:pr}=await sb.from('profiles').select('person_id').eq('id',uid).maybeSingle();
       KINME=(pr&&pr.person_id)||null; if(!KINME) return;
       const r=await sb.from('relationships').select('from_person,to_person,kind').eq('status','published');
       KINEDGES=(r.data||[]).map(function(x){
