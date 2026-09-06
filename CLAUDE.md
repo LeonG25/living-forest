@@ -399,6 +399,11 @@ asked for retellings - q() now passes every artefacts batch through
 LFDB.stories() (sb handed via window.__lfGamesSb at the five call sites);
 lf-games v9->v10 on all six games. Deployed + node-checked; Leon's phone is the
 rendered check.
+TWIN LANGUAGE PILLS (Leon 2026-09-06): search showed TWO switchers - lf-lang.js
+(shared, on 9 pages) plus page-local pills on search/contribute/journal/review.
+lf-lang injected CSS now hides any local #langBtn/.langpill where it loads; one
+switcher per page everywhere. Static audit covered ALL pages: only those 4
+doubled; duplication is structural, language-independent. lf-lang v2->v3.
 (Бобруйск in RU), zero errors.
 
 **NAME MEANINGS PIPELINE SHIPPED (2026-09-05, `ace5691`).** 21 people with
