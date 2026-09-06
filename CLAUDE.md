@@ -441,6 +441,48 @@ PART 2 PLACES: exactly one place_geo row lacked names - 'US' - filled by SQL
 PARTS 3+4 (input flows: auto-translate names/places on save, incl. the RLS question on
 keeper published inserts) NOT STARTED - next session starts there.
 
+**PARTS 3+4 SHIPPED (2026-09-06, `1cb8e45`) - the input flows fill themselves.**
+NAMES ON THE WAY IN: propose-a-person (contribute-real) wrote a name in ONE language and
+left it there until somebody opened the person page and pressed Send - the very leak that
+made the 81-row backfill necessary. submitPerson now calls carryNames(): every name part
+(given/called/family/maiden/patronymic) is carried into the two languages it was not typed
+in through the translate function's name_full path, ONE batched call per target language
+(not one per field - six sequential round trips behind a spinner was the naive shape),
+refused whole by cleanName if it comes back in the wrong script, inserted in the SAME
+group_id as the typed name with ord 1. So Review folds them into ONE card and one Yes
+welcomes the person in all three tongues. Also fixed there: the facts insert used ord:i
+(the row INDEX), which marked the second name part as a translation of the first; primaries
+are ord 0 now. Failure is silent by design - a machine spelling never blocks a person.
+NO GENDER IS ASKED on that screen, so a Russian surname is spelled by guess there
+(Дымарский/Дымарская); the person page asks and corrects. Adding the question is a VISIBLE
+change and would need the designer - raised with Leon 2026-09-06, not queued.
+PLACES ON THE WAY IN (lf-place v7->v8, all 5 pages that load it): Nominatim answers in the
+asked language only if OSM holds a name in it, and silently returns Latin otherwise -
+'Morschach, Switzerland' read "Morschach" to RU and HE readers. lf-place now has one
+learnNames() (the two duplicated fill blocks are gone): OSM first, and where OSM has
+nothing OR answers in the wrong alphabet, the translate function carries the name across
+(kind place_name, cleanPlace refuses wrong-script or over-long answers). wrongScript() also makes the
+self-heal fire on a name STORED in the wrong alphabet, so places already wrong repair
+themselves the next time anyone touches them. Reference data: no keeper, no approval.
+PROBE EVIDENCE (both, live, zero page errors): ~/qc/qc-place-tr.js opened Morschach as
+keeper -> row became Моршах/מורשך (the machine wrote Морщах; corrected by SQL to Моршах -
+the machine spelling is a starting point, not gospel). ~/qc/qc-propose-tr.js proposed
+"Zinovy Kaplanski" -> landed on the new person page, DB held exactly 3 rows, one group,
+ord 0 en + ord 1 he «זינובי קפלנסקי» + ord 1 ru «Зиновий Капланский»; test person then
+fully deleted (people back to 47, zero leftover facts).
+
+**FOUND AND FIXED WHILE PROBING: EVERY DOOR THAT MAKES A PERSON WAS DEAD (2026-09-06).**
+people.display_name_retired was NOT NULL with NO DEFAULT, so `insert into people` failed
+23502 for every caller that (correctly) never mentions the retired column. That is FOUR
+doors: propose-a-person, the moment page's ensurePerson (a new face tagged), the person
+page's new-relative creation, and Review approving a proposed new relative. It failed as a
+400 with the page showing only its generic "could not send" - which is why it was never
+noticed. Fix at the source, not in four callers: ALTER COLUMN DROP NOT NULL + SET DEFAULT
+''. No code references display_name_retired; the many `display_name` reads in the app are
+dead already (the column is renamed) and were left alone. Verified by re-running the
+propose walk, which then succeeded. The column itself is still next to retire - dropping
+it is a separate decision, not slipped in here.
+
 **NEXT WORKSTREAM - NAMES AND PLACES IN ALL TONGUES (Leon 2026-09-06, parts 1+2 DONE above):**
 Leon ruled, after the HE search page showed 'Andrey Belyakov' in Latin (cause:
 missing per-language name facts; the fallback surfaces on 15 pages + the games
