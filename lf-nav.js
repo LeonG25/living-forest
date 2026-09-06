@@ -156,6 +156,18 @@
     if(it[0]===HERE) a.className='cur';
     panel.appendChild(a);
   });
+  /* language at the menu's foot (Leon 2026-09-06): the on-page button stays; this
+     row summons the same three-tongue list. order:99 keeps it last for ever. */
+  (function(){
+    var LN={en:'English',ru:'Русский',he:'עברית'}, SH={en:'EN',ru:'RU',he:'HE'};
+    var lg='en'; try{ lg=localStorage.getItem('lf_lang')||'en'; }catch(e){}
+    var r=document.createElement('a'); r.href='#';
+    r.style.order='99'; r.style.borderTop='1px solid rgba(255,255,255,.12)'; r.style.marginTop='4px';
+    r.innerHTML='<span class="ic" style="font-family:\'Azeret Mono\',monospace;font-size:10px;letter-spacing:.08em">'+(SH[lg]||'EN')+'</span><span>'+(LN[lg]||'English')+'</span>';
+    r.onclick=function(ev){ ev.preventDefault(); wrap.classList.remove('open');
+      if(window.LFLang&&window.LFLang.open) window.LFLang.open(); };
+    panel.appendChild(r);
+  })();
   /* ---- keeper-only entries: Review + Keepers, on EVERY page, for keepers only ----
      A page may set window.__lfKeeper=true as a fast path (paint them without waiting),
      but lf-nav's own check below is the source of truth: it adds them if the account is

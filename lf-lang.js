@@ -76,5 +76,7 @@
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount);
   else mount();
-  window.LFLang={ mount:mount, current:cur };
+  window.LFLang={ mount:mount, current:cur,
+    /* the menu may summon the same list (Leon 2026-09-06) */
+    open:function(){ var b=document.querySelector('.lflang-btn'); if(b) b.click(); } };
 })();
