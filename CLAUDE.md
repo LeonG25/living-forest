@@ -328,8 +328,35 @@ of what's missing):
    добавь момент" → moment-real.html?create=1.
 8. Sparse archives: one photo may repeat with different captions and a slow
    breathing drift (gentle zoom); zero photos → animated forest background.
-PROCESS: designer pass FIRST (firm rule), then build. Brief handed to Leon
-2026-09-05 for Claude Design.
+PROCESS: Leon ruled NO redesign — the existing page design stays; the agreed
+content was implemented inside it, reusing existing visual pieces.
+
+**REEL SHIPPED (2026-09-05, `cf9ffd4`+`caef47e`+`33de366`).** The photos are the
+film: all of a person's photos flow earliest→latest through the whole reel with
+a slow breathing drift; the Face chapter is gone (spine now SEVEN lights);
+age stamps «Ей здесь 9» ride dated photos; stories told BY the person show
+their own-words flame line instead of told-by; the opening carries all names +
+(when present) a published person_facts `name_meaning` in the UI language; kin
+shows the computed relationship to the signed-in viewer (KCLOSE proper terms
+close, descriptive chains distant, BFS over the full published graph with
+up+down→sib compression) over the earliest both-tagged photo; places shows a
+night-style mini-map CONFINED to the person's geo-matched places (gold dashed
+life-order line, small localized names+years; falls back to the old pin tile if
+nothing matches geo); the ending is the latest photo + «И это ещё не всё —
+Добавить момент» → create page; forestSVG background for photo-less ends.
+Leon's phone found two bugs, both fixed in `33de366`: (1) relationship kinds are
+parent/spouse/sibling — the graph had mapped every non-parent as partner, so
+Leon's sister read «Твоя жена»; siblings now walk their own lane (verified:
+Leon↔Rita is a direct sibling edge → «Твоя сестра»). (2) long story bodies
+walled the photo — story captions clamp at 140 chars word-safe + … (probe:
+longest now exactly 140), full story one tap away via step-in. Probe evidence
+(~/qc/qc-reel*.js, RU, zero errors): 11 scenes in order Имя→Жизнь→Места→
+Рассказы(by year 1991→2026, each with age stamp + told-by + step-in)→Родня→
+дальше(CTA to create=1); lfBreathe animating on every photo; kin chain for the
+QC account (anchored to Надежда) correctly reads «Дочь сестры твоего мужа».
+NOTE: the QC test account is anchored to Nadezhda — kin captions in probes speak
+from her seat, not Leon's. NEXT for the reel: the AI pipeline that writes
+name_meaning facts in all 3 langs into Review (display side is already live).
 
 **ALSO NEXT:** Leon's own phone walk in RU and HE (the probe cannot replace his eyes);
 then whatever he rules next. Journal-as-simple-log via the designer remains
