@@ -383,6 +383,14 @@ remembers its language and only speaks in it. lf-db.js stories() (used by
 person/place/reel/search/timeline) got the same published>machine-in_review
 recency ranking; lf-db v10→v11 on all 22 pages. Probe: default moment in RU now
 shows «АВТОПЕРЕВОД · Тетя Надя на парковке...» (was English), zero errors.
+MENU IN ONE CORNER (Leon 2026-09-06, `5b2242d`+`c42935e`, lf-nav v34→v36):
+the ⊕ menu now sits bottom-right 14px on EVERY page and language — the
+151px Fen-page lift (body.lf-fen-on rule) was removed. All 22 pages scanned in
+RU+HE with elementFromPoint under the hidden button: BOTH GLOBES CLEAN (year and
+counters untouched — Leon's specific worry). Remaining hits were in-flow
+scrolling content passing the corner, cured generically: lf-nav now adds
+body{padding-bottom:92px+safe-area} so page ends always scroll clear. Probe rig
+note: the overlap scanner is ~/qc/qc-navspot.js.
 (Бобруйск in RU), zero errors.
 
 **NAME MEANINGS PIPELINE SHIPPED (2026-09-05, `ace5691`).** 21 people with
