@@ -3,6 +3,55 @@
    nominatim for strangers, localized), persisted for the whole family forever. */
 (function(){
   if(window.LFPlace) return;
+  /* A PLACE OSM CANNOT NAME (2026-09-06). Nominatim answers in the asked language only if
+     OpenStreetMap holds a name in it. Small towns often have none - Morschach read
+     "Morschach" to a Russian and a Hebrew reader, Latin letters in the middle of their own
+     page, exactly the fault Leon found in people's names. So: OSM first (it knows the real
+     local spelling), and where OSM has nothing - or answers in the wrong alphabet - the
+     translate function carries the name across, as it does for every other short label.
+     A place name is reference data: no keeper, no approval (Leon, 2026-09-06). */
+  var SCRIPT={ru:/[\u0400-\u04FF]/, he:/[\u0590-\u05FF]/, en:/[A-Za-z]/};
+  function wrongScript(v,l){ v=String(v||''); if(!v) return true;
+    if(!SCRIPT[l].test(v)) return true;                       /* not in the target alphabet */
+    if(l==='ru'&&/[\u0590-\u05FF]/.test(v)) return true;
+    if(l==='he'&&/[\u0400-\u04FF]/.test(v)) return true;
+    return false; }
+  function cleanPlace(v,l){ if(!v) return '';
+    var t=String(v).split(/[\r\n]+/).map(function(x){return x.trim();}).filter(Boolean)[0]||'';
+    t=t.replace(/\s*[\(\[].*$/,'').replace(/^["'\u201c\u201e]+|["'\u201d\u201c]+$/g,'').replace(/[\s.,;:!]+$/,'').trim();
+    if(!t||t.length>48) return '';
+    return wrongScript(t,l)?'':t; }
+  async function osmName(lat,lng,l){
+    try{
+      var rr=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=13&lat='+lat+'&lon='+lng+'&accept-language='+l);
+      var jj=await rr.json(); var a=(jj&&jj.address)||{};
+      var v=a.city||a.town||a.village||a.hamlet||a.municipality||a.suburb||((jj&&jj.display_name)||'').split(',')[0].trim()||null;
+      if(l==='en') return v||null;
+      return (v&&!wrongScript(v,l))?v:null;                   /* Latin from OSM is no answer */
+    }catch(e){ return null; } }
+  async function carryName(sb,text,l){
+    if(!sb||!text) return null;
+    try{
+      var r=await sb.functions.invoke('translate',{body:{target_lang:l,items:[{kind:'place_name',ref:'place:'+text,text:text}]}});
+      if(r.error) return null;
+      var out=(r.data&&r.data.results&&r.data.results[0]&&r.data.results[0].text)||'';
+      return cleanPlace(out,l)||null;
+    }catch(e){ return null; } }
+  /* every missing (or wrong-alphabet) language, OSM first then the translate function */
+  async function learnNames(sb,lat,lng,have,fallbackText){
+    var locs={en:'name_en',ru:'name_ru',he:'name_he'}, patch={};
+    var base=(have&&have.name_en)||fallbackText||'';
+    for(var i=0;i<3;i++){
+      var l=['en','ru','he'][i], key=locs[l];
+      var cur=have?have[key]:null;
+      if(cur&&!wrongScript(cur,l)) continue;
+      var v=null;
+      if(lat!=null&&lng!=null){ v=await osmName(lat,lng,l); await new Promise(function(z){setTimeout(z,1100);}); }
+      if(l==='en'&&!v) v=base||null;
+      if(!v&&base) v=await carryName(sb,base,l);
+      if(v){ patch[key]=v; if(l==='en'&&!base) base=v; }
+    }
+    return patch; }
   window.LFPlace={
     ensure: async function(name, lang, sb){
       name=String(name||'').trim(); if(!name||!sb) return null;
@@ -12,20 +61,11 @@
           /* A KNOWN PLACE MISSING ITS NAMES WAS NEVER FILLED IN. This returned the moment a
              row existed, so a place learned before the three names were being stored - or
              one whose lookup half-failed - stayed nameless for ever and showed as typed on
-             every page. It fills the gaps now, once, in the background. */
-          if(!r.name_en||!r.name_ru||!r.name_he){
+             every page. It fills the gaps now, once, in the background - and a name left in
+             the WRONG alphabet (Latin shown to a Russian reader) counts as a gap. */
+          if(wrongScript(r.name_en,'en')||wrongScript(r.name_ru,'ru')||wrongScript(r.name_he,'he')){
             (async function(){ try{
-              const locs={en:'name_en',ru:'name_ru',he:'name_he'}, patch={};
-              for(const l of ['en','ru','he']){
-                if(r[locs[l]]) continue;
-                try{
-                  const rr=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=13&lat='+r.lat+'&lon='+r.lng+'&accept-language='+l);
-                  const jj=await rr.json(); const a=(jj&&jj.address)||{};
-                  const v=a.city||a.town||a.village||a.hamlet||a.municipality||a.suburb||((jj&&jj.display_name)||'').split(',')[0].trim()||null;
-                  if(v) patch[locs[l]]=v;
-                }catch(e){}
-                await new Promise(z=>setTimeout(z,1100));
-              }
+              var patch=await learnNames(sb,r.lat,r.lng,r,name);
               if(Object.keys(patch).length) await sb.from('place_geo').update(patch).eq('name',name);
             }catch(e){} })();
           }
@@ -42,17 +82,7 @@
                    country:(hit.address&&hit.address.country)||null,
                    country_code:(hit.address&&hit.address.country_code||'').toUpperCase()||null};
         /* the place learns its name in all three tongues, once, from its coordinates */
-        try{
-          const locs={en:'name_en',ru:'name_ru',he:'name_he'};
-          for(const l of ['en','ru','he']){
-            try{
-              const rr=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=13&lat='+row.lat+'&lon='+row.lng+'&accept-language='+l);
-              const jj=await rr.json(); const a=(jj&&jj.address)||{};
-              row[locs[l]]=a.city||a.town||a.village||a.hamlet||a.municipality||a.suburb||((jj&&jj.display_name)||'').split(',')[0].trim()||null;
-            }catch(e){}
-            await new Promise(z=>setTimeout(z,1100));
-          }
-        }catch(e){}
+        try{ var patch=await learnNames(sb,row.lat,row.lng,null,name); Object.assign(row,patch); }catch(e){}
         try{ sb.from('place_geo').insert(row).then(()=>{},()=>{}); }catch(e){}
         return row;
       }catch(e){ return null; }

@@ -677,9 +677,18 @@
       if(g.called&&g.called.trim()) rows.push({ field:'called', lang, value:g.called.trim() });
       if(g.when&&g.when.trim()) rows.push({ field:'birth', lang:'und', value:g.when.trim() });
       if(g.kin&&g.kin.trim()) rows.push({ field:'kin', lang:'und', value:g.kin.trim() });
-      const facts=rows.map((r,i)=>({ person_id:pid, group_id:uuid(), field:r.field, lang:r.lang, value:r.value, ord:i, status:'in_review', created_by:user.id }));
+      /* A PROPOSED NAME CROSSES THE ALPHABET TOO (Leon, 2026-09-06).
+         A name typed here reached the forest in ONE language and stayed that way until
+         somebody opened the person page and pressed Send - which is how 34 people came to
+         show Latin letters to Russian and Hebrew readers. Every name part now carries its
+         other two spellings from the moment it is proposed: same group as the name itself
+         (ord 0 the typed one, ord 1 the carried ones), so the keeper sees ONE card and one
+         Yes welcomes the person in all three tongues. A failed carry is silent - the name
+         still goes; a machine spelling is never worth blocking a person on. */
+      const facts=rows.map((r)=>({ person_id:pid, group_id:uuid(), field:r.field, lang:r.lang, value:r.value, ord:0, status:'in_review', created_by:user.id }));
       const {error:fe}=await sb.from('person_facts').insert(facts);
       if(fe) throw fe;
+      try{ await carryNames(pid, facts); }catch(e){}
       const extras=[]; if(g.called&&g.called.trim()) extras.push(g.called.trim()); if(g.kin&&g.kin.trim()) extras.push(g.kin.trim());
       state.propose={ name:'', open:{}, gifts:{} };
       /* Leon, 2026-08-07: adding a person must land on an empty PERSON PAGE, fully
@@ -691,6 +700,42 @@
       return;
     }catch(err){ state.msg=t('errSend'); render(); }
   }
+  /* the name in the two languages it was not typed in. Names go through the translate
+     function's own name_full path - a name is carried across an alphabet, not translated -
+     and anything that comes back in the wrong script is refused whole, as everywhere else. */
+  function cleanName(v,l){ if(!v) return '';
+    let t=String(v).split(/[\r\n]+/).map(x=>x.trim()).filter(Boolean)[0]||'';
+    t=t.replace(/\s*[\(\[].*$/,'').replace(/^["'\u201c\u201e]+|["'\u201d\u201c]+$/g,'').replace(/[\s.,;:!]+$/,'').trim();
+    if(!t||t.length>48) return '';
+    if(/[\u0600-\u06FF\u0750-\u077F\u0370-\u03FF\u0530-\u058F\u4E00-\u9FFF\u3040-\u30FF\u0E00-\u0E7F\u0900-\u097F]/.test(t)) return '';
+    if(l==='he' && (/[\u0400-\u04FF]/.test(t) || !/[\u0590-\u05FF]/.test(t))) return '';
+    if(l==='ru' && (/[\u0590-\u05FF]/.test(t) || !/[\u0400-\u04FF]/.test(t))) return '';
+    if(l==='en' && /[\u0400-\u04FF\u0590-\u05FF]/.test(t)) return '';
+    return t; }
+  async function carryNames(pid, facts){
+    /* ONE CALL PER LANGUAGE, not one per name part: a person proposed with a name, another
+       spelling and a called-name would otherwise wait through six round trips with a spinner
+       on the button. The function takes a batch and answers with each item's ref. */
+    const NAMEF=['given','called','family','maiden','patronymic'];
+    const src=facts.filter(f=>NAMEF.indexOf(f.field)>=0);
+    if(!src.length) return;
+    const out=[];
+    await Promise.all(['en','ru','he'].map(async l=>{
+      const want=src.filter(f=>f.lang!==l && !src.some(x=>x.field===f.field&&x.lang===l));
+      if(!want.length) return;
+      let res=null;
+      try{ const {data,error}=await sb.functions.invoke('translate',
+             {body:{target_lang:l,items:want.map((f,i)=>({kind:'name_full',ref:'n'+i+':'+f.field,text:f.value}))}});
+        if(!error&&data) res=data.results||null;
+      }catch(e){}
+      if(!res) return;
+      res.forEach(r=>{ if(!r||!r.ref) return;
+        const k=+String(r.ref).split(':')[0].slice(1); const f=want[k]; if(!f) return;
+        const v=cleanName(r.text||'',l);
+        if(v) out.push({person_id:pid,group_id:f.group_id,field:f.field,lang:l,value:v,ord:1,status:'in_review',created_by:user.id}); });
+    }));
+    if(out.length) await sb.from('person_facts').insert(out); }
+
   function mkSpin(){ const s=document.createElement('span'); s.className='spin'; return s; }
 
   /* ---------- voice ---------- */
