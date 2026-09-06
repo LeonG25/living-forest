@@ -1755,6 +1755,8 @@
        in the same frame: no blank between. */
     paintEarlyFace();
     fillFaces();
+    /* every redraw ends with the place boxes speaking the reader's language */
+    localizePlaceBoxes();
   }
   async function fillFaces(){ if(!person) return; const fh=$('#faceHost'); if(fh){ const ff=pubList('face','und').slice().sort((a,b)=>String(b.published_at||b.created_at||'').localeCompare(String(a.published_at||a.created_at||'')))[0]; const fv=ff?(function(){try{return JSON.parse(ff.value);}catch(e){return null;}})():null;
     const mbox=(person.metadata&&person.metadata.face_box)||null;
@@ -2532,7 +2534,10 @@
      already on screen is not redrawn when it does. So the boxes are relabelled here, once,
      after the table is certainly loaded. It only ever REPLACES a stored spelling with the
      same place's name in the reader's language; a box the reader is typing in is left alone. */
-  function localizePlaceBoxes(){
+  async function localizePlaceBoxes(){
+    /* if the place table has not arrived yet, wait for it here rather than showing the
+       stored spelling and never coming back to it */
+    try{ if((!PLMAP||!Object.keys(PLMAP).length)&&window.LFDB&&LFDB.places) PLMAP=await LFDB.places(sb,state.lang); }catch(e){}
     try{
       document.querySelectorAll('[data-field="pbirth"],[data-newhome],[data-field="lived"]').forEach(function(el){
         if(!el || el===document.activeElement) return;
