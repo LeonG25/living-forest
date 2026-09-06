@@ -979,6 +979,44 @@ the stories told by this person.
 (House rules apply when built: dynamic from live data, never hard-coded; designer
 pass before any page work; face rules above are hard constraints.)
 
+### Twelve ideas for the children (Claude's list, 2026-09-06) - PARKED, discuss before building
+
+Leon: his sons are 10 and 12; the app with its six games is "not fun enough, not game-like
+enough" and he wants a "wow". These are Claude's proposals, IN CLAUDE'S ORDER OF PREFERENCE
+(1 strongest). Leon parked the lot for discussion - do not build unasked. Standing rules all
+apply: designer pass before engineering, generated from live data never hard-coded, truth
+guardrail (gold = a person said it, cool blue = the app worked it out).
+
+1. **You at the same age** - the app puts the child's face beside a relative's at the same
+   age, side by side. Cheapest route to a shout; needs the child anchored + a dated photo of
+   each. Leans on the parked face work but needs no scoring.
+2. **Family cards** - every relative is a collectable card unlocked by playing, with rarity
+   from how much the forest holds about them. A card you don't have yet is the oldest hook
+   there is, and it makes the existing met/followed/heard/woven levels VISIBLE at last.
+3. **Detective quest** - the app hands a child a real unsolved gap ("nobody knows who this
+   boy is"), they ask a grandparent, and their answer enters the forest through Review.
+   Turns a player into a contributor; the only idea here that grows the archive.
+4. **Beat your parents** - every game shows the family's scores, so a 10-year-old can beat
+   his father at knowing his own great-grandmother. Needs knowledge_events + a score board.
+5. **Brother versus brother** - the same five questions to two players, live, winner shown.
+   Two boys in one house is the exact case; hardest of the top five (shared rounds).
+6. **Today's mystery** - one photo or question a day for the whole family, gone tomorrow.
+   A reason to open the app before school; a daily seed over live data, no new content.
+7. **Ask the ancestor** - a child types a question and the answer is built ONLY from that
+   person's own recorded words. CAUTION, raised at proposal time: this risks putting invented
+   sentences in a real dead relative's mouth, which collides head-on with the gold/blue truth
+   guardrail. If ever built: quote only, never generate; say plainly when there is no answer.
+8. **Fen sets a dare** - the companion challenges the child personally ("bet you can't name
+   three people born before 1950") instead of the app offering a menu. Cheap; Fen exists.
+9. **Zoom in, guess the photo** - a tiny crop appears and zooms out slowly; first to name it
+   wins. A seventh game, pure existing data, works even with a small archive.
+10. **Streaks and a trophy shelf** - visible rewards for returning, because invisible
+    progress motivates nobody. Pairs with 2; would sit in the Journal.
+11. **The passport** - every country and city in the family gets a stamp, collected by
+    visiting its page. Uses place_geo as it stands.
+12. **The family record book** - who has met the most relatives, found the most photos, is
+    fastest; live. Weakest of the twelve alone, but strong as a page for 4 and 10.
+
 ### Two orphan pages — wait until the work is finished (Leon, 2026-09-05)
 Nothing links to these two pages; both are English-only. Leon ruled: leave them
 as they are until the build is done, then decide (wire in / translate / retire).
