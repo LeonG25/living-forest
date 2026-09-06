@@ -18,7 +18,7 @@
 <script src="lf-face.js?v=3"></script>
 <script src="https://unpkg.com/topojson-client@3/dist/topojson-client.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="lf-db.js?v=11"></script>
+<script src="lf-db.js?v=12"></script>
 <script src="lf-lang.js?v=7"></script>
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -491,7 +491,7 @@ async function load(){
     const [ppl, rels, arts, subs] = await Promise.all([
       sb.from('people').select('id'),
       sb.from('relationships').select('from_person,to_person,kind'),
-      sb.from('artefacts').select('id,body,certainty,metadata,storage_path,contributor_id').eq('status','published'),
+      LFDB.arts(sb, curLang(), q=>q.select('id,body,certainty,metadata,storage_path,contributor_id').eq('status','published')),
       sb.from('artefact_subjects').select('artefact_id,person_id,detail'),
     ]);
     if(ppl.error) throw ppl.error;
@@ -499,7 +499,7 @@ async function load(){
     const provName = {}; await loadNameFacts(sb,(ppl.data||[]).map(p=>p.id));
     (ppl.data||[]).forEach(p=> provName[p.id]=nameOfPerson(p.id,curLang())||p.called_name||'');
     /* read each story in the reader's own language where one exists */
-    if(window.LFDB&&LFDB.stories) await LFDB.stories(sb,(arts.data||[]),curLang());
+    /* the stories arrive in the reader's language: LFDB.arts is the only door onto them */
     const artById = {}; (arts.data||[]).forEach(a=>{ a._year=parseYear(a.metadata&&a.metadata.when); a._where=(a.metadata&&a.metadata.where)||''; artById[a.id]=a; });
     // subjects per person and per artefact
     const perPerson = {}; // id -> [{art, box}]
@@ -996,7 +996,7 @@ load();
 
     const [geoR,artsR,peopleR,factsR]=await Promise.all([
       sb2.from('place_geo').select('name,lat,lng,label').eq('name',PL).maybeSingle(),
-      sb2.from('artefacts').select('id,kind,body,metadata,storage_path,contributor_id').eq('status','published').eq('metadata->>where',PL),
+      LFDB.arts(sb2, lang, q=>q.select('id,kind,body,metadata,storage_path,contributor_id').eq('status','published').eq('metadata->>where',PL)),
       sb2.from('people').select('id,primary_asset,portrait_path'),
       sb2.from('person_facts').select('person_id,value').in('field',['pbirth','lived','home','country']).eq('status','published')
     ]);

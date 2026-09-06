@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="lf-db.js?v=11"></script>
+<script src="lf-db.js?v=12"></script>
 <script src="lf-lang.js?v=7"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
@@ -365,12 +365,12 @@
     const [ppl,facts,arts,subs,geo]=await Promise.all([
       safe(sb.from('people').select('id,sex,primary_asset,portrait_path,birth_date,birth_certainty,death_date,death_certainty,is_living')),
       safe(sb.from('person_facts').select('person_id,field,lang,value,status').eq('status','published')),
-      safe(sb.from('artefacts').select('id,kind,body,metadata,storage_path,contributor_id,status').eq('status','published')),
+      safe(LFDB.arts(sb,(localStorage.getItem('lf_lang')||'en'),q=>q.select('id,kind,body,metadata,storage_path,contributor_id,status').eq('status','published'))),
       safe(sb.from('artefact_subjects').select('artefact_id,person_id,detail')),
       safe(sb.from('place_geo').select('name,lat,lng,label'))
     ]);
     /* read each story in the reader's own language where one exists */
-    if(window.LFDB&&LFDB.stories) await LFDB.stories(sb,arts,(localStorage.getItem('lf_lang')||'en'));
+    /* the stories arrive in the reader's language: LFDB.arts is the only door onto them */
     DB.people=ppl; DB.facts=facts; DB.arts=arts; DB.subs=subs; DB.geo=geo;
     DB.byId={}; ppl.forEach(p=>DB.byId[p.id]=p);
     buildIndices();

@@ -18,7 +18,7 @@
 <script src="https://unpkg.com/three@0.149.0/build/three.min.js"></script>
 <script src="https://unpkg.com/topojson-client@3/dist/topojson-client.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="lf-db.js?v=11"></script>
+<script src="lf-db.js?v=12"></script>
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;height:100%;overflow:hidden;background:#04070e;
@@ -455,16 +455,12 @@ async function load(){
     const [ppl, rels, arts, subs] = await Promise.all([
       sb.from('people').select('id'),
       sb.from('relationships').select('from_person,to_person,kind'),
-      sb.from('artefacts').select('id,body,certainty,metadata,storage_path,contributor_id').eq('status','published'),
+      LFDB.arts(sb, GLANG, q=>q.select('id,body,certainty,metadata,storage_path,contributor_id').eq('status','published')),
       sb.from('artefact_subjects').select('artefact_id,person_id,detail'),
     ]);
     const errs=[ppl,rels,arts,subs].map((r,i)=>r.error?(['people','rels','arts','subs'][i]+':'+r.error.message):null).filter(Boolean);
     if(errs.length) throw new Error(errs.join(' | '));
-    /* THE GLOBE SHOWED THE STORY AS FIRST TYPED (Leon, 2026-09-06): he tapped a light in
-       Russian and read English. Every other page asks LFDB.stories for the retelling in the
-       reader's language; the globe never did, because it fetches its own artefacts here.
-       Failure is silent inside the helper - a story in the wrong tongue beats no story. */
-    try{ if(window.LFDB&&LFDB.stories) await LFDB.stories(sb, arts.data||[], GLANG); }catch(e){}
+    /* the stories arrive in GLANG already: LFDB.arts is the only door onto them */
     if(!(ppl.data||[]).length){
       /* a member can never truly see an empty forest — this is a failure wearing
          success's clothes. Report it, retry once, then say so out loud. */

@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="lf-db.js?v=11"></script>
+<script src="lf-db.js?v=12"></script>
 <script src="lf-label.js?v=1"></script>
 <script src="lf-progress.js?v=1"></script>
 <style>
@@ -320,15 +320,13 @@ async function load(){
   if(!session){ showSignIn(); return; }
   try{
     const [arts, subs, ppl, rels] = await Promise.all([
-      sb.from('artefacts').select('id,body,contributor_id,storage_path,metadata').eq('status','published').eq('kind','photo'),
+      LFDB.arts(sb, LG(), q=>q.select('id,body,contributor_id,storage_path,metadata').eq('status','published').eq('kind','photo')),
       sb.from('artefact_subjects').select('artefact_id,person_id,detail'),
       sb.from('people').select('id'),
       sb.from('relationships').select('from_person,to_person,kind'),
     ]);
     if(arts.error) throw arts.error;
-    /* the reader's tongue, here too (Leon, 2026-09-06): the crowd printed each story as
-       first typed. Same helper every other page uses; silent if there is no retelling. */
-    try{ if(window.LFDB&&LFDB.stories) await LFDB.stories(sb, arts.data||[], LG()); }catch(e){}
+    /* the stories arrive in the reader's language: LFDB.arts is the only door onto them */
     await LFLabel.load(sb,(ppl.data||[]).map(p=>p.id));
     (ppl.data||[]).forEach(p=> NAME[p.id]=LFLabel.of(p.id,LG())||p.called_name||'Someone');
     // the teller is a person (contributor_id), never the uploading account

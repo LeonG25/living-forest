@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="lf-db.js?v=11"></script>
+<script src="lf-db.js?v=12"></script>
 <script src="lf-label.js?v=1"></script>
 <script src="lf-walk.js?v=9"></script>
 <script src="lf-lang.js?v=7"></script>
@@ -391,12 +391,11 @@
     // 3) memories you added : artefacts uploaded by this account (contributor_user, Rule 6)
     try{
       let myPid=null; try{ const {data:pr}=await sb.from('profiles').select('person_id').eq('id',user.id).maybeSingle(); myPid=pr&&pr.person_id; }catch(e){}
-      const {data:arts,error}=myPid?await sb.from('artefacts')
-        .select('id,metadata,created_at,status,contributor_id,body').eq('contributor_id',myPid):{data:[],error:null};
+      const {data:arts,error}=myPid?await LFDB.arts(sb, state.lang,
+        q=>q.select('id,metadata,created_at,status,contributor_id,body').eq('contributor_id',myPid)):{data:[],error:null};
       /* the journal names a photograph by its own words when it has no date or place -
          those words must be the reader's too (Leon, 2026-09-06) */
       if(!error && arts){
-        try{ if(window.LFDB&&LFDB.stories) await LFDB.stories(sb, arts, state.lang); }catch(e){}
         for(const a of arts){
           const ts=new Date(a.created_at||Date.now()).getTime();
           /* a photograph with no date and no place left this line reading 'added a photo of'

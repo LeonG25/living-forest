@@ -272,10 +272,34 @@
     return map[name] || map[String(name).trim()] || name;
   }
 
+  /* THE ONE DOOR ONTO STORIES (Leon, 2026-09-06).
+     Leon asked the right question: is the globe keeping its own stories? It is not - there
+     is one store, once - but every page fetched from it ITSELF and then had to REMEMBER to
+     ask stories() for the reader's language. Three pages had forgotten (the globe, the
+     crowd, the journal), and a step a page can forget is a bug waiting for the next page.
+     So: nobody fetches a story directly any more. arts() takes the language FIRST - it
+     cannot be called without saying whose eyes are reading - builds whatever query the page
+     needs through the callback, and swaps in the retelling before the rows are handed back.
+     It answers in supabase's own shape ({data,error}) so call sites keep their error
+     handling. ~/qc/story-door-check.py fails the build if a page selects a story body
+     outside this door; the keeper surfaces (review, moment) are its named exceptions,
+     because an edit screen must show the ORIGINAL words, not a translation of them. */
+  async function arts(sb, lang, build){
+    try{
+      if(!sb||typeof build!=='function') return {data:[],error:new Error('LFDB.arts: no query')};
+      var res=await build(sb.from('artefacts'));
+      if(res&&res.error) return res;
+      var rows=(res&&res.data)||[];
+      if(lang&&rows.length) await stories(sb, rows, lang);
+      return {data:rows, error:null};
+    }catch(e){ return {data:[], error:e}; }
+  }
+
   window.LFDB={
     places:places,
     placeName:placeName,
     stories:stories,
+    arts:arts,
     img:img,
     note:note,
     incomplete:function(){ return toldAlready; },
