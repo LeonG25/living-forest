@@ -441,6 +441,29 @@ PART 2 PLACES: exactly one place_geo row lacked names - 'US' - filled by SQL
 PARTS 3+4 (input flows: auto-translate names/places on save, incl. the RLS question on
 keeper published inserts) NOT STARTED - next session starts there.
 
+**ONE DOOR ONTO STORIES (Leon 2026-09-06, `6fb50b2`, lf-db v11->v12).** Leon asked whether
+the globe keeps its own stories. It does not - one store, once - but every page FETCHED from
+it itself and then had to REMEMBER to call LFDB.stories for the reader's language. Three had
+forgotten. A step a page can forget is a bug waiting for the next page, so the step is gone:
+`LFDB.arts(sb, lang, q=>q.select(...).eq(...))` takes the LANGUAGE FIRST (it cannot be called
+without naming whose eyes are reading), builds whatever query the page needs through the
+callback, applies stories() before returning, and answers in supabase's own {data,error}
+shape so call sites keep their error handling.
+MOVED (11 call sites, 9 files): index (globe), place-real x2 (the globe-scope query NEVER
+translated at all - a fourth forgetting, found by the move), search, timeline, crowd,
+journal, reel, person, home-real, game-missing-voice.
+NOT MOVED, deliberately and named in the guard: review-real and moment-real are keeper/edit
+surfaces and must show the ORIGINAL words, never a translation; lf-games has its own door
+(q() routes every artefacts batch through stories); lf-db IS the door.
+THE GUARD: `~/qc/story-door-check.py` fails (exit 1) if any non-exempt file selects a story
+body straight from the table. Run it after touching any page that reads artefacts. It earned
+itself on its FIRST run by catching two files this session's manual audit had missed
+(game-missing-voice, home-real).
+PROBE EVIDENCE (live, RU, keeper): all 10 changed pages load with ZERO page errors and
+Russian-dominant text (~/qc/qc-door.js); and the English original of the Tetya Nadia story
+appears on NONE of timeline/crowd/search while its Russian retelling shows on timeline and
+search (~/qc/qc-door2.js).
+
 **ONE SWITCHER, AND NO FLASH (Leon 2026-09-06, `94f0303`, lf-lang v6->v7).** Leon saw the
 language buttons on the globe for an instant at load, and one sitting UNDER the menu button
 on the tree. ONE cause for both: the local switchers were hidden with an INLINE STYLE from
