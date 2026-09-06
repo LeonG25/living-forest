@@ -705,7 +705,7 @@
       scenes.push({facet:'end', prov:'gold', photo:last?last.storage_path:'', seed:9, tile:forestSVG,
         artId:'', cap:d().endingCap, cta:'moment-real.html?create=1', ctaLabel:d().addMoment });
     }
-    orderScenes();
+    orderScenes(ww);
     if(state.idx>=scenes.length) state.idx=Math.max(0,scenes.length-1);
   }
   /* THE FILM MUST RUN FORWARD (Leon, 2026-09-06: "sometimes the order looks random").
@@ -717,7 +717,10 @@
      picture it can that is NOT older than the scene before it (kin still prefers a photo
      with both of you, and only gives that up to keep the order). Story scenes are never
      touched - a story belongs to its own photograph. */
-  function orderScenes(){
+  /* ww lives inside the scene builder, so this took it as an argument rather than reaching
+     for a name it could not see - reaching for it threw, the catch swallowed it, and the
+     whole reordering quietly did nothing (Basya's cousin still stepped 2026 -> 1991). */
+  function orderScenes(ww){
     try{
       const yrOf={}, dtOf={};
       memories.forEach(m=>{ yrOf[m.id]=(m.yr==null?9e9:m.yr); dtOf[m.id]=String(m.dt||''); });
