@@ -355,8 +355,30 @@ longest now exactly 140), full story one tap away via step-in. Probe evidence
 дальше(CTA to create=1); lfBreathe animating on every photo; kin chain for the
 QC account (anchored to Надежда) correctly reads «Дочь сестры твоего мужа».
 NOTE: the QC test account is anchored to Nadezhda — kin captions in probes speak
-from her seat, not Leon's. NEXT for the reel: the AI pipeline that writes
-name_meaning facts in all 3 langs into Review (display side is already live).
+from her seat, not Leon's.
+
+**NAME MEANINGS PIPELINE SHIPPED (2026-09-05, `ace5691`).** 21 people with
+published given names now have AI-written name meanings in ALL THREE languages
+sitting in Review as in_review person_facts (field='name_meaning'): 63 rows, one
+group per person, primary lang ord=0 (ru>en>he first-non-empty), the other two
+ord=1 — so Review's existing translation-folding shows ONE card per person and
+approve/decline moves all three together. Each language line speaks of the name
+AS SPELLED in that language (Sofia/Софья/שולמית each described as itself);
+honest about unknowns («Амма — редкое семейное имя...»); people without any
+given name were skipped — no placeholders. Review's fld label dicts gained
+name_meaning ('name meaning'/'значение имени'/'משמעות השם'). Probe: Review in
+RU renders Rita's card «Маргарита — от греч. «margarites», «жемчужина»...»
+для Рита Бетито-Гольник, zero errors. Once Leon approves a card, the line
+appears on that person's reel opening (display side shipped earlier).
+RE-RUN FOR NEW PEOPLE (documented pipeline): (1) roster SQL in the transcript /
+by shape: published people lacking any name_meaning fact, with their published
+given values per lang → /tmp/nm-roster.json on the droplet; (2) run
+`ANTHROPIC_API_KEY=$(cat ~/.anthropic_key) python3 ~/qc/gen-name-meanings.py`
+(script persists; reads roster, writes /tmp/nm-out.json); (3) copy to
+~/qc/nm-out.json and run `node ~/qc/qc-nmins.js` from ~/qc (signs in as the QC
+keeper and inserts through the app's own RLS door — in_review only). Insertion
+via direct SQL was deliberately avoided (12KB retyping = drift risk; the
+browser path is the same door the person page uses daily).
 
 **ALSO NEXT:** Leon's own phone walk in RU and HE (the probe cannot replace his eyes);
 then whatever he rules next. Journal-as-simple-log via the designer remains
