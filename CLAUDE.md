@@ -441,6 +441,38 @@ PART 2 PLACES: exactly one place_geo row lacked names - 'US' - filled by SQL
 PARTS 3+4 (input flows: auto-translate names/places on save, incl. the RLS question on
 keeper published inserts) NOT STARTED - next session starts there.
 
+**THE LIFE FACET WAS LOSING EDITS - THREE BUGS, ONE PERSON (Leon on Basya Shapiro,
+2026-09-06; `92a8e31`, `2f6f087`, `29bd598`).** Leon: "I tried several times, but not
+everything is sent to review at all", and separately "I had problems setting her gender".
+All three found by reproducing his exact taps in the probe rig and watching the network for
+POSTs to person_facts (~/qc/qc-basya*.js, ~/qc/qc-gender.js).
+
+1. **The 'still living' switch could NEVER be sent, for anybody.** Tapping it sets
+   S.life.living immediately (so the page can redraw and reveal the Died box) - and
+   submitFacet then compared the switch against S.life.living, THE VALUE THE TAP HAD JUST
+   CHANGED. now===was always, so nothing was ever written. Fixed: seed() records
+   SEEDED_LIVING, untouched by any tap, and the send compares against that. Probe: with the
+   switch turned off, a `living=0` row now POSTs (it did not before, in three attempts).
+2. **'Приблизительно' never recorded.** The segment's values are exact/approx; the approval
+   map had exact/month/year/circa/unknown and NO 'approx' - so approving it wrote NULL to
+   people.birth_certainty, the page read the NULL back as 'approximately', the archive still
+   said 'exactly', the two disagreed permanently, and EVERY send re-asked the keeper for the
+   same change: EIGHT birth_prec rows on Basya in twenty minutes. Fixed twice over -
+   approx->'remembered' added to the map, and the displayed precision now reads the newest
+   FACT first (the same 'fact is the truth, not the column' rule gender already had).
+3. **Gender looked unanswered on 31 of 47 people.** The buttons are 'm'/'f'; people.sex holds
+   'male'/'female'; the seed fell back to the column raw, so neither button lit and the
+   control looked blank even for a person whose record said female. Leon then tapped the
+   answer that was ALREADY stored, the send correctly wrote nothing (nothing changed), and it
+   read as "it did not save". Fixed by mapping the column to the control's letters in seed.
+   Probe before/after on Aunt Rosa: `m=off f=off` -> `m=off f=SELECTED`.
+NOT A BUG, checked: Basya's death DATE was already stored and re-sending the same date is
+correctly a no-op; her gender was saved all along (one published `f` fact + sex=female).
+DATA LEFT OVER: 2 published people have a death_date while is_living is still TRUE (Basya is
+one) - the direct result of bug 1. Leon was told; fixing hers through the app's own door
+proves the repair. All probe rows written during this hunt were deleted (SQL verified zero
+non-published rows left on her).
+
 **ONE DOOR ONTO STORIES (Leon 2026-09-06, `6fb50b2`, lf-db v11->v12).** Leon asked whether
 the globe keeps its own stories. It does not - one store, once - but every page FETCHED from
 it itself and then had to REMEMBER to call LFDB.stories for the reader's language. Three had
