@@ -369,6 +369,20 @@ borders) from the SAME world-atlas countries-110m topojson the globes fetch
 (topojson-client script added to reel-real head; BORDERS loaded in loadData,
 graceful fallback to the plain dark map if the fetch fails). Probe: Bobruisk's
 places scene renders 9 country shapes under the gold dot, label localized
+STORIES IN THE READER'S TONGUE, GENERICALLY (Leon 2026-09-06, `1d6f79a`+`2d910b0`).
+Leon edited a story in EN, switched to RU, still saw EN. THREE fixes: (1) the
+moment page's storyForLang now ranks: original in its own language > newest
+published HUMAN retelling > newest published machine > newest machine still
+in_review (loads now include in_review machine rows) > live autotranslate >
+original — recency-ranked, so a stale row can never outshout a correction.
+(2) carryStory REPLACES the app's old machine rows (delete machine per lang
+before insert) and updates the page's local list at once — no more stacking
+duplicates. (3) THE ACTUAL BUG LEON HIT: an UNSENT staged story draft overrode
+the display in EVERY language (staged.story had no lang) — the draft now
+remembers its language and only speaks in it. lf-db.js stories() (used by
+person/place/reel/search/timeline) got the same published>machine-in_review
+recency ranking; lf-db v10→v11 on all 22 pages. Probe: default moment in RU now
+shows «АВТОПЕРЕВОД · Тетя Надя на парковке...» (was English), zero errors.
 (Бобруйск in RU), zero errors.
 
 **NAME MEANINGS PIPELINE SHIPPED (2026-09-05, `ace5691`).** 21 people with
