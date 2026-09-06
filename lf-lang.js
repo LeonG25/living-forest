@@ -17,6 +17,9 @@
   function css(){
     if(document.getElementById('lfLangCss')) return;
     var s=document.createElement('style'); s.id='lfLangCss';
+    /* one switcher per page (Leon 2026-09-06): where this shared button lives,
+       any page-local language pill steps aside - no more twin pills. */
+    var hide='#langBtn,.langpill{display:none !important;}';
     s.textContent=
       '.lflang-btn{position:fixed;top:max(14px,env(safe-area-inset-top));inset-inline-end:16px;z-index:40;'+
       'width:40px;height:40px;border-radius:12px;display:grid;place-items:center;cursor:pointer;'+
@@ -33,7 +36,7 @@
       'border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);'+
       'color:#f4ead9;font:inherit;font-size:15px;cursor:pointer}'+
       '.lflang-card button.on{border-color:rgba(243,205,132,.5);background:rgba(243,205,132,.10);color:#f3cd84}';
-    document.head.appendChild(s);
+    s.textContent=(s.textContent||'')+hide; document.head.appendChild(s);
   }
   function sheet(){
     var w=document.createElement('div'); w.className='lflang-sheet';
