@@ -925,7 +925,14 @@
        null - the approval writes it but the write never lands, so the gender a keeper approved
        vanished the moment the page reloaded. gender lives as a published fact in person_facts,
        language-neutral ('und'), exactly as Leon asked: one value for all languages. */
-      gender:(mineFirst('gender','und')||pubNewest('gender','en')||person.sex||''), langspoken:pubList('langspoken','und') },
+      /* WORDS AND LETTERS (Leon, 2026-09-06: "I had problems setting her gender, I had to do
+         it several times"). The buttons are 'm' and 'f'; people.sex holds 'male' and 'female'.
+         So whenever a person had a sex on their record but no gender FACT yet - 31 of the 47 -
+         the fallback handed the control a word it could not match and NEITHER button lit. The
+         page looked as if nobody had ever answered, the answer he tapped often equalled what
+         was already stored so the send correctly wrote nothing, and it read as "it did not
+         save". The column is translated to the control's own letters here, once. */
+      gender:(mineFirst('gender','und')||pubNewest('gender','en')||({male:'m',female:'f'})[person.sex]||person.sex||''), langspoken:pubList('langspoken','und') },
       places:{ pbirth:pubNewest('pbirth','und')||pubNewest('pbirth','en')||'', lived:pubList('lived','und'), country:perLang('country') },
       kin:pubList('kin','und'),
       more:{ custom:groupCustom(true), sources:pubList('source','und') }
