@@ -76,13 +76,42 @@
       }catch(e){}
       try{
         const lg={en:'en',ru:'ru',he:'he'}[lang]||'en';
-        const resp=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&accept-language='+lg+'&q='+encodeURIComponent(name));
-        const j=await resp.json(); const hit=j&&j[0]; if(!hit) return null;
+        async function look(q){
+          try{
+            const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&accept-language='+lg+'&q='+encodeURIComponent(q));
+            const jj=await r.json(); return (jj&&jj[0])||null;
+          }catch(e){ return null; } }
+        let hit=await look(name);
+        /* ASK AGAIN IN ENGLISH (Leon, 2026-09-06: Basya's birthplace, typed in Hebrew, stayed
+           Hebrew on a Russian page). OpenStreetMap can only be searched in a spelling it
+           holds, and a small village typed in Hebrew - לובוניצ'י for Lubonichi - matches
+           nothing, so the place was never learned AT ALL and had no name in any language.
+           When the map does not know the spelling we were given, we carry the name into
+           English and ask once more; that is how the forest meets small places. */
+        let englished='';
+        if(!hit){
+          englished=await carryName(sb, name, 'en');
+          if(englished) { await new Promise(function(z){setTimeout(z,1100);}); hit=await look(englished); }
+        }
+        /* still nothing on the map: the place is real to the family even if OSM has never
+           heard of it, so it is remembered by NAME ALONE - no coordinates, three spellings,
+           and it stops showing one language's letters to everybody else. */
+        if(!hit){
+          const only={name:name, lat:null, lng:null, label:null};
+          const patch0=await learnNames(sb, null, null, {name_en:englished||''}, englished||name);
+          if(englished) only.name_en=englished;
+          Object.assign(only, patch0);
+          if(only.name_en||only.name_ru||only.name_he){
+            try{ sb.from('place_geo').insert(only).then(function(){},function(){}); }catch(e){}
+            return only;
+          }
+          return null;
+        }
         const row={name:name, lat:+hit.lat, lng:+hit.lon, label:hit.display_name||null,
                    country:(hit.address&&hit.address.country)||null,
                    country_code:(hit.address&&hit.address.country_code||'').toUpperCase()||null};
         /* the place learns its name in all three tongues, once, from its coordinates */
-        try{ var patch=await learnNames(sb,row.lat,row.lng,null,name); Object.assign(row,patch); }catch(e){}
+        try{ var patch=await learnNames(sb,row.lat,row.lng,null,englished||name); Object.assign(row,patch); }catch(e){}
         try{ sb.from('place_geo').insert(row).then(()=>{},()=>{}); }catch(e){}
         return row;
       }catch(e){ return null; }

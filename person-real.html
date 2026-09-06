@@ -19,7 +19,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="lf-db.js?v=12"></script>
 <script src="lf-face.js?v=3"></script>
-<script src="lf-place.js?v=8"></script>
+<script src="lf-place.js?v=9"></script>
 <script src="lf-label.js?v=2"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
@@ -1680,7 +1680,7 @@
       const pctl=r=>r?`<div class="rowctl">${delCtl(r)}</div>`:'';
       return `${placeDatalist()}
         ${(function(){ const g=pbGroup(); return `
-        <div class="field"><label>${L.pbirth}</label><input class="inp" list="placelist" data-field="pbirth" value="${esc(g.place||S.places.pbirth)}" placeholder="${esc(L.pbirth)}">${pctl(pubRow('pbirth','und'))}</div>
+        <div class="field"><label>${L.pbirth}</label><input class="inp" list="placelist" data-field="pbirth" value="${esc(pn(g.place||S.places.pbirth))}" placeholder="${esc(L.pbirth)}">${pctl(pubRow('pbirth','und'))}</div>
         <div class="field"><label>${L.country}</label><input class="inp" list="placelist" data-field="pbirth_country" value="${esc(g.country)}" placeholder="${esc(L.addcountry)}"></div>
         ${g.pending?`<div class="pending" style="margin-top:-4px;margin-bottom:10px"><span class="sp"></span>${esc(L.hWaiting)}</div>`:''}`; })()}
         <div class="field"><label>${L.lived}</label>${homesBlock()}</div>
@@ -2217,8 +2217,13 @@
       if(!await flushHomeDrafts()) ok=false;
       const g=pbGroup(); const gid=g.gid||uuid();
       const pb=(read('pbirth')||'').trim(), pc=(read('pbirth_country')||'').trim();
-      /* only what actually changed - writing an unchanged value breeds a duplicate row */
-      if(pb&&pb!==g.place) await put('pbirth','und',pb,0,gid);
+      /* only what actually changed - writing an unchanged value breeds a duplicate row.
+         THE BOX NOW SHOWS THE READER'S SPELLING (Leon, 2026-09-06 - his Russian page showed
+         Basya born in לובוניצ'י), so an untouched box holds the localized name, not the
+         stored one: comparing against the stored name alone would file every visit as a new
+         place. It counts as changed only when it matches NEITHER. */
+      const pbWas=g.place||S.places.pbirth||'';
+      if(pb&&pb!==pbWas&&pb!==pn(pbWas)) await put('pbirth','und',pb,0,gid);
       if(pc&&pc!==g.country){ await put('pbirth_country',state.lang,pc,0,gid);
         await translateCountry(gid,pc,'pbirth_country'); }
       /* country used to be written here as a loose per-language fact with no tie to any
