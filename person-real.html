@@ -2639,7 +2639,9 @@
        purely because #faceHost did not exist yet. The shell costs nothing - it is the same
        placeholder the page shows anyway - and every real value overwrites it on render(). */
     try{ render(); }catch(e){}
-    await loadData(); seed(); render();
+    /* boot has its own path - it does NOT go through reload(), which is why the kin line and
+       the localized place boxes were prepared and then never used on a first visit */
+    await loadData(); await loadKinToMe(); seed(); render(); localizePlaceBoxes();
   }
   atmosphere($('#dev .atmo')); wireOnce(); boot();
 })();
