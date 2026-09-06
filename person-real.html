@@ -486,6 +486,7 @@
       memories:'Stories told about this person', addmemory:'add a story', stepIn:'Step into this moment', noStory:'The story of this is waiting for its teller.', askSomeone:'Ask someone who might know →',
       relations:'Relatives', addkin:'add a connection', kinApp:'The app works out how each of them connects back to you.',
       itsYou:'It’s you! ✨',
+      kinFar:'No line runs from you to them through the ties the forest holds yet.',
       placeNoMap:'The map does not know this place, so the forest remembers it by name only. If it has another spelling, adding it here helps everyone read it.',
       placeUnknown:'The forest could not place this name. It will be kept as you typed it — try another spelling if you have one.',
       howrelated:'How are you related?', relChild:'Child', relParent:'Parent',
@@ -536,6 +537,7 @@
       memories:'Истории об этом человеке', addmemory:'добавить историю', stepIn:'Войти в этот момент', noStory:'Эта история ждёт своего рассказчика.', askSomeone:'Спросить того, кто знает →',
       relations:'Родственники', addkin:'добавить связь', kinApp:'Приложение вычисляет, как каждый связан с вами.',
       itsYou:'Это ты! ✨',
+      kinFar:'Пока в лесу нет связей, по которым можно пройти от вас к этому человеку.',
       placeNoMap:'Карта не знает это место — лес запомнит его только по названию. Если есть другое написание, добавьте его: так его прочтут все.',
       placeUnknown:'Лес не смог найти это название. Оно сохранится как вы написали — попробуйте другое написание, если оно есть.',
       howrelated:'Как вы связаны?', relChild:'Ребёнок', relParent:'Родитель',
@@ -586,6 +588,7 @@
       memories:'סיפורים על אדם זה', addmemory:'הוספת סיפור', stepIn:'להיכנס אל הרגע הזה', noStory:'הסיפור הזה מחכה למספר שלו.', askSomeone:'שאלו מישהו שאולי מכיר ←',
       relations:'בני משפחה', addkin:'הוספת קשר', kinApp:'האפליקציה מחשבת כיצד כל אחד קשור אליכם.',
       itsYou:'זה את/ה! ✨',
+      kinFar:'בינתיים אין ביער קשרים שדרכם אפשר להגיע מכם אל האדם הזה.',
       placeNoMap:'המפה לא מכירה את המקום הזה, ולכן היער יזכור אותו לפי השם בלבד. אם יש איות אחר, הוספתו כאן תעזור לכולם.',
       placeUnknown:'היער לא הצליח לאתר את השם הזה. הוא יישמר כפי שהקלדתם — נסו איות אחר אם יש לכם.',
       howrelated:'איך אתם קשורים?', relChild:'ילד', relParent:'הורה',
@@ -1947,6 +1950,10 @@
                              sexOf:kinSex, selfText:L.itsYou});
       if(c&&c.cap) return `<div class="appfact" style="margin-top:12px"><span class="mark">${sv(I.kin,2)}</span>`+
         `<div class="body" style="font-size:15px;color:var(--cool-hi)">${esc(c.cap)}<span class="src">${L.assembled}</span></div></div>`;
+      /* the app knows who the reader is and still cannot trace a line - say THAT, plainly.
+         Asking "how are you related?" here would be asking a question we already answered. */
+      return `<div class="appfact" style="margin-top:12px"><span class="mark">${sv(I.kin,2)}</span>`+
+        `<div class="body">${esc(L.kinFar)}<span class="src">${L.assembled}</span></div></div>`;
     }
     return `<button class="chip add" data-act="howrelated" style="margin-top:12px;border-color:rgba(127,180,216,.4);color:var(--cool-hi)">${sv(I.kin,1.7)} ${L.howrelated}</button>`; }
   /* the note under a place box: cool blue, because it is the app reporting on itself */
