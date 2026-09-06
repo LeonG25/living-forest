@@ -217,9 +217,17 @@
       var ids=[]; for(var i=0;i<rows.length;i++){ var r=rows[i]; if(r&&r.id&&r.body) ids.push(r.id); }
       if(!ids.length) return rows;
       var res=await sb.from('artefact_translations')
-        .select('artefact_id,body').eq('lang',lang).eq('status','published').in('artefact_id',ids);
+        .select('artefact_id,body,status,machine,created_at').eq('lang',lang)
+        .or('status.eq.published,and(status.eq.in_review,machine.eq.true)').in('artefact_id',ids);
       var data=res&&res.data; if(!data||!data.length) return rows;
-      var by={}; for(var j=0;j<data.length;j++){ if(data[j].body) by[data[j].artefact_id]=data[j].body; }
+      /* the reader's language, always (Leon, 2026-09-06): newest human retelling, then the
+         app's newest published one, then the app's words still waiting for the keeper. */
+      var rank=function(x){ return (x.status==='published'&&!x.machine)?3:(x.status==='published'?2:1); };
+      var by={}, seen={};
+      for(var j=0;j<data.length;j++){ var x=data[j]; if(!x.body) continue;
+        var prev=seen[x.artefact_id];
+        if(!prev || rank(x)>rank(prev) || (rank(x)===rank(prev)&&String(x.created_at||'')>String(prev.created_at||''))){
+          seen[x.artefact_id]=x; by[x.artefact_id]=x.body; } }
       for(var k=0;k<rows.length;k++){ var t=by[rows[k].id]; if(t) rows[k].body=t; }
     }catch(e){ }
     return rows;

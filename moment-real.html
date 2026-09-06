@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="lf-db.js?v=10"></script>
+<script src="lf-db.js?v=11"></script>
 <script src="lf-name.js?v=1"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
@@ -715,7 +715,15 @@
   function detailsList(){ return (art&&art.metadata&&Array.isArray(art.metadata.details))?art.metadata.details:[]; }
   function storyForLang(L){ const orig=(art&&art.original_language)||'en';
     if(art&&art.body && L===orig) return {kind:'human', text:art.body};
-    const tr=translations.find(x=>x.lang===L); if(tr) return {kind:'human', text:tr.body};
+    /* the reader's language, always (Leon, 2026-09-06): newest human retelling first,
+       then the app's newest published one, then the app's words still waiting for the
+       keeper — better the app's fresh retelling than the wrong language entirely. */
+    const newest=pred=>{ let b=null; for(const x of (translations||[])){
+      if(x.lang!==L||!x.body||!pred(x)) continue;
+      if(!b||String(x.created_at||'')>String(b.created_at||'')) b=x; } return b; };
+    const hp=newest(x=>x.status==='published'&&!x.machine); if(hp) return {kind:'human',text:hp.body};
+    const mp=newest(x=>x.status==='published'&&x.machine);  if(mp) return {kind:'machine',text:mp.body};
+    const mr=newest(x=>x.status==='in_review'&&x.machine);  if(mr) return {kind:'machine',text:mr.body};
     if(art&&art.body){ const m=(autoStory[L]!=null?autoStory[L]:'');
       /* an empty box taught nothing while a translation waited unseen for the keeper;
          until it is welcomed, the original telling stands — human words, gold */
@@ -1422,9 +1430,12 @@
            already in the forest there is nothing left to decide, and a translation nobody
            can approve would wait for ever. A person's own words still wait. */
         const live=(art&&art.status==='published');
-        await sbWrite(()=>sb.from('artefact_translations').insert({artefact_id:art.id,lang:l,body:out,
+        try{ await sb.from('artefact_translations').delete().eq('artefact_id',art.id).eq('lang',l).eq('machine',true); }catch(_){}
+        const ok2=await sbWrite(()=>sb.from('artefact_translations').insert({artefact_id:art.id,lang:l,body:out,
           status: live?'published':'in_review', created_by:user.id, machine:true,
           published_at: live?new Date().toISOString():null }));
+        if(ok2){ translations=(translations||[]).filter(x=>!(x.lang===l&&x.machine));
+          translations.push({lang:l,body:out,status:live?'published':'in_review',machine:true,created_at:new Date().toISOString()}); }
       }
     }catch(e){ try{ console.warn('carryStory',e); }catch(_){ } }
   }
@@ -1782,7 +1793,7 @@
        never said so. His sex travels with the text now. */
     tellerSex=null;
     if(art.contributor_id){ const {data:cp}=await sb.from('people').select('id,sex').eq('id',art.contributor_id).maybeSingle(); if(cp&&cp.sex) tellerSex=({male:'m',female:'f'})[cp.sex]||null; tellerName=(window.LFLabel&&LFLabel.of(art.contributor_id,(localStorage.getItem('lf_lang')||'en')))||''; }
-    const {data:tr}=await sb.from('artefact_translations').select('lang,body,status,machine').eq('artefact_id',MOMENT_ID).eq('status','published'); translations=tr||[];
+    const {data:tr}=await sb.from('artefact_translations').select('lang,body,status,machine,created_at').eq('artefact_id',MOMENT_ID).or('status.eq.published,and(status.eq.in_review,machine.eq.true)'); translations=tr||[];
     await loadQueue();
     buildModel(); render(); ensureLangAssets();
   }
@@ -1792,7 +1803,7 @@
     subjects=(subs.data||[]).filter(s=>s.person_id);
     const ids=subjects.map(s=>s.person_id);
     if(ids.length){ const {data:pp}=await sb.from('people').select('id,primary_asset,portrait_path,sex').in('id',ids); (pp||[]).forEach(p=>peopleById[p.id]=p); }
-    const {data:tr}=await sb.from('artefact_translations').select('lang,body,status,machine').eq('artefact_id',MOMENT_ID).eq('status','published'); translations=tr||[];
+    const {data:tr}=await sb.from('artefact_translations').select('lang,body,status,machine,created_at').eq('artefact_id',MOMENT_ID).or('status.eq.published,and(status.eq.in_review,machine.eq.true)'); translations=tr||[];
     await loadQueue(); buildModel(); render(); window.scrollTo(0,y); }
 
   boot();
