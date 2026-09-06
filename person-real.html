@@ -19,7 +19,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="lf-db.js?v=12"></script>
 <script src="lf-face.js?v=3"></script>
-<script src="lf-place.js?v=9"></script>
+<script src="lf-place.js?v=10"></script>
+<script src="lf-kin.js?v=1"></script>
 <script src="lf-label.js?v=2"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
@@ -484,6 +485,9 @@
       pbirth:'Place of birth', lived:'Places lived', addplace:'add a home',
       memories:'Stories told about this person', addmemory:'add a story', stepIn:'Step into this moment', noStory:'The story of this is waiting for its teller.', askSomeone:'Ask someone who might know →',
       relations:'Relatives', addkin:'add a connection', kinApp:'The app works out how each of them connects back to you.',
+      itsYou:'It’s you! ✨',
+      placeNoMap:'The map does not know this place, so the forest remembers it by name only. If it has another spelling, adding it here helps everyone read it.',
+      placeUnknown:'The forest could not place this name. It will be kept as you typed it — try another spelling if you have one.',
       howrelated:'How are you related?', relChild:'Child', relParent:'Parent',
       reelSub:'A life, assembled from the rest. It opens as the facets fill.', watch:'Watch', reelBar:'facets kindled',
       detail:'Details & sources', adddetail:'Add a detail', adddetailsub:'Record anything — a saying, a recipe, a medal — with where it came from.',
@@ -531,6 +535,9 @@
       pbirth:'Место рождения', lived:'Где жила', addplace:'добавить дом',
       memories:'Истории об этом человеке', addmemory:'добавить историю', stepIn:'Войти в этот момент', noStory:'Эта история ждёт своего рассказчика.', askSomeone:'Спросить того, кто знает →',
       relations:'Родственники', addkin:'добавить связь', kinApp:'Приложение вычисляет, как каждый связан с вами.',
+      itsYou:'Это ты! ✨',
+      placeNoMap:'Карта не знает это место — лес запомнит его только по названию. Если есть другое написание, добавьте его: так его прочтут все.',
+      placeUnknown:'Лес не смог найти это название. Оно сохранится как вы написали — попробуйте другое написание, если оно есть.',
       howrelated:'Как вы связаны?', relChild:'Ребёнок', relParent:'Родитель',
       reelSub:'Жизнь, собранная из остального. Открывается по мере заполнения.', watch:'Смотреть', reelBar:'граней зажжено',
       detail:'Детали и источники', adddetail:'Добавить деталь', adddetailsub:'Запишите что угодно — поговорку, рецепт, награду — и откуда это.',
@@ -578,6 +585,9 @@
       pbirth:'מקום לידה', lived:'מקומות מגורים', addplace:'הוספת בית',
       memories:'סיפורים על אדם זה', addmemory:'הוספת סיפור', stepIn:'להיכנס אל הרגע הזה', noStory:'הסיפור הזה מחכה למספר שלו.', askSomeone:'שאלו מישהו שאולי מכיר ←',
       relations:'בני משפחה', addkin:'הוספת קשר', kinApp:'האפליקציה מחשבת כיצד כל אחד קשור אליכם.',
+      itsYou:'זה את/ה! ✨',
+      placeNoMap:'המפה לא מכירה את המקום הזה, ולכן היער יזכור אותו לפי השם בלבד. אם יש איות אחר, הוספתו כאן תעזור לכולם.',
+      placeUnknown:'היער לא הצליח לאתר את השם הזה. הוא יישמר כפי שהקלדתם — נסו איות אחר אם יש לכם.',
       howrelated:'איך אתם קשורים?', relChild:'ילד', relParent:'הורה',
       reelSub:'חייה, מורכבים מן השאר. נפתח ככל שהפרטים מתמלאים.', watch:'צפייה', reelBar:'פנים הודלקו',
       detail:'פרטים ומקורות', adddetail:'הוספת פרט', adddetailsub:'תעדו כל דבר — פתגם, מתכון, עיטור — ומאיפה זה.',
@@ -1717,7 +1727,7 @@
       return `${live||''}${legacy}${pendRows}
         <div class="chips" style="margin-top:4px"><button class="chip add" data-act="addconn">${sv(I.plus,2)} ${L.addkin}</button></div>
         ${rels.length?`<div class="appfact"><span class="mark">${sv(I.chart,2)}</span><div class="body">${L.kinApp}<span class="src">${L.assembled}</span></div></div>`:''}
-        <button class="chip add" data-act="howrelated" style="margin-top:12px;border-color:rgba(127,180,216,.4);color:var(--cool-hi)">${sv(I.kin,1.7)} ${L.howrelated}</button>`; }
+        ${kinToMeBlock()}`; }
     if(id==='reel'){ const fill=Math.round(overallFill()*100); const kindled=FACETS.filter(x=>x.id!=='reel').filter(x=>facetK(x.id)>=0.5).length;
       const g0=NAME.given[state.lang]||NAME.called[state.lang]||nameLabel().split(' ')[0]||'';
       const reelName={ en:`${g0}’s reel`, ru:`Плёнка · ${g0}`, he:`הסרט של ${g0}` }[state.lang]||`${g0}`;
@@ -1908,6 +1918,49 @@
      mode 'add'    — connect this person to someone already in the forest
      mode 'edit'   — change kind / certainty / note on an existing row
      mode 'me'     — "How are you related?": the viewer's own node → this person   */
+  /* WHO THIS PERSON IS TO ME - SAID, NOT ASKED (Leon, 2026-09-06).
+     This card promised "the app works out how each of them connects back to you" and then
+     offered a button that opened a page asking Leon WHO HE WAS. The app already knows: his
+     account carries his person, and the reel has been naming the relationship correctly for
+     a week. Same engine now (lf-kin.js), same words, stated here in one line - gold-free,
+     cool blue, because it is the app's own working-out, not something a person said.
+     The old question survives ONLY for a reader the app cannot place: not signed in, no
+     person of their own yet, or no path through the published graph. */
+  let KINME=null, KINEDGES=[], KINSEX={};
+  async function loadKinToMe(){
+    try{
+      const {data:{user:u}}=await sb.auth.getUser(); if(!u) return;
+      const {data:pr}=await sb.from('profiles').select('person_id').eq('id',u.id).maybeSingle();
+      KINME=(pr&&pr.person_id)||null; if(!KINME) return;
+      const r=await sb.from('relationships').select('from_person,to_person,kind').eq('status','published');
+      KINEDGES=(r.data||[]).map(function(x){
+        return {from:x.from_person, to:x.to_person,
+                k:(x.kind==='parent')?'parent':((x.kind==='sibling')?'sib':'partner')}; });
+      const pp=await sb.from('people').select('id,sex');
+      (pp.data||[]).forEach(function(x){ KINSEX[x.id]=x.sex||''; });
+    }catch(e){}
+  }
+  function kinSex(id){ const v=String(KINSEX[id]||''); return /^f/i.test(v)?'f':(/^m/i.test(v)?'m':'n'); }
+  function kinToMeBlock(){ const L=d();
+    if(KINME && window.LFKin){
+      const c=LFKin.caption({me:KINME, target:PERSON_ID, edges:KINEDGES, lang:state.lang,
+                             sexOf:kinSex, selfText:L.itsYou});
+      if(c&&c.cap) return `<div class="appfact" style="margin-top:12px"><span class="mark">${sv(I.kin,2)}</span>`+
+        `<div class="body" style="font-size:15px;color:var(--cool-hi)">${esc(c.cap)}<span class="src">${L.assembled}</span></div></div>`;
+    }
+    return `<button class="chip add" data-act="howrelated" style="margin-top:12px;border-color:rgba(127,180,216,.4);color:var(--cool-hi)">${sv(I.kin,1.7)} ${L.howrelated}</button>`; }
+  /* the note under a place box: cool blue, because it is the app reporting on itself */
+  function placeWarn(input, msg){
+    try{
+      const host=input.parentElement; if(!host) return;
+      let n=host.querySelector('[data-placewarn]');
+      if(!msg){ if(n) n.remove(); return; }
+      if(!n){ n=document.createElement('div'); n.setAttribute('data-placewarn','1');
+        n.style.cssText='margin-top:6px;font-size:12px;line-height:1.45;color:var(--cool-hi)';
+        host.appendChild(n); }
+      n.textContent=msg;
+    }catch(e){}
+  }
   function openKin(mode,relId){ const L=d(); const sh=$('.sheet[data-sheet="kin"]');
     const existing=relId?rels.find(r=>r.id===relId):null;
     const st={ mode, relId:relId||null,
@@ -2334,9 +2387,16 @@
       const t=e.target; if(!t||t.getAttribute('data-field')!=='pbirth') return;
       const val=(t.value||'').trim(); if(!val) return;
       const ci=root.querySelector('[data-field="pbirth_country"]');
-      if(!ci||ci.value.trim()) return;                 /* never overwrite a typed country */
-      try{ const c=await window.LFPlace.country(val, state.lang, sb);
-        if(c&&!ci.value.trim()) ci.value=c; }catch(err){}
+      /* THE FAMILY MUST BE TOLD WHEN A PLACE CANNOT BE FOUND (Leon, 2026-09-06). It used to
+         fail in silence: a place the map does not know was simply never learned, so it sat
+         in one language's letters on everyone else's page and nobody knew why. The app now
+         says so at the moment of typing, while the person who knows the place is still here
+         and can offer a spelling the map will recognise. */
+      try{
+        const r=await window.LFPlace.ensure(val, state.lang, sb);
+        if(ci && !ci.value.trim()){ const c=r&&r.country; if(c) ci.value=c; }
+        placeWarn(t, (!r||r.unplaced)?(r&&!r.unknown?d().placeNoMap:d().placeUnknown):'');
+      }catch(err){}
     }, true);
     root.addEventListener('click', async e=>{
       const L=d();
@@ -2526,6 +2586,7 @@
 
   /* ---------- reload + gate + boot ---------- */
   async function reload(){ await loadData();
+    if(!KINME) await loadKinToMe();          /* who I am, and the graph, once per visit */
     try{ if(window.LFDB&&LFDB.places) PLMAP=await LFDB.places(sb,state.lang); }catch(e){}
     seed(); render(); localizePlaceBoxes(); }
   /* THE BIRTHPLACE BOX SPOKE THE SPELLING IT WAS TYPED IN (Leon, 2026-09-06: his Russian page

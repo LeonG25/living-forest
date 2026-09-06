@@ -88,10 +88,22 @@
            nothing, so the place was never learned AT ALL and had no name in any language.
            When the map does not know the spelling we were given, we carry the name into
            English and ask once more; that is how the forest meets small places. */
-        let englished='';
+        /* ASK IN EVERY TONGUE BEFORE GIVING UP (Leon, 2026-09-06: "in this case the app did
+           find it in the end, but it had to look better"). Lubonichi is on the map as
+           Любоничи and nowhere as Lubonichi, so one English retry was not enough: the name is
+           carried into ALL the other languages and each spelling is tried in turn. */
+        let englished='', tried=[];
         if(!hit){
-          englished=await carryName(sb, name, 'en');
-          if(englished) { await new Promise(function(z){setTimeout(z,1100);}); hit=await look(englished); }
+          const others=['en','ru','he'].filter(function(l){ return l!==(lang||'en'); });
+          for(let oi=0; oi<others.length && !hit; oi++){
+            const alt=await carryName(sb, name, others[oi]);
+            if(!alt || tried.indexOf(alt)>=0) continue;
+            tried.push(alt);
+            if(others[oi]==='en') englished=alt;
+            await new Promise(function(z){setTimeout(z,1100);});
+            hit=await look(alt);
+            if(hit && !englished && others[oi]!=='en') englished='';
+          }
         }
         /* still nothing on the map: the place is real to the family even if OSM has never
            heard of it, so it is remembered by NAME ALONE - no coordinates, three spellings,
@@ -101,11 +113,12 @@
           const patch0=await learnNames(sb, null, null, {name_en:englished||''}, englished||name);
           if(englished) only.name_en=englished;
           Object.assign(only, patch0);
+          only.unplaced=true;              /* named in three tongues, but not on the map */
           if(only.name_en||only.name_ru||only.name_he){
             try{ sb.from('place_geo').insert(only).then(function(){},function(){}); }catch(e){}
             return only;
           }
-          return null;
+          return {name:name, unplaced:true, unknown:true};   /* not even a spelling: say so */
         }
         const row={name:name, lat:+hit.lat, lng:+hit.lon, label:hit.display_name||null,
                    country:(hit.address&&hit.address.country)||null,
