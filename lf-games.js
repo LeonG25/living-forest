@@ -78,7 +78,15 @@
   async function q(builder, where) {
     const { data, error } = await builder;
     if (error) throw new Error((where ? where + ': ' : '') + (error.message || String(error)));
-    return data || [];
+    let rows = data || [];
+    /* the reader's language, in the games too (Leon 2026-09-06): every artefact
+       batch passes through the shared retelling-swap before an engine sees it */
+    if (where === 'artefacts' && rows.length && window.LFDB && window.LFDB.stories) {
+      try { const sbc = builder && builder.headers ? null : null;
+        const lg = (localStorage.getItem('lf_lang') || 'en');
+        rows = await window.LFDB.stories(window.__lfGamesSb || null, rows, lg) || rows; } catch (e) {}
+    }
+    return rows;
   }
   /* names come from the published display facts (the keeper-edited truth),
      per current language with EN fallback; people.display_name is only the last resort */
@@ -187,7 +195,7 @@
     const seed = resolveSeed(opts.seed);
     const rng = makeRng(seed);
     try {
-      const arts = await q(
+      window.__lfGamesSb=sb; const arts = await q(
         sb.from('artefacts').select('id,body,contributor_id,kind,metadata,status').eq('status', 'published'),
         'artefacts'
       );
@@ -246,7 +254,7 @@
     const seed = resolveSeed(opts.seed);
     const rng = makeRng(seed);
     try {
-      const arts = await q(
+      window.__lfGamesSb=sb; const arts = await q(
         sb.from('artefacts').select('id,body,metadata,storage_path,kind,status').eq('status', 'published'),
         'artefacts'
       );
@@ -435,7 +443,7 @@
     const seed = resolveSeed(opts.seed);
     const rng = makeRng(seed);
     try {
-      const arts = await q(
+      window.__lfGamesSb=sb; const arts = await q(
         sb.from('artefacts').select('id,body,metadata,storage_path,kind,status').eq('status', 'published'),
         'artefacts'
       );
@@ -528,7 +536,7 @@
           .in('field', ['birth', 'death']).eq('status', 'published'),
         'person_facts'
       );
-      const arts = await q(
+      window.__lfGamesSb=sb; const arts = await q(
         sb.from('artefacts').select('id,body,metadata,storage_path,kind,status').eq('status', 'published'),
         'artefacts'
       );
@@ -661,7 +669,7 @@
     const rng = makeRng(seed);
     const NEED = 'at least 2 memories with dates';
     try {
-      const arts = await q(
+      window.__lfGamesSb=sb; const arts = await q(
         sb.from('artefacts').select('id,body,metadata,storage_path,kind,status').eq('status', 'published'),
         'artefacts'
       );

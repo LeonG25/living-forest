@@ -299,9 +299,9 @@
     /* a hand-placed dock is anchored by top/left only. The lf-fen-on rule adds
        bottom with !important, and an element with both stretches - which squeezed
        the button into an oval once the fox arrived. The marker keeps them apart. */
-    wrap.setAttribute('data-moved','1');
-    wrap.style.right='auto'; wrap.style.bottom='auto';
-    wrap.style.left=p.x+'px'; wrap.style.top=p.y+'px';
+    /* Leon 2026-09-06: ONE constant corner on every page - the hand-placed dock
+       is retired, and any remembered position is forgotten for good. */
+    try{ localStorage.removeItem(DRAG_KEY); }catch(e){}
   }
   function clamp(x,y){
     var r=wrap.getBoundingClientRect();
