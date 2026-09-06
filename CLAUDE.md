@@ -404,6 +404,11 @@ TWIN LANGUAGE PILLS (Leon 2026-09-06): search showed TWO switchers - lf-lang.js
 lf-lang injected CSS now hides any local #langBtn/.langpill where it loads; one
 switcher per page everywhere. Static audit covered ALL pages: only those 4
 doubled; duplication is structural, language-independent. lf-lang v2->v3.
+LIST CHOOSER EVERYWHERE (Leon 2026-09-06, `ceb2a96`, lf-lang v4): the globe's
+own pill was dead AND Leon ruled the switcher must OPEN A LIST, never cycle.
+lf-lang now loads on ALL 22 pages, always injects (the skip-if-local-pill guard
+became hide-the-local-pill), letters button top-right opens the EN/RU/HE sheet,
+reloads on choice. Every legacy tap-to-cycle pill is hidden with it.
 (Бобруйск in RU), zero errors.
 
 **NAME MEANINGS PIPELINE SHIPPED (2026-09-05, `ace5691`).** 21 people with
