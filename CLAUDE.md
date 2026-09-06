@@ -419,7 +419,29 @@ NO ON-PAGE LANGUAGE BUTTONS (Leon 2026-09-06, lf-lang v6): .lflang-btn hidden
 too - the menu row is the ONLY visible switcher; it still clicks the hidden
 button, so the sheet works unchanged. All pages, all languages, one rule.
 
-**NEXT WORKSTREAM - NAMES AND PLACES IN ALL TONGUES (Leon 2026-09-06, NOT STARTED):**
+**NAMES AND PLACES BACKFILL DONE (2026-09-06) - parts 1+2 of the workstream below.**
+PART 1 PEOPLE: all 81 missing name spellings (42 field-groups, 34 people; mostly RU/HE
+of names stored only in EN, plus 7 missing EN) written by Claude directly (transliteration
+is deterministic enough that the gen-script API round was skipped), inserted in_review
+through the app's own RLS door (~/qc/nt-out.json + ~/qc/qc-ntins.js, same pattern as the
+name-meanings run), then published by ONE bounded SQL update (in_review name fields,
+created_at < 30 min) per Leon's ruling that name translations need no approval.
+Conventions used: faithful transliteration of the stored spelling; RU applies grammatical
+gender to Slavic surnames for women (Дымарская, Шуфрина, Левина - Russian grammar, not
+editing; the family's own Tserlina precedent); HE transliterates flat; descriptive
+called-names translated with their uncertainty markers kept («Борис [Кустанович?]»,
+«Брат Наума», «[Жена Шая] Руах»); Naum rendered נחום in HE (the Hebrew name, not נאום).
+Verified: SQL still_missing=0 across given/family/patronymic/maiden/called for all
+published people; rendered probe (~/qc/qc-ntcheck*.js) - HE search headline for Belyakov
+now «אנדריי בליאקוב», Latin remains ONLY inside the card's per-language variants list
+(deliberate data display), zero page errors. PROBE TRAP FOUND: the language key is
+lf_lang (underscore) - a probe writing lf-lang silently tests English.
+PART 2 PLACES: exactly one place_geo row lacked names - 'US' - filled by SQL
+(United States / США / ארה"ב); still_missing=0.
+PARTS 3+4 (input flows: auto-translate names/places on save, incl. the RLS question on
+keeper published inserts) NOT STARTED - next session starts there.
+
+**NEXT WORKSTREAM - NAMES AND PLACES IN ALL TONGUES (Leon 2026-09-06, parts 1+2 DONE above):**
 Leon ruled, after the HE search page showed 'Andrey Belyakov' in Latin (cause:
 missing per-language name facts; the fallback surfaces on 15 pages + the games
 engine - audited):
