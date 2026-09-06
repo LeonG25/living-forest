@@ -441,6 +441,38 @@ PART 2 PLACES: exactly one place_geo row lacked names - 'US' - filled by SQL
 PARTS 3+4 (input flows: auto-translate names/places on save, incl. the RLS question on
 keeper published inserts) NOT STARTED - next session starts there.
 
+**ONE SWITCHER, AND NO FLASH (Leon 2026-09-06, `94f0303`, lf-lang v6->v7).** Leon saw the
+language buttons on the globe for an instant at load, and one sitting UNDER the menu button
+on the tree. ONE cause for both: the local switchers were hidden with an INLINE STYLE from
+mount(), which runs after DOMContentLoaded (too late - the button has already painted) and
+is wiped whenever a page redraws its own chrome (which the tree does). Now a STYLESHEET
+(#lfLangHide) injected the instant lf-lang.js is PARSED, into the head, before body exists:
+it cannot be out-raced and a redraw cannot undo it. The old hide list also MISSED three
+kinds - .langsw (two games), .langset/#pLang (place), .langmenu (the reel's dropdown);
+HIDE_SEL now covers every local switcher in the app and is used by both the early sheet and
+the later one. PROBE (~/qc/qc-langsweep.js, ALL 22 pages x EN/RU/HE = 66 loads, signed in
+as keeper, GEOMETRY asserted - rect size + computed display/visibility/opacity, not class
+names): zero visible local switchers anywhere. Flash proved gone separately
+(~/qc/qc-globecard.js): at domcontentloaded the stylesheet is already present and #gbPill
+computes display:none.
+
+**STORIES IN THE READER'S TONGUE - THE THREE PAGES THAT NEVER ASKED (Leon 2026-09-06,
+`94f0303`).** Leon tapped a light on the globe in Russian and read English. The globe
+fetches its own artefacts in load() and never called LFDB.stories - so it printed every
+story AS FIRST TYPED. Fixed there, and the same audit found two more: crowd-real (prints
+each story) and journal-real (names a photo by its own words when it has no date/place).
+Audited every file that touches artefacts: tree/curators/lf-person/lf-walk select no body
+(nothing to translate); review and moment are keeper/edit surfaces that must show the
+ORIGINAL - deliberately untouched. ALSO on the globe card, named because they are visible:
+'told by' -> rasskazal(a)/sopar, the certainty word (documented/remembered) now uses a certs
+dict per language, and 'waiting to be placed' now speaks RU/HE too; all three were English
+literals inside a Russian page. PROBE: card opened in RU on the live globe reads the Russian
+retelling with the Russian teller line, zero page errors. Coverage checked in SQL: of 22
+published stories, the only two without a RU retelling are Russian originals - nothing is
+stranded.
+PROBE RIG NOTE: index.html's PEOPLE is a top-level `let` - NOT on window. A probe must say
+`typeof PEOPLE!=="undefined"?PEOPLE:[]` (global lexical scope), never window.PEOPLE.
+
 **PARTS 3+4 SHIPPED (2026-09-06, `1cb8e45`) - the input flows fill themselves.**
 NAMES ON THE WAY IN: propose-a-person (contribute-real) wrote a name in ONE language and
 left it there until somebody opened the person page and pressed Send - the very leak that
