@@ -451,10 +451,17 @@
     memories=tagged.map(t=>({ id:t.artefact_id, storage_path:t.storage_path, cap:(t.body||'').trim(),
       /* the small chip on the glass names a place too - the reader's spelling there as well */
       whenwhere:[t.meta&&t.meta.when,plc(t.meta&&t.meta.where)].filter(Boolean).join(' · '),
-      yr:yearOf(t.meta), contributor:t.contributor_id||null,
+      yr:yearOf(t.meta), dt:(t.meta&&t.meta.when_date)||'', contributor:t.contributor_id||null,
       teller:t.contributor_id?(contribNames[t.contributor_id]||''):'' }));
-    /* the photos ARE the film: earliest to latest; the undated wait at the end */
-    memories.sort((a,b)=>{ const A=a.yr==null?9e9:a.yr, B=b.yr==null?9e9:b.yr; return A-B; });
+    /* the photos ARE the film: earliest to latest; the undated wait at the end.
+       Two photos from the same year used to come back in whatever order the database
+       happened to answer in, which is part of what made the run feel shuffled - the full
+       date decides within a year, and the id keeps it steady when even that is missing. */
+    memories.sort((a,b)=>{ const A=a.yr==null?9e9:a.yr, B=b.yr==null?9e9:b.yr;
+      if(A!==B) return A-B;
+      const da=String(a.dt||''), db=String(b.dt||'');
+      if(da!==db) return da<db?-1:1;
+      return String(a.id||'').localeCompare(String(b.id||'')); });
     if(ME&&ME!==PERSON_ID&&memories.length){ try{ const ids2=memories.map(m=>m.id);
       const {data:s2}=await sb.from('artefact_subjects').select('artefact_id').eq('person_id',ME).in('artefact_id',ids2);
       const set2=new Set((s2||[]).map(x=>x.artefact_id)); bothPhotos=memories.filter(m=>set2.has(m.id)); }catch(e){} }
@@ -698,7 +705,37 @@
       scenes.push({facet:'end', prov:'gold', photo:last?last.storage_path:'', seed:9, tile:forestSVG,
         artId:'', cap:d().endingCap, cta:'moment-real.html?create=1', ctaLabel:d().addMoment });
     }
+    orderScenes();
     if(state.idx>=scenes.length) state.idx=Math.max(0,scenes.length-1);
+  }
+  /* THE FILM MUST RUN FORWARD (Leon, 2026-09-06: "sometimes the order looks random").
+     The stories were already in year order, but three scenes chose their own picture for
+     their own good reasons - the life scene took the photo nearest the birth year, the kin
+     scene the earliest photo with both of you in it, the ending the latest - and those
+     choices sat between the stories, so the run jumped backwards and forwards in time.
+     Here the chosen ones are moved forward if they would step back: each keeps the best
+     picture it can that is NOT older than the scene before it (kin still prefers a photo
+     with both of you, and only gives that up to keep the order). Story scenes are never
+     touched - a story belongs to its own photograph. */
+  function orderScenes(){
+    try{
+      const yrOf={}, dtOf={};
+      memories.forEach(m=>{ yrOf[m.id]=(m.yr==null?9e9:m.yr); dtOf[m.id]=String(m.dt||''); });
+      const bothIds=new Set(bothPhotos.map(m=>m.id));
+      let lastYr=-1e9;
+      for(const sc of scenes){
+        if(!sc.artId||!sc.photo){ continue; }
+        const y=yrOf[sc.artId]==null?9e9:yrOf[sc.artId];
+        if(sc.facet==='story'){ if(y<9e9) lastYr=Math.max(lastYr,y); continue; }
+        if(y>=lastYr){ if(y<9e9) lastYr=y; continue; }
+        /* it would step back: take the earliest photo from here on instead */
+        const pool=memories.filter(m=>(m.yr!=null)&&m.yr>=lastYr);
+        const pick=(sc.facet==='kin'&&pool.some(m=>bothIds.has(m.id)))
+                   ? pool.find(m=>bothIds.has(m.id)) : pool[0];
+        if(pick){ sc.photo=pick.storage_path; sc.artId=pick.id||''; sc.whenwhere=ww(pick);
+          lastYr=pick.yr; }
+      }
+    }catch(e){}
   }
 
   /* ---------- render ---------- */
