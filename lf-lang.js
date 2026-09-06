@@ -60,7 +60,11 @@
   function mount(){
     if(!document.body) return;
     /* leave a page that already has its own button exactly as it is */
-    if(document.querySelector('[data-act="lang"],#langBtn,#gbPill,[data-langbtn]')) return;
+    /* Leon 2026-09-06: the LIST chooser is the one switcher on EVERY page - local
+       pills (already hidden by the rule above) no longer stop it, and their old
+       tap-to-cycle behaviour is retired with them. */
+    var olds=document.querySelectorAll('[data-act="lang"],#langBtn,#gbPill,[data-langbtn],.langpill');
+    for(var oi=0; oi<olds.length; oi++){ try{ olds[oi].style.display='none'; }catch(e){} }
     if(document.querySelector('.lflang-btn')) return;
     css();
     var sh=sheet();
