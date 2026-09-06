@@ -1321,12 +1321,12 @@
          screen, and in English a full one. Whatever is on the page is what opens: his own
          staging first, then anything waiting, then the words being read, whoever made them.
          Editing a translation is how it stops being a translation and becomes his. */
-      const val = (staged.story!=null) ? staged.story.value : (pendBody!=null?pendBody : (s.text||''));
+      const val = (staged.story!=null && (staged.story.lang==null||staged.story.lang===lang)) ? staged.story.value : (pendBody!=null?pendBody : (s.text||''));
       html=`<div class="ed-langtag">${sv(ICON.info,1.7)} ${esc(d.langTitle)}: ${esc(langNative(lang))}</div>
         <div class="ed-field"><label>${esc(d.edStory)}</label><textarea rows="5" id="edInput">${esc(val)}</textarea></div>`;
       onsend=async()=>{ const v=String(($('#editSheet #edInput')||{}).value||'').trim(); if(!v){ hide(); return; }
         const lg=lang;
-        stageEdit('story',{ label:d.storyH, value:v, flush:async()=>{
+        stageEdit('story',{ label:d.storyH, value:v, lang:lg, flush:async()=>{
           /* If a waiting story for this language already exists, edit it in place so a
              re-telling does not pile up a second pending row. .select() tells us whether the
              update actually touched a row (RLS can refuse silently, 0 rows, no error); if it
@@ -1652,7 +1652,7 @@
     const set=(key,value,state)=>{ if(value==null||value==='') return; const c=document.querySelector(`[data-pending="${key}"]`); if(!c) return;
       c.innerHTML=pendChip(value,state); c.classList.add('show'); };
     // story
-    if(staged.story!=null) set('story', staged.story.value, 'staged');
+    if(staged.story!=null && (staged.story.lang==null||staged.story.lang===lang)) set('story', staged.story.value, 'staged');
     else { const ps=edits.find(e=>e.kind==='story'&&e.lang===lang); if(ps) set('story', ps.body, 'sent'); }
     // where
     if(staged.where) set('where', staged.where.value, 'staged');
