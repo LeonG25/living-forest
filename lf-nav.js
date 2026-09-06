@@ -126,7 +126,7 @@
      14px in, never lifted - Fen's bud lives bottom-LEFT, so nothing collides. */
   var css = ''
   + '#lfnav{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:45;display:flex;flex-direction:column;align-items:flex-end;gap:10px;font-family:\'Hanken Grotesk\',system-ui,sans-serif;}'
-  + '#lfnavPanel{display:none;position:absolute;bottom:calc(100% + 10px);right:0;flex-direction:column;gap:4px;max-height:min(68vh,520px);overflow-y:auto;overscroll-behavior:contain;background:rgba(9,16,30,.94);border:1px solid rgba(180,205,235,.18);border-radius:14px;padding:8px;min-width:168px;box-shadow:0 10px 34px rgba(0,0,0,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);}'  + '#lfnavPanel.lf-left{right:auto;left:0;}'  + '#lfnavPanel.lf-down{bottom:auto;top:calc(100% + 10px);}'
+  + '#lfnavPanel{display:none;position:absolute;bottom:calc(100% + 10px);right:0;flex-direction:column;gap:4px;max-height:calc(100vh - 150px);overflow-y:auto;overscroll-behavior:contain;background:rgba(9,16,30,.94);border:1px solid rgba(180,205,235,.18);border-radius:14px;padding:8px;min-width:168px;box-shadow:0 10px 34px rgba(0,0,0,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);}'  + '#lfnavPanel.lf-left{right:auto;left:0;}'  + '#lfnavPanel.lf-down{bottom:auto;top:calc(100% + 10px);}'
   + '#lfnav.open #lfnavPanel{display:flex;}'
   + '#lfnavPanel a{display:flex;gap:10px;align-items:center;color:#e8eef8;text-decoration:none;font-size:14.5px;padding:10px 12px;border-radius:10px;line-height:1;}'
   + '#lfnavPanel a:active{background:rgba(243,205,132,.16);}'
