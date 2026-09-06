@@ -356,6 +356,12 @@ longest now exactly 140), full story one tap away via step-in. Probe evidence
 QC account (anchored to Надежда) correctly reads «Дочь сестры твоего мужа».
 NOTE: the QC test account is anchored to Nadezhda — kin captions in probes speak
 from her seat, not Leon's.
+INSTAGRAM CAPTIONS (Leon's ruling 2026-09-05, `325288e`): text does NOT sit on
+the photograph. The caption block (.rcapx: story text 17px, told-by pill, links)
+lives UNDER the hero frame; ON the glass only a few small words remain — the
+when-and-where chip (.wwchip, 11px pill bottom-left: «Ей здесь 8 · 1992 · ...»)
+and the top scene chip. Geometry-verified: rcapx.top(468) > hero.bottom(456),
+chip inside the frame, zero errors.
 
 **NAME MEANINGS PIPELINE SHIPPED (2026-09-05, `ace5691`).** 21 people with
 published given names now have AI-written name meanings in ALL THREE languages
