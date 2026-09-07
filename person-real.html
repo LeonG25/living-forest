@@ -21,6 +21,7 @@
 <script src="lf-face.js?v=3"></script>
 <script src="lf-place.js?v=10"></script>
 <script src="lf-kin.js?v=1"></script>
+<script src="lf-tongue.js?v=1"></script>
 <script src="lf-label.js?v=2"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
@@ -1040,7 +1041,8 @@
   let chipDrafts={};
   function chipAddBox(field,label){ const L=d();
     const isLang=(field==='langspoken');
-    const dl=isLang?`<datalist id="lfLangs">${LANGLIST.map(x=>`<option value="${x}"></option>`).join('')}</datalist>`:'';
+    const langChoices=(isLang&&window.LFTongue)?LFTongue.list(state.lang):LANGLIST;
+    const dl=isLang?`<datalist id="lfLangs">${langChoices.map(x=>`<option value="${x}"></option>`).join('')}</datalist>`:'';
     return dl+`<div class="chipadd" data-for="${field}" style="display:none;margin-top:8px">
       <input class="inp"${isLang?' list="lfLangs" autocomplete="off"':''} placeholder="${esc(label||'')}">
       <div class="btnrow" style="margin-top:8px">
@@ -1064,11 +1066,15 @@
       }
     }
     return good; }
+  /* A LANGUAGE HAS ONE NAME PER READER (Leon, 2026-09-07: Jonny's Hebrew page listed his
+     tongues in Russian words). The stored text is a key; lf-tongue turns it into the
+     reader's word, and leaves anything it does not recognise exactly as it was typed. */
+  const chipText=(field,v)=>(field==='langspoken'&&window.LFTongue)?LFTongue.name(v,state.lang):v;
   function chipsField(field,addLabel,cool){ const L=d(); const pubs=pubList(field,'und'); const pends=pendList(field,'und');
-    const pubc=pubs.map(r=>`<span class="chip ${cool?'cool':''}">${(cool&&r.ord!=null)?`<span class="ord">${String((r.ord||0)+1).padStart(2,'0')}</span>`:''}${esc(r.value)}<span class="x" data-del="${r.id}">${sv(I.x,2)}</span></span>`).join('');
+    const pubc=pubs.map(r=>`<span class="chip ${cool?'cool':''}">${(cool&&r.ord!=null)?`<span class="ord">${String((r.ord||0)+1).padStart(2,'0')}</span>`:''}${esc(chipText(field,r.value))}<span class="x" data-del="${r.id}">${sv(I.x,2)}</span></span>`).join('');
     const addbtn=`<button class="chip add" data-addchip="${field}">${sv(I.plus,2)} ${esc(addLabel||'')}</button>`;
     let pend='';
-    if(pends.length){ pend=pends.map(r=>`<div class="pendrow"><span class="chip ${cool?'cool':''} pending">${esc(r.value)} <span class="mono" style="font-size:9px;opacity:.8">· ${L.pendingChip}</span></span>${state.keeper?keeperInline(r.id,'fact'):''}</div>`).join('');
+    if(pends.length){ pend=pends.map(r=>`<div class="pendrow"><span class="chip ${cool?'cool':''} pending">${esc(chipText(field,r.value))} <span class="mono" style="font-size:9px;opacity:.8">· ${L.pendingChip}</span></span>${state.keeper?keeperInline(r.id,'fact'):''}</div>`).join('');
       if(!state.keeper) pend+=`<div class="pending" style="margin-top:6px"><span class="sp"></span>${L.bothpending}</div>`; }
     /* what is held but not yet sent, shown as such - violet like everything waiting, but
        with its own words, because 'not sent yet' and 'waiting for the keeper' differ */
