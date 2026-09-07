@@ -1043,21 +1043,49 @@ incoming pinned to the TOP and in bold. Old-style SMS: simple, flat, plain.
 **Read state.** A message becomes read when it has been FULLY SHOWN (Leon) - not on opening
 the mailbox, and not on a half-scrolled long message.
 
-**Actions.** Reply and FORWARD (Leon added forward). Delete: the owner may delete anything
-from their own mailbox, and what is deleted is REALLY deleted - a hard delete, no trash, no
-hidden row. OPEN Q: does deleting a message I SENT remove it from the recipient's mailbox
-too, or does each side own their own copy? Claude's recommendation: each side owns its copy,
-because otherwise a sender can erase what the other person was told.
+**Actions.** Reply and FORWARD (Leon added forward). Delete (Leon ruled 2026-09-06): a person may
+delete anything from THEIR OWN mailbox and nobody else's - deleting a message you sent does
+NOT remove it from the recipient's mailbox. What is deleted is REALLY deleted: no trash, no
+hidden row, and it never comes back to the side that deleted it. Once BOTH sides have
+deleted a message the row is destroyed outright.
 
 **The menu button.** A mailbox row in the (+) menu, SECOND FROM THE BOTTOM - the language row
 stays last. With an unread message the button becomes a special icon; it returns to normal
-the moment no unread messages remain. OPEN Q: a count on the icon as well, or the changed
-icon alone?
+the moment no unread messages remain. NO COUNT on the icon - the changed icon alone
+(Leon ruled 2026-09-06).
 
 **Claude's engineering notes (not Leon's to decide).** One table (sender, recipient, body,
 sent_at, read_at, plus a per-side delete). The unread check is one small count query at page
 load in lf-nav, so the icon is right on every page; no polling unless it proves needed.
 Forward carries the text and marks it as forwarded rather than faking a new original.
+
+**THE FOUNDATION IS BUILT AND TESTED (2026-09-06) - no screen yet, by design.**
+The mailbox's rules live in the database, where a page cannot get them wrong. This has NO
+visual surface, so it does not jump the designer pass; the drawing is still owed.
+TABLE `messages`: sender_person, recipient_person, body (<=4000 chars, never empty),
+forwarded_from (a forward points at what it carries), sent_at, read_at, hidden_by_sender,
+hidden_by_recipient. No self-posting.
+RLS - and note what is ABSENT: there is NO keeper clause anywhere on this table, deliberately
+(Leon ruled twice). SELECT: only the two people, and only while that side has not hidden it.
+INSERT: sender must be YOUR OWN person, and can_receive_mail(recipient) demands the recipient
+be published, alive (no death date, is_living true) AND registered - an unanchored account has
+no mailbox. A BEFORE UPDATE trigger refuses any rewrite of body/sender/recipient/sent_at after
+sending, and refuses to let one side touch the other side's hidden flag.
+TWO DOORS (RPC, security definer, granted to authenticated only): `hide_message(id)` and
+`mark_message_read(id)`. hide_message deletes from YOUR mailbox only, and when the other side
+has already hidden it the row is DESTROYED - Leon's "really deleted" honoured exactly.
+WHY AN RPC AND NOT A PLAIN UPDATE (worth knowing before anyone 'simplifies' it): a hidden row
+is invisible to its owner by the SELECT policy, so hiding it through a direct update is
+refused - the update would leave the writer holding a row they may not see. Proven, not
+guessed: the plain update failed with 42501 both from the browser and from SQL under the
+authenticated role, while `read_at` on the same row succeeded.
+PROBE EVIDENCE (~/qc/qc-mail*.js, live, as the QC keeper, who IS a keeper): reading all
+messages returned ONLY the one addressed to them - the message between two other people was
+invisible; forging another person as sender REFUSED; writing to a dead person REFUSED;
+writing to a living but unregistered relative REFUSED; a proper message ACCEPTED; rewriting
+it after sending REFUSED; hiding it from the other person's mailbox REFUSED; hiding it from
+their own mailbox 'hidden' and it left their list; hiding a message they are not part of
+'not your message'. Test rows then deleted (messages_left = 0).
 
 **DESIGNER BRIEF (Claude Design, before any engineering - firm house rule).**
 Draw: (1) the mailbox list with all four states in one view - unread incoming bold at top,
