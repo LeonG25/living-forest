@@ -183,6 +183,10 @@
   .prow .radio{ width:20px; height:20px; border-radius:50%; border:1.5px solid var(--hair); flex:0 0 auto; display:grid; place-items:center; }
   .prow.on .radio{ border-color:var(--gold); }
   .prow.on .radio::after{ content:""; width:11px; height:11px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px 1px var(--gold); }
+  .tosearch{ width:100%; margin-top:10px; padding:11px 13px; border-radius:12px;
+    background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.14);
+    color:#f4ecdb; font-family:'Hanken Grotesk',system-ui,sans-serif; font-size:15px; }
+  .tosearch:focus{ outline:none; border-color:rgba(243,205,132,.5); }
   .compose textarea{ margin-top:14px; flex:1; min-height:120px; width:100%; resize:none;
     background:rgba(8,16,28,.55); border:1px solid var(--hair); border-radius:14px; padding:14px;
     color:#f7edda; font-family:'Newsreader',serif; font-weight:300; font-size:18px; line-height:1.5; }
@@ -233,7 +237,9 @@
   const L={
     en:{ dir:'ltr', native:'English',
       title:'Mailbox', empty:'No messages yet.', write:'Write', writeTitle:'Write', to:'To', oneOnly:'One person only',
-      pickerHint:'Living relatives who use the app', send:'Send', sending:'Sending…',
+      pickerHint:'Living relatives who use the app',
+      searchPlace:'Type a name',
+      noMatch:'Nobody by that name can receive messages.', send:'Send', sending:'Sending…',
       fromLine:'From', toLine:'To', reply:'Reply', forward:'Forward', del:'Delete',
       delConfirm:'Delete from your mailbox? It cannot be brought back.', cancel:'Cancel',
       forwarded:'Forwarded', translate:'Translate', showOriginal:'Show as written',
@@ -244,7 +250,9 @@
       now:'now', min:'m', hr:'h', yesterday:'Yesterday' },
     ru:{ dir:'ltr', native:'Русский',
       title:'Почта', empty:'Пока нет сообщений.', write:'Написать', writeTitle:'Написать', to:'Кому', oneOnly:'Только один человек',
-      pickerHint:'Живые родственники, у которых есть приложение', send:'Отправить', sending:'Отправка…',
+      pickerHint:'Живые родственники, у которых есть приложение',
+      searchPlace:'Введите имя',
+      noMatch:'Никто с таким именем не может получать сообщения.', send:'Отправить', sending:'Отправка…',
       fromLine:'От', toLine:'Кому', reply:'Ответить', forward:'Переслать', del:'Удалить',
       delConfirm:'Удалить из вашей почты? Вернуть будет нельзя.', cancel:'Отмена',
       forwarded:'Переслано', translate:'Перевести', showOriginal:'Показать как написано',
@@ -255,7 +263,9 @@
       now:'сейчас', min:'мин', hr:'ч', yesterday:'Вчера' },
     he:{ dir:'rtl', native:'עברית',
       title:'דואר', empty:'אין עדיין הודעות.', write:'לכתוב', writeTitle:'לכתוב', to:'אל', oneOnly:'אדם אחד בלבד',
-      pickerHint:'בני משפחה חיים שמשתמשים באפליקציה', send:'לשלוח', sending:'שולח…',
+      pickerHint:'בני משפחה חיים שמשתמשים באפליקציה',
+      searchPlace:'הקלידו שם',
+      noMatch:'אף אחד בשם הזה לא יכול לקבל הודעות.', send:'לשלוח', sending:'שולח…',
       fromLine:'מאת', toLine:'אל', reply:'להשיב', forward:'להעביר', del:'למחוק',
       delConfirm:'למחוק מהדואר שלכם? לא ניתן להחזיר.', cancel:'ביטול',
       forwarded:'הועבר', translate:'לתרגם', showOriginal:'להציג כפי שנכתב',
@@ -295,7 +305,7 @@
   /* ---------- state ---------- */
   const state={ lang:'en', view:'list' };
   let user=null, me=null;               // me = my person id
-  let messages=[], byId={}, nameMap={}, peopleList=null;
+  let messages=[], byId={}, nameMap={}, spellMap={}, peopleList=null;
   let cur=null;                         // opened message
   let compose=null;                     // {recipient, recipientLabel, body, forwardedFrom, sending}
   const urlCache={};
@@ -309,10 +319,14 @@
       const {data}=await sb.from('person_facts').select('person_id,field,lang,value,status')
         .in('person_id',ids).in('field',['called','given','family','maiden']).eq('status','published');
       const by=window.LFName?LFName.byPerson(data||[]):{};
-      ids.forEach(id=>{ const facts=by[id]||[]; nameMap[id]=(window.LFName&&LFName.label(facts,state.lang))||''; });
+      ids.forEach(id=>{ const facts=by[id]||[];
+        nameMap[id]=(window.LFName&&LFName.label(facts,state.lang))||'';
+        /* the search must match a name in ANY tongue, not only the one being read */
+        spellMap[id]=facts.map(f=>f.value||'').join(' ')+' '+(nameMap[id]||''); });
     }catch(e){ ids.forEach(id=>{ if(nameMap[id]===undefined) nameMap[id]=''; }); }
   }
   const nmeOf=id=>nameMap[id]||d().someone;
+  const allSpellings=id=>(spellMap[id]||nameMap[id]||'');
 
   /* ---------- portraits (real face when we have one, procedural otherwise) ---------- */
   async function signed(path){ if(!path) return ''; if(urlCache[path]!==undefined) return urlCache[path];
@@ -447,7 +461,9 @@
     let ids=[];
     try{ const {data}=await sb.rpc('mailbox_people'); ids=(data||[]).map(r=>r.id||r).filter(Boolean); }catch(e){ ids=[]; }
     await loadNames(ids);
-    peopleList=ids.map(id=>({id, label:nmeOf(id)}))
+    /* every spelling this person has, so typing 'Лёня' or 'Leonid' or 'לאוניד' all find them
+       - the same courtesy the Search page gives (Leon, 2026-09-07) */
+    peopleList=ids.map(id=>({id, label:nmeOf(id), hay:allSpellings(id)}))
       .filter(p=>p.label && p.label!==d().someone)
       .sort((a,b)=>a.label.localeCompare(b.label));
     return peopleList;
@@ -462,10 +478,19 @@
     if(compose.recipient){
       toBlock=`<span class="to-chip">${avatar(compose.recipient)}<span class="nm">${esc(compose.recipientLabel||nmeOf(compose.recipient))}</span><span class="x" data-act="clear-to">${sv(I.x,2)}</span></span>`;
     } else {
-      const rows=(peopleList||[]).map(p=>`<div class="prow" data-pick="${esc(p.id)}" data-label="${esc(p.label)}">
-        ${avatar(p.id)}<span class="nm">${esc(p.label)}</span><span class="radio"></span></div>`).join('');
+      /* A SEARCH WINDOW, NOT A LIST (Leon, 2026-09-07). A family of hundreds cannot be a
+         scroll; you type a name and the matches appear, exactly as the Search page works.
+         What is searched is ONLY the people you may actually write to - alive and registered
+         - so nobody is offered a relative who could never receive it. */
+      const q=(compose.q||'').trim().toLowerCase();
+      const hits=(peopleList||[]).filter(p=>!q || (p.hay||p.label||'').toLowerCase().includes(q));
+      const rows=hits.slice(0,25).map(p=>`<div class="prow" data-pick="${esc(p.id)}" data-label="${esc(p.label)}">
+        ${avatar(p.id)}<span class="nm">${esc(p.label)}</span><span class="radio"></span></div>`).join('')
+        || `<div class="picker-hint" style="margin:10px 0 0">${esc(q?Ld.noMatch:Ld.pickerHint)}</div>`;
       toBlock=`<div class="picker-hint" style="margin:0">${sv(I.people,1.6)} ${esc(Ld.pickerHint)}</div>`;
-      picker=`<div class="plist">${rows}</div>`;
+      picker=`<input class="tosearch" id="toSearch" type="search" autocomplete="off"
+                 placeholder="${esc(Ld.searchPlace)}" value="${esc(compose.q||'')}">
+              <div class="plist">${rows}</div>`;
     }
     return topbarBack(Ld.native,Ld.writeTitle)+`<div class="body"><div class="compose">
       <div class="to-field"><span class="lbl">${esc(Ld.to)} · ${esc(Ld.oneOnly)}</span>${toBlock}</div>
@@ -603,6 +628,15 @@
     };
     const ta=document.getElementById('cBody');
     if(ta) ta.addEventListener('input',()=>{ if(compose) compose.body=ta.value; });
+    /* the recipient search: redraw the matches as the letters arrive, and put the caret back
+       where it was - a redraw that steals the cursor makes a search box unusable */
+    const ts=document.getElementById('toSearch');
+    if(ts) ts.addEventListener('input',()=>{
+      if(!compose) return; compose.q=ts.value; const at=ts.selectionStart;
+      render();
+      const again=document.getElementById('toSearch');
+      if(again){ again.focus(); try{ again.setSelectionRange(at,at); }catch(e){} }
+    });
   }
 
   /* ---------- toast ---------- */
