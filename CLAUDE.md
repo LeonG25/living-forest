@@ -1118,6 +1118,53 @@ normal and 'you have mail'. Three languages including Hebrew RTL. House rules: d
 alive background, and the truth guardrail - a message is a PERSON's words, so gold, never
 the cool blue of app-made facts. It must feel like an old SMS list: plain, quick, unclever.
 
+### PRIVACY, SECURITY AND WHO SEES WHOM - PARKED 2026-09-07, decide before the family grows
+
+Leon opened this and parked it the same day ("It's all tangled, I don't know where to
+start... we will get back to it one day"). NOTHING IS BUILT. Everything below is the thinking,
+kept so it does not have to be done twice. Leon's own words frame the problem:
+ - people will not want strangers seeing their children's photos or their own details;
+ - a FRIEND who joins is connected to Leon but is a stranger to Leon's relatives;
+ - even inside one tree, branches do not know each other (the parents of the wife of the
+   brother of his wife are unknown to almost everyone on his side);
+ - "What I uploaded are my family pictures. I don't want now anyone to ban any of them" -
+   the uploader keeps control of their own photographs;
+ - his instinct: show the whole forest and the trees, but WITHOUT NAMES by default;
+ - he does not believe in request-access buttons: "people are shy, they will not do it".
+
+WHAT THE FIELD ALREADY DOES (researched 2026-09-07, sources in the chat of that day):
+ - Geni/MyHeritage: every LIVING profile is private, visible only to your "Family Group" -
+   an audience defined by DISTANCE IN THE TREE, not by a friend list. The dead are public.
+ - FamilySearch: living people sit in a private tree or a named family-group tree; only the
+   person who entered a living person can see or change that record.
+ - WikiTree: a per-profile MANAGER plus a TRUSTED LIST; strangers see a placeholder, not a
+   blank. Living non-members must be "Unlisted". Their photo rule is the one to copy: a
+   photo is as private as the most private person in it.
+
+CLAUDE'S PROPOSAL, as put to Leon (he did not rule on it):
+ 1. Separate the three questions - they are not one. WHO DECIDES ABOUT A PHOTO (the uploader,
+    always) / WHAT A STRANGER SEES (shape yes, people no) / HOW ANYONE EVER OPENS UP.
+ 2. A living person may remove THEMSELVES from a photo: the face-tag goes, the photo stays.
+    That gives a worried mother what she needs without taking anyone's pictures away.
+ 3. Outside your branch, a living person is an UNNAMED LIGHT - no face, no name, no stories.
+    The dead stay fully visible; they are the majority, so the archive still works.
+ 4. No request-access button. Ask at the natural moment instead: when someone JOINS and
+    connects, ask the few people actually near them - "Rita has joined and is your niece.
+    Let her see you?" - everything / just my name / not yet.
+ 5. Photos and stories INHERIT from the living people in them; never a setting per upload.
+ 6. A guest (a friend's branch) is not a relative: dead people and whatever is open to the
+    whole forest, nothing else.
+ 7. Make the cost of hiding visible rather than warned about: a hidden person is a dimmed
+    light labelled hidden, and the games skip them.
+ WHERE TO START (Claude's recommendation): with CHILDREN, because it needs no model at all -
+ a living minor is never visible outside their own branch, no setting to get wrong - and then
+ Leon's own rule, living people unnamed outside their branch BY DEFAULT. Defaults are what
+ everyone lives with, and they are cheapest to set while the forest is still only Leon's.
+
+THE OPEN VALUES QUESTION, unanswered: when someone later restricts themselves, what happens
+to photographs already shared - do they disappear from people who could already see them, or
+is a memory once shared with the family shared for good? Leon has not ruled. Do not guess.
+
 ### Twelve ideas for the children (Claude's list, 2026-09-06) - PARKED, discuss before building
 
 Leon: his sons are 10 and 12; the app with its six games is "not fun enough, not game-like
