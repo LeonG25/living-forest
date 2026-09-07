@@ -139,15 +139,31 @@
   + '#lfnav.open #lfnavBtn{border-color:rgba(243,205,132,.9);}';
   var st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);
 
+  /* THE MENU SPOKE ENGLISH TO EVERYONE (found 2026-09-06 while adding the mailbox row).
+     Every label here was a hard-coded English string, so a Russian or Hebrew reader met
+     "The globe" and "Step out" on every page of an otherwise translated app. The words are
+     translated now; the layout, the order and the look are untouched. */
+  var NAVW={
+    en:{map:'The globe',find:'Search',tree:'The tree',play:'Find them in a crowd',
+        when:'The timeline',add:'Contribute',journal:'My journal',clearing:'The clearing',
+        mail:'Mailbox',review:'Review',keepers:'Keepers',out:'Step out'},
+    ru:{map:'Глобус',find:'Поиск',tree:'Древо',play:'Найти в толпе',
+        when:'Лента времени',add:'Добавить',journal:'Мой дневник',clearing:'Поляна',
+        mail:'Почта',review:'Проверка',keepers:'Хранители',out:'Выйти'},
+    he:{map:'הגלובוס',find:'חיפוש',tree:'האילן',play:'לזהות בקהל',
+        when:'ציר הזמן',add:'להוסיף',journal:'היומן שלי',clearing:'הקרחת',
+        mail:'דואר',review:'בדיקה',keepers:'שומרים',out:'יציאה'}};
+  function navLang(){ try{ return localStorage.getItem('lf_lang')||'en'; }catch(e){ return 'en'; } }
+  function W(k){ var d=NAVW[navLang()]||NAVW.en; return d[k]||NAVW.en[k]||k; }
   var items=[
-             ['map','◍','The globe','index.html'],
-             ['find','⌕','Search','search-real.html'],
-             ['tree','⋔','The tree','tree-real.html'],
-             ['play','❂','Find them in a crowd','crowd-real.html'],
-             ['when','◷','The timeline','timeline-real.html'],
-             ['add','✎','Contribute','contribute-real.html'],
-             ['journal','❦','My journal','journal-real.html'],
-             ['clearing','🦊','The clearing','clearing-real.html']];
+             ['map','◍',W('map'),'index.html'],
+             ['find','⌕',W('find'),'search-real.html'],
+             ['tree','⋔',W('tree'),'tree-real.html'],
+             ['play','❂',W('play'),'crowd-real.html'],
+             ['when','◷',W('when'),'timeline-real.html'],
+             ['add','✎',W('add'),'contribute-real.html'],
+             ['journal','❦',W('journal'),'journal-real.html'],
+             ['clearing','🦊',W('clearing'),'clearing-real.html']];
   var wrap=document.createElement('div'); wrap.id='lfnav';
   var panel=document.createElement('div'); panel.id='lfnavPanel';
   items.forEach(function(it){
@@ -156,6 +172,49 @@
     if(it[0]===HERE) a.className='cur';
     panel.appendChild(a);
   });
+  /* THE MAILBOX, SECOND FROM THE BOTTOM (Leon, 2026-09-06). order:98 sits it directly
+     above the language row, which keeps 99 for ever. The mark changes shape when a message
+     is waiting - a filled envelope with a gold dot, NO number (Leon ruled: the icon alone) -
+     and returns to the plain envelope the moment nothing is unread. One small count at load;
+     no polling, because a mailbox that nags is worse than one you open yourself. */
+  var mailRow=null;
+  (function(){
+    var a=document.createElement('a'); a.href='mail-real.html';
+    a.style.order='98'; a.setAttribute('data-lfmail','1');
+    a.innerHTML='<span class="ic" data-mailic>\u2709</span><span>'+W('mail')+'</span>';
+    if(HERE==='mail') a.className='cur';
+    mailRow=a; panel.appendChild(a);
+  })();
+  function markMail(has){
+    if(!mailRow) return;
+    var ic=mailRow.querySelector('[data-mailic]'); if(!ic) return;
+    ic.textContent = has ? '\u2709' : '\u2709';
+    ic.style.color = has ? '#f3cd84' : '';
+    ic.style.textShadow = has ? '0 0 10px rgba(243,205,132,.65)' : '';
+    var dot=mailRow.querySelector('[data-maildot]');
+    if(has && !dot){ dot=document.createElement('span'); dot.setAttribute('data-maildot','1');
+      dot.style.cssText='width:7px;height:7px;border-radius:50%;background:#f3cd84;margin-inline-start:auto;box-shadow:0 0 8px rgba(243,205,132,.8)';
+      mailRow.appendChild(dot); }
+    if(!has && dot) dot.remove();
+  }
+  (function(){
+    function look(){
+      var client=null;
+      try{ if(window.supabase&&window.supabase.createClient)
+        client=window.supabase.createClient('https://oabcdrktuikifbormjip.supabase.co','sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC'); }catch(e){}
+      if(!client||!client.rpc) return false;
+      client.rpc('my_person').then(function(r){
+        var me=r&&r.data; if(!me) return;
+        client.from('messages').select('id',{count:'exact',head:true})
+          .eq('recipient_person',me).is('read_at',null).eq('hidden_by_recipient',false)
+          .then(function(res){ markMail(!!(res&&res.count)); },function(){});
+      },function(){});
+      return true;
+    }
+    /* the library may still be arriving; try, then try once more shortly after */
+    if(!look()) setTimeout(look,1500);
+  })();
+
   /* language at the menu's foot (Leon 2026-09-06): the on-page button stays; this
      row summons the same three-tongue list. order:99 keeps it last for ever. */
   (function(){
@@ -175,11 +234,11 @@
   function addKeeperItems(){
     if(panel.querySelector('a[data-lf="review"]')) return;   // de-dupe: never double-insert
     var rv=document.createElement('a'); rv.href='review-real.html'; rv.setAttribute('data-lf','review');
-    rv.innerHTML='<span class="ic">\u2713</span><span>'+(window.__lfReviewLabel||'Review')+'</span>';
+    rv.innerHTML='<span class="ic">\u2713</span><span>'+(window.__lfReviewLabel||W('review'))+'</span>';
     if(HERE==='review') rv.className='cur';
     panel.insertBefore(rv, panel.querySelector('a[data-lf="signout"]'));
     var a=document.createElement('a'); a.href='curators-real.html'; a.setAttribute('data-lf','curators');
-    a.innerHTML='<span class="ic">\u2609</span><span>'+(window.__lfKeeperLabel||'Keepers')+'</span>';
+    a.innerHTML='<span class="ic">\u2609</span><span>'+(window.__lfKeeperLabel||W('keepers'))+'</span>';
     if(HERE==='curators') a.className='cur';
     panel.insertBefore(a, panel.querySelector('a[data-lf="signout"]'));
   }
@@ -259,7 +318,7 @@
   function addStepOut(){
     if(soEl && soEl.parentNode) return;
     soEl=document.createElement('a'); soEl.href='#'; soEl.setAttribute('data-lf','signout');
-    soEl.innerHTML='<span class="ic">\u238b</span><span>Step out</span>';
+    soEl.innerHTML='<span class="ic">\u238b</span><span>'+W('out')+'</span>';
     soEl.addEventListener('click', function(ev){ ev.preventDefault();
       var s2=storedSession();
       try{ if(s2) fetch(SB_URL+'/auth/v1/logout',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+s2.token}}); }catch(e){}
