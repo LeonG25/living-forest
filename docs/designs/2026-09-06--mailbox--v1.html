@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mailbox — The Living Forest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Azeret+Mono:wght@300;400;500&family=Frank+Ruhl+Libre:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body{ background:#04070e; }
+  :root{
+    --cream:#f4ecdb; --muted:#9db0cc; --dim:#6f83a3; --hair:#ffffff18; --panel:#ffffff0b;
+    --gold:#f3cd84; --gold-hi:#ffe6ad; --cool:#7fb4d8; --cool-hi:#a9d2ee;
+    --edit:#c9a2ff; --danger:#ff9a86;
+  }
+  body{ font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--cream); min-height:100dvh;
+    padding:38px 22px 90px;
+    background:radial-gradient(150% 100% at 50% -6%, #12233c 0%, #0a1526 44%, #04070e 100%);
+    -webkit-user-select:none; user-select:none; }
+  .serif{ font-family:'Newsreader',Georgia,serif; }
+  .mono{ font-family:'Azeret Mono',monospace; }
+  [dir="rtl"] .serif, [dir="rtl"] .msg-body, [dir="rtl"] .compose textarea{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
+
+  /* ===== page lede ===== */
+  .lede{ max-width:920px; margin:0 auto 30px; text-align:center; display:flex; flex-direction:column; gap:12px; align-items:center; }
+  .lede .k{ font-family:'Azeret Mono',monospace; font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--dim); }
+  .lede h1{ font-family:'Newsreader',serif; font-weight:300; font-size:33px; line-height:1.1; color:#f6efe0; }
+  .lede p{ font-size:14px; line-height:1.6; color:var(--muted); max-width:700px; }
+  .lede .badges{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:4px; }
+  .lede .badge{ font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted);
+    padding:6px 12px; border-radius:99px; border:1px solid var(--hair); background:var(--panel); }
+  .lede .badge b{ font-weight:600; }
+
+  /* ===== language sections ===== */
+  .langsec{ max-width:1600px; margin:0 auto 8px; }
+  .langsec > h2{ font-family:'Newsreader',serif; font-weight:400; font-size:23px; color:#f6efe0; margin:40px 0 4px;
+    display:flex; align-items:baseline; gap:12px; }
+  .langsec > h2 .native{ color:var(--gold-hi); }
+  .langsec > h2 .tag{ font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--dim); }
+  .langsec > h2 .tag.rtl{ color:var(--cool-hi); }
+  .frames{ display:flex; flex-wrap:wrap; gap:34px 26px; padding:22px 0 8px; align-items:flex-start; }
+
+  .fwrap{ display:flex; flex-direction:column; align-items:center; gap:11px; width:360px; }
+  .fwrap .cap{ font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); text-align:center; }
+  .fwrap .cap b{ color:var(--gold); font-weight:500; }
+
+  /* ===== the phone ===== */
+  .phone{ position:relative; width:360px; height:639px; border-radius:38px; overflow:hidden; flex:0 0 auto;
+    background:#04070e; box-shadow:0 34px 100px -46px #000, 0 0 0 8px #14141b, 0 0 0 9px #2b2b34; }
+
+  /* alive background */
+  .sky{ position:absolute; inset:-14%; z-index:0;
+    background:
+      radial-gradient(38% 28% at 20% 16%, rgba(86,214,196,.30), transparent 60%),
+      radial-gradient(42% 32% at 84% 24%, rgba(150,120,236,.30), transparent 60%),
+      radial-gradient(44% 34% at 74% 82%, rgba(236,110,200,.22), transparent 60%),
+      radial-gradient(48% 40% at 24% 86%, rgba(255,207,126,.20), transparent 62%),
+      radial-gradient(60% 50% at 50% 48%, rgba(95,200,236,.12), transparent 72%);
+    animation:sky 20s ease-in-out infinite alternate; }
+  @keyframes sky{ 0%{ transform:scale(1) translate(0,0); filter:hue-rotate(0deg); }
+    100%{ transform:scale(1.14) translate(-3%,-2%); filter:hue-rotate(20deg); } }
+  .glow{ position:absolute; inset-inline:0; top:44px; height:150px; z-index:0; pointer-events:none;
+    background:radial-gradient(60% 100% at 50% 0%, rgba(243,205,132,.30), transparent 72%);
+    filter:blur(14px); animation:breathe 7s ease-in-out infinite; }
+  @keyframes breathe{ 0%,100%{ opacity:.5; } 50%{ opacity:.95; } }
+  .veil{ position:absolute; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(120% 80% at 50% 26%, transparent 32%, rgba(4,7,14,.5) 100%),
+      linear-gradient(180deg, rgba(4,7,14,.32), transparent 22%, transparent 58%, rgba(4,7,14,.7)); }
+  .mote{ position:absolute; z-index:1; width:3px; height:3px; border-radius:50%; background:rgba(255,248,232,.85);
+    box-shadow:0 0 8px 2px rgba(255,232,180,.5); animation:float linear infinite; }
+  @keyframes float{ 0%{ transform:translateY(10px); opacity:0; } 12%{ opacity:.9; } 88%{ opacity:.9; } 100%{ transform:translateY(-150px); opacity:0; } }
+
+  /* app chrome */
+  .app{ position:absolute; inset:0; z-index:3; display:flex; flex-direction:column; }
+  .topbar{ flex:0 0 auto; display:flex; align-items:center; gap:10px; padding:16px 16px 12px;
+    background:linear-gradient(to bottom, rgba(5,9,17,.86), rgba(5,9,17,.35) 70%, transparent); backdrop-filter:blur(7px); }
+  .ibtn{ width:40px; height:40px; border-radius:12px; flex:0 0 auto; display:grid; place-items:center; cursor:pointer;
+    border:1px solid var(--hair); background:rgba(10,20,34,.55); color:var(--cream); }
+  .ibtn svg{ width:18px; height:18px; }
+  .ttl{ flex:1; min-width:0; }
+  .ttl .k{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); }
+  .ttl .n{ font-family:'Newsreader',serif; font-size:22px; color:#fbf5e8; line-height:1.05; margin-top:1px; }
+  .ttl.center{ text-align:center; }
+  .writebtn{ display:inline-flex; align-items:center; gap:7px; padding:9px 13px; border-radius:99px; cursor:pointer; flex:0 0 auto;
+    background:linear-gradient(180deg,var(--gold-hi),var(--gold)); color:#1a1206; border:none;
+    font-family:'Hanken Grotesk',sans-serif; font-size:12.5px; font-weight:700; }
+  .writebtn svg{ width:15px; height:15px; }
+
+  .body{ flex:1; min-height:0; overflow-y:auto; scrollbar-width:none; padding:2px 0 22px; }
+  .body::-webkit-scrollbar{ display:none; }
+
+  /* ===== the list ===== */
+  .row{ position:relative; display:flex; gap:12px; align-items:flex-start; padding:15px 18px; cursor:pointer;
+    border-bottom:1px solid rgba(255,255,255,.05); }
+  .row .dir{ flex:0 0 auto; width:22px; display:flex; flex-direction:column; align-items:center; gap:6px; padding-top:3px; }
+  .row .dot{ width:9px; height:9px; border-radius:50%; }
+  .row.unread .dot{ background:var(--gold); box-shadow:0 0 9px 2px rgba(243,205,132,.7); }
+  .row .arrow{ color:var(--cool); }
+  .row .arrow svg{ width:16px; height:16px; display:block; }
+  [dir="rtl"] .row .arrow svg{ transform:scaleX(-1); }
+  .row .rt{ flex:1; min-width:0; }
+  .row .eyebrow{ display:flex; align-items:center; gap:8px; font-family:'Azeret Mono',monospace; font-size:9.5px;
+    letter-spacing:.1em; text-transform:uppercase; }
+  .row .eyebrow.in{ color:var(--dim); } .row .eyebrow.out{ color:rgba(127,180,216,.75); }
+  .row .eyebrow .who{ font-family:'Newsreader',serif; font-size:16px; letter-spacing:0; text-transform:none; color:#eadfca; }
+  .row .eyebrow.out .who{ color:#cfe0f2; }
+  .row .prev{ font-size:13.5px; line-height:1.4; color:#cdbfa4; margin-top:4px;
+    display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; }
+  .row .time{ flex:0 0 auto; font-family:'Azeret Mono',monospace; font-size:9.5px; color:var(--dim); padding-top:4px; }
+  .row.unread .eyebrow .who{ color:#fff2d6; font-weight:600; }
+  .row.unread .prev{ color:#f0e6d0; font-weight:600; }
+  .row.incoming{ box-shadow:inset 3px 0 0 rgba(243,205,132,.55); }
+  [dir="rtl"] .row.incoming{ box-shadow:inset -3px 0 0 rgba(243,205,132,.55); }
+  .row.outgoing{ box-shadow:inset 3px 0 0 rgba(127,180,216,.4); background:rgba(9,17,29,.32); }
+  [dir="rtl"] .row.outgoing{ box-shadow:inset -3px 0 0 rgba(127,180,216,.4); }
+
+  /* empty state */
+  .emptybox{ height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:16px; padding:30px; }
+  .emptybox .env{ width:70px; height:70px; border-radius:20px; display:grid; place-items:center; color:var(--gold-hi);
+    border:1px solid rgba(243,205,132,.28); background:rgba(243,205,132,.06); }
+  .emptybox .env svg{ width:34px; height:34px; }
+  .emptybox .t{ font-family:'Newsreader',serif; font-size:20px; color:#e9dcc2; }
+  .emptybox .writebtn{ margin-top:4px; }
+
+  /* ===== opened message ===== */
+  .msg{ padding:20px 18px 0; }
+  .msg .mhead{ display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+  .msg .mhead .flame{ width:8px; height:8px; border-radius:50%; background:var(--gold); box-shadow:0 0 10px 2px rgba(243,205,132,.8); flex:0 0 auto; }
+  .msg .mhead .from{ font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); }
+  .msg .mhead .from b{ font-family:'Newsreader',serif; font-size:16px; letter-spacing:0; text-transform:none; color:#eadfca; font-weight:400; }
+  .msg .mhead .time{ margin-inline-start:auto; font-family:'Azeret Mono',monospace; font-size:10px; color:var(--dim); }
+  .fwd{ display:inline-flex; align-items:center; gap:7px; margin-bottom:13px; padding:6px 11px; border-radius:99px;
+    font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--cool-hi); background:rgba(127,180,216,.12); border:1px solid rgba(127,180,216,.3); }
+  .fwd svg{ width:13px; height:13px; }
+  .msg-body{ font-family:'Newsreader',serif; font-weight:300; font-size:22px; line-height:1.5; color:#f7edda; }
+  .inlink{ display:inline-flex; align-items:center; gap:6px; margin-top:14px; padding:9px 13px; border-radius:12px; cursor:pointer;
+    background:rgba(243,205,132,.08); border:1px solid rgba(243,205,132,.32); color:var(--gold-hi);
+    font-family:'Hanken Grotesk',sans-serif; font-size:13.5px; font-weight:600; text-decoration:none; }
+  .inlink svg{ width:15px; height:15px; }
+  .inlink .lchev{ margin-inline-start:2px; opacity:.7; }
+  [dir="rtl"] .inlink .lchev svg{ transform:scaleX(-1); }
+  .translate{ margin-top:18px; display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:10px; cursor:pointer;
+    color:var(--cool); background:rgba(127,180,216,.08); border:1px solid rgba(127,180,216,.26);
+    font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; }
+  .translate svg{ width:14px; height:14px; }
+  .aswritten{ margin-top:12px; font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--dim); display:flex; align-items:center; gap:7px; }
+  .aswritten::before{ content:""; width:5px; height:5px; border-radius:50%; background:var(--gold); box-shadow:0 0 7px 1px var(--gold); }
+
+  .actionbar{ margin-top:auto; display:flex; gap:8px; padding:12px 16px calc(16px + env(safe-area-inset-bottom));
+    background:linear-gradient(to top, rgba(5,9,17,.9), transparent); }
+  .act{ flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; padding:11px 4px; border-radius:14px; cursor:pointer;
+    border:1px solid var(--hair); background:rgba(10,20,34,.5); color:var(--cream);
+    font-family:'Hanken Grotesk',sans-serif; font-size:11.5px; }
+  .act svg{ width:18px; height:18px; }
+  .act.del{ color:var(--danger); border-color:rgba(255,154,134,.28); }
+
+  /* ===== delete confirm ===== */
+  .dim{ position:absolute; inset:0; z-index:5; background:rgba(4,7,14,.6); backdrop-filter:blur(2px); }
+  .confirm{ position:absolute; z-index:6; inset-inline:0; bottom:0; padding:8px 20px calc(22px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg,#141122,#0a0812); border-top:1px solid rgba(255,154,134,.3);
+    border-radius:22px 22px 0 0; box-shadow:0 -22px 60px -28px #000; }
+  .confirm .grip{ width:40px; height:4px; border-radius:99px; background:rgba(255,255,255,.2); margin:6px auto 16px; }
+  .confirm .ct{ font-family:'Newsreader',serif; font-size:19px; line-height:1.4; color:#f6ece0; text-align:center; }
+  .confirm .cbtns{ display:flex; gap:10px; margin-top:20px; }
+  .cbtn{ flex:1; padding:14px; border-radius:13px; cursor:pointer; border:1px solid transparent;
+    font-family:'Hanken Grotesk',sans-serif; font-size:14px; font-weight:600; }
+  .cbtn.keep{ background:transparent; border-color:var(--hair); color:var(--cream); }
+  .cbtn.del{ background:linear-gradient(180deg,#ffb2a1,var(--danger)); color:#2a0f0a; }
+
+  /* ===== compose ===== */
+  .compose{ padding:16px 18px; display:flex; flex-direction:column; height:100%; }
+  .to-field{ margin-bottom:14px; }
+  .to-field .lbl{ font-family:'Azeret Mono',monospace; font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; display:block; }
+  .to-chip{ display:inline-flex; align-items:center; gap:9px; padding:8px 10px 8px 8px; border-radius:99px;
+    background:rgba(243,205,132,.1); border:1px solid rgba(243,205,132,.34); }
+  .to-chip .av{ width:26px; height:26px; border-radius:50%; overflow:hidden; flex:0 0 auto; }
+  .to-chip .av svg{ width:100%; height:100%; display:block; }
+  .to-chip .nm{ font-family:'Newsreader',serif; font-size:15px; color:#fbf5e8; }
+  .to-chip .x{ width:16px; height:16px; color:var(--muted); cursor:pointer; }
+  .picker-hint{ font-size:11.5px; color:var(--muted); margin:2px 0 10px; display:flex; align-items:center; gap:7px; }
+  .picker-hint svg{ width:14px; height:14px; color:var(--cool); flex:0 0 auto; }
+  .plist{ display:flex; flex-direction:column; gap:2px; }
+  .prow{ display:flex; align-items:center; gap:12px; padding:11px 8px; border-radius:12px; cursor:pointer; }
+  .prow.on{ background:rgba(243,205,132,.09); }
+  .prow .av{ width:38px; height:38px; border-radius:50%; overflow:hidden; flex:0 0 auto; border:1px solid var(--hair); }
+  .prow .av svg{ width:100%; height:100%; display:block; }
+  .prow .nm{ flex:1; font-family:'Newsreader',serif; font-size:16px; color:#eadfca; }
+  .prow .radio{ width:20px; height:20px; border-radius:50%; border:1.5px solid var(--hair); flex:0 0 auto; display:grid; place-items:center; }
+  .prow.on .radio{ border-color:var(--gold); }
+  .prow.on .radio::after{ content:""; width:11px; height:11px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px 1px var(--gold); }
+  .compose textarea{ margin-top:14px; flex:1; min-height:120px; width:100%; resize:none;
+    background:rgba(8,16,28,.55); border:1px solid var(--hair); border-radius:14px; padding:14px;
+    color:#f7edda; font-family:'Newsreader',serif; font-weight:300; font-size:18px; line-height:1.5; }
+  .compose textarea:focus{ outline:none; border-color:rgba(243,205,132,.5); }
+  .sendbar{ margin-top:12px; display:flex; }
+  .sendbtn{ flex:1; padding:15px; border-radius:14px; cursor:pointer; border:none;
+    background:linear-gradient(180deg,var(--gold-hi),var(--gold)); color:#1a1206;
+    font-family:'Hanken Grotesk',sans-serif; font-size:15px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:9px; }
+  .sendbtn svg{ width:17px; height:17px; }
+
+  .nobody{ height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:14px; padding:34px; }
+  .nobody .env{ width:60px; height:60px; border-radius:18px; display:grid; place-items:center; color:var(--dim);
+    border:1px dashed var(--hair); background:rgba(255,255,255,.02); }
+  .nobody .env svg{ width:28px; height:28px; }
+  .nobody .t{ font-family:'Newsreader',serif; font-size:17px; line-height:1.5; color:var(--muted); max-width:230px; }
+
+  /* ===== the (+) menu ===== */
+  .menuscrim{ position:absolute; inset:0; z-index:4; background:rgba(4,7,14,.55); backdrop-filter:blur(2px); }
+  .menupanel{ position:absolute; z-index:5; inset-inline:0; bottom:0; padding:8px 14px calc(16px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg,#0f1e33,#070d18); border:1px solid var(--hair); border-bottom:none;
+    border-radius:24px 24px 0 0; box-shadow:0 -26px 70px -30px #000; }
+  .menupanel .grip{ width:40px; height:4px; border-radius:99px; background:rgba(255,255,255,.2); margin:6px auto 12px; }
+  .mrow{ display:flex; align-items:center; gap:14px; padding:13px 12px; border-radius:14px; cursor:pointer; }
+  .mrow + .mrow{ border-top:1px solid rgba(255,255,255,.04); }
+  .mrow .mic{ width:38px; height:38px; border-radius:11px; flex:0 0 auto; display:grid; place-items:center;
+    background:rgba(255,255,255,.04); border:1px solid var(--hair); color:var(--cream); position:relative; }
+  .mrow .mic svg{ width:19px; height:19px; }
+  .mrow .ml{ flex:1; font-family:'Newsreader',serif; font-size:18px; color:#eadfca; }
+  .mrow .mchev{ color:var(--dim); }
+  .mrow .mchev svg{ width:16px; height:16px; }
+  [dir="rtl"] .mrow .mchev svg{ transform:scaleX(-1); }
+  .mrow.mailbox .mic{ color:var(--gold-hi); border-color:rgba(243,205,132,.4); background:rgba(243,205,132,.08); }
+  .maildot{ position:absolute; top:-3px; inset-inline-end:-3px; width:12px; height:12px; border-radius:50%;
+    background:var(--gold); box-shadow:0 0 8px 2px rgba(243,205,132,.8), 0 0 0 2px #0c1524; }
+  .mrow.lang .ml span{ font-family:'Azeret Mono',monospace; font-size:11px; color:var(--muted); margin-inline-start:8px; letter-spacing:.06em; }
+  .mrow.divider{ margin-top:6px; border-top:1px solid rgba(255,255,255,.1); padding-top:16px; }
+
+  /* icon legend for the two mailbox marks */
+  .iconlegend{ display:flex; gap:22px; justify-content:center; align-items:flex-start; margin-top:16px; padding-top:14px; border-top:1px dashed var(--hair); }
+  .iconlegend .one{ display:flex; flex-direction:column; align-items:center; gap:7px; }
+  .iconlegend .mark{ width:46px; height:46px; border-radius:13px; display:grid; place-items:center; position:relative;
+    border:1px solid var(--hair); background:rgba(255,255,255,.04); color:var(--cream); }
+  .iconlegend .mark.mail{ color:var(--gold-hi); border-color:rgba(243,205,132,.4); background:rgba(243,205,132,.08); }
+  .iconlegend .mark svg{ width:22px; height:22px; }
+  .iconlegend .cap2{ font-family:'Azeret Mono',monospace; font-size:8.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); text-align:center; max-width:80px; }
+
+  .note{ max-width:1200px; margin:22px auto 0; font-size:12.5px; line-height:1.6; color:var(--dim); text-align:center; }
+  .note b{ color:var(--muted); font-weight:500; }
+  hr.sep{ max-width:1200px; margin:44px auto 0; border:none; border-top:1px solid rgba(255,255,255,.07); }
+
+  @media (prefers-reduced-motion: reduce){
+    .sky,.glow,.mote{ animation:none !important; }
+  }
+</style>
+</head>
+<body>
+  <div class="lede">
+    <div class="k">The Living Forest · the mailbox</div>
+    <h1>A mailbox that never leaves the forest.</h1>
+    <p>Private, one-to-one notes between living family who use the app. It reads like an old SMS list — plain, quick, unclever. No one else can read it: not a keeper, not a parent. Shown here in all three languages, four screens each, with every state drawn.</p>
+    <div class="badges">
+      <span class="badge" style="color:var(--gold-hi)"><b style="color:var(--gold)">Gold</b> · a person&rsquo;s words</span>
+      <span class="badge" style="color:var(--cool-hi)"><b style="color:var(--cool)">Blue</b> · what the app worked out</span>
+      <span class="badge">unread · <b style="color:var(--gold)">bold, pinned to the top</b></span>
+    </div>
+  </div>
+
+  <div id="stage"></div>
+
+  <script>
+  'use strict';
+  const reduce = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const sv = (p,w) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w||1.6}" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+  const I = {
+    back:'<path d="M15 18l-6-6 6-6"/>',
+    pencil:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>',
+    env:'<rect x="3" y="5" width="18" height="14" rx="2.4"/><path d="M3.5 7.5l8.5 6 8.5-6"/>',
+    reply:'<path d="M9 7L4 12l5 5"/><path d="M4 12h10a6 6 0 016 6v0"/>',
+    forward:'<path d="M15 7l5 5-5 5"/><path d="M20 12H10a6 6 0 00-6 6v0"/>',
+    trash:'<path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2M6 7l1 12a1 1 0 001 1h8a1 1 0 001-1l1-12"/>',
+    leaf:'<path d="M4 20c0-9 7-15 16-15 0 9-6 15-15 15z"/><path d="M4 20c3-4 7-6 11-8"/>',
+    chev:'<path d="M9 6l6 6-6 6"/>',
+    translate:'<path d="M4 5h9M8 3v2M6 5c0 5-2 8-4 9M5 9c0 3 2 5 5 6"/><path d="M13 19l4-9 4 9M14.5 15h5"/>',
+    send:'<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>',
+    sentarrow:'<path d="M5 12h13M12 5l7 7-7 7"/>',
+    people:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 6.5a3 3 0 010 5.6M21 20c0-2.4-1.4-4.5-3.5-5.4"/>',
+    plus:'<path d="M12 5v14M5 12h14"/>', x:'<path d="M6 6l12 12M18 6L6 18"/>',
+    check:'<path d="M20 6L9 17l-5-5"/>',
+    globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+    tree:'<path d="M12 22v-7"/><path d="M12 15a4.5 4.5 0 01-4.4-5.5A4 4 0 018 3a4.3 4.3 0 018 0 4 4 0 01.4 6.5A4.5 4.5 0 0112 15z"/>',
+    search:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>',
+    book:'<path d="M4 5a2 2 0 012-2h12v18H6a2 2 0 01-2-2z"/><path d="M8 8h7M8 12h7"/>',
+    lang:'<path d="M4 6h8M7 4v2M9 6c0 4-2 6-5 8M6 10c0 2 2 4 5 5"/><path d="M13 20l4-9 4 9M14.5 16h5"/>'
+  };
+
+  /* face-avatar art (procedural, gender-neutral) */
+  const SK=['#e6c49b','#d9b083','#e0b98d','#eac6a0','#dcb58c'];
+  const HR=['#7a5c40','#3a3a3a','#4a3a2a','#b8b0a4','#5a4030'];
+  const BG=['#3a2a1e','#2a3446','#243449','#2c2a1e','#33283a'];
+  function h32(s){ let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))|0; return Math.abs(h); }
+  function faceSVG(seed){ const h=h32(seed), sk=SK[h%5], hr=HR[(h>>3)%5], bg=BG[(h>>5)%5], g=(h>>7)%4===0;
+    return `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="${bg}"/><ellipse cx="50" cy="47" rx="23" ry="26" fill="${sk}"/><path d="M50 96 Q50 70 27 66 Q31 42 50 42 Q69 42 73 66 Q50 70 50 96Z" fill="${hr}"/><path d="M27 44 Q31 23 50 23 Q69 23 73 44 Q61 33 50 33 Q39 33 27 44Z" fill="${g?'#cfc7bb':hr}"/></svg>`; }
+
+  /* ============ content, per language (gender-neutral throughout) ============ */
+  const P = {
+    leonid:{ en:'Leonid', ru:'Леонид', he:'לאוניד', seed:'leonid' },
+    zoya:{ en:'Zoya', ru:'Зоя', he:'זויה', seed:'zoya' },
+    michael:{ en:'Michael', ru:'Михаил', he:'מיכאל', seed:'michael' },
+    nadezhda:{ en:'Nadezhda', ru:'Надежда', he:'נדיה', seed:'nadia' },
+    ida:{ en:'Ida', ru:'Ида', he:'אידה', seed:'ida' }
+  };
+  const nm = (k,lang) => P[k][lang];
+
+  const L = {
+    en:{ dir:'ltr', native:'English', tag:'EN · left-to-right',
+      title:'Mailbox', empty:'No messages yet.', write:'Write', to:'To',
+      pickerHint:'Living relatives who use the app', send:'Send',
+      fromLine:'From', toLine:'To', reply:'Reply', forward:'Forward', del:'Delete',
+      delConfirm:'Delete from your mailbox? It cannot be brought back.', cancel:'Cancel',
+      forwarded:'Forwarded', translate:'Translate', asWritten:'Shown as written',
+      nobody:'Nobody else has joined the app yet.', oneOnly:'One person only',
+      link:'Rita’s page',
+      menu:{ forest:'The forest', tree:'The tree', search:'Search', journal:'The journal', add:'Add a moment', mailbox:'Mailbox', language:'Language' },
+      legOrdinary:'ordinary', legMail:'you have mail',
+      times:['2 min','1 h','Yesterday','Mon','Tue'],
+      msgs:{
+        leonid:'Did the photograph from the shore turn up? I’d love to put it on the page.',
+        zoya:'Coming on Saturday — should I bring the old albums?',
+        michael:'Thank you for the story about the kitchen in Holon. I read it twice.',
+        outNadezhda:'Sent you the link to the moment. Look at that face!',
+        outIda:'Do you remember the name of the street in Bobruisk?'
+      },
+      opened:{ from:'michael', fwdFrom:'leonid', time:'1 h',
+        body:'Look what turned up — this belongs on the page.' },
+      draft:'Do you still have the letters? I’d like to scan them for the archive.'
+    },
+    ru:{ dir:'ltr', native:'Русский', tag:'RU · слева направо',
+      title:'Почта', empty:'Пока нет сообщений.', write:'Написать', to:'Кому',
+      pickerHint:'Живые родственники, у которых есть приложение', send:'Отправить',
+      fromLine:'От', toLine:'Кому', reply:'Ответить', forward:'Переслать', del:'Удалить',
+      delConfirm:'Удалить из вашей почты? Вернуть будет нельзя.', cancel:'Отмена',
+      forwarded:'Переслано', translate:'Перевести', asWritten:'Показано как написано',
+      nobody:'Пока в приложении никого больше нет.', oneOnly:'Только один человек',
+      link:'Страница Риты',
+      menu:{ forest:'Лес', tree:'Дерево', search:'Поиск', journal:'Журнал', add:'Добавить момент', mailbox:'Почта', language:'Язык' },
+      legOrdinary:'обычная', legMail:'есть письмо',
+      times:['2 мин','1 ч','Вчера','Пн','Вт'],
+      msgs:{
+        leonid:'Фотография с берега нашлась? Хочу добавить её на страницу.',
+        zoya:'Приеду в субботу — привезти старые альбомы?',
+        michael:'Спасибо за историю про кухню в Холоне. Перечитываю уже второй раз.',
+        outNadezhda:'Отправляю ссылку на момент. Посмотри, какое лицо!',
+        outIda:'Помнишь название улицы в Бобруйске?'
+      },
+      opened:{ from:'michael', fwdFrom:'leonid', time:'1 ч',
+        body:'Смотри, что нашлось — этому место на странице.' },
+      draft:'У тебя ещё сохранились письма? Хочу отсканировать их для архива.'
+    },
+    he:{ dir:'rtl', native:'עברית', tag:'HE · מימין לשמאל',
+      title:'דואר', empty:'אין עדיין הודעות.', write:'לכתוב', to:'אל',
+      pickerHint:'בני משפחה חיים שמשתמשים באפליקציה', send:'לשלוח',
+      fromLine:'מאת', toLine:'אל', reply:'להשיב', forward:'להעביר', del:'למחוק',
+      delConfirm:'למחוק מהדואר שלכם? לא ניתן להחזיר.', cancel:'ביטול',
+      forwarded:'הועבר', translate:'לתרגם', asWritten:'מוצג כפי שנכתב',
+      nobody:'עדיין אף אחד אחר לא הצטרף לאפליקציה.', oneOnly:'אדם אחד בלבד',
+      link:'העמוד של ריטה',
+      menu:{ forest:'היער', tree:'העץ', search:'חיפוש', journal:'היומן', add:'להוסיף רגע', mailbox:'דואר', language:'שפה' },
+      legOrdinary:'רגילה', legMail:'יש דואר',
+      times:['לפני 2 ד׳','לפני שעה','אתמול','ב׳','ג׳'],
+      msgs:{
+        leonid:'התצלום מהחוף נמצא? בא לי להוסיף אותו לעמוד.',
+        zoya:'מגיעים בשבת — להביא את האלבומים הישנים?',
+        michael:'תודה על הסיפור על המטבח בחולון. קראתי אותו פעמיים.',
+        outNadezhda:'שלחתי לכם את הקישור לרגע. תראו איזה פנים!',
+        outIda:'זוכרים את שם הרחוב בבוברויסק?'
+      },
+      opened:{ from:'michael', fwdFrom:'leonid', time:'לפני שעה',
+        body:'תראו מה נמצא — זה שייך לעמוד.' },
+      draft:'המכתבים עדיין אצלכם? בא לי לסרוק אותם לארכיון.'
+    }
+  };
+
+  /* ============ frame skeleton ============ */
+  function phone(lang, inner){
+    const motes = Array.from({length:5}, (_,i) => {
+      const x=8+i*20, dur=9+i*2.4, delay=i*1.7, size=2+(i%2);
+      return `<span class="mote" style="left:${x}%; width:${size}px; height:${size}px; animation-duration:${dur}s; animation-delay:-${delay}s; top:${60+i*7}%;"></span>`;
+    }).join('');
+    return `<div class="phone" dir="${L[lang].dir}">
+      <div class="sky"></div><div class="glow"></div>${motes}<div class="veil"></div>
+      <div class="app">${inner}</div>
+    </div>`;
+  }
+  function topbarList(lang){ const d=L[lang];
+    return `<div class="topbar">
+      <div class="ttl"><div class="k">${d.native}</div><div class="n">${d.title}</div></div>
+      <button class="writebtn">${sv(I.pencil,1.7)} ${d.write}</button>
+    </div>`; }
+  function topbarBack(lang, whoKey){ const d=L[lang];
+    return `<div class="topbar">
+      <button class="ibtn">${sv(I.back)}</button>
+      <div class="ttl center"><div class="k">${d.fromLine}</div><div class="n">${nm(whoKey,lang)}</div></div>
+      <span style="width:40px;flex:0 0 auto"></span>
+    </div>`; }
+  function topbarWrite(lang){ const d=L[lang];
+    return `<div class="topbar">
+      <button class="ibtn">${sv(I.back)}</button>
+      <div class="ttl center"><div class="k">${d.native}</div><div class="n">${d.write}</div></div>
+      <span style="width:40px;flex:0 0 auto"></span>
+    </div>`; }
+
+  /* ---- screen 1: the list ---- */
+  function listScreen(lang){ const d=L[lang];
+    const rows = [
+      { dir:'in', who:'leonid', unread:true, body:d.msgs.leonid, time:d.times[0] },
+      { dir:'in', who:'zoya', unread:true, body:d.msgs.zoya, time:d.times[1] },
+      { dir:'in', who:'michael', unread:false, body:d.msgs.michael, time:d.times[2] },
+      { dir:'out', who:'nadezhda', unread:false, body:d.msgs.outNadezhda, time:d.times[3] },
+      { dir:'out', who:'ida', unread:false, body:d.msgs.outIda, time:d.times[4] }
+    ];
+    const rowHTML = rows.map(r => {
+      const inc = r.dir==='in';
+      const eyebrow = inc
+        ? `<span class="eyebrow in">${d.fromLine} <span class="who">${nm(r.who,lang)}</span></span>`
+        : `<span class="eyebrow out"><span class="arrow">${sv(I.sentarrow,2)}</span>${d.toLine} <span class="who">${nm(r.who,lang)}</span></span>`;
+      const dot = inc ? `<span class="dot"></span>` : '';
+      return `<div class="row ${inc?'incoming':'outgoing'} ${r.unread?'unread':''}">
+        <div class="dir">${dot}</div>
+        <div class="rt">${eyebrow}<div class="prev">${r.body}</div></div>
+        <div class="time">${r.time}</div>
+      </div>`;
+    }).join('');
+    return topbarList(lang) + `<div class="body">${rowHTML}</div>`;
+  }
+
+  /* ---- empty state ---- */
+  function emptyScreen(lang){ const d=L[lang];
+    return topbarList(lang) + `<div class="body"><div class="emptybox">
+      <div class="env">${sv(I.env,1.4)}</div>
+      <div class="t">${d.empty}</div>
+      <button class="writebtn">${sv(I.pencil,1.7)} ${d.write}</button>
+    </div></div>`; }
+
+  /* ---- screen 2: one message opened ---- */
+  function openedInner(lang){ const d=L[lang], o=d.opened;
+    return `<div class="body"><div class="msg">
+      <div class="mhead"><span class="flame"></span>
+        <span class="from">${d.fromLine} <b>${nm(o.from,lang)}</b></span>
+        <span class="time">${o.time}</span></div>
+      <div class="fwd">${sv(I.forward,1.7)} ${d.forwarded} · ${nm(o.fwdFrom,lang)}</div>
+      <div class="msg-body">${o.body}
+        <a class="inlink">${sv(I.leaf,1.5)} ${d.link}<span class="lchev">${sv(I.chev,2)}</span></a>
+      </div>
+      <div class="translate">${sv(I.translate,1.5)} ${d.translate}</div>
+      <div class="aswritten">${d.asWritten}</div>
+    </div></div>`;
+  }
+  function openedScreen(lang){ const d=L[lang];
+    return topbarBack(lang, d.opened.from) + openedInner(lang) + `<div class="actionbar">
+      <button class="act">${sv(I.reply,1.6)}${d.reply}</button>
+      <button class="act">${sv(I.forward,1.6)}${d.forward}</button>
+      <button class="act del">${sv(I.trash,1.6)}${d.del}</button>
+    </div>`;
+  }
+
+  /* ---- delete confirm (overlaid on the opened message) ---- */
+  function deleteScreen(lang){ const d=L[lang];
+    return topbarBack(lang, d.opened.from) + openedInner(lang) + `<div class="actionbar">
+      <button class="act">${sv(I.reply,1.6)}${d.reply}</button>
+      <button class="act">${sv(I.forward,1.6)}${d.forward}</button>
+      <button class="act del">${sv(I.trash,1.6)}${d.del}</button>
+    </div>
+    <div class="dim"></div>
+    <div class="confirm"><div class="grip"></div>
+      <div class="ct">${d.delConfirm}</div>
+      <div class="cbtns">
+        <button class="cbtn keep">${d.cancel}</button>
+        <button class="cbtn del">${d.del}</button>
+      </div>
+    </div>`;
+  }
+
+  /* ---- screen 3: writing ---- */
+  function writeScreen(lang){ const d=L[lang];
+    const people = ['leonid','zoya','michael','nadezhda','ida'];
+    const chosen = 'nadezhda';
+    const rows = people.map(k => `<div class="prow ${k===chosen?'on':''}">
+      <span class="av">${faceSVG(P[k].seed)}</span>
+      <span class="nm">${nm(k,lang)}</span>
+      <span class="radio"></span>
+    </div>`).join('');
+    return topbarWrite(lang) + `<div class="body"><div class="compose">
+      <div class="to-field">
+        <span class="lbl">${d.to} · ${d.oneOnly}</span>
+        <span class="to-chip"><span class="av">${faceSVG(P[chosen].seed)}</span><span class="nm">${nm(chosen,lang)}</span><span class="x">${sv(I.x,2)}</span></span>
+      </div>
+      <div class="picker-hint">${sv(I.people,1.6)} ${d.pickerHint}</div>
+      <div class="plist">${rows}</div>
+      <textarea readonly>${d.draft}</textarea>
+      <div class="sendbar"><button class="sendbtn">${sv(I.send,1.7)} ${d.send}</button></div>
+    </div></div>`;
+  }
+
+  /* ---- writing, nobody to write to ---- */
+  function nobodyScreen(lang){ const d=L[lang];
+    return topbarWrite(lang) + `<div class="body"><div class="nobody">
+      <div class="env">${sv(I.people,1.4)}</div>
+      <div class="t">${d.nobody}</div>
+    </div></div>`; }
+
+  /* ---- screen 4: the (+) menu ---- */
+  function menuScreen(lang){ const d=L[lang], m=d.menu;
+    const item = (icon, label, cls, extra) => `<div class="mrow ${cls||''}">
+      <span class="mic">${sv(icon,1.6)}${extra||''}</span>
+      <span class="ml">${label}</span>
+      <span class="mchev">${sv(I.chev,2)}</span>
+    </div>`;
+    const langRow = `<div class="mrow lang">
+      <span class="mic">${sv(I.lang,1.5)}</span>
+      <span class="ml">${m.language}<span>${d.native}</span></span>
+      <span class="mchev">${sv(I.chev,2)}</span>
+    </div>`;
+    const mailRow = `<div class="mrow mailbox">
+      <span class="mic">${sv(I.env,1.5)}<span class="maildot"></span></span>
+      <span class="ml">${m.mailbox}</span>
+      <span class="mchev">${sv(I.chev,2)}</span>
+    </div>`;
+    const legend = `<div class="iconlegend">
+      <div class="one"><span class="mark">${sv(I.env,1.5)}</span><span class="cap2">${d.legOrdinary}</span></div>
+      <div class="one"><span class="mark mail">${sv(I.env,1.5)}<span class="maildot"></span></span><span class="cap2">${d.legMail}</span></div>
+    </div>`;
+    return `<div class="menuscrim"></div>
+      <div class="menupanel"><div class="grip"></div>
+        ${item(I.globe, m.forest)}
+        ${item(I.tree, m.tree)}
+        ${item(I.search, m.search)}
+        ${item(I.book, m.journal)}
+        ${item(I.plus, m.add)}
+        <div style="margin-top:6px;padding-top:8px;border-top:1px solid rgba(255,255,255,.1)"></div>
+        ${mailRow}
+        ${langRow}
+        ${legend}
+      </div>`;
+  }
+
+  /* ============ compose the catalogue ============ */
+  const SCREENS = [
+    { key:'list',   cap:l=>`1 · The list <b>·</b> unread, read, sent`, fn:listScreen },
+    { key:'empty',  cap:l=>`1b · Empty`, fn:emptyScreen },
+    { key:'open',   cap:l=>`2 · One message <b>·</b> forwarded, a link`, fn:openedScreen },
+    { key:'del',    cap:l=>`2b · Delete`, fn:deleteScreen },
+    { key:'write',  cap:l=>`3 · Writing <b>·</b> one recipient`, fn:writeScreen },
+    { key:'nobody', cap:l=>`3b · No one to write to`, fn:nobodyScreen },
+    { key:'menu',   cap:l=>`4 · The ⊕ menu <b>·</b> both marks`, fn:menuScreen }
+  ];
+
+  const stage = document.getElementById('stage');
+  ['en','ru','he'].forEach(lang => {
+    const d = L[lang];
+    const sec = document.createElement('section');
+    sec.className = 'langsec';
+    const rtl = d.dir==='rtl';
+    sec.innerHTML = `<h2><span class="native">${d.native}</span><span class="tag ${rtl?'rtl':''}">${d.tag}</span></h2>
+      <div class="frames">${SCREENS.map(s =>
+        `<div class="fwrap"><div class="cap">${s.cap(lang)}</div>${phone(lang, s.fn(lang))}</div>`
+      ).join('')}</div>`;
+    stage.appendChild(sec);
+  });
+
+  /* one closing note */
+  const note = document.createElement('p');
+  note.className = 'note';
+  note.innerHTML = 'The <b>Forwarded</b> mark and the <b>Translate</b> tap are cool blue — the app is telling you something about the message, not speaking for the family. The words themselves stay gold. The ⊕ menu keeps <b>Mailbox</b> second from the bottom and <b>Language</b> last; the mark changes shape when a note is waiting — never a number.';
+  stage.appendChild(note);
+  const hr = document.createElement('hr'); hr.className='sep'; stage.appendChild(hr);
+  </script>
+</body>
+</html>
