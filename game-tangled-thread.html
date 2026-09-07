@@ -455,10 +455,12 @@
     var opts={ id:scopeId };
     if(seed!=null) opts.seed=seed;
     else if(urlSeed!=null){ opts.seed=urlSeed; urlSeed=null; } // honour ?seed= once
-    window.LFGames.tangledThread(sb, opts).then(function(res){
+    window.LFGames.tangledThread(sb, opts).then(async function(res){
       round=res;
       if(!res || res.status==='error') return renderError(res&&res.message);
       if(res.status==='not_enough_data') return renderLocked(res);
+      /* the place table before the board is drawn, so the name is right the first time */
+      if(!PLMAP) await loadPlaceNames();
       if(res.status==='ok') return renderPlay(res);
       renderError('unknown status');
     }, function(e){ renderError(e&&e.message||e); });
@@ -489,9 +491,20 @@
     return pos;
   }
 
+  /* THE PLACE SPOKE THE LANGUAGE IT WAS TYPED IN (Leon, 2026-09-07: a Hebrew board asking
+     about "Bobruisk" in Latin letters). The engine answers with the stored spelling, which
+     is the key to the place, not its name - the forest's name for it in the reader's tongue
+     comes from the same door every other page uses. */
+  var PLMAP=null;
+  function plc(v){ v=String(v||'').trim(); if(!v) return v;
+    try{ return (window.LFDB&&LFDB.placeName)?LFDB.placeName(v,PLMAP||{}):v; }catch(e){ return v; } }
+  async function loadPlaceNames(){
+    try{ if(window.LFDB&&LFDB.places) PLMAP=await LFDB.places(sb,state.lang); }catch(e){ PLMAP={}; }
+  }
   function renderPlay(res){
     var L=T[state.lang];
-    var place=res.prompt&&res.prompt.place ? res.prompt.place : '';
+    var raw=res.prompt&&res.prompt.place ? res.prompt.place : '';
+    var place=plc(raw);
     $('askQ').innerHTML=L.askQ(esc(place));
     $('placeLabel').textContent=place;
 
