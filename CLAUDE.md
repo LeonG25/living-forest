@@ -1087,6 +1087,28 @@ it after sending REFUSED; hiding it from the other person's mailbox REFUSED; hid
 their own mailbox 'hidden' and it left their list; hiding a message they are not part of
 'not your message'. Test rows then deleted (messages_left = 0).
 
+**THE WORDS, SETTLED BEFORE THE DRAWING (2026-09-06).** All three languages, and all
+GENDER-NEUTRAL per Leon's ruling of the same day - a mailbox is the last place to guess
+whether a cousin is a man or a woman.
+  menu row / title      Mailbox            | Почта                | דואר
+  empty                 No messages yet.   | Пока нет сообщений.  | אין עדיין הודעות.
+  write                 Write              | Написать             | לכתוב
+  to (field)            To                 | Кому                 | אל
+  picker hint           Living relatives who use the app | Живые родственники, у которых есть
+                        приложение | בני משפחה חיים שמשתמשים באפליקציה
+  send                  Send               | Отправить            | לשלוח
+  incoming line         From {name}        | От: {name}           | מאת {name}
+  outgoing line         To {name}          | Кому: {name}         | אל {name}
+  reply/forward/delete  Reply / Forward / Delete | Ответить / Переслать / Удалить |
+                        להשיב / להעביר / למחוק
+  delete confirm        Delete from your mailbox? It cannot be brought back. |
+                        Удалить из вашей почты? Вернуть будет нельзя. |
+                        למחוק מהדואר שלכם? לא ניתן להחזיר.
+  forwarded mark        Forwarded          | Переслано            | הועבר
+  translate tap         Translate          | Перевести            | לתרגם
+  nobody to write to    Nobody else has joined the app yet. | Пока в приложении никого больше
+                        нет. | עדיין אף אחד אחר לא הצטרף לאפליקציה.
+
 **DESIGNER BRIEF (Claude Design, before any engineering - firm house rule).**
 Draw: (1) the mailbox list with all four states in one view - unread incoming bold at top,
 read incoming, outgoing, and empty; (2) one message opened, with reply / forward / delete;
