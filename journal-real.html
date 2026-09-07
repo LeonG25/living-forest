@@ -347,8 +347,11 @@
   }
 
   /* ---------- load : engine-driven from the DB, this user only ---------- */
+  let PLMAP={};
+  const pn=v=>(window.LFDB&&LFDB.placeName)?LFDB.placeName(v,PLMAP):v;
   async function loadData(){
     entries=[]; counts={mem:0,people:0,games:0};
+    try{ if(window.LFDB&&LFDB.places) PLMAP=await LFDB.places(sb,state.lang); }catch(e){}
     const nameCache={};
     async function nameOf(pid){ if(!pid) return d().aSomeone; if(nameCache[pid]!==undefined) return nameCache[pid];
       try{ await LFLabel.load(sb,[pid]); const {data}=await sb.from('people').select('id').eq('id',pid).maybeSingle(); nameCache[pid]=(window.LFLabel&&LFLabel.of(pid,state.lang))||d().aSomeone; }
@@ -400,7 +403,7 @@
           const ts=new Date(a.created_at||Date.now()).getTime();
           /* a photograph with no date and no place left this line reading 'added a photo of'
              and then nothing. Its own words are the better name for it when it has them. */
-          const m=a.metadata||{}; let cap=[m.when,m.where].filter(Boolean).join(' · ');
+          const m=a.metadata||{}; let cap=[m.when,pn(m.where)].filter(Boolean).join(' · ');
           if(!cap && a.body){ const b=String(a.body).replace(/\s+/g,' ').trim(); if(b) cap=b.slice(0,48)+(b.length>48?'…':''); }
           const pub=a.status==null||a.status==='published';
           const prov=pub?'gold':'wait'; const label=pub?d().provWords:d().provWaiting;

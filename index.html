@@ -342,6 +342,9 @@ const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const SUPABASE_URL = 'https://oabcdrktuikifbormjip.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+/* a place reads in the reader's language; the stored spelling stays the geocoding key */
+let PLMAP={};
+const pn=v=>(window.LFDB&&LFDB.placeName)?LFDB.placeName(v,PLMAP):v;
 LFDB.install(sb,'index');
 
 /* ---- known place coordinates (real places from your photos) ---- */
@@ -460,6 +463,7 @@ async function load(){
     ]);
     const errs=[ppl,rels,arts,subs].map((r,i)=>r.error?(['people','rels','arts','subs'][i]+':'+r.error.message):null).filter(Boolean);
     if(errs.length) throw new Error(errs.join(' | '));
+    try{ if(window.LFDB&&LFDB.places) PLMAP=await LFDB.places(sb,GLANG); }catch(e){}
     /* the stories arrive in GLANG already: LFDB.arts is the only door onto them */
     if(!(ppl.data||[]).length){
       /* a member can never truly see an empty forest — this is a failure wearing
@@ -501,7 +505,7 @@ async function load(){
       const path=usable.map(x=>({y:x.y, lat:x.lat, lng:x.lng}));
       if(pts.length) { ymin=Math.min(ymin,pts[0].y); ymax=Math.max(ymax,pts[pts.length-1].y); }
       built.push({ id:p.id, name, gen:gen(p.id), memoryCount, waiting:false,
-        born, lat:last.lat, lng:last.lng, place:last.place, _pk:last.lat.toFixed(3)+','+last.lng.toFixed(3),
+        born, lat:last.lat, lng:last.lng, place:pn(last.place), _pk:last.lat.toFixed(3)+','+last.lng.toFixed(3),
         path: path.length>1?path:null, records:usable });
     });
     // fan co-located people apart (phyllotaxis) so a crowded city separates when you zoom

@@ -299,6 +299,9 @@ const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const SUPABASE_URL='https://oabcdrktuikifbormjip.supabase.co';
 const SUPABASE_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+/* a place reads in the reader's language; the stored spelling stays the key */
+let PLMAP={};
+const pn=v=>(window.LFDB&&LFDB.placeName)?LFDB.placeName(v,PLMAP):v;
 LFDB.install(sb,'crowd-real');
 if(window.LFProgress) LFProgress.init(sb);
 
@@ -326,6 +329,7 @@ async function load(){
       sb.from('relationships').select('from_person,to_person,kind'),
     ]);
     if(arts.error) throw arts.error;
+    try{ if(window.LFDB&&LFDB.places) PLMAP=await LFDB.places(sb,LG()); }catch(e){}
     /* the stories arrive in the reader's language: LFDB.arts is the only door onto them */
     await LFLabel.load(sb,(ppl.data||[]).map(p=>p.id));
     (ppl.data||[]).forEach(p=> NAME[p.id]=LFLabel.of(p.id,LG())||p.called_name||'Someone');
@@ -366,7 +370,7 @@ async function loadRound(i){
   $('#caption').classList.remove('lit'); $('#allHere').classList.remove('show'); $('#quest').classList.remove('done');
   $('#hintBtn').style.display=''; $('#hintNote').textContent='Tap where you think they are. No wrong moves \u2014 only warmer or cooler.';
   const who=(round.art.contributor_id&&window.__prov&&window.__prov[round.art.contributor_id])||null;
-  const body=round.art.body||''; const where=round.art.metadata&&round.art.metadata.where; const when=round.art.metadata&&round.art.metadata.when;
+  const body=round.art.body||''; const where=pn(round.art.metadata&&round.art.metadata.where); const when=round.art.metadata&&round.art.metadata.when;
   $('#captionWords').textContent = body? '\u201C'+body+'\u201D' : '';
   $('#capWho').textContent = body? (who? ('in '+who+'\u2019s words') : '') : (where||'');
   $('#capAttrib').innerHTML = who? ('\u2014 <b>'+esc(who)+'</b>, who kept this photograph') : ((where||'')+(when?(' \u00b7 '+when):''));

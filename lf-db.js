@@ -269,7 +269,18 @@
   function placeName(name, map){
     if(!name) return name;
     if(!map) return name;
-    return map[name] || map[String(name).trim()] || name;
+    var s=String(name);
+    /* the whole spelling is a key first - a place learned as one "City, Country" string
+       still resolves whole. */
+    if(map[name]) return map[name];
+    if(map[s.trim()]) return map[s.trim()];
+    /* otherwise a "Place, Country" is two keys. place_geo holds country rows too, so
+       translating each comma part through the same table lets the country read in the
+       reader's tongue as well - a part that is unknown simply stays as it was typed. */
+    if(s.indexOf(',')>=0){
+      return s.split(',').map(function(p){ var t=p.trim(); return (t&&map[t])||t; }).join(', ');
+    }
+    return name;
   }
 
   /* THE ONE DOOR ONTO STORIES (Leon, 2026-09-06).

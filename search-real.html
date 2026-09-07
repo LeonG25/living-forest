@@ -357,11 +357,15 @@
   const NAME_FIELDS=['given','family','patronymic','maiden','called','honorific','nickname'];
   const DB={ people:[], byId:{}, facts:[], arts:[], subs:[], geo:[] };
   const IDX={ names:{}, facePath:{}, placeCount:{}, artMeta:{} };
+  /* a place reads in the reader's language; the stored spelling stays the key for nav/grouping */
+  let PLMAP={};
+  const pn=v=>(window.LFDB&&LFDB.placeName)?LFDB.placeName(v,PLMAP):v;
   const urlCache={};
 
   async function safe(p){ try{ const r=await p; return (r&&r.data)||[]; }catch(e){ return []; } }
 
   async function loadData(){
+    try{ if(window.LFDB&&LFDB.places) PLMAP=await LFDB.places(sb,state.lang); }catch(e){}
     const [ppl,facts,arts,subs,geo]=await Promise.all([
       safe(sb.from('people').select('id,sex,primary_asset,portrait_path,birth_date,birth_certainty,death_date,death_certainty,is_living')),
       safe(sb.from('person_facts').select('person_id,field,lang,value,status').eq('status','published')),
@@ -550,14 +554,14 @@
   function placeRow(pl, q){ const L=d();
     return '<div class="res" role="button" tabindex="0" data-nav="place:'+esc(pl.name)+'">'
       + '<div class="thumb"><div class="ini">'+I.pin+'</div></div>'
-      + '<div class="b"><div class="rname'+(state.lang==='he'?' serif':'')+'">'+hl(pl.name,q)+'</div>'
+      + '<div class="b"><div class="rname'+(state.lang==='he'?' serif':'')+'">'+hl(pn(pl.name),q)+'</div>'
       + '<div class="sub"><span class="kindtag">'+esc(L.places)+'</span>'+(pl.count>0?provGold(L.momentsHere(pl.count)):'')+'</div>'
       + '</div><span class="go">'+I.chev+'</span></div>';
   }
 
   function momentTitle(a){ const L=d(); const b=a.body?a.body.replace(/\s+/g,' ').trim():''; if(b) return b.slice(0,60)+(b.length>60?'…':''); return (a.storage_path?L.aPhoto:L.aMoment); }
   function momentRow(it, q){ const L=d(); const a=it.a, m=it.m;
-    const sub=[m.year||m.when, m.where].filter(Boolean).join(' · ');
+    const sub=[m.year||m.when, pn(m.where)].filter(Boolean).join(' · ');
     return '<div class="res" role="button" tabindex="0" data-nav="moment:'+esc(a.id)+'">'
       + '<div class="thumb"'+(a.storage_path?' data-fp="'+esc(a.storage_path)+'"':'')+'>'+(a.storage_path?'<div class="ini">'+I.photo+'</div>':'<div class="ini">'+I.photo+'</div>')+'</div>'
       + '<div class="b"><div class="rname" style="font-size:17px">'+hl(momentTitle(a),q)+'</div>'

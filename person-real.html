@@ -534,7 +534,7 @@
       about:'О человеке', aboutPh:'Что угодно — какими они были, чем занимались, история, которую хочется сохранить.', occupation:'Занятие', addoccupation:'Добавить занятие', langspoken:'Языки',
       born:'Дата рождения', died:'Дата смерти', precision:'Точность', prec:['Точно','Приблизительно'], living:'Живёт сейчас',
       gender:'Род', genderHint:'', gopts:['Мужской','Женский'],
-      pbirth:'Место рождения', lived:'Где жила', addplace:'добавить дом',
+      pbirth:'Место рождения', lived:'Место жительства', addplace:'добавить дом',
       memories:'Истории об этом человеке', addmemory:'добавить историю', stepIn:'Войти в этот момент', noStory:'Эта история ждёт своего рассказчика.', askSomeone:'Спросить того, кто знает →',
       relations:'Родственники', addkin:'добавить связь', kinApp:'Приложение вычисляет, как каждый связан с вами.',
       itsYou:'Это ты! ✨',
@@ -585,7 +585,7 @@
       about:'אודות', aboutPh:'כל דבר — איך הם היו, מה עשו, סיפור שחשוב לשמור.', occupation:'עיסוק', addoccupation:'הוספת עיסוק', langspoken:'שפות',
       born:'תאריך לידה', died:'תאריך פטירה', precision:'דיוק', prec:['מדויק','משוער'], living:'עדיין בחיים',
       gender:'מין', genderHint:'', gopts:['זכר','נקבה'],
-      pbirth:'מקום לידה', lived:'מקומות מגורים', addplace:'הוספת בית',
+      pbirth:'מקום לידה', lived:'מקום מגורים', addplace:'הוספת בית',
       memories:'סיפורים על אדם זה', addmemory:'הוספת סיפור', stepIn:'להיכנס אל הרגע הזה', noStory:'הסיפור הזה מחכה למספר שלו.', askSomeone:'שאלו מישהו שאולי מכיר ←',
       relations:'בני משפחה', addkin:'הוספת קשר', kinApp:'האפליקציה מחשבת כיצד כל אחד קשור אליכם.',
       itsYou:'זה את/ה! ✨',
@@ -1295,9 +1295,10 @@
   function homeDelCtl(b){ const L=d(); const req=removalReq(b.group_id);
     if(req) return `<span class="remreq">${esc(state.keeper?L.askremove:L.removeAsked)}</span>`;
     const mine=b.rows.every(r=>canDelete(r));
-    /* Leon, 2026-08-24: no ask-to-remove anywhere on these pages. A home is edited, not
-       un-asked. The handler stays; only the button is gone. */
-    return ''; }
+    /* Leon, 2026-09-07: a home gets its remove control back - the same remove_request road
+       every other field travels, keyed by the group so the keeper removes the whole home
+       at once. A keeper's own removal still waits for Review, like every other edit. */
+    return `<button class="np-ctl ${mine?'':'warn'}" data-delhome="${b.group_id}">${sv(mine?I.trash:I.x,1.7)} ${esc(mine?L.remove:L.askremove)}</button>`; }
   function homeCard(b){ const L=d(); const pend=hPending(b);
     const where=homeWhere(b)||'—', yrs=homeYears(b);
     const style=pend?' style="border-color:rgba(201,162,255,.34);background:rgba(201,162,255,.06)"':'';
@@ -1560,8 +1561,10 @@
   function occPending(b){ return occVal(b)!==occPubVal(b); }
   function occDelCtl(b){ const L=d(); const req=removalReq(b.group_id);
     if(req) return `<span class="remreq">${esc(state.keeper?L.askremove:L.removeAsked)}</span>`;
+    /* Leon, 2026-09-07: an occupation gets its remove control back - the same road every
+       other field travels, keyed by the group so the keeper removes it in one approval. */
     const mine=b.rows.every(r=>canDelete(r));
-    return ''; }
+    return `<button class="np-ctl ${mine?'':'warn'}" data-delocc="${b.group_id}">${sv(mine?I.trash:I.x,1.7)} ${esc(mine?L.remove:L.askremove)}</button>`; }
   function occCard(b){ const L=d(); const pend=occPending(b);
     const style=pend?' style="border-color:rgba(201,162,255,.34);background:rgba(201,162,255,.06)"':'';
     return `<div class="detailrow"${style}>

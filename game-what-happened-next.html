@@ -308,6 +308,9 @@
   const SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
   const sb=window.supabase.createClient(SB_URL,SB_KEY);
   LFDB.install(sb,'game-what-happened-next');
+  /* a place reads in the reader's language; the stored spelling stays the key */
+  let PLMAP={};
+  const pn=v=>(window.LFDB&&LFDB.placeName)?LFDB.placeName(v,PLMAP):v;
   if(window.LFProgress) LFProgress.init(sb);
   const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
   const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -514,13 +517,13 @@
     const anchorPhoto=ex.photos['__anchor__'];
     const chips=[];
     if(ex.anchorTeller) chips.push(`<span class="mchip gold">${esc(L.toldBy(ex.anchorTeller))}</span>`);
-    if(p.where) chips.push(`<span class="mchip">${sv(I.pin,1.6)}${esc(p.where)}</span>`);
+    if(p.where) chips.push(`<span class="mchip">${sv(I.pin,1.6)}${esc(pn(p.where))}</span>`);
     if(name) chips.push(`<span class="mchip">${esc(L.aboutP(name))}</span>`);
 
     const opts=res.options.map((o,i)=>{
       const photo=ex.photos[o.id];
       const teller=ex.tellers[o.id];
-      const text=String(o.label==null?'':o.label).trim()||L.amemory;
+      const text=pn(String(o.label==null?'':o.label).trim())||L.amemory;
       return `
       <button class="opt" type="button" data-i="${i}">
         <div class="row">
@@ -619,9 +622,9 @@
   function renderReveal(anchorYear,correctYear,years){
     const L=d(), res=state.round, ex=state.extra;
     const name=ex&&ex.personName;
-    const anchorText=(res.prompt&&res.prompt.memory_text)||(res.prompt&&res.prompt.where)||L.amemory;
+    const anchorText=(res.prompt&&res.prompt.memory_text)||pn(res.prompt&&res.prompt.where)||L.amemory;
     const nextOpt=res.options[res.answer_index];
-    const nextText=String(nextOpt.label==null?'':nextOpt.label).trim()||L.amemory;
+    const nextText=pn(String(nextOpt.label==null?'':nextOpt.label).trim())||L.amemory;
 
     let ribbon='';
     if(anchorYear!=null&&correctYear!=null){
@@ -717,6 +720,7 @@
   /* ---------- load a round (ENGINE — Rule 8: nothing here is hard-coded) ---------- */
   async function loadRound(seed){
     state.seed=seed; state.answered=false; state.round=null; state.extra=null;
+    try{ if(window.LFDB&&LFDB.places) PLMAP=await LFDB.places(sb,state.lang); }catch(e){}
     let res;
     try{ res=await window.LFGames.whatHappenedNext(sb,{ id:PERSON_ID, personId:PERSON_ID, seed:seed }); }
     catch(e){ res={status:'error', message:(e&&e.message)||String(e)}; }

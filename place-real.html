@@ -529,7 +529,7 @@ async function load(){
       const path=usable.map(x=>({y:x.y, lat:x.lat, lng:x.lng}));
       if(pts.length) { ymin=Math.min(ymin,pts[0].y); ymax=Math.max(ymax,pts[pts.length-1].y); }
       built.push({ id:p.id, name, gen:gen(p.id), memoryCount, waiting:false,
-        born, lat:last.lat, lng:last.lng, place:last.place, _pk:last.lat.toFixed(3)+','+last.lng.toFixed(3),
+        born, lat:last.lat, lng:last.lng, place:pn(last.place), _pk:last.lat.toFixed(3)+','+last.lng.toFixed(3),
         path: path.length>1?path:null, records:usable });
     });
     // fan co-located people apart (phyllotaxis) so a crowded city separates when you zoom
@@ -834,6 +834,9 @@ load();
   })();
   let isKeeper=false;              /* default view = family; flips only for the keeper */
   let model=null;                  /* built once from the DB, re-rendered on lang/keeper change */
+  /* a place (and its country) reads in the reader's language; the stored spelling stays the key */
+  let PLMAP={};
+  const pn=v=>(window.LFDB&&LFDB.placeName)?LFDB.placeName(v,PLMAP):v;
 
   /* ---- helpers ---- */
   const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -1001,6 +1004,7 @@ load();
       sb2.from('person_facts').select('person_id,value').in('field',['pbirth','lived','home','country']).eq('status','published')
     ]);
     const geo=geoR.data||null, arts=artsR.data||[];
+    try{ if(window.LFDB&&LFDB.places) PLMAP=await LFDB.places(sb2, lang); }catch(e){}
     const pById={}; (peopleR.data||[]).forEach(p=>pById[p.id]=p);
     const nameOf=id=>{const n=nameOfPerson(id,curLang()); if(n) return n; const p=pById[id]; return p?(p.called_name||'Someone'):'Someone';};
     // the teller is a person (contributor_id), never the uploading account (Rule 6)
@@ -1016,10 +1020,11 @@ load();
         if(s.person_id){ const a=artById[s.artefact_id]; if(a&&a.storage_path){ const cur=faceAsset[s.person_id]; if(!cur||(!cur.box&&s.detail)) faceAsset[s.person_id]={path:a.storage_path,box:s.detail||null}; } } }); }
     arts.sort((x,y)=>{const a=py(x.metadata&&x.metadata.when),b=py(y.metadata&&y.metadata.when);return (isNaN(a)?9999:a)-(isNaN(b)?9999:b);});
 
-    // hero name: the located, canonical place name (app-resolved → cool provenance)
-    const head=((geo&&geo.label)||PL||'').split(',')[0].trim() || PL;
+    // hero name: the located, canonical place name (app-resolved → cool provenance),
+    // spoken in the reader's language through the one door (the stored spelling stays the key)
+    const head=pn(((geo&&geo.label)||PL||'').split(',')[0].trim() || PL);
     const label=(geo&&geo.label)||PL||'', parts=label.split(',').map(x=>x.trim()).filter(Boolean);
-    const region=parts.length>1?parts.slice(1).join(' · '):'';
+    const region=parts.length>1?parts.slice(1).map(pn).join(' · '):'';
     const coords = geo && geo.lat!=null && geo.lng!=null
       ? Math.abs(geo.lat).toFixed(2)+'&deg;'+(geo.lat>=0?'N':'S')+' &nbsp; '+Math.abs(geo.lng).toFixed(2)+'&deg;'+(geo.lng>=0?'E':'W') : '';
 

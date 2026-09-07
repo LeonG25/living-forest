@@ -450,6 +450,10 @@
   var sb=window.supabase.createClient(SB_URL,SB_KEY);
   LFDB.install(sb,'game-where-was-this');
   if(window.LFProgress) LFProgress.init(sb);
+  /* a place and its country read in the reader's language; the stored spelling stays the key.
+     LFPlace still geocodes the pins, but the visible NAME comes through the one place door. */
+  var PLMAP={};
+  function pn(v){ return (window.LFDB&&LFDB.placeName)?LFDB.placeName(v,PLMAP):v; }
 
   // ---- i18n -------------------------------------------------------------
   var T={

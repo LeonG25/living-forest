@@ -251,6 +251,9 @@
   const SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
   const sb=window.supabase.createClient(SB_URL,SB_KEY);
   LFDB.install(sb,'game-missing-voice');
+  /* a place reads in the reader's language; the stored spelling stays the key */
+  let PLMAP={};
+  const pn=v=>(window.LFDB&&LFDB.placeName)?LFDB.placeName(v,PLMAP):v;
   if(window.LFProgress) LFProgress.init(sb);
   if(window.LFFace) LFFace.init(sb);
   const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -374,7 +377,7 @@
     const L=d();
     const chips=[];
     if(meta&&meta.when) chips.push(`<span class="mchip">${sv(I.cal)}${esc(meta.when)}</span>`);
-    if(meta&&meta.where) chips.push(`<span class="mchip">${sv(I.pin)}${esc(meta.where)}</span>`);
+    if(meta&&meta.where) chips.push(`<span class="mchip">${sv(I.pin)}${esc(pn(meta.where))}</span>`);
     const rows=round.options.map((o,i)=>`
       <button class="teller" type="button" data-i="${i}" data-id="${esc(o.id)}">
         <div class="av ${AV[i%AV.length]}"><i></i></div>
@@ -498,6 +501,7 @@
   /* ---------- load a round ---------- */
   async function loadRound(seed){
     state.seed = seed; state.done=false; state.firstTry=true; state.round=null;
+    try{ if(window.LFDB&&LFDB.places) PLMAP=await LFDB.places(sb,state.lang); }catch(e){}
     let res;
     try{ res=await window.LFGames.missingVoice(sb,{ id:PERSON_ID, seed:seed }); }
     catch(e){ res={status:'error', message:(e&&e.message)||String(e)}; }
