@@ -1118,6 +1118,45 @@ normal and 'you have mail'. Three languages including Hebrew RTL. House rules: d
 alive background, and the truth guardrail - a message is a PERSON's words, so gold, never
 the cool blue of app-made facts. It must feel like an old SMS list: plain, quick, unclever.
 
+### ONE NAME PER THING (Leon, 2026-09-07) - SPEC, partly built
+
+Leon: "We should avoid double names, such as Soviet Union and USSR - they are the same...
+If someone enters 'US' and we already have 'USA', the app will automatically adjust...
+if someone enters 'Babruysk', but we have already 'Bobruisk', it should be corrected...
+'Tel-Aviv Jaffo' or just 'Jaffo' should be corrected to 'Tel Aviv'." AND, on the same day,
+about occupations: "There are places where it is written 'engineer' and 'technology
+engineer'. I need a way to correct this kind of mistakes."
+
+THE RULE: a thing has ONE name in the forest. When somebody types a spelling the forest
+already knows under another name, the app ADOPTS THE ONE IT HAS, silently - no question, no
+'did you mean'. Leon was explicit: "The app should change without asking."
+
+WHAT THIS TOUCHES (all of it, not just the box being typed into):
+ - place names and countries, on entry AND when a machine translation invents a variant
+   ('Морщах' vs 'Моршах' was exactly this, caught by hand on 2026-09-06);
+ - the auto-translations themselves must be consistent - one Russian name per place, forever;
+ - occupations, where the same job is written two ways.
+
+HOW (Claude's design, not yet built):
+ 1. place_geo grows an ALIASES column: every spelling ever seen for that row. On entry, a
+    typed name is looked up against name/name_en/name_ru/name_he AND aliases (folded case,
+    stripped punctuation, latin/cyrillic/hebrew alike). A hit means the stored key becomes
+    the CANONICAL one and the typed spelling is remembered as an alias, so it is recognised
+    for ever after but never displayed.
+ 2. Coordinates decide the hard cases: two names within ~2km of each other are the same
+    place, which is how 'Tel-Aviv Jaffo' and 'Jaffo' fold into Tel Aviv without a dictionary.
+ 3. Countries get a small canonical table (USSR/Soviet Union/СССР -> one row; US/USA/United
+    States -> one row), because a country has no coordinates to compare and history renames
+    them - the forest must keep BOTH the historical country of a 1951 birth and one spelling
+    for each.
+ 4. Occupations: a merge, not a rename - the keeper sees 'engineer' and 'technology engineer'
+    side by side and joins them; every person carrying the loser gets the winner. This one is
+    a KEEPER tool, not an automatic fold: a job title is not a place, and two similar titles
+    are sometimes genuinely two jobs.
+ 5. Whatever is folded must be reversible and recorded - the forest never silently loses what
+    a person typed; the alias IS the record of it.
+NOT BUILT YET. Nothing here is in the app.
+
 ### PRIVACY, SECURITY AND WHO SEES WHOM - PARKED 2026-09-07, decide before the family grows
 
 Leon opened this and parked it the same day ("It's all tangled, I don't know where to
