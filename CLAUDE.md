@@ -126,6 +126,64 @@
 
 # CURRENT STATE — session handover (read me first)
 
+## SESSION OF 2026-09-06/07 — WHERE THINGS STAND (read this first, then §2)
+
+**THE THREAD OF THE WHOLE SESSION:** one fault, over and over — a page holding a PRIVATE COPY
+of something the app already does centrally, and the two drifting apart. It produced the
+globe's English stories, the person page asking Leon who he was, the reel's Latin place
+names, the tangled thread's Bobruisk, and the addresses under Jonny's stories. Two of those
+are now closed behind ONE DOOR each, with a guard that fails the build if a page goes round
+it: `~/qc/story-door-check.py` (stories) and `~/qc/place-door-check.py` (places). Run BOTH
+after touching any page that shows a story or a place. The place guard earned itself on its
+first run, catching a line the manual sweep had missed.
+
+**SHIPPED AND PROBE-VERIFIED THIS SESSION** (details in the dated sections below):
+ - names+places backfill (81 name spellings, 1 place) and the input flows that keep them full;
+ - THE MAILBOX: table + RLS + RPCs, page, menu row, recipient SEARCH box. Sending, receiving,
+   the unread mark, reading and deleting all verified live between real accounts;
+ - the person page's three life-facet bugs (living switch, 'approximately', gender);
+ - kin stated instead of asked (lf-kin.js, shared with the reel);
+ - the reel runs strictly forward in time;
+ - gender-neutral Russian and Hebrew everywhere (two sweeps: 2026-09-06 and the lowercase
+   miss caught on 09-07 — 'Где жила' -> 'Место жительства');
+ - a language has one name per reader (lf-tongue.js);
+ - the ⊕ menu translated (it was hard-coded English on every page) + Mailbox row;
+ - homes and occupations can be removed again, now with a quiet x.
+
+**OPEN — WAITING ON LEON, ASK BEFORE BUILDING:**
+ 1. Do the new remove controls on homes/occupations really override his ruling of 2026-08-24
+    ("no ask-to-remove anywhere on these pages; a home is edited, not un-asked")? Raised
+    twice, not answered.
+ 2. A street address in another language: show only the town (Claude's recommendation) or
+    keep the address as typed?
+ 3. The twelve ideas for the children — parked, he wants to discuss before any is built.
+ 4. Privacy / who-sees-whom — parked with a full write-up; he will return to it.
+
+**OPEN — WORK, IN THE ORDER CLAUDE WOULD TAKE IT:**
+ 1. ONE NAME PER THING (spec below, nothing built): silent canonicalisation of places and
+    countries, a keeper MERGE for occupations. This is the next real build.
+ 2. The mailbox's REPLY, FORWARD and TRANSLATE have never been tested. Also unresolved: the
+    unread row did not read as bold in a styling check - either it is styled on an element
+    the probe did not look at, or it genuinely is not bold.
+ 3. home-real.html (parked star-sky page) is unlinked and unverified for places.
+
+**THINGS THAT COST HOURS THIS SESSION — DO NOT RELEARN THEM:**
+ - A change can be correct in the file and do NOTHING on screen. Twice: a helper referenced
+   outside its scope, swallowed by a catch (the reel), and a whole feature prepared in
+   reload() when boot() takes a DIFFERENT path (person-real). ALWAYS verify rendered, never
+   by reading the diff.
+ - When a shared .js changes, BUMP ITS ?v= ON EVERY PAGE. An agent changed lf-db.js and did
+   not; phones would have kept the old copy and Leon would have seen no change at all.
+ - Agent launches need `--dangerously-skip-permissions` or the agent plans and writes nothing,
+   and `--max-turns` high enough (80 was not enough for a two-fault sweep). Check the log
+   SIZE after 60s+; a 0-byte log means running, not failed. One run died on "Credit balance
+   is too low" - that is Leon's key, not the server.
+ - Probe traps: the language key is `lf_lang` (underscore); person-real's facet TAB is
+   `.cat[data-jump="..."]`, not `[data-facet]` (that is the card); index.html's PEOPLE is a
+   top-level `let`, not on window; RU labels render UPPERCASE, so match case-insensitively;
+   `document.body.textContent` sees hidden cards and datalists - use innerText.
+
+
 *Last full handover: 2026-08-14, end of session. §2 is the live list; everything above the
 Consolidated Documents line is current. Nightly-agent canon and the older session archive
 were removed the same day - they described a system stopped on 2026-08-07 and git keeps them.*
