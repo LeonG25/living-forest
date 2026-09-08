@@ -1654,7 +1654,7 @@
       return `<div class="detailrow" style="border-color:rgba(201,162,255,.34);background:rgba(201,162,255,.06)"><div><div class="dl">${esc(lab)}</div><div class="dv">${esc(val)}</div>${state.keeper?keeperInline(c.group_id,'group'):`<div class="pending" style="margin-top:6px"><span class="sp"></span>${L.bothpending}</div>`}</div><span class="x" data-delgroup="${c.group_id}">${sv(I.x,2)}</span></div>`; }).join(''); }
   function bodyFor(f){ const L=d(); const id=f.id, lang=state.lang;
     if(id==='name') return nameBody();
-    if(id==='face'){ const shots=tagged.map((t,i)=>`<div class="tagshot"><div class="im" data-thumb="${i}"${t.artefact_id?` data-open-moment="${esc(t.artefact_id)}" role="button" tabindex="0" aria-label="${esc(L.openPhoto)}" style="cursor:pointer"`:''}>${galSVG(i)}</div><div class="cap2">${esc([t.meta&&t.meta.when,t.meta&&t.meta.where].filter(Boolean).join(' · '))}</div></div>`).join('');
+    if(id==='face'){ const shots=tagged.map((t,i)=>`<div class="tagshot"><div class="im" data-thumb="${i}"${t.artefact_id?` data-open-moment="${esc(t.artefact_id)}" role="button" tabindex="0" aria-label="${esc(L.openPhoto)}" style="cursor:pointer"`:''}>${galSVG(i)}</div><div class="cap2">${esc([t.meta&&t.meta.when,pn(t.meta&&t.meta.where)].filter(Boolean).join(' · '))}</div></div>`).join('');
       return `<div class="hint" style="margin-top:0;margin-bottom:12px">${L.faceLine}</div>
         ${tagged.length?`<div class="tagstrip">${shots}</div>`:`<div class="hint">${L.noFace}</div>`}
         <div class="chips" style="margin-top:10px"><button class="chip add" data-act="addmemory">${sv(I.plus,2)} ${L.addmemory}</button></div>
