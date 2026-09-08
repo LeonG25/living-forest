@@ -372,6 +372,7 @@
   .np-auto{ color:#c4b8de; }
   .np-suggested .np-val{ color:var(--edit-hi); }
   .np-foot{ display:flex; gap:10px; flex-wrap:wrap; margin-top:17px; padding-top:15px; border-top:1px solid var(--hair); }
+  .npx{ padding:6px 9px !important; min-width:0 !important; }
   .np-ctl{ display:inline-flex; align-items:center; gap:7px; padding:9px 12px; border-radius:11px; cursor:pointer;
     background:var(--panel); border:1px solid var(--hair); color:var(--muted);
     font-family:'Azeret Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; transition:border-color .2s,color .2s; }
@@ -1298,7 +1299,12 @@
     /* Leon, 2026-09-07: a home gets its remove control back - the same remove_request road
        every other field travels, keyed by the group so the keeper removes the whole home
        at once. A keeper's own removal still waits for Review, like every other edit. */
-    return `<button class="np-ctl ${mine?'':'warn'}" data-delhome="${b.group_id}">${sv(mine?I.trash:I.x,1.7)} ${esc(mine?L.remove:L.askremove)}</button>`; }
+    /* A SMALL X, NOT A SENTENCE (Leon, 2026-09-07). "ПРОСИТЬ УДАЛИТЬ" beside every home shouted
+       louder than the home itself; the chips have used a quiet x since the beginning, so a
+       home and an occupation use the same one. The word survives as the button's label for a
+       screen reader and as its tooltip - nothing is lost, it is only no longer shouted. */
+    const lbl=esc(mine?L.remove:L.askremove);
+    return `<button class="np-ctl npx ${mine?'':'warn'}" data-delhome="${b.group_id}" title="${lbl}" aria-label="${lbl}">${sv(mine?I.trash:I.x,1.6)}</button>`; }
   function homeCard(b){ const L=d(); const pend=hPending(b);
     const where=homeWhere(b)||'—', yrs=homeYears(b);
     const style=pend?' style="border-color:rgba(201,162,255,.34);background:rgba(201,162,255,.06)"':'';
@@ -1564,7 +1570,7 @@
     /* Leon, 2026-09-07: an occupation gets its remove control back - the same road every
        other field travels, keyed by the group so the keeper removes it in one approval. */
     const mine=b.rows.every(r=>canDelete(r));
-    return `<button class="np-ctl ${mine?'':'warn'}" data-delocc="${b.group_id}">${sv(mine?I.trash:I.x,1.7)} ${esc(mine?L.remove:L.askremove)}</button>`; }
+    return `<button class="np-ctl npx ${mine?'':'warn'}" data-delocc="${b.group_id}" title="${esc(mine?L.remove:L.askremove)}" aria-label="${esc(mine?L.remove:L.askremove)}">${sv(mine?I.trash:I.x,1.6)}</button>`; }
   function occCard(b){ const L=d(); const pend=occPending(b);
     const style=pend?' style="border-color:rgba(201,162,255,.34);background:rgba(201,162,255,.06)"':'';
     return `<div class="detailrow"${style}>
