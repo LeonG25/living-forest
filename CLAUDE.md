@@ -163,7 +163,9 @@ first run, catching a line the manual sweep had missed.
 **OPEN — WORK, IN THE ORDER CLAUDE WOULD TAKE IT:**
  1. ONE NAME PER THING — SHIPPED 2026-09-10 (`2bbac39`): aliases column + GIN index, 6 duplicate
     groups merged, `find_place_by_name` RPC, 4-step lookup in lf-place.js (exact → alias/lang
-    → Nominatim → 2km proximity). Occupations MERGE and country field normalisation: still open.
+    → Nominatim → 2km proximity). Occupations MERGE dropped: the × on occupations already
+    lets the keeper delete a wrong spelling and re-enter the correct one (Leon, 2026-09-10).
+    Country field normalisation: still open (display already correct via ISO code).
  2. The mailbox's REPLY, FORWARD and TRANSLATE have never been tested. Also unresolved: the
     unread row did not read as bold in a styling check - either it is styled on an element
     the probe did not look at, or it genuinely is not bold.
