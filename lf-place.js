@@ -52,26 +52,39 @@
       if(v){ patch[key]=v; if(l==='en'&&!base) base=v; }
     }
     return patch; }
+  function addAlias(sb,cn,al,t){
+    var lo=t.toLowerCase();
+    if(!al)al=[];
+    if(cn.toLowerCase()===lo)return;
+    if(al.some(function(a){return a.toLowerCase()===lo;}))return;
+    sb.from('place_geo').update({aliases:[].concat(al,[t])}).eq('name',cn).then(function(){},function(){});
+  }
+  var SEL='name,lat,lng,label,country,country_code,name_en,name_ru,name_he,aliases';
+  function fillN(sb,r,tn){
+    if(!r)return;
+    if(r.lat!=null&&(wrongScript(r.name_en,'en')||wrongScript(r.name_ru,'ru')||wrongScript(r.name_he,'he'))){
+      (async function(){try{
+        var p=await learnNames(sb,r.lat,r.lng,r,tn);
+        if(Object.keys(p).length)await sb.from('place_geo').update(p).eq('name',r.name);
+      }catch(e){}})();
+    }
+    if(!r.country&&r.label){var c2=r.label.split(',').pop().trim();
+      if(c2){r.country=c2;try{sb.from('place_geo').update({country:c2}).eq('name',r.name).then(function(){},function(){});}catch(e){}}}
+  }
   window.LFPlace={
     ensure: async function(name, lang, sb){
       name=String(name||'').trim(); if(!name||!sb) return null;
+      /* STEP 1: exact primary-key match — the fast common path */
       try{
-        const {data:r}=await sb.from('place_geo').select('name,lat,lng,label,country,name_en,name_ru,name_he').eq('name',name).maybeSingle();
-        if(r&&r.lat!=null){
-          /* A KNOWN PLACE MISSING ITS NAMES WAS NEVER FILLED IN. This returned the moment a
-             row existed, so a place learned before the three names were being stored - or
-             one whose lookup half-failed - stayed nameless for ever and showed as typed on
-             every page. It fills the gaps now, once, in the background - and a name left in
-             the WRONG alphabet (Latin shown to a Russian reader) counts as a gap. */
-          if(wrongScript(r.name_en,'en')||wrongScript(r.name_ru,'ru')||wrongScript(r.name_he,'he')){
-            (async function(){ try{
-              var patch=await learnNames(sb,r.lat,r.lng,r,name);
-              if(Object.keys(patch).length) await sb.from('place_geo').update(patch).eq('name',name);
-            }catch(e){} })();
-          }
-          if(!r.country&&r.label){ const c=r.label.split(',').pop().trim();
-            if(c){ r.country=c; try{ sb.from('place_geo').update({country:c}).eq('name',name).then(()=>{},()=>{}); }catch(e){} } }
-          return r;
+        const {data:r}=await sb.from('place_geo').select(SEL).eq('name',name).maybeSingle();
+        if(r){ fillN(sb,r,name); return r; }
+      }catch(e){}
+      /* STEP 2: alias / language-name match — no duplicate rows created.
+         ONE NAME PER THING (Leon, 2026-09-10). */
+      try{
+        const {data:rows}=await sb.rpc('find_place_by_name',{p_name:name});
+        if(rows&&rows.length){
+          const r=rows[0]; fillN(sb,r,name); addAlias(sb,r.name,r.aliases,name); return r;
         }
       }catch(e){}
       try{
@@ -120,7 +133,17 @@
           }
           return {name:name, unplaced:true, unknown:true};   /* not even a spelling: say so */
         }
-        const row={name:name, lat:+hit.lat, lng:+hit.lon, label:hit.display_name||null,
+        /* STEP 4: check ~2 km proximity before inserting — same spot = same place.
+           ONE NAME PER THING (Leon, 2026-09-10). */
+        const hlat=+hit.lat,hlng=+hit.lon;
+        try{
+          const {data:nr}=await sb.from('place_geo').select(SEL)
+            .gte('lat',hlat-0.018).lte('lat',hlat+0.018)
+            .gte('lng',hlng-0.025).lte('lng',hlng+0.025)
+            .not('lat','is',null).limit(1).maybeSingle();
+          if(nr){ fillN(sb,nr,name); addAlias(sb,nr.name,nr.aliases,name); return nr; }
+        }catch(e){}
+        const row={name:name,lat:hlat,lng:hlng,label:hit.display_name||null,
                    country:(hit.address&&hit.address.country)||null,
                    country_code:(hit.address&&hit.address.country_code||'').toUpperCase()||null};
         /* the place learns its name in all three tongues, once, from its coordinates */
