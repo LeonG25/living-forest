@@ -167,7 +167,7 @@ first run, catching a line the manual sweep had missed.
  2. The mailbox's REPLY, FORWARD and TRANSLATE have never been tested. Also unresolved: the
     unread row did not read as bold in a styling check - either it is styled on an element
     the probe did not look at, or it genuinely is not bold.
- 3. home-real.html (parked star-sky page) is unlinked and unverified for places.
+ 3. home-real.html — CLOSED 2026-09-10: retired page, intentional orphan, leave as-is (Leon).
 
 **THINGS THAT COST HOURS THIS SESSION — DO NOT RELEARN THEM:**
  - A change can be correct in the file and do NOTHING on screen. Twice: a helper referenced
