@@ -170,6 +170,14 @@ first run, catching a line the manual sweep had missed.
     nobody to exchange messages with yet. Move to §4 PARKED.
  3. home-real.html — CLOSED 2026-09-10: retired page, intentional orphan, leave as-is (Leon).
 
+**RESPONSIVE AUDIT (2026-09-10):** All 10 pages screenshotted at iPhone/iPad/desktop. One bug found: contribute-real.html phone frame (390px) was a tiny shell on iPad/desktop. Fixed with media queries: 520px at >=600px, 680px at >=1024px. All other pages full-width. Cannot verify remotely: globe (WebGL), fox videos, login-gated backgrounds.
+
+**RESPONSIVE AUDIT (2026-09-10, `7ab0b4f`):** All 10 pages screenshotted at iPhone/iPad/desktop.
+One bug found and fixed: contribute-real.html phone frame (390px r=42px) showed as a tiny shell
+on iPad/desktop. Fixed with media queries: 520px/r=28px at >=600px, 680px/r=20px at >=1024px.
+All other pages are full-width with correctly anchored controls. Cannot verify remotely: globe
+(WebGL), fox videos (media codec), animated background on login-gated pages — needs real device.
+
 **THINGS THAT COST HOURS THIS SESSION — DO NOT RELEARN THEM:**
  - A change can be correct in the file and do NOTHING on screen. Twice: a helper referenced
    outside its scope, swallowed by a catch (the reel), and a whole feature prepared in
