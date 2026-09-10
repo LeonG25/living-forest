@@ -166,9 +166,8 @@ first run, catching a line the manual sweep had missed.
     → Nominatim → 2km proximity). Occupations MERGE dropped: the × on occupations already
     lets the keeper delete a wrong spelling and re-enter the correct one (Leon, 2026-09-10).
     Country field normalisation: still open (display already correct via ISO code).
- 2. The mailbox's REPLY, FORWARD and TRANSLATE have never been tested. Also unresolved: the
-    unread row did not read as bold in a styling check - either it is styled on an element
-    the probe did not look at, or it genuinely is not bold.
+ 2. The mailbox's REPLY, FORWARD, TRANSLATE and unread-bold — PARKED 2026-09-10: Leon has
+    nobody to exchange messages with yet. Move to §4 PARKED.
  3. home-real.html — CLOSED 2026-09-10: retired page, intentional orphan, leave as-is (Leon).
 
 **THINGS THAT COST HOURS THIS SESSION — DO NOT RELEARN THEM:**
@@ -1045,6 +1044,13 @@ The connector drops now and then, on either version. Re-find it with tool_search
 assuming the shell is gone.
 
 ## 4 · PARKED — decided, not now (do not build unasked)
+
+### Mailbox REPLY, FORWARD, TRANSLATE + unread bold (2026-09-10) — PARKED
+
+The mailbox was built and the basic flow (send, receive, read, delete) was verified
+live between real accounts. REPLY, FORWARD and TRANSLATE were never tested, and the
+unread-row bold was not confirmed by the probe. Parked because Leon has no second
+family member to exchange messages with yet. Return when a second user joins.
 
 ### Person page — three analysis features (Leon, 2026-09-05) — PARKED, do not build unasked
 
