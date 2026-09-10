@@ -43,6 +43,12 @@
   .stagewrap{ display:flex; flex-direction:column; align-items:center; gap:14px; }
   .device{ position:relative; width:min(390px,100vw); height:820px; max-height:calc(100dvh - 40px); border-radius:42px; overflow:hidden; flex:0 0 auto;
     background:#04070e; box-shadow:0 40px 120px -50px #000, 0 0 0 9px #14141b, 0 0 0 10px #2b2b34; }
+  @media(min-width:600px){
+    .device{ width:min(520px,calc(100vw - 40px)); border-radius:28px; }
+  }
+  @media(min-width:1024px){
+    .device{ width:min(680px,calc(100vw - 64px)); border-radius:20px; height:860px; }
+  }
 
   /* ===== ALIVE : in-device atmosphere — rising candle-glow embers + warm aurora ===== */
   .atmo{ position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
