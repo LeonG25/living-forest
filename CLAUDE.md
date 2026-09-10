@@ -151,17 +151,19 @@ first run, catching a line the manual sweep had missed.
  - homes and occupations can be removed again, now with a quiet x.
 
 **OPEN — WAITING ON LEON, ASK BEFORE BUILDING:**
- 1. Do the new remove controls on homes/occupations really override his ruling of 2026-08-24
-    ("no ask-to-remove anywhere on these pages; a home is edited, not un-asked")? Raised
-    twice, not answered.
- 2. A street address in another language: show only the town (Claude's recommendation) or
-    keep the address as typed?
+ 1. RESOLVED 2026-09-09: ALL Person page fields are editable AND deletable. A quiet ×
+    is the right control. Every removal routes through keeper approval. The 2026-08-24
+    "no ask-to-remove" ruling is superseded. The × on homes and occupations is correct.
+ 2. RESOLVED 2026-09-09: Places = city/town/village + country only (no street addresses).
+    App already enforces this. Auto-translate on entry already shipped. Remaining gap:
+    ONE NAME PER THING canonicalisation (Soviet Union→USSR etc.) — SHIPPED 2026-09-10 (`2bbac39`).
  3. The twelve ideas for the children — parked, he wants to discuss before any is built.
  4. Privacy / who-sees-whom — parked with a full write-up; he will return to it.
 
 **OPEN — WORK, IN THE ORDER CLAUDE WOULD TAKE IT:**
- 1. ONE NAME PER THING (spec below, nothing built): silent canonicalisation of places and
-    countries, a keeper MERGE for occupations. This is the next real build.
+ 1. ONE NAME PER THING — SHIPPED 2026-09-10 (`2bbac39`): aliases column + GIN index, 6 duplicate
+    groups merged, `find_place_by_name` RPC, 4-step lookup in lf-place.js (exact → alias/lang
+    → Nominatim → 2km proximity). Occupations MERGE and country field normalisation: still open.
  2. The mailbox's REPLY, FORWARD and TRANSLATE have never been tested. Also unresolved: the
     unread row did not read as bold in a styling check - either it is styled on an element
     the probe did not look at, or it genuinely is not bold.
