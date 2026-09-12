@@ -2065,13 +2065,12 @@
       /* "Parent" alone can be read either way round - Leon read the button as saying
          BASYA was the parent. Say it back as a whole sentence, naming both people and
          which of them is which, before anything is written. */
+      /* from here on, 'child' IS 'parent' with the direction flipped */
+      const kindForStore = (st.kind==='child') ? 'parent' : st.kind;  /* hoisted: was inside block, causing ReferenceError at saveRel */
       {
         const them=st.other?nameOf(st.other):String(st.propose||'').trim();
-        const me=(person&&(person.display_name||person.called_name))||nameOf(PERSON_ID)||'';
-        /* from here on, 'child' IS 'parent' with the direction flipped - the store, the
-         conflict check, the sentence and the mini-tree all speak that one vocabulary */
-      const kindForStore = (st.kind==='child') ? 'parent' : st.kind;
-      const clash=await kinConflict(st.other, kindForStore, st.dir);
+        const me=(NAME&&(NAME.called[state.lang]||NAME.given[state.lang]||NAME.called.en||NAME.given.en))||'';
+        const clash=await kinConflict(st.other, kindForStore, st.dir);
         if(clash){ toast((L.clash&&L.clash[clash])||L.clashOther||'That connection cannot be true — the forest already says otherwise.'); return; }
         const line=kinSentence(them, me, kindForStore, st.dir, state.lang);
         if(line){
