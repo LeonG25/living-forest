@@ -1652,7 +1652,7 @@ function auroraVines(cv){
     nebulae=[ {x:rnd(0.2,0.4),y:rnd(0.18,0.5),r:rnd(0.5,0.8),hue:270,a:0.11,spd:0.00023,ph:rnd(0,TAU)},
       {x:rnd(0.6,0.85),y:rnd(0.3,0.6),r:rnd(0.5,0.9),hue:190,a:0.10,spd:0.00019,ph:rnd(0,TAU)},
       {x:rnd(0.4,0.7),y:rnd(0.55,0.88),r:rnd(0.6,1.0),hue:150,a:0.08,spd:0.00016,ph:rnd(0,TAU)} ];
-    bokeh=Array.from({length:Math.round(clamp(W/34,14,34))},()=>({x:Math.random()*W,y:Math.random()*H,r:rnd(6,26),hue:rnd(160,285),spd:rnd(0.08,0.35),ph:rnd(0,TAU),a:rnd(0.05,0.13)})); }
+    bokeh=Array.from({length:Math.round(clamp(W/80,6,16))},()=>({x:Math.random()*W,y:Math.random()*H,r:rnd(6,26),hue:rnd(160,285),spd:rnd(0.08,0.35),ph:rnd(0,TAU),a:rnd(0.05,0.13)})); }
   const AURH=[270,190,150,215]; let aur=[];
   function seedAur(){ aur=[]; for(let i=0;i<4;i++) aur.push({cx:rnd(0.15,0.85),w:rnd(0.16,0.34),amp:rnd(0.05,0.13),spd:rnd(0.0025,0.006),ph:rnd(0,TAU),hue:AURH[i%AURH.length],a:rnd(0.08,0.16),drift:rnd(0.3,0.6)}); }
   let vines=[], petals=[];
@@ -1696,17 +1696,16 @@ function auroraVines(cv){
     for(const s of stars){ const tw=0.4+0.6*(0.5+0.5*Math.sin(t*s.tw+s.ph)); ctx.fillStyle=hsla(s.hue,60,86,0.5*tw); ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,TAU); ctx.fill(); }
     for(const a of aur){ const cx=a.cx*W+Math.sin(a.ph)*a.amp*W*a.drift, half=a.w*W*0.5, h=a.hue+gh(); const grad=ctx.createLinearGradient(cx-half,0,cx+half,0); grad.addColorStop(0,hsla(h,80,60,0)); grad.addColorStop(0.5,hsla(h,82,62,a.a)); grad.addColorStop(1,hsla(h,80,60,0)); ctx.fillStyle=grad; ctx.beginPath();
       for(let y=0;y<=H;y+=44){ const off=Math.sin(y*0.005+a.ph*2)*a.amp*W*0.4; ctx.lineTo(cx-half+off,y); } for(let y=H;y>=0;y-=44){ const off=Math.sin(y*0.005+a.ph*2)*a.amp*W*0.4; ctx.lineTo(cx+half+off,y); } ctx.closePath(); ctx.fill(); }
-    ctx.globalCompositeOperation='source-over'; let blurred=false;
-    for(const v of vines){ if(v.depth<0.5 && !blurred && !reduceMotion){ ctx.filter='blur(1.6px)'; blurred=true; } else if(v.depth>=0.5 && blurred){ ctx.filter='none'; blurred=false; } drawVine(v); }
-    if(blurred) ctx.filter='none'; ctx.globalCompositeOperation='lighter';
+    ctx.globalCompositeOperation='source-over';
+    for(const v of vines){ ctx.globalAlpha=v.depth<0.5?0.52:1; drawVine(v); } /* depth via alpha, not blur */ ctx.globalAlpha=1; ctx.globalCompositeOperation='lighter';
     for(const p of petals){ const fade=p.life<40?p.life/40:p.life>p.max-70?Math.max(0,(p.max-p.life)/70):1; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle=hsla(p.hue+gh(),82,68,0.7*fade); ctx.beginPath(); ctx.ellipse(0,0,p.sz,p.sz*0.5,0,0,TAU); ctx.fill(); ctx.restore(); }
     for(const b of bokeh){ const tw=0.6+0.4*Math.sin(t*0.02+b.ph); const rg=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r); rg.addColorStop(0,hsla(b.hue+gh(),78,80,b.a*tw*1.6)); rg.addColorStop(0.4,hsla(b.hue+gh(),78,70,b.a*tw*0.5)); rg.addColorStop(1,hsla(b.hue+gh(),78,70,0)); ctx.fillStyle=rg; ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,TAU); ctx.fill(); }
     ctx.globalCompositeOperation='source-over'; }
-  function size(){ const r=cv.getBoundingClientRect(); DPR=Math.min(devicePixelRatio||1,2); W=Math.max(1,r.width); H=Math.max(1,r.height); cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR); ctx.setTransform(DPR,0,0,DPR,0,0); NV=Math.round(clamp(W/175,4,9)); seedStatic(); }
+  function size(){ const r=cv.getBoundingClientRect(); DPR=1; /* bg canvas: retina gives no visible benefit, 4x pixel cost */ W=Math.max(1,r.width); H=Math.max(1,r.height); cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR); ctx.setTransform(DPR,0,0,DPR,0,0); NV=Math.round(clamp(W/175,4,9)); seedStatic(); }
   size(); seedAur();
   addEventListener('resize',()=>{ size(); while(vines.length<NV) vines.push(makeVine()); if(reduceMotion) paint(); });
   if(reduceMotion){ for(let i=0;i<NV;i++){ const v=makeVine(); v.g=rnd(0.78,1); v.state='grow'; v.fullAt=v.age; vines.push(v); } vines.sort((a,b)=>a.depth-b.depth); paint(); }
-  else { (function loop(){ t++; step(); paint(); requestAnimationFrame(loop); })(); }
+  else { let _lft=0; (function loop(ts){ if(!document.hidden&&ts-_lft>=34){ _lft=ts; t++; step(); paint(); } requestAnimationFrame(loop); })(0); }
 }
 
 /* ---------- boot ---------- */
