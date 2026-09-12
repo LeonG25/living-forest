@@ -1974,7 +1974,7 @@
       return `<div class="appfact" style="margin-top:12px"><span class="mark">${sv(I.kin,2)}</span>`+
         `<div class="body">${esc(L.kinFar)}<span class="src">${L.assembled}</span></div></div>`;
     }
-    return `<button class="chip add" data-act="howrelated" style="margin-top:12px;border-color:rgba(127,180,216,.4);color:var(--cool-hi)">${sv(I.kin,1.7)} ${L.howrelated}</button>`; }
+    return ''; } /* how-are-you-related button removed 2026-09-10: kin is stated, not asked */
   /* the note under a place box: cool blue, because it is the app reporting on itself */
   function placeWarn(input, msg){
     try{
