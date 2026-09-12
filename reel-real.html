@@ -340,7 +340,7 @@
       facet:{ name:'שם', face:'פנים', life:'חיים', places:'מקומות', story:'סיפורים', kin:'משפחה', reel:'סרט', more:'עוד' },
       playingBack:'מתנגן', lightsOf:n=>`${n} אורות מתוך שבעה`,
       sceneOf:(i,n)=>`סצנה ${i} מתוך ${n}`,
-      kindledA:'נדלקו', ofEight:'מתוך שבעה גרנים נדלקו', ringOf:'מתוך שבעה', nee:'לבית', stillDark:n=>n===1?'אחת עדיין חשוכה':`${n} עדיין חשוכות`, allLit:'כל השבע דולקות',
+      kindledA:'נדלקו', ofEight:'מתוך שבעה היבטים נדלקו', ringOf:'מתוך שבעה', nee:'לבית', stillDark:n=>n===1?'אחת עדיין חשוכה':`${n} עדיין חשוכות`, allLit:'כל השבע דולקות',
       provGold:'זהב — אדם סיפר לנו את זה', provCool:'כחול — האפליקציה חישבה זאת', provViolet:'סגול — עדיין נאסף, שמור לשומר',
       toldBy:'מפי', openPhoto:'פתח את התצלום',
       stepIn:'להיכנס לרגע הזה',
@@ -350,7 +350,7 @@
       placesGathering:'מקום מגורים — עדיין נאסף',
       kinLine:n=>`${n} קרובי משפחה · החוט אליכם`,
       untold:'עדיין לא נוסף כאן דבר',
-      endAssembled:'נאספו', endTitle:name=>`חייה של ${name} — `, endSub:'עזרו לגרנים החשוכות להידלק — והסרט יתארך.', endSubFull:'כל הגרנים דולקות. תודה שאתם זוכרים אותם כל כך במלואם.',
+      endAssembled:'נאספו', endTitle:name=>`חייה של ${name} — `, endSub:'עזרו להיבטים החשוכים להידלק — והסרט יתארך.', endSubFull:'כל ההיבטים דולקים. תודה שאתם זוכרים אותם כל כך במלואם.',
       watchAgain:'לצפות שוב', addToLight:f=>`הוסיפו כדי להדליק «${f}»`,
       gatherTitle:name=>`הסיפור של ${name} `, gatherStill:'עדיין נאסף', gatherSub:'גרן או שתיים כבר דולקות. כל רגע שתוסיפו מפיץ את האור לגרן נוספת.',
       waitKeeper:'ממתין לשומר',
@@ -390,7 +390,7 @@
     return `<svg viewBox="0 0 100 66" preserveAspectRatio="xMidYMid slice"><rect width="100" height="66" fill="#241a3a"/><circle cx="50" cy="33" r="30" fill="none" stroke="#f3cd84" stroke-width="1" opacity=".5"/><text x="50" y="42" font-family="Georgia,serif" font-size="26" fill="#ffe6ad" text-anchor="middle">${esc(ch)}</text></svg>`; }
   function lifeSVG(){ return `<svg viewBox="0 0 100 66" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="lf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#20304a"/><stop offset="1" stop-color="#132033"/></linearGradient></defs><rect width="100" height="66" fill="url(#lf)"/><circle cx="50" cy="33" r="17" fill="none" stroke="#7fb4d8" stroke-width="1.6" opacity=".7"/><path d="M50 22v11l7 5" fill="none" stroke="#a9d2ee" stroke-width="1.8" stroke-linecap="round"/></svg>`; }
   function placeSVG(){ return `<svg viewBox="0 0 100 66" preserveAspectRatio="xMidYMid slice"><rect width="100" height="66" fill="#16283a"/><path d="M50 52s-11-10.3-11-18a11 11 0 1122 0c0 7.7-11 18-11 18z" fill="none" stroke="#7fb4d8" stroke-width="1.8"/><circle cx="50" cy="34" r="4" fill="#a9d2ee"/></svg>`; }
-  function kinSVG(){ return `<svg viewBox="0 0 100 66" preserveAspectRatio="xMidYMid slice"><rect width="100" height="66" fill="#16283a"/><path d="M14 33 H86" stroke="#7fb4d8" stroke-width="1.4" opacity=".6"/><circle cx="18" cy="33" r="6" fill="#a9d2ee"/><circle cx="50" cy="33" r="5" fill="#7fb4d8"/><circle cx="82" cy="33" r="7" fill="#f3cd84"/></svg>`; }
+  function kinSVG(){ return `<svg viewBox="0 0 100 66" preserveAspectRatio="xMidYMid slice"><rect width="100" height="66" fill="#16283a"/><line x1="50" y1="25" x2="50" y2="36" stroke="#7fb4d8" stroke-width="1.4" opacity=".6"/><line x1="28" y1="36" x2="72" y2="36" stroke="#7fb4d8" stroke-width="1.4" opacity=".6"/><line x1="28" y1="36" x2="28" y2="43" stroke="#7fb4d8" stroke-width="1.4" opacity=".6"/><line x1="72" y1="36" x2="72" y2="43" stroke="#7fb4d8" stroke-width="1.4" opacity=".6"/><circle cx="50" cy="18" r="7" fill="#f3cd84"/><circle cx="28" cy="49" r="5.5" fill="#a9d2ee"/><circle cx="72" cy="49" r="5.5" fill="#7fb4d8"/></svg>`; }
   function galSVG(seed){ const s=['#c9a878','#8fa6b8','#b58a5c','#9fb0a0','#c08a70','#8a92b0','#a88f6e','#7f97ab'][(seed||0)%8];
     return `<svg viewBox="0 0 100 66" preserveAspectRatio="xMidYMid slice"><rect width="100" height="66" fill="${s}"/><rect y="42" width="100" height="24" fill="rgba(0,0,0,.16)"/><circle cx="50" cy="30" r="12" fill="#e6c49b"/><path d="M50 64 Q50 46 34 44 Q37 36 50 36 Q63 36 66 44 Q50 46 50 64Z" fill="#5a4636"/></svg>`; }
   function avSVG(){ return `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#2a3a52"/><circle cx="50" cy="42" r="18" fill="#e6c49b"/><path d="M50 96 Q50 68 28 64 Q32 48 50 48 Q68 48 72 64 Q50 68 50 96Z" fill="#c9c1b4"/></svg>`; }
