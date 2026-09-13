@@ -77,7 +77,7 @@
   /* box = {x,y,w,h} as fractions of the image; box:null = picked, not on a photo */
   var M={ photoFile:null, photoURL:null,
           story:'', when:'', where:'', country:'', countryOpen:false, people:[] };
-  var places=null, peopleList=null, sb=null;
+  var places=null, placeCountry={}, peopleList=null, sb=null;
   var arm=false, gesture=null, draft=null, pickCtx=null;
   function sbc(){ if(!sb) sb=window.supabase.createClient(SB_URL,SB_KEY); return sb; }
 
@@ -139,7 +139,7 @@
       +'<input id="cWhen" placeholder="'+esc(L.whenPh)+'" value="'+esc(M.when)+'" style="'+inputCss+'">'
       +secT(L.whereT,true)
       +'<input id="cWhere" list="cPlaces" autocomplete="off" placeholder="'+esc(L.wherePh)+'" value="'+esc(M.where)+'" style="'+inputCss+'"><datalist id="cPlaces"></datalist>'
-      +'<input id="cCountry" placeholder="'+esc(L.countryPh)+'" value="'+esc(M.country)+'" style="'+inputCss+';margin-top:8px;display:'+(M.countryOpen?'block':'none')+'">'
+      +'<input id="cCountry" placeholder="'+esc(L.countryPh)+'" value="'+esc(M.country)+'" style="'+inputCss+';margin-top:8px">'
       +secT(L.whoT,true)
       +whoBlock
       +'<button id="cSend" style="width:100%;margin-top:34px;background:linear-gradient(180deg,#f6d996,#eec371);border:0;border-radius:99px;padding:15px;font-size:16.5px;font-weight:600;color:#20180a;cursor:pointer">'+esc(L.send)+'</button>'
@@ -173,8 +173,8 @@
     var wi=document.getElementById('cWhere'), ci=document.getElementById('cCountry');
     wi.oninput=function(){ M.where=this.value;
       var raw=this.value.trim().toLowerCase();
-      var hit=(places||[]).some(function(pl){ return pl.trim().toLowerCase()===raw; });
-      M.countryOpen=!!(raw&&!hit); ci.style.display=M.countryOpen?'block':'none'; };
+      /* auto-fill country when a known place is typed, never overwrite what the user typed */
+      if(raw&&!ci.value.trim()){ var co=placeCountry[raw]; if(co) ci.value=M.country=co; } };
     ci.oninput=function(){ M.country=this.value; };
     var ta=document.getElementById('cTagArm'); if(ta) ta.onclick=function(){ arm=!arm; render(); };
     var wp=document.getElementById('cWhoPick'); if(wp) wp.onclick=function(){ openPicker('pick',{}); };
@@ -361,9 +361,16 @@
   function fillPlaces(){
     var dl=document.getElementById('cPlaces'); if(!dl) return;
     if(places){ dl.innerHTML=places.map(function(p){ return '<option value="'+esc(p)+'">'; }).join(''); return; }
-    sbc().from('place_geo').select('name,name_en,name_ru,name_he').then(function(r){
-      var seen={}; (r.data||[]).forEach(function(x){ ['name','name_en','name_ru','name_he'].forEach(function(k){ var v=(x[k]||'').trim(); if(v) seen[v]=1; }); });
-      places=Object.keys(seen).sort(); fillPlaces();
+    sbc().from('place_geo').select('name,name_en,name_ru,name_he,country').then(function(r){
+      var seen={}, cm={};
+      (r.data||[]).forEach(function(x){
+        var co=x.country||'';
+        ['name','name_en','name_ru','name_he'].forEach(function(k){
+          var v=(x[k]||'').trim(); if(!v) return;
+          seen[v]=1; if(co&&!cm[v.toLowerCase()]) cm[v.toLowerCase()]=co;
+        });
+      });
+      places=Object.keys(seen).sort(); placeCountry=cm; fillPlaces();
     });
   }
 
