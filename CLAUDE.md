@@ -126,6 +126,21 @@
 
 # CURRENT STATE — session handover (read me first)
 
+## SESSION OF 2026-09-16 — HANDOVER
+
+See git log for full commit list. Key items:
+
+- ONE NAME PER THING shipped: aliases, 4-step lookup, 6 duplicates merged
+- Tree CPU fix: DPR=1, 30fps cap, no blur
+- Person kin picker: search fixed, kinsave ReferenceError fixed, obsolete button removed
+- Contribute: phone frame removed, country field always visible
+- Pan button (hand icon) on both tagging pages
+- Story edit: one-tap send to keeper
+- Unified create/moment layout: narrator, rotate, same CSS classes
+- DB: aliases on place_geo, my_person()+mailbox_people() updated, 4 profiles linked
+
+OPEN: artefact where values normalisation pending; create form needs live test; Chromebook tree unconfirmed.
+
 ## SESSION OF 2026-09-06/07 — WHERE THINGS STAND (read this first, then §2)
 
 **THE THREAD OF THE WHOLE SESSION:** one fault, over and over — a page holding a PRIVATE COPY
