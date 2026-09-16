@@ -33,6 +33,7 @@
         send:'Send to the keeper', missT:'Not complete yet',
         missLead:'A moment needs a little more before it can go to the keeper:',
         mWhen:'when it happened', mWhere:'where it happened', mWho:'who is in it',
+        toldBy:'told by', narPh:'who is sharing this?', rotate:'Rotate', whereK:'Where', whenK:'When',
         mSubst:'a photograph, a story, or a voice', ok:'Understood', sending:'Sending\u2026', sendFail:'That could not be sent. Nothing was lost \u2014 try again.' },
    ru:{ dir:'ltr', newT:'\u041d\u043e\u0432\u044b\u0439 \u043c\u043e\u043c\u0435\u043d\u0442', sub:'\u0417\u0430\u043f\u043e\u043b\u043d\u0438\u0442\u0435 \u0442\u0430\u043a, \u043a\u0430\u043a \u0440\u0430\u0441\u0441\u043a\u0430\u0437\u0430\u043b\u0430 \u0431\u044b \u0441\u0435\u043c\u044c\u044f. \u041d\u0438\u0447\u0435\u0433\u043e \u043d\u0435 \u0441\u043e\u0445\u0440\u0430\u043d\u044f\u0435\u0442\u0441\u044f, \u043f\u043e\u043a\u0430 \u0432\u044b \u043d\u0435 \u043e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u0435.',
         reqd:'\u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u043e', addPhoto:'\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u0444\u043e\u0442\u043e\u0433\u0440\u0430\u0444\u0438\u044e', changePhoto:'\u0417\u0430\u043c\u0435\u043d\u0438\u0442\u044c \u0444\u043e\u0442\u043e', removePhoto:'\u0423\u0431\u0440\u0430\u0442\u044c',
@@ -51,6 +52,7 @@
         send:'\u041e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c \u0445\u0440\u0430\u043d\u0438\u0442\u0435\u043b\u044e', missT:'\u041f\u043e\u043a\u0430 \u043d\u0435 \u0433\u043e\u0442\u043e\u0432\u043e',
         missLead:'\u041c\u043e\u043c\u0435\u043d\u0442\u0443 \u043d\u0443\u0436\u043d\u043e \u0435\u0449\u0451 \u043d\u0435\u043c\u043d\u043e\u0433\u043e, \u043f\u0440\u0435\u0436\u0434\u0435 \u0447\u0435\u043c \u043e\u043d \u0443\u0439\u0434\u0451\u0442 \u043a \u0445\u0440\u0430\u043d\u0438\u0442\u0435\u043b\u044e:',
         mWhen:'\u043a\u043e\u0433\u0434\u0430 \u044d\u0442\u043e \u0431\u044b\u043b\u043e', mWhere:'\u0433\u0434\u0435 \u044d\u0442\u043e \u0431\u044b\u043b\u043e', mWho:'\u043a\u0442\u043e \u0432 \u043d\u0451\u043c',
+        toldBy:'\u0440\u0430\u0441\u0441\u043a\u0430\u0437\u0430\u043b', narPh:'\u043a\u0442\u043e \u0440\u0430\u0441\u0441\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u0442?', rotate:'\u041f\u043e\u0432\u0435\u0440\u043d\u0443\u0442\u044c', whereK:'\u0413\u0434\u0435', whenK:'\u041a\u043e\u0433\u0434\u0430',
         mSubst:'\u0444\u043e\u0442\u043e\u0433\u0440\u0430\u0444\u0438\u044f, \u0438\u0441\u0442\u043e\u0440\u0438\u044f \u0438\u043b\u0438 \u0433\u043e\u043b\u043e\u0441', ok:'\u041f\u043e\u043d\u044f\u0442\u043d\u043e', sending:'\u041e\u0442\u043f\u0440\u0430\u0432\u043b\u044f\u0435\u0442\u0441\u044f\u2026', sendFail:'\u041d\u0435 \u043f\u043e\u043b\u0443\u0447\u0438\u043b\u043e\u0441\u044c \u043e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c. \u041d\u0438\u0447\u0435\u0433\u043e \u043d\u0435 \u043f\u043e\u0442\u0435\u0440\u044f\u043b\u043e\u0441\u044c \u2014 \u043f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0435\u0449\u0451 \u0440\u0430\u0437.' },
    he:{ dir:'rtl', newT:'\u05e8\u05d2\u05e2 \u05d7\u05d3\u05e9', sub:'\u05de\u05dc\u05d0\u05d5 \u05db\u05e4\u05d9 \u05e9\u05d4\u05de\u05e9\u05e4\u05d7\u05d4 \u05d4\u05d9\u05d9\u05ea\u05d4 \u05de\u05e1\u05e4\u05e8\u05ea. \u05d3\u05d1\u05e8 \u05dc\u05d0 \u05e0\u05e9\u05de\u05e8 \u05e2\u05d3 \u05d4\u05e9\u05dc\u05d9\u05d7\u05d4.',
         reqd:'\u05e0\u05d3\u05e8\u05e9', addPhoto:'\u05dc\u05d4\u05d5\u05e1\u05d9\u05e3 \u05ea\u05e6\u05dc\u05d5\u05dd', changePhoto:'\u05dc\u05d4\u05d7\u05dc\u05d9\u05e3 \u05ea\u05e6\u05dc\u05d5\u05dd', removePhoto:'\u05dc\u05d4\u05e1\u05d9\u05e8',
@@ -69,6 +71,7 @@
         send:'\u05dc\u05e9\u05dc\u05d5\u05d7 \u05dc\u05e9\u05d5\u05de\u05e8', missT:'\u05e2\u05d3\u05d9\u05d9\u05df \u05dc\u05d0 \u05de\u05d5\u05db\u05df',
         missLead:'\u05dc\u05e8\u05d2\u05e2 \u05d3\u05e8\u05d5\u05e9 \u05e2\u05d5\u05d3 \u05de\u05e2\u05d8 \u05dc\u05e4\u05e0\u05d9 \u05e9\u05d9\u05d2\u05d9\u05e2 \u05d0\u05dc \u05d4\u05e9\u05d5\u05de\u05e8:',
         mWhen:'\u05de\u05ea\u05d9 \u05d6\u05d4 \u05e7\u05e8\u05d4', mWhere:'\u05d0\u05d9\u05e4\u05d4 \u05d6\u05d4 \u05e7\u05e8\u05d4', mWho:'\u05de\u05d9 \u05de\u05d5\u05e4\u05d9\u05e2 \u05d1\u05d5',
+        toldBy:'\u05de\u05e4\u05d9', narPh:'\u05de\u05d9 \u05de\u05e1\u05e4\u05e8?', rotate:'\u05e1\u05d9\u05d1\u05d5\u05d1', whereK:'\u05d0\u05d9\u05e4\u05d4', whenK:'\u05de\u05ea\u05d9',
         mSubst:'\u05ea\u05e6\u05dc\u05d5\u05dd, \u05e1\u05d9\u05e4\u05d5\u05e8 \u05d0\u05d5 \u05e7\u05d5\u05dc', ok:'\u05d4\u05d1\u05e0\u05ea\u05d9', sending:'\u05e0\u05e9\u05dc\u05d7\u2026', sendFail:'\u05d4\u05e9\u05dc\u05d9\u05d7\u05d4 \u05dc\u05d0 \u05d4\u05e6\u05dc\u05d9\u05d7\u05d4. \u05d3\u05d1\u05e8 \u05dc\u05d0 \u05d0\u05d1\u05d3 \u2014 \u05e0\u05e1\u05d5 \u05e9\u05d5\u05d1.' }
   };
   var L=T[lang]||T.en;
@@ -76,7 +79,7 @@
 
   /* box = {x,y,w,h} as fractions of the image; box:null = picked, not on a photo */
   var M={ photoFile:null, photoURL:null,
-          story:'', when:'', where:'', country:'', countryOpen:false, people:[] };
+          story:'', narrator:'', when:'', where:'', country:'', people:[] };
   var places=null, placeCountry={}, peopleList=null, sb=null;
   var cZoom={s:1,tx:0,ty:0}, _cSpaceDown=false, _cPanMode=false;
   var arm=false, gesture=null, draft=null, pickCtx=null;
@@ -113,56 +116,62 @@
 
   function render(){
     document.documentElement.lang=lang; document.documentElement.dir=L.dir;
+    document.body.classList.toggle('rtl',L.dir==='rtl');
     var w=document.getElementById('wrap'); if(!w) return;
     var photoBlock = M.photoURL
-      ? '<div id="cStage" style="position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(180,205,235,.16);touch-action:none">'
+      ? '<div class="photostage" id="cStage" style="touch-action:none">'
           +'<div id="cZoomWrap" style="position:absolute;inset:0;transform-origin:0 0;will-change:transform">'
           +'<img id="cImg" src="'+M.photoURL+'" style="width:100%;display:block;pointer-events:none" draggable="false">'
           +'<div id="cTagLayer" style="position:absolute;inset:0'+(arm?'':';pointer-events:none')+'"></div>'
           +'</div>'
-        +'</div>'
-        +'<div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;align-items:center">'
-          +'<button id="cTagArm" class="cbtn'+(arm?' gold':'')+'">'+(arm?esc(L.tagStop):esc(L.tagBtn))+'</button>'
-          +'<button id="cZoomIn" class="cbtn" style="min-width:34px;font-family:monospace;font-size:19px;padding:0">+</button>'
-          +'<button id="cZoomOut" class="cbtn" style="min-width:34px;font-family:monospace;font-size:19px;padding:0" disabled>−</button>'
-          +'<button id="cZoomPan" class="cbtn" style="min-width:34px;font-size:17px;padding:0" title="Pan">✋</button>'
-          +'<button id="cPhotoChange" class="cbtn">'+esc(L.changePhoto)+'</button>'
-          +'<button id="cPhotoDrop" class="cbtn ghost">'+esc(L.removePhoto)+'</button></div>'
-      : '<button id="cPhotoAdd" style="width:100%;border:1.5px dashed rgba(243,205,132,.45);background:rgba(243,205,132,.05);border-radius:18px;padding:42px 16px;color:var(--gold,#f3cd84);font-family:\'Newsreader\',serif;font-size:17px;cursor:pointer">'+esc(L.addPhoto)+'</button>';
-    var whoBlock = M.photoURL
-      ? '<div style="'+noteCss+'">'+esc(L.whoTagNote)+'</div>'+chipsHtml()+proposeLine()
-      : '<div style="'+noteCss+'">'+esc(L.whoPickNote)+'</div>'
-        +'<button id="cWhoPick" class="cbtn" style="margin-top:12px">'+esc(L.pickBtn)+'</button>'
-        +chipsHtml()+proposeLine();
-    w.innerHTML=
-      '<div style="max-width:560px;margin:0 auto;padding:18px 16px 90px">'
-      +'<div class="serif" style="font-size:30px;color:#f2ead9;margin:14px 2px 4px">'+esc(L.newT)+'</div>'
-      +'<div style="color:var(--muted,#8fa0b3);font-size:14px;margin:0 2px 8px">'+esc(L.sub)+'</div>'
-      +secT('\u2014',false).replace('\u2014','')+photoBlock
-      +secT(L.storyT,false)
-      +'<textarea id="cStory" rows="5" placeholder="'+esc(L.storyPh)+'" style="'+inputCss+';resize:vertical">'+esc(M.story)+'</textarea>'
-      +secT(L.whenT,true)
-      +'<input id="cWhen" placeholder="'+esc(L.whenPh)+'" value="'+esc(M.when)+'" style="'+inputCss+'">'
-      +secT(L.whereT,true)
-      +'<input id="cWhere" list="cPlaces" autocomplete="off" placeholder="'+esc(L.wherePh)+'" value="'+esc(M.where)+'" style="'+inputCss+'"><datalist id="cPlaces"></datalist>'
-      +'<input id="cCountry" placeholder="'+esc(L.countryPh)+'" value="'+esc(M.country)+'" style="'+inputCss+';margin-top:8px">'
-      +secT(L.whoT,true)
-      +whoBlock
-      +'<button id="cSend" style="width:100%;margin-top:34px;background:linear-gradient(180deg,#f6d996,#eec371);border:0;border-radius:99px;padding:15px;font-size:16.5px;font-weight:600;color:#20180a;cursor:pointer">'+esc(L.send)+'</button>'
-      +'<div id="cMiss" style="display:none;margin-top:14px;border:1px solid rgba(243,205,132,.4);background:rgba(243,205,132,.06);border-radius:14px;padding:13px 15px;color:#e8dcc0;font-size:14.5px"></div>'
-      +'<input type="file" id="cFile" accept="image/*" hidden>'
+          +'<div class="zoomctl" id="cZoomCtl">'
+          +'<button type="button" class="zbtn" id="cZoomIn">+</button>'
+          +'<button type="button" class="zbtn" id="cZoomOut" disabled>−</button>'
+          +'<button type="button" class="zbtn zpan" id="cZoomPan">✋</button>'
+          +'<button type="button" class="zbtn zreset" id="cZoomReset" data-z="reset">⤢</button>'
+          +'</div></div>'
+          +'<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'
+          +'<button class="ptool tag'+(arm?' on':'')+'" id="cTagArm">⊞ '+esc(arm?L.tagStop:L.tagBtn)+'</button>'
+          +'<button class="ptool" id="cPhotoRotate">↻ '+esc(L.rotate)+'</button>'
+          +'<button class="ptool" id="cPhotoChange">⇄ '+esc(L.changePhoto)+'</button>'
+          +'<button class="ptool round danger" id="cPhotoDrop" title="'+esc(L.removePhoto)+'">×</button>'
+          +'</div>'
+      : '<button id="cPhotoAdd" class="ptool" style="width:100%;justify-content:center;border-style:dashed;padding:40px 16px;border-radius:14px;font-size:17px">⊕ '+esc(L.addPhoto)+'</button>';
+    var is='background:none;border:none;width:100%;outline:none;padding:2px 0;display:block;font-family:inherit;color:#f7edda;';
+    var fc=chipsHtml(); var ra=L.dir==='rtl'?' dir="rtl"':'';
+    w.innerHTML='<div class="wrap"'+ra+'>'
+      +'<div class="topbar"><button class="icon-btn" id="cBack">&#x2039;</button>'
+      +'<div class="crumb"><span class="k">'+esc(L.newT)+'</span></div></div>'
+      +'<div class="stage">'+photoBlock+'</div>'
+      +'<div class="story story-editable" style="margin-top:20px;cursor:auto"><span class="quotemark">&ldquo;</span>'
+      +'<textarea id="cStory" placeholder="'+esc(L.storyPh)+'" rows="5" style="background:none;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 12px;width:100%;box-sizing:border-box;font-family:\'Newsreader\',serif;font-style:italic;font-size:22px;color:#f7edda;line-height:1.42;resize:vertical;outline:none">'+esc(M.story)+'</textarea>'
+      +'<div class="told" style="margin-top:14px"><span class="flame"></span>'
+      +'<span style="font-size:13px;color:var(--gold,#f3cd84);white-space:nowrap;flex:0 0 auto">'+esc(L.toldBy)+'</span>'
+      +'<input id="cNarrator" value="'+esc(M.narrator)+'" placeholder="'+esc(L.narPh)+'" style="flex:1;min-width:0;background:none;border:none;border-bottom:1px solid rgba(243,205,132,.3);color:var(--gold,#f3cd84);font-size:13px;padding:2px 6px;outline:none;font-family:inherit">'
+      +'</div></div>'
+      +'<div class="facts" style="margin-top:18px">'
+      +'<div class="fact link human" style="flex-direction:column;gap:0;align-items:stretch">'
+      +'<div style="display:flex;align-items:center;gap:13px"><span class="fi">&#128205;</span>'
+      +'<span class="ftext" style="flex:1;min-width:0"><span class="fk">'+esc(L.whereK)+'</span>'
+      +'<input id="cWhere" list="cPlaces" value="'+esc(M.where)+'" placeholder="'+esc(L.wherePh)+'" autocomplete="off" style="'+is+'font-family:\'Newsreader\',serif;font-size:18px;margin-top:2px">'
+      +'<datalist id="cPlaces"></datalist></span></div>'
+      +'<input id="cCountry" value="'+esc(M.country)+'" placeholder="'+esc(L.countryPh)+'" style="background:none;border:none;border-bottom:1px solid rgba(127,180,216,.2);width:calc(100% - 47px);outline:none;padding:2px 0;display:block;font-size:14px;color:rgba(127,180,216,.8);margin-top:6px;margin-inline-start:47px">'
       +'</div>'
-      +'<style>.cbtn{background:rgba(180,205,235,.1);border:1px solid rgba(180,205,235,.25);border-radius:99px;padding:10px 18px;color:#dce6f0;font-size:14px;cursor:pointer;font-family:inherit}.cbtn.ghost{background:transparent;color:var(--muted,#8fa0b3)}.cbtn.gold{background:rgba(243,205,132,.16);border-color:rgba(243,205,132,.55);color:var(--gold,#f3cd84)}'
-      +'.ctag{position:absolute;border:2px solid rgba(243,205,132,.95);border-radius:6px;box-shadow:0 0 0 1px rgba(0,0,0,.4)}'
-      +'.ctag.draft{border-style:dashed}'
-      +'.ctagno{position:absolute;top:-12px;left:-12px;width:24px;height:24px;border-radius:50%;background:var(--gold,#f3cd84);color:#20180a;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;pointer-events:auto;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.5)}'
-      +'.chdl{position:absolute;width:18px;height:18px;background:rgba(243,205,132,.9);border-radius:4px;pointer-events:auto}'
-      +'.chdl-nw{top:-9px;left:-9px}.chdl-ne{top:-9px;right:-9px}.chdl-sw{bottom:-9px;left:-9px}.chdl-se{bottom:-9px;right:-9px}'
-      +'.cchip{display:inline-flex;align-items:center;gap:7px;background:rgba(10,18,28,.6);border:1px solid rgba(243,205,132,.35);border-radius:99px;padding:7px 8px 7px 13px;color:#e8eef5;font-family:\'Newsreader\',serif;font-size:15px}'
-      +'.cchip b{color:var(--gold,#f3cd84);font-weight:700;font-size:13px}'
-      +'.cx{background:transparent;border:0;color:var(--muted,#8fa0b3);font-size:17px;cursor:pointer;padding:0 5px;line-height:1}'
-      +'</style>';
-    wire(); renderBoxes();
+      +'<div class="fact link human"><span class="fi">&#128336;</span>'
+      +'<span class="ftext" style="flex:1;min-width:0"><span class="fk">'+esc(L.whenK)+'</span>'
+      +'<input id="cWhen" value="'+esc(M.when)+'" placeholder="'+esc(L.whenPh)+'" style="'+is+'font-family:\'Newsreader\',serif;font-size:18px;margin-top:2px"></span></div>'
+      +'</div>'
+      +'<div style="margin-top:18px">'
+      +'<div style="font-family:\'Azeret Mono\',monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:rgba(127,180,216,.7);margin-bottom:10px">'+esc(L.whoT)+'</div>'
+      +'<div class="tagbar"><div style="display:flex;gap:8px;flex-wrap:wrap">'+fc+'</div></div>'
+      +(M.photoURL?'':'<button id="cWhoPick" class="ptool" style="margin-top:10px">'+esc(L.pickBtn)+'</button>')
+      +proposeLine()
+      +'</div>'
+      +'<div id="cMiss" style="display:none;margin-top:14px;border:1px solid rgba(243,205,132,.4);background:rgba(243,205,132,.06);border-radius:14px;padding:13px 15px;color:#e8dcc0;font-size:14.5px"></div>'
+      +'<button id="cSend" style="width:100%;margin-top:28px;margin-bottom:50px;background:linear-gradient(180deg,#f6d996,#eec371);border:0;border-radius:99px;padding:15px;font-size:16.5px;font-weight:600;color:#20180a;cursor:pointer">'+esc(L.send)+'</button>'
+      +'<input type="file" id="cFile" accept="image/*" hidden></div>'
+      +'<style>.ctag{position:absolute;border:2px solid rgba(243,205,132,.95);border-radius:6px}.ctag.draft{border-style:dashed}.ctagno{position:absolute;top:-12px;left:-12px;width:24px;height:24px;border-radius:50%;background:var(--gold,#f3cd84);color:#20180a;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;pointer-events:auto;cursor:pointer}.chdl{position:absolute;width:18px;height:18px;background:rgba(243,205,132,.9);border-radius:4px;pointer-events:auto}.chdl-nw{top:-9px;left:-9px}.chdl-ne{top:-9px;right:-9px}.chdl-sw{bottom:-9px;left:-9px}.chdl-se{bottom:-9px;right:-9px}.cchip{display:inline-flex;align-items:center;gap:7px;background:rgba(10,18,28,.6);border:1px solid rgba(243,205,132,.35);border-radius:99px;padding:7px 8px 7px 13px;color:#e8eef5;font-family:\'Newsreader\',serif;font-size:15px}.cchip b{color:var(--gold,#f3cd84);font-weight:700;font-size:13px}.cx{background:transparent;border:0;color:var(--muted,#8fa0b3);font-size:17px;cursor:pointer;padding:0 5px;line-height:1}</style>';
+    renderBoxes(); wire();
   }
 
   function wire(){
@@ -175,7 +184,10 @@
       dropPhoto();
       M.photoFile=file; M.photoURL=URL.createObjectURL(file); cZoom={s:1,tx:0,ty:0}; render(); };
     document.getElementById('cStory').oninput=function(){ M.story=this.value; };
+    var cn=document.getElementById('cNarrator'); if(cn) cn.oninput=function(){ M.narrator=this.value; };
     document.getElementById('cWhen').oninput=function(){ M.when=this.value; };
+    var cb=document.getElementById('cBack'); if(cb) cb.onclick=function(){ history.back(); };
+    var pr=document.getElementById('cPhotoRotate'); if(pr) pr.onclick=function(){ rotatePhoto(); };
     var wi=document.getElementById('cWhere'), ci=document.getElementById('cCountry');
     wi.oninput=function(){ M.where=this.value;
       var raw=this.value.trim().toLowerCase();
@@ -427,6 +439,21 @@
     });
   }
 
+  /* rotate the loaded photo 90 degrees clockwise (client-side, before upload) */
+  function rotatePhoto(){
+    if(!M.photoURL||!M.photoFile) return;
+    var img=new Image(); img.onload=function(){
+      var c=document.createElement('canvas'); c.width=img.height; c.height=img.width;
+      var x=c.getContext('2d'); x.translate(c.width/2,c.height/2); x.rotate(Math.PI/2);
+      x.drawImage(img,-img.width/2,-img.height/2);
+      c.toBlob(function(b){ if(!b) return;
+        if(M.photoURL) URL.revokeObjectURL(M.photoURL);
+        M.photoFile=new File([b],'photo.jpg',{type:'image/jpeg'});
+        M.photoURL=URL.createObjectURL(b); cZoom={s:1,tx:0,ty:0}; _cPanMode=false; render();
+      },'image/jpeg',0.92);
+    }; img.src=M.photoURL;
+  }
+
   /* ---------- Stage C: the real Send ----------
      Ported from the contribution engine: downscale + upload the local photo,
      insert the artefact and its subjects as in_review (never published - RLS
@@ -490,6 +517,7 @@
         var co=(M.country||'').trim();
         if(co && meta.where.indexOf(',')<0 && !(places||[]).some(function(pl){ return pl.trim().toLowerCase()===meta.where.toLowerCase(); }))
           meta.where=meta.where+', '+co; }
+      if(M.narrator&&M.narrator.trim()) meta.teller=M.narrator.trim();
       var photoPath=null;
       if(M.photoFile){
         var pf=await lfDown(M.photoFile);
