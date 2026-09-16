@@ -24,10 +24,10 @@
     --gold:#f3cd84; --gold-hi:#ffe6ad; --cool:#7fb4d8; --cool-hi:#a9d2ee;
     --edit:#c9a2ff; --edit-hi:#ddc6ff; --edit-soft:#efe6ff; --leaf:#8fd6a0; --autotr:#9a8bbd; --coral:#ff8a80;
   }
-  body{ font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--cream); min-height:100dvh;
-    display:flex; align-items:flex-start; justify-content:center; gap:40px; padding:34px 20px 90px;
+  body{ font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--cream);
     background:radial-gradient(150% 100% at 50% -6%, #1a1330 0%, #0c0e22 44%, #04070e 100%);
-    -webkit-user-select:none; user-select:none; flex-wrap:wrap; position:relative; overflow-x:hidden; }
+    -webkit-user-select:none; user-select:none; margin:0; padding:0;
+    position:relative; overflow:hidden; height:100dvh; }
   .serif{ font-family:'Newsreader',Georgia,serif; }
   .screen[dir="rtl"]{ direction:rtl; }
   .screen[dir="rtl"] .serif,.screen[dir="rtl"] .big,.screen[dir="rtl"] .bigfield input,.screen[dir="rtl"] .gh2{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
@@ -40,7 +40,7 @@
   .pageatmo .p3{ width:52vw; height:52vw; left:24vw; bottom:-24vh; background:radial-gradient(circle, rgba(255,138,128,.42), transparent 66%); animation:auraDrift 56s ease-in-out infinite reverse; }
   .stagewrap{ position:relative; z-index:2; }
 
-  .stagewrap{ display:block; }
+  .stagewrap{ display:block; width:100%; height:100%; }
   .device{ position:relative; width:100%; height:100dvh; overflow:hidden; background:#04070e; }
 
   /* ===== ALIVE : in-device atmosphere — rising candle-glow embers + warm aurora ===== */
