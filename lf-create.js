@@ -78,6 +78,7 @@
   var M={ photoFile:null, photoURL:null,
           story:'', when:'', where:'', country:'', countryOpen:false, people:[] };
   var places=null, placeCountry={}, peopleList=null, sb=null;
+  var cZoom={s:1,tx:0,ty:0}, _cSpaceDown=false;
   var arm=false, gesture=null, draft=null, pickCtx=null;
   function sbc(){ if(!sb) sb=window.supabase.createClient(SB_URL,SB_KEY); return sb; }
 
@@ -114,12 +115,16 @@
     document.documentElement.lang=lang; document.documentElement.dir=L.dir;
     var w=document.getElementById('wrap'); if(!w) return;
     var photoBlock = M.photoURL
-      ? '<div id="cStage" style="position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(180,205,235,.16)'+(arm?';touch-action:none':'')+'">'
+      ? '<div id="cStage" style="position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(180,205,235,.16);touch-action:none">'
+          +'<div id="cZoomWrap" style="position:absolute;inset:0;transform-origin:0 0;will-change:transform">'
           +'<img id="cImg" src="'+M.photoURL+'" style="width:100%;display:block;pointer-events:none" draggable="false">'
           +'<div id="cTagLayer" style="position:absolute;inset:0'+(arm?'':';pointer-events:none')+'"></div>'
+          +'</div>'
         +'</div>'
-        +'<div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">'
+        +'<div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;align-items:center">'
           +'<button id="cTagArm" class="cbtn'+(arm?' gold':'')+'">'+(arm?esc(L.tagStop):esc(L.tagBtn))+'</button>'
+          +'<button id="cZoomIn" class="cbtn" style="min-width:34px;font-family:monospace;font-size:19px;padding:0">+</button>'
+          +'<button id="cZoomOut" class="cbtn" style="min-width:34px;font-family:monospace;font-size:19px;padding:0" disabled>−</button>'
           +'<button id="cPhotoChange" class="cbtn">'+esc(L.changePhoto)+'</button>'
           +'<button id="cPhotoDrop" class="cbtn ghost">'+esc(L.removePhoto)+'</button></div>'
       : '<button id="cPhotoAdd" style="width:100%;border:1.5px dashed rgba(243,205,132,.45);background:rgba(243,205,132,.05);border-radius:18px;padding:42px 16px;color:var(--gold,#f3cd84);font-family:\'Newsreader\',serif;font-size:17px;cursor:pointer">'+esc(L.addPhoto)+'</button>';
@@ -167,7 +172,7 @@
     var pd=document.getElementById('cPhotoDrop'); if(pd) pd.onclick=function(){ dropPhoto(); render(); };
     f.onchange=function(){ var file=f.files&&f.files[0]; if(!file) return;
       dropPhoto();
-      M.photoFile=file; M.photoURL=URL.createObjectURL(file); render(); };
+      M.photoFile=file; M.photoURL=URL.createObjectURL(file); cZoom={s:1,tx:0,ty:0}; render(); };
     document.getElementById('cStory').oninput=function(){ M.story=this.value; };
     document.getElementById('cWhen').oninput=function(){ M.when=this.value; };
     var wi=document.getElementById('cWhere'), ci=document.getElementById('cCountry');
@@ -191,6 +196,50 @@
     };
     bindTagger();
     fillPlaces();
+    /* ---------- zoom: wheel, +/- buttons, Space+drag pan ---------- */
+    function _applyZoom(){
+      var w=document.getElementById('cZoomWrap'); if(!w) return;
+      w.style.transform='translate('+cZoom.tx+'px,'+cZoom.ty+'px) scale('+cZoom.s+')';
+      var zo=document.getElementById('cZoomOut'); if(zo) zo.disabled=cZoom.s<=1.001;
+    }
+    function _zoomAt(ns,cx,cy){
+      var r=stageRect(); ns=Math.min(4,Math.max(1,ns));
+      var ox=cx-r.left, oy=cy-r.top;
+      var tx=ox-(ox-cZoom.tx)*ns/cZoom.s, ty=oy-(oy-cZoom.ty)*ns/cZoom.s;
+      cZoom={s:ns,tx:Math.min(0,Math.max(r.width*(1-ns),tx)),ty:Math.min(0,Math.max(r.height*(1-ns),ty))};
+      _applyZoom();
+    }
+    var _zi=document.getElementById('cZoomIn'), _zo=document.getElementById('cZoomOut');
+    if(_zi) _zi.onclick=function(){ var r=stageRect(); _zoomAt(cZoom.s*1.5,r.left+r.width/2,r.top+r.height/2); };
+    if(_zo) _zo.onclick=function(){ var r=stageRect(); _zoomAt(cZoom.s/1.5,r.left+r.width/2,r.top+r.height/2); };
+    var _cst=document.getElementById('cStage');
+    if(_cst && !_cst.__zb){ _cst.__zb=true;
+      _cst.addEventListener('wheel',function(e){
+        e.preventDefault(); e.stopPropagation();
+        _zoomAt(cZoom.s*(e.ctrlKey?(e.deltaY<0?1.4:1/1.4):(e.deltaY<0?1.15:1/1.15)),e.clientX,e.clientY);
+      },{passive:false});
+      var _pg=null;
+      _cst.addEventListener('pointerdown',function(e){
+        if(arm && !_cSpaceDown) return;
+        if(cZoom.s<=1.001) return;
+        e.preventDefault(); try{_cst.setPointerCapture(e.pointerId);}catch(_){}
+        _pg={px:e.clientX,py:e.clientY,tx:cZoom.tx,ty:cZoom.ty};
+      });
+      _cst.addEventListener('pointermove',function(e){
+        if(!_pg) return; e.preventDefault();
+        var r=stageRect(), ns=cZoom.s;
+        cZoom.tx=Math.min(0,Math.max(r.width*(1-ns),_pg.tx+(e.clientX-_pg.px)));
+        cZoom.ty=Math.min(0,Math.max(r.height*(1-ns),_pg.ty+(e.clientY-_pg.py)));
+        var w=document.getElementById('cZoomWrap'); if(w) w.style.transform='translate('+cZoom.tx+'px,'+cZoom.ty+'px) scale('+cZoom.s+')';
+      });
+      _cst.addEventListener('pointerup',function(){ _pg=null; });
+      _cst.addEventListener('pointercancel',function(){ _pg=null; });
+      if(!window._cZoomKeys){ window._cZoomKeys=true;
+        document.addEventListener('keydown',function(e){ if(e.code==='Space'&&arm){ _cSpaceDown=true; e.preventDefault(); }});
+        document.addEventListener('keyup',function(e){ if(e.code==='Space') _cSpaceDown=false; });
+      }
+    }
+    _applyZoom(); /* restore zoom after re-render */
   }
 
   /* ---------- the tagger (create mode: boxes live in M.people, never the DB) ----------
@@ -200,14 +249,14 @@
      markers stay tappable to re-name or remove a face. */
   function dropPhoto(){
     if(M.photoURL) URL.revokeObjectURL(M.photoURL);
-    M.photoFile=null; M.photoURL=null; arm=false; gesture=null; draft=null;
+    M.photoFile=null; M.photoURL=null; arm=false; gesture=null; draft=null; cZoom={s:1,tx:0,ty:0};
     /* the boxes belonged to that photograph; the people stay, picked */
     M.people.forEach(function(p){ p.box=null; });
   }
   function stageRect(){ var st=document.getElementById('cStage'); return st?st.getBoundingClientRect():{left:0,top:0,width:1,height:1}; }
-  function toLocal(cx,cy){ var r=stageRect();
-    return { x:Math.min(1,Math.max(0,(cx-r.left)/r.width)), y:Math.min(1,Math.max(0,(cy-r.top)/r.height)) }; }
-  function dLocal(dx,dy){ var r=stageRect(); return { x:dx/r.width, y:dy/r.height }; }
+  function toLocal(cx,cy){ var r=stageRect(), s=cZoom.s;
+    return { x:Math.min(1,Math.max(0,(cx-r.left-cZoom.tx)/(r.width*s))), y:Math.min(1,Math.max(0,(cy-r.top-cZoom.ty)/(r.height*s))) }; }
+  function dLocal(dx,dy){ var r=stageRect(), s=cZoom.s; return { x:dx/(r.width*s), y:dy/(r.height*s) }; }
   function boxCss(b){ return 'left:'+(b.x*100)+'%;top:'+(b.y*100)+'%;width:'+(b.w*100)+'%;height:'+(b.h*100)+'%'; }
   function handlesHtml(){ return ['nw','ne','sw','se'].map(function(h){ return '<span class="chdl chdl-'+h+'" data-h="'+h+'"></span>'; }).join(''); }
   function renderBoxes(){
@@ -231,6 +280,7 @@
     layer.addEventListener('pointerdown',function(e){
       if(!arm) return;
       if(e.target.closest('.ctagno')) return; /* the click handler above owns the marker */
+      if(_cSpaceDown && cZoom.s>1.001) return; /* pan mode - let stage handle it */
       var boxEl=e.target.closest('.ctag'); var hdl=e.target.closest('.chdl');
       e.preventDefault(); try{ layer.setPointerCapture(e.pointerId); }catch(_){}
       if(!boxEl || boxEl.id==='cDraft'){
