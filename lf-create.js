@@ -78,7 +78,7 @@
   var M={ photoFile:null, photoURL:null,
           story:'', when:'', where:'', country:'', countryOpen:false, people:[] };
   var places=null, placeCountry={}, peopleList=null, sb=null;
-  var cZoom={s:1,tx:0,ty:0}, _cSpaceDown=false;
+  var cZoom={s:1,tx:0,ty:0}, _cSpaceDown=false, _cPanMode=false;
   var arm=false, gesture=null, draft=null, pickCtx=null;
   function sbc(){ if(!sb) sb=window.supabase.createClient(SB_URL,SB_KEY); return sb; }
 
@@ -125,6 +125,7 @@
           +'<button id="cTagArm" class="cbtn'+(arm?' gold':'')+'">'+(arm?esc(L.tagStop):esc(L.tagBtn))+'</button>'
           +'<button id="cZoomIn" class="cbtn" style="min-width:34px;font-family:monospace;font-size:19px;padding:0">+</button>'
           +'<button id="cZoomOut" class="cbtn" style="min-width:34px;font-family:monospace;font-size:19px;padding:0" disabled>−</button>'
+          +'<button id="cZoomPan" class="cbtn" style="min-width:34px;font-size:17px;padding:0" title="Pan">✋</button>'
           +'<button id="cPhotoChange" class="cbtn">'+esc(L.changePhoto)+'</button>'
           +'<button id="cPhotoDrop" class="cbtn ghost">'+esc(L.removePhoto)+'</button></div>'
       : '<button id="cPhotoAdd" style="width:100%;border:1.5px dashed rgba(243,205,132,.45);background:rgba(243,205,132,.05);border-radius:18px;padding:42px 16px;color:var(--gold,#f3cd84);font-family:\'Newsreader\',serif;font-size:17px;cursor:pointer">'+esc(L.addPhoto)+'</button>';
@@ -212,6 +213,8 @@
     var _zi=document.getElementById('cZoomIn'), _zo=document.getElementById('cZoomOut');
     if(_zi) _zi.onclick=function(){ var r=stageRect(); _zoomAt(cZoom.s*1.5,r.left+r.width/2,r.top+r.height/2); };
     if(_zo) _zo.onclick=function(){ var r=stageRect(); _zoomAt(cZoom.s/1.5,r.left+r.width/2,r.top+r.height/2); };
+    var _zp=document.getElementById('cZoomPan');
+    if(_zp) _zp.onclick=function(){ _cPanMode=!_cPanMode; _zp.style.background=_cPanMode?'rgba(127,180,216,.25)':''; _zp.style.borderColor=_cPanMode?'rgba(127,180,216,.7)':''; var st=document.getElementById('cStage'); if(st) st.style.cursor=_cPanMode?'grab':''; };
     var _cst=document.getElementById('cStage');
     if(_cst && !_cst.__zb){ _cst.__zb=true;
       _cst.addEventListener('wheel',function(e){
@@ -220,7 +223,7 @@
       },{passive:false});
       var _pg=null;
       _cst.addEventListener('pointerdown',function(e){
-        if(arm && !_cSpaceDown) return;
+        if(arm && !_cSpaceDown && !_cPanMode) return;
         if(cZoom.s<=1.001) return;
         e.preventDefault(); try{_cst.setPointerCapture(e.pointerId);}catch(_){}
         _pg={px:e.clientX,py:e.clientY,tx:cZoom.tx,ty:cZoom.ty};
@@ -249,7 +252,7 @@
      markers stay tappable to re-name or remove a face. */
   function dropPhoto(){
     if(M.photoURL) URL.revokeObjectURL(M.photoURL);
-    M.photoFile=null; M.photoURL=null; arm=false; gesture=null; draft=null; cZoom={s:1,tx:0,ty:0};
+    M.photoFile=null; M.photoURL=null; arm=false; gesture=null; draft=null; cZoom={s:1,tx:0,ty:0}; _cPanMode=false;
     /* the boxes belonged to that photograph; the people stay, picked */
     M.people.forEach(function(p){ p.box=null; });
   }

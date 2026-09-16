@@ -98,9 +98,13 @@
   .zoomctl .zbtn:active{ background:rgba(243,205,132,.14); }
   .zoomctl .zreset{ opacity:.45; font-size:14px; }
   .zoomctl.on .zreset{ opacity:1; }
+  .zoomctl .zpan{ font-size:17px; opacity:.55; }
+  .zoomctl.on .zpan{ opacity:1; }
+  .zoomctl .zpan.active{ background:rgba(127,180,216,.25); border-color:rgba(127,180,216,.7); opacity:1; }
+  .photostage.panmode{ cursor:grab; }
+  .photostage.panmode:active{ cursor:grabbing; }
   body.tagging .photostage{ cursor:crosshair; }
-  body.tagging .photostage.panmode{ cursor:grab; }
-  body.tagging .photostage.panmode:active{ cursor:grabbing; }
+
   .stage-dim{ position:absolute; inset:0; background:rgba(4,7,14,.34); opacity:0; pointer-events:none; transition:opacity .3s; z-index:3; }
   body.tagging .stage-dim{ opacity:1; }
 
@@ -887,6 +891,7 @@
           <div class="zoomctl" id="zoomctl">
             <button type="button" class="zbtn" data-z="in" aria-label="Zoom in">+</button>
             <button type="button" class="zbtn" data-z="out" aria-label="Zoom out">−</button>
+            <button type="button" class="zbtn zpan" id="zpan" aria-label="Pan">✋</button>
             <button type="button" class="zbtn zreset" data-z="reset" aria-label="Reset zoom">⤢</button>
           </div>
           ${d.year?`<div class="yearstamp"><span class="d"></span><span class="y">${esc(d.year)}</span></div>`:''}
@@ -1009,7 +1014,7 @@
   function drawLive(tg){ let el=boxEl(tg.id); if(!el){ renderBoxes(); el=boxEl(tg.id);} if(el){ el.classList.add('draft'); positionBox(tg);} }
 
   // ---- pinch / button zoom on the photo stage (precise face tagging) ----
-  let zoom={s:1,tx:0,ty:0}; const zP=new Map(); let zPinch=null, zPan=null, _spaceDown=false;
+  let zoom={s:1,tx:0,ty:0}; const zP=new Map(); let zPinch=null, zPan=null, _spaceDown=false, _panMode=false;
   function stageRect(){ const st=document.getElementById('photostage'); return st?st.getBoundingClientRect():{left:0,top:0,width:1,height:1}; }
   function zClampPan(){ const st=stageRect(); const minX=st.width-st.width*zoom.s, minY=st.height-st.height*zoom.s;
     zoom.tx=Math.min(0,Math.max(minX,zoom.tx)); zoom.ty=Math.min(0,Math.max(minY,zoom.ty)); if(zoom.s<=1.0001){ zoom.tx=0; zoom.ty=0; } }
@@ -1020,7 +1025,9 @@
   function zoomAt(ns,cx,cy){ ns=Math.min(4,Math.max(1,ns)); const st=stageRect();
     const px=(cx-st.left-zoom.tx)/zoom.s, py=(cy-st.top-zoom.ty)/zoom.s;
     zoom.s=ns; zoom.tx=(cx-st.left)-px*ns; zoom.ty=(cy-st.top)-py*ns; applyZoom(); }
-  function zoomReset(){ zoom={s:1,tx:0,ty:0}; applyZoom(); }
+  function zoomReset(){ zoom={s:1,tx:0,ty:0}; _panMode=false; applyZoom();
+    const zp=document.getElementById('zpan'); if(zp) zp.classList.remove('active');
+    const ps2=document.getElementById('photostage'); if(ps2) ps2.classList.remove('panmode'); }
   function zAbortDraw(){ if(gesture){ if(gesture.mode==='draw'){ TAGS=TAGS.filter(x=>x.id!==gesture.id); } gesture=null; renderBoxes(); } }
   function bindZoom(){ const ps=document.getElementById('photostage'); if(!ps || ps.__zoomBound) return; ps.__zoomBound=true;
     const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
@@ -1028,7 +1035,7 @@
       if(zP.size===2){ zAbortDraw(); const p=[...zP.values()];
         zPinch={d:dist(p[0],p[1]), mx:(p[0].x+p[1].x)/2, my:(p[0].y+p[1].y)/2, s0:zoom.s, tx0:zoom.tx, ty0:zoom.ty};
         e.preventDefault(); e.stopPropagation();
-      } else if(zP.size===1 && zoom.s>1.0001 && (!document.body.classList.contains('tagging')||_spaceDown) && !e.target.closest('.tagno')){
+      } else if(zP.size===1 && zoom.s>1.0001 && (!document.body.classList.contains('tagging')||_spaceDown||_panMode) && !e.target.closest('.tagno')){
         zPan={x:e.clientX,y:e.clientY,tx0:zoom.tx,ty0:zoom.ty}; }
     }, true);
     ps.addEventListener('pointermove', e=>{ if(!zP.has(e.pointerId)) return; zP.set(e.pointerId,{x:e.clientX,y:e.clientY});
@@ -1043,6 +1050,9 @@
     const zc=document.getElementById('zoomctl');
     if(zc){ zc.querySelectorAll('[data-z]').forEach(b=>b.onclick=ev=>{ ev.preventDefault(); const st=stageRect(); const cx=st.left+st.width/2, cy=st.top+st.height/2;
       const z=b.dataset.z; if(z==='in') zoomAt(zoom.s*1.5,cx,cy); else if(z==='out') zoomAt(zoom.s/1.5,cx,cy); else zoomReset(); }); }
+    const zpBtn=document.getElementById('zpan');
+    if(zpBtn) zpBtn.onclick=()=>{ _panMode=!_panMode; zpBtn.classList.toggle('active',_panMode);
+      const p=document.getElementById('photostage'); if(p) p.classList.toggle('panmode',_panMode); };
     /* Wheel zoom: scroll-wheel + Mac/Chromebook trackpad pinch (fires as ctrl+wheel).
        Only intercepts when already zoomed OR in tagging mode; otherwise lets the page scroll. */
     ps.addEventListener('wheel', e=>{
@@ -1363,11 +1373,21 @@
     }
     $('#editSheet').innerHTML=`<div class="grip"></div><h3>${esc(title)}</h3>${html}
       <div class="ed-note">${sv(ICON.info,1.7)} <span>${esc(d.keeperNote)}</span></div>
-      <div class="ed-actions"><button class="btn ghost" id="edCancel">${esc(d.cancel)}</button><button class="btn primary" id="edSend">${esc(d.done)}</button></div>`;
+      <div class="ed-actions"><button class="btn ghost" id="edCancel">${esc(d.cancel)}</button><button class="btn primary" id="edSend">${esc(d.sendKeeper)}</button></div>`;
     show($('#editSheet'));
     const inp=$('#editSheet #edInput'); if(inp) setTimeout(()=>inp.focus(),340);
     $('#editSheet #edCancel').onclick=hide;
-    $('#editSheet #edSend').onclick=async()=>{ hide(); if(onsend) await onsend(); };
+    $('#editSheet #edSend').onclick=async()=>{
+      hide(); if(!onsend) return;
+      const before=new Set(Object.keys(staged));
+      await onsend();
+      /* immediately flush what was just staged — no second button needed */
+      let sent=false;
+      for(const [k,s] of Object.entries(staged)){
+        if(!before.has(k)&&s&&s.flush){ const ok=await s.flush(); if(ok){ delete staged[k]; sent=true; } }
+      }
+      render(); if(sent) toast(t().sent);
+    };
   }
 
   /* ---------- gate helpers ---------- */
