@@ -1575,6 +1575,8 @@ function openWhoAmI(){
       try{
         const u=await sb.from('player_anchors').upsert({user_id:user.id, person_id:pid, status:'active'},{onConflict:'user_id'});
         if(u.error){ console.error('anchor claim', u.error); toast(STR[state.lang].whoFail); return; }
+        /* keep profiles in sync so mailbox and my_person() see the same identity */
+        try{ await sb.from('profiles').update({person_id:pid}).eq('id',user.id); }catch(_){}
         viewerPersonId=pid; buildCards();
         const nmv=nm(pid)||'';
         /* this passed the FUNCTION nm into the message, which would print its source */
