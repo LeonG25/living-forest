@@ -1113,6 +1113,36 @@ function computeLayout(){
   // normalise: leftmost card-left → PADX
   const xs=placed.map(id=>pos[id].x); const minx=Math.min(...xs);
   const shift=(PADX+CW/2)-minx; placed.forEach(id=>{ pos[id].x+=shift; });
+
+  /* ═══ IN-LAW PULL (Leon 2026-09-17, MyHeritage approach) ═══
+     A married-in person (Zoya beside Leon) whose parents head a SEPARATE root tree:
+     move that entire tree so the parents sit ONE tier above them, centred over them.
+     Edik+Innesa land on Fima+Zina's row, over Zoya; Kolya's family hangs beside Leon's. */
+  const GX0=PADX+CW/2; const toCol=x=>Math.round((x-GX0)/COLW); const toX=col=>GX0+col*COLW;
+  const pulled=new Set();
+  units.forEach(u=>{ if(!u.parentUnit||u.virtual) return;
+    u.members.forEach(m=>{ if(m===u.root||!pos[m]) return;
+      const pars=parentsOf(m).filter(p=>P.has(p)); if(!pars.length) return;
+      const pu=homeUnit[pars[0]]; if(!pu||pulled.has(pu)||pu.parentUnit||pu.virtual) return;
+      if(!pos[pu.root]) return;
+      const dTier=(pos[m].tier-1)-pos[pu.root].tier; const dX=pos[m].x-pu.cx;
+      const walk=v=>{ (v.members||[]).forEach(id=>{ if(pos[id]){ pos[id].tier+=dTier; pos[id].x+=dX; } }); (v.childUnits||[]).forEach(walk); };
+      walk(pu); pulled.add(pu); }); });
+
+  /* ═══ GRID SNAP + NO-TWO-CARDS-ON-ONE-CELL (Leon 2026-09-17) ═══
+     Every card sits on an integer (col, tier). Couples occupy adjacent columns and move
+     as a block. If a unit's target cells are taken, it shifts right until they are free.
+     Tiers can go negative after the pull; renormalise so the topmost tier is 0. */
+  const occ={};
+  const realUnits=units.filter(u=>!u.virtual&&u.members.some(m=>pos[m]));
+  realUnits.sort((a,b)=>{ const ta=Math.min(...a.members.filter(m=>pos[m]).map(m=>pos[m].tier)), tb=Math.min(...b.members.filter(m=>pos[m]).map(m=>pos[m].tier));
+    if(ta!==tb) return ta-tb; const xa=Math.min(...a.members.filter(m=>pos[m]).map(m=>pos[m].x)), xb=Math.min(...b.members.filter(m=>pos[m]).map(m=>pos[m].x)); return xa-xb; });
+  realUnits.forEach(u=>{ const ms=u.members.filter(m=>pos[m]); if(!ms.length) return;
+    const t=pos[ms[0]].tier; const cols=ms.map(m=>toCol(pos[m].x)); const base=Math.min(...cols); const offs=cols.map(cc=>cc-base);
+    let sh=0; while(offs.some(o=>occ[(base+sh+o)+'|'+t])) sh++;
+    ms.forEach((m,i)=>{ const col=base+sh+offs[i]; occ[col+'|'+t]=m; pos[m].x=toX(col); }); });
+  const minT=Math.min(...placed.filter(id=>pos[id]).map(id=>pos[id].tier));
+  if(minT<0) placed.forEach(id=>{ if(pos[id]) pos[id].tier-=minT; });
   /* Leon's ruling 2026-09-05: the tree keeps the same left-to-right layout in every
      language. Page chrome still flips under RTL; the forest itself does not. */
 }
