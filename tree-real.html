@@ -729,6 +729,7 @@ let pos={};           // id -> {x(centre px), tier}
 let placedSet=new Set();
 let unplaced=[];      // ids
 let treeRootGroups=[]; // [[rootId,...]] sibling groups with no parent card (draw a sibling bar)
+let structParentOf={}; // id -> [parentIds] of the unit this person is STRUCTURALLY placed under
 const state={ lang:'en', keeper:false, scale:1, tx:0, ty:0, sel:null, trace:false, legendHid:true };
 const ZMIN=0.28, ZMAX=2.8;
 const world=$('#world'), links=$('#links'), vp=$('#vp'), toastEl=$('#toast'), sheet=$('#sheet'), scrim=$('#scrim'), sbody=$('#sbody'), sfoot=$('#sfoot');
@@ -999,7 +1000,7 @@ function computeLayout(){
   // whose parent isn't in the data are grouped under a virtual parent so they sit together
   // under one sibling bar. Leon's rulings: all a person's spouses ride on their row; blood-
   // related spouses keep their own generation (drawn as a cross-level marriage connector). ----
-  pos={}; placedSet=new Set(); unplaced=[]; treeRootGroups=[];
+  pos={}; placedSet=new Set(); unplaced=[]; treeRootGroups=[]; structParentOf={};
   const ids=Object.keys(people);
   ids.forEach(id=>{ if(hasAnyRel(id)) placedSet.add(id); });
   unplaced=ids.filter(id=>!placedSet.has(id));
@@ -1016,7 +1017,20 @@ function computeLayout(){
     if(partner){ const u={members:[id,partner],childUnits:[]}; units.push(u); homeUnit[id]=u; homeUnit[partner]=u; } });
   placed.forEach(id=>{ if(!homeUnit[id]){ const u={members:[id],childUnits:[]}; units.push(u); homeUnit[id]=u; } });
   // anchor each unit by the blood-line member (one with parents), else first
-  units.forEach(u=>{ u.root = u.members.find(m=>parentsOf(m).length>0) ?? u.members.find(m=>siblingsOf(m).some(x=>placedSet.has(x))) ?? u.members[0]; });
+  /* ANCHOR BY DEPTH (Leon, 2026-09-17: 'I am thrown somewhere very far away').
+     A couple's anchor was the FIRST member with parents, by ID order. When Zoya gained a
+     parent (Edik) her ID sorted before Leon's, she became the anchor, and the whole couple
+     was placed under Edik instead of under Fima+Zina. The anchor must be the member whose
+     ancestry runs deepest in this tree - that is the main lineage; the other is married-in. */
+  const ancDepth=id=>{ let d=0, cur=parentsOf(id).filter(p=>P.has(p)); const seen=new Set();
+    while(cur.length&&d<30){ d++; const next=[]; cur.forEach(p=>{ if(seen.has(p))return; seen.add(p);
+      parentsOf(p).filter(x=>P.has(x)).forEach(x=>next.push(x)); }); cur=next; } return d; };
+  units.forEach(u=>{
+    const wp=u.members.filter(m=>parentsOf(m).some(p=>P.has(p)));
+    if(wp.length===1) u.root=wp[0];
+    else if(wp.length>1) u.root=wp.reduce((a,b)=>ancDepth(b)>ancDepth(a)?b:a);
+    else u.root=u.members.find(m=>siblingsOf(m).some(x=>placedSet.has(x))) ?? u.members[0];
+  });
   units.forEach(u=>{ const par=parentsOf(u.root)[0]; u.parentUnit=(par!=null&&homeUnit[par])?homeUnit[par]:null; });
   /* A sibling with no parents of their own belongs BESIDE their sibling, not adrift
      at the top of the tree. Basya is Sofia's sister by an explicit sibling tie and has
@@ -1059,6 +1073,10 @@ function computeLayout(){
 
   units.forEach(u=>{ if(u.parentUnit&&u.parentUnit!==u) u.parentUnit.childUnits.push(u); });
   units.forEach(u=>u.childUnits.sort((a,b)=>ord(a.root,b.root)));
+  /* record each person's STRUCTURAL parents: the members of the unit they hang under.
+     A married-in person (Zoya beside Leon) hangs under Leon's parents, not her own -
+     buildLinks uses this to keep one family's bus from spanning a stranger's branch. */
+  units.forEach(u=>{ if(u.parentUnit&&!u.parentUnit.virtual) u.members.forEach(m=>{ structParentOf[m]=u.parentUnit.members.slice(); }); });
   // sibling groups among ROOT units (siblings whose parent isn't placed) via union-find on home units
   const roots=units.filter(u=>!u.parentUnit); const rootSet=new Set(roots);
   const uf={}; roots.forEach(u=>uf[u.root]=u.root);
@@ -1150,7 +1168,16 @@ function buildLinks(){
     if(f.parents.length===2){ const key=f.parents.slice().sort().join('|'); if(!drawnSp.has(key)){ drawnSp.add(key); drawSpouse(f.parents[0],f.parents[1]); } }
     const px = f.parents.reduce((a,b)=>a+CX(b),0)/f.parents.length;
     const py = Math.max(...f.parents.map(CBOT));
-    const kidIds=Object.keys(f.kids);
+    const allKids=Object.keys(f.kids);
+    /* structural children hang under THIS parent-set; married-in children hang elsewhere
+       (Zoya under Fima+Zina, not under Edik) and get their own card-to-card line below. */
+    const isStruct=k=>{ const sp=structParentOf[k]; return !sp || sp.some(p=>f.parents.includes(p)); };
+    const kidIds=allKids.filter(isStruct);
+    const crossKids=allKids.filter(k=>!isStruct(k));
+    crossKids.forEach(k=>{ const c2=(f.kids[k].certainty||'remembered');
+      const cx=CX(k), ct=CTOP(k); const midY=(py+ct)/2;
+      links.appendChild(mkPath(`M ${px} ${py} V ${midY} H ${cx} V ${ct}`,'ln c-'+c2)); });
+    if(!kidIds.length) return;
     // bus sits in the empty gap ABOVE the children's row; a small per-family offset keeps
     // two families' buses on one tier from lining up into a single apparent connector.
     const kidTops=kidIds.map(CTOP); const busY=Math.min(...kidTops)-26-(famOff%3)*7; famOff++;
