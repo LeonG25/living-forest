@@ -1012,9 +1012,14 @@ function computeLayout(){
   // home units — couples first (spouse OR co-parent), then singletons
   const homeUnit={}, units=[];
   const partnersOf=id=>[...new Set(spousesOf(id))].filter(x=>P.has(x));
+  /* MULTI-SPOUSE UNITS (Leon's rule, 2026-07): all of a person's spouses on ONE row, to
+     the side. Two spouses: [A]-[hub]-[B]. One: [hub]-[A]. The hub is the person with
+     the most partners; each spouse takes the side nearest their own children. */
   placed.slice().sort(sortId).forEach(id=>{ if(homeUnit[id]) return;
-    const partner=partnersOf(id).find(x=>!homeUnit[x]);
-    if(partner){ const u={members:[id,partner],childUnits:[]}; units.push(u); homeUnit[id]=u; homeUnit[partner]=u; } });
+    const ps=partnersOf(id).filter(x=>!homeUnit[x]); if(!ps.length) return;
+    let members; if(ps.length===1) members=[id,ps[0]];
+    else{ const mid=Math.floor(ps.length/2); members=[...ps.slice(0,mid),id,...ps.slice(mid)]; }
+    const u={members,childUnits:[],hub:ps.length>1?id:null}; units.push(u); members.forEach(m=>homeUnit[m]=u); });
   placed.forEach(id=>{ if(!homeUnit[id]){ const u={members:[id],childUnits:[]}; units.push(u); homeUnit[id]=u; } });
   // anchor each unit by the blood-line member (one with parents), else first
   /* ANCHOR BY DEPTH (Leon, 2026-09-17: 'I am thrown somewhere very far away').
@@ -1026,6 +1031,7 @@ function computeLayout(){
     while(cur.length&&d<30){ d++; const next=[]; cur.forEach(p=>{ if(seen.has(p))return; seen.add(p);
       parentsOf(p).filter(x=>P.has(x)).forEach(x=>next.push(x)); }); cur=next; } return d; };
   units.forEach(u=>{
+    if(u.hub){ u.root=u.hub; return; }
     const wp=u.members.filter(m=>parentsOf(m).some(p=>P.has(p)));
     if(wp.length===1) u.root=wp[0];
     else if(wp.length>1) u.root=wp.reduce((a,b)=>ancDepth(b)>ancDepth(a)?b:a);
@@ -1091,7 +1097,7 @@ function computeLayout(){
     if(mem.length>1) treeRootGroups.push(mem.map(u=>u.root)); });
   // measure + place (Reingold-Tilford tidy tree)
   const OFF=COLW/2, SIB=40, FAM=94;
-  const ownW=u=>u.virtual?0:(u.members.length>1?(COLW+CWX):CWX);
+  const ownW=u=>u.virtual?0:((u.members.length-1)*COLW+CWX);
   const M=new Set();
   function measure(u){ if(M.has(u))return u.sub; M.add(u); const k=u.childUnits;
     if(!k.length){u.sub=ownW(u);return u.sub;}
@@ -1103,8 +1109,8 @@ function computeLayout(){
     else{ const cw=k.reduce((a,c,i)=>a+c.sub+(i<k.length-1?SIB:0),0);
       let cur=left+(u.sub-cw)/2; k.forEach(c=>{place(c,cur,depth+1);cur+=c.sub+SIB;});
       u.cx=(k[0].cx+k[k.length-1].cx)/2; }
-    if(!u.virtual){ if(u.members.length>1){ pos[u.members[0]]={x:u.cx-OFF,tier:u.depth}; pos[u.members[1]]={x:u.cx+OFF,tier:u.depth}; }
-      else pos[u.members[0]]={x:u.cx,tier:u.depth}; } }
+    if(!u.virtual){ const n=u.members.length;
+      u.members.forEach((m,i)=>{ pos[m]={x:u.cx+(i-(n-1)/2)*COLW,tier:u.depth}; }); } }
   vroots.sort((a,b)=>ord(a.childUnits[0].root,b.childUnits[0].root));
   let xLeft=0; vroots.forEach(v=>{ measure(v); place(v,xLeft,-1); xLeft+=v.sub+FAM; });
   // safety: any unit not placed (shouldn't happen) → a fresh bottom row so nobody is lost
