@@ -1015,7 +1015,9 @@ function computeLayout(){
   /* MULTI-SPOUSE UNITS (Leon's rule, 2026-07): all of a person's spouses on ONE row, to
      the side. Two spouses: [A]-[hub]-[B]. One: [hub]-[A]. The hub is the person with
      the most partners; each spouse takes the side nearest their own children. */
-  placed.slice().sort(sortId).forEach(id=>{ if(homeUnit[id]) return;
+  /* hubs first: a person with two spouses must claim both before either spouse can
+     claim them - otherwise Flora (ID sorts first) takes Edik and Inna is left alone. */
+  placed.slice().sort((a,b)=>partnersOf(b).length-partnersOf(a).length||sortId(a,b)).forEach(id=>{ if(homeUnit[id]) return;
     const ps=partnersOf(id).filter(x=>!homeUnit[x]); if(!ps.length) return;
     let members; if(ps.length===1) members=[id,ps[0]];
     else{ const mid=Math.floor(ps.length/2); members=[...ps.slice(0,mid),id,...ps.slice(mid)]; }
