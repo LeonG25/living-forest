@@ -875,7 +875,8 @@
         sb.from('person_names').select('person_id,lang,given,family,called').limit(3000)
       ]);
       const _nm={}; (nms||[]).forEach(n=>{ (_nm[n.person_id]=_nm[n.person_id]||{})[n.lang]=n; });
-      const _pick=(id,l)=>{ const r=(_nm[id]||{})[l]; return r?(r.called||r.given||''):''; };
+      /* show given + family so two Galyas cannot be confused in the picker (Leon 2026-09-17) */
+      const _pick=(id,l)=>{ const r=(_nm[id]||{})[l]; if(!r) return ''; const n=r.given||r.called||''; return (n&&r.family)?(n+' '+r.family):n; };
       PEOPLE=(all||[]).map(p=>{
         const dn=_pick(p.id,state.lang)||_pick(p.id,'en')||_pick(p.id,'ru')||_pick(p.id,'he')||'—';
         const _all=Object.values(_nm[p.id]||{}).map(r=>[r.called,r.given,r.family].filter(Boolean).join(' ')).join(' ').toLowerCase();
