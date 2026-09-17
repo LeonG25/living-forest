@@ -353,7 +353,6 @@
   .ln.sibling{ stroke:var(--gold); stroke-width:2.2; opacity:.82; filter:drop-shadow(0 0 4px rgba(243,205,132,.35)); }
   .knot{ fill:#0a1420; stroke:var(--gold-hi); stroke-width:2; filter:drop-shadow(0 0 5px rgba(255,230,173,.5)); }
   .ln.pend{ stroke:var(--edit); stroke-width:2.4; opacity:.95; stroke-dasharray:5 5; filter:drop-shadow(0 0 7px rgba(201,162,255,.6)); }
-  .ln.satellite{ stroke:var(--cool); stroke-width:1.5; opacity:.38; stroke-dasharray:7 5; }
   .pendbadge{ fill:#1a0f2e; stroke:var(--edit); stroke-width:2; filter:drop-shadow(0 0 4px rgba(201,162,255,.5)); }
   /* the trace path is the app-worked-out route to you — SOLID cool (matches the legend swatch).
      It is never dashed: dashes on this tree mean one thing only — waiting for the keeper (.ln.pend). */
@@ -1018,19 +1017,7 @@ function computeLayout(){
   placed.forEach(id=>{ if(!homeUnit[id]){ const u={members:[id],childUnits:[]}; units.push(u); homeUnit[id]=u; } });
   // anchor each unit by the blood-line member (one with parents), else first
   units.forEach(u=>{ u.root = u.members.find(m=>parentsOf(m).length>0) ?? u.members.find(m=>siblingsOf(m).some(x=>placedSet.has(x))) ?? u.members[0]; });
-  /* ONE NAME PER UNIT: score each candidate parent-unit by how many of this child's
-     parents it contains. A couple unit containing BOTH parents (score 2*10-2=18) beats
-     any singleton (score 1*10-1=9). This prevents a child of remarriage being placed
-     under the wrong family when a parent appears in two separate couple units. */
-  units.forEach(u=>{
-    const pars=parentsOf(u.root).filter(p=>P.has(p));
-    if(!pars.length){u.parentUnit=null;return;}
-    let best=null,bestS=-1;
-    units.forEach(pu=>{ if(pu===u)return;
-      const s=pars.filter(p=>pu.members.includes(p)).length*10-pu.members.length;
-      if(s>bestS){bestS=s;best=pu;} });
-    u.parentUnit=bestS>0?best:null;
-  });
+  units.forEach(u=>{ const par=parentsOf(u.root)[0]; u.parentUnit=(par!=null&&homeUnit[par])?homeUnit[par]:null; });
   /* A sibling with no parents of their own belongs BESIDE their sibling, not adrift
      at the top of the tree. Basya is Sofia's sister by an explicit sibling tie and has
      no parent edges; when Leon gave Sofia her parents, Sofia dropped under them and
@@ -1169,16 +1156,11 @@ function buildLinks(){
     const kidTops=kidIds.map(CTOP); const busY=Math.min(...kidTops)-26-(famOff%3)*7; famOff++;
     const certs=kidIds.map(k=>f.kids[k].certainty||'remembered');
     const rep = certs.includes('documented')?'documented':(certs.includes('remembered')?'remembered':'uncertain');
-    const xs=kidIds.map(CX); const minx=Math.min(...xs), maxx=Math.max(...xs);
-    /* cross-branch bus: parent is far from any of its children, or sibling bar spans > 4 cards */
-    const parentSpan = f.parents.length>1 ? Math.abs(CX(f.parents[0])-CX(f.parents[f.parents.length-1])) : 0;
-    const busSpan = maxx - minx;
-    const isCrossFamily = parentSpan > COLW*4 || busSpan > COLW*4;
-    const lineClass = isCrossFamily ? 'ln satellite' : ('ln c-'+rep);
-    links.appendChild(mkPath(`M ${px} ${py} V ${busY}`,lineClass));
+    links.appendChild(mkPath(`M ${px} ${py} V ${busY}`,'ln c-'+rep));
     // horizontal sibling bar spans ONLY this parent-set's real children
-    if(kidIds.length>1) links.appendChild(mkPath(`M ${minx} ${busY} H ${maxx}`,lineClass));
-    kidIds.forEach(k=>{ const lc=isCrossFamily?'ln satellite':('ln c-'+(f.kids[k].certainty||'remembered')); links.appendChild(mkPath(`M ${CX(k)} ${busY} V ${CTOP(k)}`,lc)); });
+    const xs=kidIds.map(CX); const minx=Math.min(...xs), maxx=Math.max(...xs);
+    if(kidIds.length>1) links.appendChild(mkPath(`M ${minx} ${busY} H ${maxx}`,'ln c-'+rep));
+    kidIds.forEach(k=>{ const c=(f.kids[k].certainty||'remembered'); links.appendChild(mkPath(`M ${CX(k)} ${busY} V ${CTOP(k)}`,'ln c-'+c)); });
   });
   // sibling bar for a top-generation sibling group that has NO parent card: one clean
   // horizontal bar over the group with a short drop to each sibling (the married-in spouse
@@ -1217,16 +1199,17 @@ function buildLinks(){
 }
 function drawSpouse(a,b){ const y=CMID(a), x1=CX(a), x2=CX(b), mx=(x1+x2)/2;
   const sameTier = pos[a]&&pos[b]&&pos[a].tier===pos[b].tier;
-  const isCross = Math.abs(x1-x2) > COLW*4; /* cross-branch: more than 4 card-widths apart */
-  // Adjacent, same-level partners: a short bar between their edges. Distant but same-branch:
-  // arch above cards. Cross-branch (remarriage across the tree): satellite dashed arch.
+  // Adjacent, same-level partners: a short bar between their edges. Otherwise — distant
+  // co-parents, OR the related-spouse edge case where the two partners keep DIFFERENT blood
+  // levels — route the marriage line through the gap ABOVE the cards, so it reads as a
+  // connector (never crossing an unrelated card) and can span levels without any overlap.
   if(sameTier && Math.abs(x1-x2) <= COLW*1.35){
-    links.appendChild(mkPath(`M ${Math.min(x1,x2)+CW/2-6} ${y} H ${Math.max(x1,x2)-CW/2+6}`,isCross?'ln satellite':'ln spouse'));
-    if(!isCross) links.appendChild(mkEl('circle',{cx:mx, cy:y, r:4.5, class:'knot'}));
+    links.appendChild(mkPath(`M ${Math.min(x1,x2)+CW/2-6} ${y} H ${Math.max(x1,x2)-CW/2+6}`,'ln spouse'));
+    links.appendChild(mkEl('circle',{cx:mx, cy:y, r:4.5, class:'knot'}));
   } else {
     const busY=Math.min(CTOP(a),CTOP(b))-12;
-    links.appendChild(mkPath(`M ${x1} ${CTOP(a)} V ${busY} H ${x2} V ${CTOP(b)}`,isCross?'ln satellite':'ln spouse'));
-    if(!isCross) links.appendChild(mkEl('circle',{cx:mx, cy:busY, r:4.5, class:'knot'}));
+    links.appendChild(mkPath(`M ${x1} ${CTOP(a)} V ${busY} H ${x2} V ${CTOP(b)}`,'ln spouse'));
+    links.appendChild(mkEl('circle',{cx:mx, cy:busY, r:4.5, class:'knot'}));
   } }
 
 function sizeLinks(){ const bb=worldBBox(); const w=bb.maxX+PADX, h=bb.maxY+PADY;
