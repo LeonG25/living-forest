@@ -1122,31 +1122,40 @@ function computeLayout(){
 
   /* ═══ IN-LAW PULL (Leon 2026-09-17, MyHeritage approach) ═══
      A married-in person (Zoya beside Leon) whose parents head a SEPARATE root tree:
-     move that entire tree so the parents sit ONE tier above them, centred over them.
-     Edik+Innesa land on Fima+Zina's row, over Zoya; Kolya's family hangs beside Leon's. */
+     move that tree so the parents sit ONE tier above them, their midpoint over them. */
   const GX0=PADX+CW/2; const toCol=x=>Math.round((x-GX0)/COLW); const toX=col=>GX0+col*COLW;
-  const pulled=new Set();
+  const pulled=[]; const pulledSet=new Set();
   units.forEach(u=>{ if(!u.parentUnit||u.virtual) return;
     u.members.forEach(m=>{ if(m===u.root||!pos[m]) return;
       const pars=parentsOf(m).filter(p=>P.has(p)); if(!pars.length) return;
-      const pu=homeUnit[pars[0]]; if(!pu||pulled.has(pu)||pu.parentUnit||pu.virtual) return;
-      if(!pos[pu.root]) return;
-      const dTier=(pos[m].tier-1)-pos[pu.root].tier; const dX=pos[m].x-pu.cx;
+      const pu=homeUnit[pars[0]]; if(!pu||pulledSet.has(pu)||pu.parentUnit||pu.virtual) return;
+      const inU=pars.filter(p=>pu.members.includes(p)&&pos[p]); if(!inU.length) return;
+      const parMid=inU.reduce((a,p)=>a+pos[p].x,0)/inU.length;
+      const dTier=(pos[m].tier-1)-pos[inU[0]].tier; const dX=pos[m].x-parMid;
       const walk=v=>{ (v.members||[]).forEach(id=>{ if(pos[id]){ pos[id].tier+=dTier; pos[id].x+=dX; } }); (v.childUnits||[]).forEach(walk); };
-      walk(pu); pulled.add(pu); }); });
+      walk(pu); pulled.push(pu); pulledSet.add(pu); }); });
+  const inPulled=new Set(); pulled.forEach(pu=>{ const w=v=>{ inPulled.add(v); (v.childUnits||[]).forEach(w); }; w(pu); });
 
-  /* ═══ GRID SNAP + NO-TWO-CARDS-ON-ONE-CELL (Leon 2026-09-17) ═══
-     Every card sits on an integer (col, tier). Couples occupy adjacent columns and move
-     as a block. If a unit's target cells are taken, it shifts right until they are free.
-     Tiers can go negative after the pull; renormalise so the topmost tier is 0. */
+  /* ═══ GRID SNAP + ONE CARD PER CELL (Leon 2026-09-17) ═══
+     Every card on an integer (col,tier). A unit whose cells are taken searches LEFT and
+     RIGHT for the nearest free run. The main tree snaps first and is locked; each pulled
+     in-law tree then walks top-down, and when a unit has to shift, its subtree shifts too. */
   const occ={};
-  const realUnits=units.filter(u=>!u.virtual&&u.members.some(m=>pos[m]));
-  realUnits.sort((a,b)=>{ const ta=Math.min(...a.members.filter(m=>pos[m]).map(m=>pos[m].tier)), tb=Math.min(...b.members.filter(m=>pos[m]).map(m=>pos[m].tier));
-    if(ta!==tb) return ta-tb; const xa=Math.min(...a.members.filter(m=>pos[m]).map(m=>pos[m].x)), xb=Math.min(...b.members.filter(m=>pos[m]).map(m=>pos[m].x)); return xa-xb; });
-  realUnits.forEach(u=>{ const ms=u.members.filter(m=>pos[m]); if(!ms.length) return;
+  const snapUnit=(u,carry)=>{
+    const ms=u.members.filter(m=>pos[m]); if(!ms.length) return 0;
+    ms.forEach(m=>{ pos[m].x+=carry; });
     const t=pos[ms[0]].tier; const cols=ms.map(m=>toCol(pos[m].x)); const base=Math.min(...cols); const offs=cols.map(cc=>cc-base);
-    let sh=0; while(offs.some(o=>occ[(base+sh+o)+'|'+t])) sh++;
-    ms.forEach((m,i)=>{ const col=base+sh+offs[i]; occ[col+'|'+t]=m; pos[m].x=toX(col); }); });
+    const fits=b=>!offs.some(o=>occ[(b+o)+'|'+t]);
+    let sh=0; while(!fits(base+sh)&&!fits(base-sh)&&sh<400) sh++;
+    const nb=fits(base+sh)?base+sh:base-sh;
+    ms.forEach((m,i)=>{ const col=nb+offs[i]; occ[col+'|'+t]=m; pos[m].x=toX(col); });
+    return (nb-base)*COLW;
+  };
+  const realUnits=units.filter(u=>!u.virtual&&u.members.some(m=>pos[m]));
+  const byPos=(a,b)=>{ const ta=Math.min(...a.members.filter(m=>pos[m]).map(m=>pos[m].tier)), tb=Math.min(...b.members.filter(m=>pos[m]).map(m=>pos[m].tier));
+    if(ta!==tb) return ta-tb; const xa=Math.min(...a.members.filter(m=>pos[m]).map(m=>pos[m].x)), xb=Math.min(...b.members.filter(m=>pos[m]).map(m=>pos[m].x)); return xa-xb; };
+  realUnits.filter(u=>!inPulled.has(u)).sort(byPos).forEach(u=>snapUnit(u,0));
+  pulled.forEach(pu=>{ const walk=(v,carry)=>{ const extra=snapUnit(v,carry); (v.childUnits||[]).slice().sort(byPos).forEach(ch=>walk(ch,carry+extra)); }; walk(pu,0); });
   const minT=Math.min(...placed.filter(id=>pos[id]).map(id=>pos[id].tier));
   if(minT<0) placed.forEach(id=>{ if(pos[id]) pos[id].tier-=minT; });
   /* Leon's ruling 2026-09-05: the tree keeps the same left-to-right layout in every
