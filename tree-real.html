@@ -1086,7 +1086,19 @@ function computeLayout(){
      buildLinks uses this to keep one family's bus from spanning a stranger's branch. */
   units.forEach(u=>{ if(u.parentUnit&&!u.parentUnit.virtual) u.members.forEach(m=>{ structParentOf[m]=u.parentUnit.members.slice(); }); });
   // sibling groups among ROOT units (siblings whose parent isn't placed) via union-find on home units
-  const roots=units.filter(u=>!u.parentUnit); const rootSet=new Set(roots);
+  /* IN-LAW DETECTION BEFORE PLACEMENT (Leon 2026-09-18: 'empty space remained').
+     A married-in person's own family (a separate root tree) is identified here, from the
+     unit graph alone, and kept OUT of the main root row - so the main layout never reserves
+     width for it. It is placed later, pulled to sit over the married-in person. */
+  const pulls=[]; const pulledSet=new Set();
+  units.forEach(u=>{ if(!u.parentUnit||u.virtual) return;
+    u.members.forEach(m=>{ if(m===u.root) return;
+      const pars=parentsOf(m).filter(p=>P.has(p)); if(!pars.length) return;
+      const pu=homeUnit[pars[0]]; if(!pu||pulledSet.has(pu)||pu.parentUnit||pu.virtual) return;
+      const inU=pars.filter(p=>pu.members.includes(p)); if(!inU.length) return;
+      pulls.push({pu,m,inU}); pulledSet.add(pu); }); });
+  const allRoots=units.filter(u=>!u.parentUnit);
+  const roots=allRoots.filter(u=>!pulledSet.has(u)); const rootSet=new Set(roots);
   const uf={}; roots.forEach(u=>uf[u.root]=u.root);
   const find=x=>(uf[x]===undefined||uf[x]===x)?x:(uf[x]=find(uf[x]));
   const uni=(a,b)=>{a=find(a);b=find(b); if(a!=null&&b!=null&&a!==b) uf[a]=b;};
@@ -1115,6 +1127,8 @@ function computeLayout(){
       u.members.forEach((m,i)=>{ pos[m]={x:u.cx+(i-(n-1)/2)*COLW,tier:u.depth}; }); } }
   vroots.sort((a,b)=>ord(a.childUnits[0].root,b.childUnits[0].root));
   let xLeft=0; vroots.forEach(v=>{ measure(v); place(v,xLeft,-1); xLeft+=v.sub+FAM; });
+  /* pulled trees: measured and placed for their internal shape only; the pull moves them */
+  pulls.forEach(({pu})=>{ const v={members:[],childUnits:[pu],virtual:true}; pu.parentUnit=v; measure(v); place(v,0,-1); });
   // safety: any unit not placed (shouldn't happen) → a fresh bottom row so nobody is lost
   let maxTier=Math.max(0,...placed.filter(id=>pos[id]).map(id=>pos[id].tier));
   let sx=0; placed.forEach(id=>{ if(!pos[id]){ pos[id]={x:sx*COLW,tier:maxTier+1}; sx++; } });
@@ -1128,13 +1142,6 @@ function computeLayout(){
      pulled tree with nearest-fit search left/right, subtree following any shift. Computing
      the pull before the main snap aimed at where Zoya used to be, not where she ended up. */
   const GX0=PADX+CW/2; const toCol=x=>Math.round((x-GX0)/COLW); const toX=col=>GX0+col*COLW;
-  const pulls=[]; const pulledSet=new Set();
-  units.forEach(u=>{ if(!u.parentUnit||u.virtual) return;
-    u.members.forEach(m=>{ if(m===u.root||!pos[m]) return;
-      const pars=parentsOf(m).filter(p=>P.has(p)); if(!pars.length) return;
-      const pu=homeUnit[pars[0]]; if(!pu||pulledSet.has(pu)||(pu.parentUnit&&!pu.parentUnit.virtual)||pu.virtual) return;
-      const inU=pars.filter(p=>pu.members.includes(p)&&pos[p]); if(!inU.length) return;
-      pulls.push({pu,m,inU}); pulledSet.add(pu); }); });
   const inPulled=new Set(); pulls.forEach(({pu})=>{ const w=v=>{ inPulled.add(v); (v.childUnits||[]).forEach(w); }; w(pu); });
   const occ={};
   const snapUnit=(u,carry)=>{
@@ -1224,7 +1231,11 @@ function buildLinks(){
     // co-parents get a spouse bar too if not already
     if(f.parents.length===2){ const key=f.parents.slice().sort().join('|'); if(!drawnSp.has(key)){ drawnSp.add(key); drawSpouse(f.parents[0],f.parents[1]); } }
     const px = f.parents.reduce((a,b)=>a+CX(b),0)/f.parents.length;
-    const py = Math.max(...f.parents.map(CBOT));
+    /* a couple's children drop from the marriage knot (mid-card, between the two), not
+       from below the cards. A single parent's drop still leaves from the card bottom. */
+    const coupleKnot = f.parents.length===2 && pos[f.parents[0]] && pos[f.parents[1]]
+      && pos[f.parents[0]].tier===pos[f.parents[1]].tier && Math.abs(CX(f.parents[0])-CX(f.parents[1]))<=COLW*1.35;
+    const py = coupleKnot ? CMID(f.parents[0])+5 : Math.max(...f.parents.map(CBOT));
     const allKids=Object.keys(f.kids);
     /* structural children hang under THIS parent-set; married-in children hang elsewhere
        (Zoya under Fima+Zina, not under Edik) and get their own card-to-card line below. */
