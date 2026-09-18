@@ -1132,7 +1132,7 @@ function computeLayout(){
   units.forEach(u=>{ if(!u.parentUnit||u.virtual) return;
     u.members.forEach(m=>{ if(m===u.root||!pos[m]) return;
       const pars=parentsOf(m).filter(p=>P.has(p)); if(!pars.length) return;
-      const pu=homeUnit[pars[0]]; if(!pu||pulledSet.has(pu)||pu.parentUnit||pu.virtual) return;
+      const pu=homeUnit[pars[0]]; if(!pu||pulledSet.has(pu)||(pu.parentUnit&&!pu.parentUnit.virtual)||pu.virtual) return;
       const inU=pars.filter(p=>pu.members.includes(p)&&pos[p]); if(!inU.length) return;
       pulls.push({pu,m,inU}); pulledSet.add(pu); }); });
   const inPulled=new Set(); pulls.forEach(({pu})=>{ const w=v=>{ inPulled.add(v); (v.childUnits||[]).forEach(w); }; w(pu); });
@@ -1160,6 +1160,13 @@ function computeLayout(){
     mv(pu);
     const walk=(v,carry)=>{ const extra=snapUnit(v,carry); (v.childUnits||[]).slice().sort(byPos).forEach(ch=>walk(ch,carry+extra)); };
     walk(pu,0);
+    /* face the right way: the spouse who is m's parent sits on the side nearest m */
+    if(pu.hub&&pu.members.length===3){
+      const hub=pu.hub, sp=pu.members.filter(x=>x!==hub), mine=sp.find(x=>inU.includes(x)), other=sp.find(x=>x!==mine);
+      if(mine&&other&&pos[mine]&&pos[other]&&pos[hub]){
+        const wantRight=pos[m].x>pos[hub].x, isRight=pos[mine].x>pos[hub].x;
+        if(wantRight!==isRight){ const t=pos[mine].x; pos[mine].x=pos[other].x; pos[other].x=t;
+          const tier=pos[hub].tier; occ[toCol(pos[mine].x)+'|'+tier]=mine; occ[toCol(pos[other].x)+'|'+tier]=other; } } }
   });
   const minT=Math.min(...placed.filter(id=>pos[id]).map(id=>pos[id].tier));
   if(minT<0) placed.forEach(id=>{ if(pos[id]) pos[id].tier-=minT; });
