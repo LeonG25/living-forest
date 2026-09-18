@@ -1122,26 +1122,20 @@ function computeLayout(){
   const xs=placed.map(id=>pos[id].x); const minx=Math.min(...xs);
   const shift=(PADX+CW/2)-minx; placed.forEach(id=>{ pos[id].x+=shift; });
 
-  /* ═══ IN-LAW PULL (Leon 2026-09-17, MyHeritage approach) ═══
-     A married-in person (Zoya beside Leon) whose parents head a SEPARATE root tree:
-     move that tree so the parents sit ONE tier above them, their midpoint over them. */
+  /* ═══ GRID SNAP + IN-LAW PULL (Leon 2026-09-17/18) ═══
+     Order matters: (1) identify in-law trees, (2) snap the MAIN tree to the grid and lock
+     it, (3) THEN compute each pull from the married-in person's FINAL cell, (4) snap the
+     pulled tree with nearest-fit search left/right, subtree following any shift. Computing
+     the pull before the main snap aimed at where Zoya used to be, not where she ended up. */
   const GX0=PADX+CW/2; const toCol=x=>Math.round((x-GX0)/COLW); const toX=col=>GX0+col*COLW;
-  const pulled=[]; const pulledSet=new Set();
+  const pulls=[]; const pulledSet=new Set();
   units.forEach(u=>{ if(!u.parentUnit||u.virtual) return;
     u.members.forEach(m=>{ if(m===u.root||!pos[m]) return;
       const pars=parentsOf(m).filter(p=>P.has(p)); if(!pars.length) return;
       const pu=homeUnit[pars[0]]; if(!pu||pulledSet.has(pu)||pu.parentUnit||pu.virtual) return;
       const inU=pars.filter(p=>pu.members.includes(p)&&pos[p]); if(!inU.length) return;
-      const parMid=inU.reduce((a,p)=>a+pos[p].x,0)/inU.length;
-      const dTier=(pos[m].tier-1)-pos[inU[0]].tier; const dX=pos[m].x-parMid;
-      const walk=v=>{ (v.members||[]).forEach(id=>{ if(pos[id]){ pos[id].tier+=dTier; pos[id].x+=dX; } }); (v.childUnits||[]).forEach(walk); };
-      walk(pu); pulled.push(pu); pulledSet.add(pu); }); });
-  const inPulled=new Set(); pulled.forEach(pu=>{ const w=v=>{ inPulled.add(v); (v.childUnits||[]).forEach(w); }; w(pu); });
-
-  /* ═══ GRID SNAP + ONE CARD PER CELL (Leon 2026-09-17) ═══
-     Every card on an integer (col,tier). A unit whose cells are taken searches LEFT and
-     RIGHT for the nearest free run. The main tree snaps first and is locked; each pulled
-     in-law tree then walks top-down, and when a unit has to shift, its subtree shifts too. */
+      pulls.push({pu,m,inU}); pulledSet.add(pu); }); });
+  const inPulled=new Set(); pulls.forEach(({pu})=>{ const w=v=>{ inPulled.add(v); (v.childUnits||[]).forEach(w); }; w(pu); });
   const occ={};
   const snapUnit=(u,carry)=>{
     const ms=u.members.filter(m=>pos[m]); if(!ms.length) return 0;
@@ -1156,8 +1150,17 @@ function computeLayout(){
   const realUnits=units.filter(u=>!u.virtual&&u.members.some(m=>pos[m]));
   const byPos=(a,b)=>{ const ta=Math.min(...a.members.filter(m=>pos[m]).map(m=>pos[m].tier)), tb=Math.min(...b.members.filter(m=>pos[m]).map(m=>pos[m].tier));
     if(ta!==tb) return ta-tb; const xa=Math.min(...a.members.filter(m=>pos[m]).map(m=>pos[m].x)), xb=Math.min(...b.members.filter(m=>pos[m]).map(m=>pos[m].x)); return xa-xb; };
+  /* (2) main tree first */
   realUnits.filter(u=>!inPulled.has(u)).sort(byPos).forEach(u=>snapUnit(u,0));
-  pulled.forEach(pu=>{ const walk=(v,carry)=>{ const extra=snapUnit(v,carry); (v.childUnits||[]).slice().sort(byPos).forEach(ch=>walk(ch,carry+extra)); }; walk(pu,0); });
+  /* (3)+(4) each in-law tree: aim at the married-in person's FINAL cell, then fit */
+  pulls.forEach(({pu,m,inU})=>{
+    const parMid=inU.reduce((a,p)=>a+pos[p].x,0)/inU.length;
+    const dTier=(pos[m].tier-1)-pos[inU[0]].tier; const dX=pos[m].x-parMid;
+    const mv=v=>{ (v.members||[]).forEach(id=>{ if(pos[id]){ pos[id].tier+=dTier; pos[id].x+=dX; } }); (v.childUnits||[]).forEach(mv); };
+    mv(pu);
+    const walk=(v,carry)=>{ const extra=snapUnit(v,carry); (v.childUnits||[]).slice().sort(byPos).forEach(ch=>walk(ch,carry+extra)); };
+    walk(pu,0);
+  });
   const minT=Math.min(...placed.filter(id=>pos[id]).map(id=>pos[id].tier));
   if(minT<0) placed.forEach(id=>{ if(pos[id]) pos[id].tier-=minT; });
   /* Leon's ruling 2026-09-05: the tree keeps the same left-to-right layout in every
@@ -1185,8 +1188,8 @@ function buildCards(){
       `<span class="por" data-face="${esc(id)}"></span>`+
       /* photo badge retired per keeper 2026-08-01: the source photograph is reachable from the Person page */
       `<span class="pnm serif">${esc(firstName(id))}</span>`+
-      `<span class="phint">${esc(lifeHint(id))}</span>`+
-      `<span class="conn" data-conn="${esc(id)}" role="button" aria-label="connect" tabindex="0">${svg(I.plus,2.2)}</span>`;
+      `<span class="phint">${esc(lifeHint(id))}</span>`;
+      /* per-card + (connect) removed 2026-09-18: kin is added from the Person page (Leon) */
     world.appendChild(el); });
   $$('.pcard .por[data-face]').forEach(el=>hydrateFace(el, el.getAttribute('data-face')));
 }
@@ -1231,9 +1234,10 @@ function buildLinks(){
     const certs=kidIds.map(k=>f.kids[k].certainty||'remembered');
     const rep = certs.includes('documented')?'documented':(certs.includes('remembered')?'remembered':'uncertain');
     links.appendChild(mkPath(`M ${px} ${py} V ${busY}`,'ln c-'+rep));
-    // horizontal sibling bar spans ONLY this parent-set's real children
-    const xs=kidIds.map(CX); const minx=Math.min(...xs), maxx=Math.max(...xs);
-    if(kidIds.length>1) links.appendChild(mkPath(`M ${minx} ${busY} H ${maxx}`,'ln c-'+rep));
+    /* bar spans from the parent drop to the outermost child - even with ONE child, if
+       that child sits under a different column the bar is what joins the two drops. */
+    const xs=kidIds.map(CX); const minx=Math.min(px,...xs), maxx=Math.max(px,...xs);
+    if(maxx-minx>0.5) links.appendChild(mkPath(`M ${minx} ${busY} H ${maxx}`,'ln c-'+rep));
     kidIds.forEach(k=>{ const c=(f.kids[k].certainty||'remembered'); links.appendChild(mkPath(`M ${CX(k)} ${busY} V ${CTOP(k)}`,'ln c-'+c)); });
   });
   // sibling bar for a top-generation sibling group that has NO parent card: one clean
