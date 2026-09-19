@@ -413,6 +413,7 @@
   .relrow .rn{ font-family:'Newsreader',serif; font-size:17px; color:var(--cream); margin-top:3px; }
   .relrow .rc{ font-size:11.5px; color:var(--muted); margin-top:3px; line-height:1.4; }
   .picker{ max-height:184px; overflow-y:auto; margin-bottom:12px; border:1px solid var(--hair); border-radius:12px; }
+  .picker button .phint{ display:block; font-size:12px; color:var(--muted,#8fa0b3); margin-top:2px; font-family:'Hanken Grotesk',system-ui,sans-serif; }
   .picker button{ display:block; width:100%; text-align:start; padding:11px 13px; background:transparent; border:none;
     border-bottom:1px solid var(--hair); color:var(--cream); font-family:'Newsreader',serif; font-size:15px; cursor:pointer; }
   .picker button:hover{ background:rgba(255,255,255,.05); }
@@ -512,7 +513,7 @@
       relkind:'Kind of connection', relkindWho:'Who is {a} to {b}?', certainty:'How sure are you?', relnote:'Note (optional)',
       relkinds:{ parent:'Parent', child:'Child', spouse:'Spouse', sibling:'Sibling', friend:'Friend', mentor:'Mentor', neighbour:'Neighbour', other:'Other' },
       certs:{ documented:'Documented', remembered:'Remembered', uncertain:'Uncertain' },
-      pickperson:'Who is this?', searchppl:'Search the family', nopeople:'No one to choose from yet.',
+      pickperson:'Who is this?', searchppl:'Search the family', nopeople:'No one to choose from yet.', childOf:'child of', bornY:'born',
       dirq:'Which way round?', dirTheirParent:'…is their parent', dirTheirChild:'…is their child',
       proposenew:'Someone not in the forest yet', proposehint:'Sends a proposal to the keeper.', proposename:'Their name',
       addconn:'Add a connection', editconn:'Edit the connection', removeconn:'Remove this connection',
@@ -563,7 +564,7 @@
       relkind:'Вид связи', relkindWho:'Кто {a} для {b}?', certainty:'Насколько вы уверены?', relnote:'Заметка (необязательно)',
       relkinds:{ parent:'Родитель', child:'Ребёнок', spouse:'Супруг(а)', sibling:'Брат/сестра', friend:'Друг', mentor:'Наставник', neighbour:'Сосед', other:'Другое' },
       certs:{ documented:'Документально', remembered:'По памяти', uncertain:'Неточно' },
-      pickperson:'Кто это?', searchppl:'Поиск по семье', nopeople:'Пока не из кого выбирать.',
+      pickperson:'Кто это?', searchppl:'Поиск по семье', nopeople:'Пока не из кого выбирать.', childOf:'ребёнок', bornY:'род.',
       dirq:'В какую сторону?', dirTheirParent:'…родитель этого человека', dirTheirChild:'…ребёнок этого человека',
       proposenew:'Кого-то ещё нет в лесу', proposehint:'Отправит предложение хранителю.', proposename:'Имя',
       addconn:'Добавить связь', editconn:'Изменить связь', removeconn:'Удалить эту связь',
@@ -614,7 +615,7 @@
       relkind:'סוג הקשר', relkindWho:'מי {a} עבור {b}?', certainty:'עד כמה אתם בטוחים?', relnote:'הערה (לא חובה)',
       relkinds:{ parent:'הורה', child:'ילד/ה', spouse:'בן/בת זוג', sibling:'אח/אחות', friend:'חבר', mentor:'מורה דרך', neighbour:'שכן', other:'אחר' },
       certs:{ documented:'מתועד', remembered:'מהזיכרון', uncertain:'לא בטוח' },
-      pickperson:'מי זה?', searchppl:'חיפוש במשפחה', nopeople:'עדיין אין ממי לבחור.',
+      pickperson:'מי זה?', searchppl:'חיפוש במשפחה', nopeople:'עדיין אין ממי לבחור.', childOf:'בן/בת של', bornY:'נולד',
       dirq:'לאיזה כיוון?', dirTheirParent:'…הורה של אדם זה', dirTheirChild:'…ילד של אדם זה',
       proposenew:'מישהו שעדיין לא ביער', proposehint:'שולח הצעה לשומר.', proposename:'השם',
       addconn:'הוספת קשר', editconn:'עריכת הקשר', removeconn:'מחיקת הקשר הזה',
@@ -870,17 +871,25 @@
                  dir:isFrom?'other_child':'other_parent', relKey:isFrom?'child':'parent' }; });
     }catch(e){ rels=[]; }
     try{
-      const [{data:all},{data:nms}]=await Promise.all([
-        sb.from('people').select('id').neq('id',PERSON_ID).limit(600),
-        sb.from('person_names').select('person_id,lang,given,family,called').limit(3000)
+      const [{data:all},{data:nms},{data:prs}]=await Promise.all([
+        sb.from('people').select('id,birth_date').neq('id',PERSON_ID).limit(600),
+        sb.from('person_names').select('person_id,lang,given,family,called').limit(3000),
+        sb.from('relationships').select('from_person,to_person').eq('kind','parent').eq('status','published').limit(3000)
       ]);
       const _nm={}; (nms||[]).forEach(n=>{ (_nm[n.person_id]=_nm[n.person_id]||{})[n.lang]=n; });
+      const _par={}; (prs||[]).forEach(r=>{ (_par[r.to_person]=_par[r.to_person]||[]).push(r.from_person); });
       /* show given + family so two Galyas cannot be confused in the picker (Leon 2026-09-17) */
       const _pick=(id,l)=>{ const r=(_nm[id]||{})[l]; if(!r) return ''; const n=r.given||r.called||''; return (n&&r.family)?(n+' '+r.family):n; };
+      const _first=(id)=>{ const r=(_nm[id]||{})[state.lang]||(_nm[id]||{}).en||(_nm[id]||{}).ru||(_nm[id]||{}).he; return r?(r.called||r.given||''):''; };
+      /* DISAMBIGUATION HINT (Leon 2026-09-19): two people can share every name. Under each
+         candidate: 'child of X & Y' if parents are known, else 'born YYYY', else nothing. */
+      const _hint=(p)=>{ const ps=(_par[p.id]||[]).map(_first).filter(Boolean);
+        if(ps.length) return (L.childOf||'child of')+' '+ps.join(' & ');
+        const y=p.birth_date?String(p.birth_date).slice(0,4):''; return y?(L.bornY||'born')+' '+y:''; };
       PEOPLE=(all||[]).map(p=>{
         const dn=_pick(p.id,state.lang)||_pick(p.id,'en')||_pick(p.id,'ru')||_pick(p.id,'he')||'—';
         const _all=Object.values(_nm[p.id]||{}).map(r=>[r.called,r.given,r.family].filter(Boolean).join(' ')).join(' ').toLowerCase();
-        return {id:p.id, display_name:dn, _all};
+        return {id:p.id, display_name:dn, _all, hint:_hint(p)};
       });
     }catch(e){ PEOPLE=[]; }
     /* canonical place suggestions: distinct published place values across the whole family + any places table */
@@ -2023,7 +2032,7 @@
       const list=PEOPLE.filter(p=>!q||(p._all||'').includes(q)||String(p.display_name||'').toLowerCase().includes(q)).slice(0,200);
       return wasChosen+`<div class="field"><label>${mode==='me'?L.meAsk:(mode==='edit'?L.pickperson:L.pickperson)}</label>
         <input class="inp" data-kinsearch placeholder="${esc(L.searchppl)}" value="${esc(st.q||'')}" style="margin-bottom:9px">
-        <div class="picker">${list.length?list.map(p=>`<button data-kinpick="${esc(p.id)}" class="${st.other===p.id?'on':''}">${esc(p.display_name||'—')}</button>`).join(''):`<div class="sub" style="padding:12px">${L.nopeople}</div>`}</div>
+        <div class="picker">${list.length?list.map(p=>`<button data-kinpick="${esc(p.id)}" class="${st.other===p.id?'on':''}">${esc(p.display_name||'—')}${p.hint?`<span class="phint">${esc(p.hint)}</span>`:''}</button>`).join(''):`<div class="sub" style="padding:12px">${L.nopeople}</div>`}</div>
         ${mode==='me'?'':`<label>${L.proposenew}</label>
         <input class="inp" data-kinpropose placeholder="${esc(L.proposename)}" value="${esc(st.propose||'')}">
         <div class="hint">${L.proposehint}</div>`}</div>`; }

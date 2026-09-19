@@ -104,7 +104,7 @@
   .pcard .pendpin svg{ width:10px; height:10px; color:#1a0f2e; }
 
   /* controls dock */
-  .dock{ position:absolute; z-index:16; inset-inline-end:14px; bottom:calc(20px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:9px; align-items:stretch; }
+  .dock{ position:absolute; z-index:16; inset-inline-end:14px; bottom:calc(84px + env(safe-area-inset-bottom)); /* clears the shared nav globe (52px + gap) - Leon 2026-09-19 */ display:flex; flex-direction:column; gap:9px; align-items:stretch; }
   .dbtn{ width:44px; height:44px; border-radius:13px; display:grid; place-items:center; cursor:pointer;
     border:1px solid var(--hair); background:rgba(10,20,34,.82); backdrop-filter:blur(8px); color:var(--cream); transition:border-color .2s, color .2s, background .2s; }
   .dbtn:hover{ border-color:rgba(127,180,216,.55); color:var(--cool-hi); }
@@ -133,7 +133,7 @@
   .pill span[data-t]{ display:none !important; }
   .pill .cnt{ position:absolute; top:-5px; inset-inline-end:-5px; margin:0 !important; }
   body.lf-fen-on .pills{ bottom:calc(84px + 151px + env(safe-area-inset-bottom)); }
-  body.lf-fen-on .dock{ bottom:calc(20px + 151px + env(safe-area-inset-bottom)); }
+  body.lf-fen-on .dock{ bottom:calc(84px + 151px + env(safe-area-inset-bottom)); }
   .pill{ display:inline-flex; align-items:center; gap:7px; padding:9px 13px; border-radius:99px; cursor:pointer; white-space:nowrap;
     font-family:'Hanken Grotesk',sans-serif; font-size:12px; color:var(--cream);
     background:rgba(10,20,34,.82); backdrop-filter:blur(8px); border:1px solid var(--hair); box-shadow:0 10px 26px -18px #000; transition:border-color .2s, background .2s; }
