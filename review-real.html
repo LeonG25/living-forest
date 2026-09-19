@@ -843,6 +843,9 @@
   function oldInfo(it){
     if(it.kind==='person')   return { kind:'new', why:'person' };
     if(it.kind==='artefact') return { kind:'new', why:'memory' };
+    /* a connection proposal is always an addition; the generic lookup below would
+       find an older published kin row and print its raw JSON as the 'was' (Leon 2026-09-20) */
+    if(it.kind==='kin')      return { kind:'none' };
     if(it.kind==='group'){ const rows=(pending.pubGroup&&pending.pubGroup[it.id])||[];
       const val=(rows.find(r=>r.field==='custom_value')||{}).value||'';
       const lab=(rows.find(r=>r.field==='custom_label')||{}).value||'';
