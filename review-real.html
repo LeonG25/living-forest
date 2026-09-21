@@ -1075,6 +1075,16 @@
       const f=(pending.facts||[]).find(x=>x.id===id); if(!f){ approveRef._busy=false; return; }
       let k=null; try{ k=JSON.parse(f.value); }catch(e){}
       if(!k||!k.kind){ approveRef._busy=false; toast(L.tCannot||'That suggestion could not be read.',false); return; }
+      /* REMOVAL (Leon 2026-09-22): a proposal with op:'remove' names the relationship to
+         take away by rel_id. Approving it deletes that row - it never inserts. */
+      if(k.op==='remove'){
+        if(!k.rel_id){ approveRef._busy=false; toast(L.tCannot||'That suggestion could not be read.',false); return; }
+        const del=await sb.from('relationships').delete().eq('id',k.rel_id);
+        if(del.error){ approveRef._busy=false; toast(L.tFail||'That did not save.',false); return; }
+        const fin0=await sb.from('person_facts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id);
+        if(fin0.error){ approveRef._busy=false; toast(L.tFail||'That did not save.',false); return; }
+        approveRef._busy=false; await reload(); toast(L.tWelcomed||'Welcomed.',true); return;
+      }
       let other=k.other;
       if(!other){
         const nm=String(k.propose||k.other_name||'').trim();
