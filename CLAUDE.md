@@ -1068,6 +1068,19 @@ assuming the shell is gone.
 
 ## 4 · PARKED — decided, not now (do not build unasked)
 
+### Delete a person (2026-09-22) — PARKED
+
+Leon asked whether a person can be erased from the tree or the system. Today: no option
+anywhere. A person can only be edited. A delete must handle everything that references
+them: relationships (all kinds), facts in all three languages, portrait, tags in photos,
+appearances in memories as subject or narrator, and the account link if registered.
+
+Proposed shape: keeper-only action on the Person page, "remove this person from the
+forest", with a confirmation that lists what goes with them, done in one transaction.
+Recommendation: SOFT delete (status='removed', hidden everywhere, keeper-recoverable) —
+a mistaken tap on a person with forty photos is hard to undo otherwise. Leon's call on
+hard vs soft still open.
+
 ### Mailbox REPLY, FORWARD, TRANSLATE + unread bold (2026-09-10) — PARKED
 
 The mailbox was built and the basic flow (send, receive, read, delete) was verified
