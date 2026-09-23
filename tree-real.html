@@ -1036,7 +1036,11 @@ function computeLayout(){
     if(u.hub){ u.root=u.hub; return; }
     const wp=u.members.filter(m=>parentsOf(m).some(p=>P.has(p)));
     if(wp.length===1) u.root=wp[0];
-    else if(wp.length>1) u.root=wp.reduce((a,b)=>ancDepth(b)>ancDepth(a)?b:a);
+    else if(wp.length>1){
+      /* tie on depth -> the one with more siblings in the tree is the main line
+         (Sofia has Basya, Anya, +1; Tsodik has one) - Leon 2026-09-23 */
+      const sc=id=>siblingsOf(id).filter(x=>P.has(x)).length;
+      u.root=wp.reduce((a,b)=>{ const da=ancDepth(a),db=ancDepth(b); if(db!==da) return db>da?b:a; return sc(b)>sc(a)?b:a; }); }
     else u.root=u.members.find(m=>siblingsOf(m).some(x=>placedSet.has(x))) ?? u.members[0];
   });
   units.forEach(u=>{ const par=parentsOf(u.root)[0]; u.parentUnit=(par!=null&&homeUnit[par])?homeUnit[par]:null; });
@@ -1126,9 +1130,21 @@ function computeLayout(){
     if(!u.virtual){ const n=u.members.length;
       u.members.forEach((m,i)=>{ pos[m]={x:u.cx+(i-(n-1)/2)*COLW,tier:u.depth}; }); } }
   vroots.sort((a,b)=>ord(a.childUnits[0].root,b.childUnits[0].root));
+  /* IN-LAW AS LAYOUT-SIBLING (Leon 2026-09-23: 'spouses bring their family, the tree
+     expands'). Edik's whole subtree becomes a layout-child of Sofia+Tsodik, right beside
+     Fima+Zina - on the side Zoya sits on. measure() then reserves its width at EVERY tier
+     below, so Kolya's children and Leon's children never compete for the same columns. */
+  pulls.forEach(({pu,m,inU})=>{
+    const mu=homeUnit[m]; const A=mu&&mu.parentUnit; if(!A) return;
+    const P=A.parentUnit; if(!P) return;
+    const mIdx=mu.members.indexOf(m); const leftSide=mIdx<(mu.members.length-1)/2;
+    if(pu.hub&&pu.members.length===3){
+      const sp=pu.members.filter(x=>x!==pu.hub); const mine=sp.find(x=>inU.includes(x)); const other=sp.find(x=>x!==mine);
+      if(mine&&other) pu.members=leftSide?[other,pu.hub,mine]:[mine,pu.hub,other]; }
+    const kids=P.childUnits; const ai=kids.indexOf(A);
+    kids.splice(leftSide?ai:ai+1,0,pu); pu.parentUnit=P; pu.layoutOnly=true;
+  });
   let xLeft=0; vroots.forEach(v=>{ measure(v); place(v,xLeft,-1); xLeft+=v.sub+FAM; });
-  /* pulled trees: measured and placed for their internal shape only; the pull moves them */
-  pulls.forEach(({pu})=>{ const v={members:[],childUnits:[pu],virtual:true}; pu.parentUnit=v; measure(v); place(v,0,-1); });
   // safety: any unit not placed (shouldn't happen) → a fresh bottom row so nobody is lost
   let maxTier=Math.max(0,...placed.filter(id=>pos[id]).map(id=>pos[id].tier));
   let sx=0; placed.forEach(id=>{ if(!pos[id]){ pos[id]={x:sx*COLW,tier:maxTier+1}; sx++; } });
@@ -1158,23 +1174,7 @@ function computeLayout(){
   const byPos=(a,b)=>{ const ta=Math.min(...a.members.filter(m=>pos[m]).map(m=>pos[m].tier)), tb=Math.min(...b.members.filter(m=>pos[m]).map(m=>pos[m].tier));
     if(ta!==tb) return ta-tb; const xa=Math.min(...a.members.filter(m=>pos[m]).map(m=>pos[m].x)), xb=Math.min(...b.members.filter(m=>pos[m]).map(m=>pos[m].x)); return xa-xb; };
   /* (2) main tree first */
-  realUnits.filter(u=>!inPulled.has(u)).sort(byPos).forEach(u=>snapUnit(u,0));
-  /* (3)+(4) each in-law tree: aim at the married-in person's FINAL cell, then fit */
-  pulls.forEach(({pu,m,inU})=>{
-    const parMid=inU.reduce((a,p)=>a+pos[p].x,0)/inU.length;
-    const dTier=(pos[m].tier-1)-pos[inU[0]].tier; const dX=pos[m].x-parMid;
-    const mv=v=>{ (v.members||[]).forEach(id=>{ if(pos[id]){ pos[id].tier+=dTier; pos[id].x+=dX; } }); (v.childUnits||[]).forEach(mv); };
-    mv(pu);
-    const walk=(v,carry)=>{ const extra=snapUnit(v,carry); (v.childUnits||[]).slice().sort(byPos).forEach(ch=>walk(ch,carry+extra)); };
-    walk(pu,0);
-    /* face the right way: the spouse who is m's parent sits on the side nearest m */
-    if(pu.hub&&pu.members.length===3){
-      const hub=pu.hub, sp=pu.members.filter(x=>x!==hub), mine=sp.find(x=>inU.includes(x)), other=sp.find(x=>x!==mine);
-      if(mine&&other&&pos[mine]&&pos[other]&&pos[hub]){
-        const wantRight=pos[m].x>pos[hub].x, isRight=pos[mine].x>pos[hub].x;
-        if(wantRight!==isRight){ const t=pos[mine].x; pos[mine].x=pos[other].x; pos[other].x=t;
-          const tier=pos[hub].tier; occ[toCol(pos[mine].x)+'|'+tier]=mine; occ[toCol(pos[other].x)+'|'+tier]=other; } } }
-  });
+  realUnits.sort(byPos).forEach(u=>snapUnit(u,0));
   const minT=Math.min(...placed.filter(id=>pos[id]).map(id=>pos[id].tier));
   if(minT<0) placed.forEach(id=>{ if(pos[id]) pos[id].tier-=minT; });
   /* Leon's ruling 2026-09-05: the tree keeps the same left-to-right layout in every
