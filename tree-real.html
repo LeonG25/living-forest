@@ -1134,13 +1134,26 @@ function computeLayout(){
      expands'). Edik's whole subtree becomes a layout-child of Sofia+Tsodik, right beside
      Fima+Zina - on the side Zoya sits on. measure() then reserves its width at EVERY tier
      below, so Kolya's children and Leon's children never compete for the same columns. */
+  /* CHILDREN UNDER THEIR PARENTS (Leon 2026-09-23, Israel/Jacob): the in-law goes on a
+     chosen side of A (alternating per A so two in-laws don't fight for one edge); the
+     married-in couple moves to THAT edge of A's children; the married-in spouse takes the
+     outer seat of the couple. Result: in-law parent, then spouse, adjacent - no crossing.
+     Shallow pulls first: a parent-level pull moves the couple to the edge; a deeper pull
+     then lands its in-law right beside that couple. Reversed, the deeper one is stranded. */
+  const sideCount=new Map();
+  const uDepth=u=>{ let d=0; while(u&&u.parentUnit&&!u.parentUnit.virtual){ d++; u=u.parentUnit; } return d; };
+  pulls.sort((a,b)=>uDepth(homeUnit[a.m])-uDepth(homeUnit[b.m]));
   pulls.forEach(({pu,m,inU})=>{
     const mu=homeUnit[m]; const A=mu&&mu.parentUnit; if(!A) return;
     const P=A.parentUnit; if(!P) return;
-    const mIdx=mu.members.indexOf(m); const leftSide=mIdx<(mu.members.length-1)/2;
+    const n=sideCount.get(A)||0; sideCount.set(A,n+1); const leftSide=(n%2===1);
+    if(mu.members.length===2){ const o=mu.members.find(x=>x!==m); mu.members=leftSide?[m,o]:[o,m]; }
+    const ak=A.childUnits; const mi=ak.indexOf(mu); if(mi>=0){ ak.splice(mi,1); if(leftSide) ak.unshift(mu); else ak.push(mu); }
     if(pu.hub&&pu.members.length===3){
       const sp=pu.members.filter(x=>x!==pu.hub); const mine=sp.find(x=>inU.includes(x)); const other=sp.find(x=>x!==mine);
       if(mine&&other) pu.members=leftSide?[other,pu.hub,mine]:[mine,pu.hub,other]; }
+    else if(pu.members.length===2){ const mine=pu.members.find(x=>inU.includes(x)); const other=pu.members.find(x=>x!==mine);
+      if(mine&&other) pu.members=leftSide?[other,mine]:[mine,other]; }
     const kids=P.childUnits; const ai=kids.indexOf(A);
     kids.splice(leftSide?ai:ai+1,0,pu); pu.parentUnit=P; pu.layoutOnly=true;
   });
