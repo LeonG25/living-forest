@@ -43,7 +43,9 @@
       st.textContent='@keyframes lfBudP{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}'+
         '@media (prefers-reduced-motion: reduce){#lfBud{animation:none}}';
       document.head.appendChild(st); document.body.appendChild(b);
-      b.onclick=summon;
+      /* Leon 2026-09-24: the bud opens the Play sheet (Fen's picks lead it) instead of
+         summoning Fen with one invitation. summon() is kept below, unused, for reversal. */
+      b.onclick=function(){ if(window.LFNav&&window.LFNav.openPlay) window.LFNav.openPlay(); };
     }
     function loadScript(src){ return new Promise(function(res,rej){
       var sc=document.createElement('script'); sc.src=src; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); }); }
@@ -186,10 +188,47 @@
     places:'<path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
     story:'<path d="M5 4.5h10.5L19 8v11.5H5z"/><path d="M8.5 10h7M8.5 13.5h7M8.5 17h4.5"/>'};
   var playEl=null;
+  /* FEN'S PICKS MOVED INTO THE PLAY SHEET (Leon, 2026-09-24). The clearing page offered
+     three hand-picked paths (someone to meet / a story to hear / a place to walk) and held
+     Fen's voice switch; the Play sheet offered every game. Two doors to the same games, so
+     the clearing folded in here: its three picks lead the sheet (ember, Fen's colour), all
+     seven games follow. The clearing's 'Fen speaks on her own' switch was NOT carried over:
+     nothing in the app ever read its key (lf_fen_quiet), so it switched nothing. The picks
+     come from LFInvite.trio exactly as the clearing drew them; if there is no session or no
+     data, the row simply does not appear. clearing-real.html stays in the repo, unlinked. */
+  var FENW={
+    en:{h:'Fen suggests',meet:'Someone to meet',story:'A story to hear',place:'A place to walk'},
+    ru:{h:'Фен предлагает',meet:'С кем познакомиться',story:'История, которую стоит услышать',place:'Куда пройтись'},
+    he:{h:'פן מציעה',meet:'מישהו להכיר',story:'סיפור לשמוע',place:'מקום ללכת אליו'}};
+  function fenEsc(x){ return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function fenLoad(src){ return new Promise(function(res,rej){ var sc=document.createElement('script'); sc.src=src; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); }); }
+  function fenPicks(box, F, lg){
+    var ses=storedSession(); if(!ses||!window.supabase||!window.supabase.createClient){ box.remove(); return; }
+    var sb=window.supabase.createClient('https://oabcdrktuikifbormjip.supabase.co','sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC');
+    (window.LFInvite? Promise.resolve() : fenLoad('lf-invite.js?v=2')).then(function(){
+      return window.LFInvite.trio(sb, ses.uid, lg);
+    }).then(function(t){
+      var c=[];
+      if(t.meet&&t.meet.kind==='meet') c.push([F.meet,t.meet.line,t.meet.go]);
+      if(t.story) c.push([F.story,t.story.line,t.story.go]);
+      if(t.place) c.push([F.place,t.place.line,t.place.go]);
+      if(!c.length){ box.remove(); return; }
+      box.querySelector('.fw').innerHTML=c.map(function(x){
+        return '<a class="fp" href="'+fenEsc(x[2])+'"><span class="fk">'+fenEsc(x[0])+'</span><span class="fl">'+fenEsc(x[1])+'</span></a>'; }).join('');
+    }).catch(function(){ box.remove(); });
+  }
+  function fenCss(){ return ''
+    +'#lfPlay .fw{display:flex;flex-direction:column;gap:8px;min-height:40px;}'
+    +'#lfPlay a.fp{display:flex;flex-direction:column;gap:3px;padding:12px 14px;border-radius:14px;text-decoration:none;background:linear-gradient(160deg,rgba(232,149,92,.16),rgba(232,149,92,.03) 65%);border:1px solid rgba(232,149,92,.38);}'
+    +'#lfPlay a.fp:active{transform:scale(.98);}'
+    +'#lfPlay a.fp:focus-visible{outline:2px solid #e8955c;outline-offset:2px;}'
+    +'#lfPlay .fk{font-size:12.5px;color:#f0b48a;}'
+    +'#lfPlay .fl{font-family:"Newsreader","Frank Ruhl Libre",Georgia,serif;font-size:17px;line-height:1.25;color:#fbf0e2;}'
+    +'#lfPlay .fdots{color:rgba(244,234,217,.5);font-size:13px;padding:10px 2px;}'; }
   function playCss(){
     if(document.getElementById('lfPlayCss')) return;
     var c=document.createElement('style'); c.id='lfPlayCss';
-    c.textContent=''
+    c.textContent=fenCss()
     +'#lfPlay{position:fixed;inset:0;z-index:61;display:flex;align-items:flex-end;justify-content:center;background:rgba(2,6,14,0);visibility:hidden;pointer-events:none;transition:background .25s,visibility 0s .3s;}'
     +'#lfPlay.on{background:rgba(2,6,14,.62);visibility:visible;pointer-events:auto;transition:background .25s;}'
     +'#lfPlay .pc{width:100%;max-width:560px;max-height:calc(100dvh - 40px);overflow-y:auto;overscroll-behavior:contain;background:#0b1520;border:1px solid rgba(255,255,255,.13);border-bottom:0;border-radius:22px 22px 0 0;padding:10px 16px calc(20px + env(safe-area-inset-bottom));color:#f4ead9;font-family:"Hanken Grotesk",system-ui,sans-serif;transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1);box-sizing:border-box;}'
@@ -222,6 +261,8 @@
     if(lg==='he') playEl.dir='rtl';
     var h='<div class="pc"><div class="grip"></div><div class="ph"><h2 class="pt">'+P.title+'</h2>'
       +'<button type="button" class="px" aria-label="'+P.close+'">\u2715</button></div>';
+    var F=FENW[lg]||FENW.en;
+    h+='<div class="fen"><div class="pg" style="color:#f0b48a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 4l4 5h8l4-5v8a8 8 0 0 1-16 0z"/><path d="M9.5 13.5h.01M14.5 13.5h.01"/></svg>'+F.h+'</div><div class="fw"><div class="fdots">\u2026</div></div></div>';
     PLAYG.forEach(function(grp){
       h+='<div class="pg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">'+PLAYI[grp.g]+'</svg>'+P.g[grp.g]+'</div><div class="pw">';
       grp.games.forEach(function(gm){
@@ -231,6 +272,7 @@
     });
     playEl.innerHTML=h+'</div>';
     document.body.appendChild(playEl);
+    fenPicks(playEl.querySelector('.fen'), F, lg);
     playEl.addEventListener('click', function(e){ if(e.target===playEl) closePlay(); });
     playEl.querySelector('.px').addEventListener('click', closePlay);
     requestAnimationFrame(function(){ requestAnimationFrame(function(){ playEl.classList.add('on'); }); });
@@ -247,8 +289,7 @@
              ['play','❂',W('play'),'crowd-real.html'],
              ['when','◷',W('when'),'timeline-real.html'],
              ['add','✎',W('add'),'contribute-real.html'],
-             ['journal','❦',W('journal'),'journal-real.html'],
-             ['clearing','🦊',W('clearing'),'clearing-real.html']];
+             ['journal','❦',W('journal'),'journal-real.html']];  /* the clearing row retired 2026-09-24: folded into the Play sheet */
   var wrap=document.createElement('div'); wrap.id='lfnav';
   var panel=document.createElement('div'); panel.id='lfnavPanel';
   items.forEach(function(it){
