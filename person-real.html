@@ -1505,7 +1505,7 @@
         else if(data&&data.results&&data.results[0]) out=data.results[0].text||''; }
       catch(e){ failed=true; }
       out=clean(out,l,text);
-      if(out){ if(await insFact(field,l,out,1,grouped?ref:undefined)===false) failed=true; }
+      if(out){ if(await insFact(field,l,out,1,grouped?ref:(opt.gid||undefined))===false) failed=true; }
       else failed=true; }
     if(failed) toast(L.trFail,true);
     return !failed; }
@@ -2350,13 +2350,17 @@
        Russian spelling of a surname by hand and it is yours for good. */
     const gsex=({f:'f',m:'m'})[S.life.gender]||null;
     const changed=[];
+    /* ONE GROUP PER NAME PART (Leon 2026-09-24): the typed row and its two machine
+       translations share a group_id, so the Review page shows ONE item, not three. The
+       lock stays ungrouped (a human row in any group still protects that language). */
     for(const f of ['given','family','called','maiden','patronymic','honorific']){
       for(const l of LANGS){ const v=read(f,l);
         if(v&&v!==((NAME[f]||{})[l]||'')){
-          if(await insFact(f,l,v)===false) ok=false; else changed.push({f:f,l:l,v:v}); } } }
+          const gid=uuid();
+          if(await insFact(f,l,v,0,gid)===false) ok=false; else changed.push({f:f,l:l,v:v,gid:gid}); } } }
     for(const c of changed){
       if(await translateInto(PERSON_ID,c.v,c.f,
-           {from:c.l,kind:'name_full',clean:cleanTr,grouped:false,gender:gsex})===false) ok=false; }
+           {from:c.l,kind:'name_full',clean:cleanTr,grouped:false,gender:gsex,gid:c.gid})===false) ok=false; }
     if(!quiet){ await reload(); if(ok) toast(d().sent); }
     return ok; }
 
