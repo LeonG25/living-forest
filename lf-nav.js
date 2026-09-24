@@ -259,7 +259,7 @@
      LFFen.destroy). Her forest strip is lifted onto <body>, fixed, above the sheet's
      backdrop; the sheet card rests on top of the strip; she speaks the first pick.
      Closing the sheet walks her out and tears her down; following a link just leaves. */
-  var FOX_STRIP=151, foxOn=false, foxGen=0;
+  var FOX_STRIP=151, foxOn=false, foxGen=0, foxT0=0;
   function foxLoad(src){ return new Promise(function(res,rej){ var sc=document.createElement('script'); sc.src=src; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); }); }
   function foxLift(){
     var st=document.getElementById('lfFenStrip'); if(!st) return false;
@@ -268,7 +268,7 @@
     st.style.position='fixed'; st.style.zIndex='62'; return true;
   }
   function foxIn(){
-    foxOn=true; var my=++foxGen;
+    foxOn=true; var my=++foxGen; foxT0=Date.now();
     var bud=document.getElementById('lfBud'); if(bud) bud.style.display='none';
     if(playEl) playEl.classList.add('fox');
     window.__lfFenManual=1;
@@ -278,8 +278,14 @@
       var n=0; (function lift(){ if(my!==foxGen) return; if(!foxLift() && n++<40) setTimeout(lift,100); })();
     }).catch(function(e){ foxOut(true); try{ if(window.LFDB) LFDB.note('sheet fox: '+String(e&&e.message||e).slice(0,90)); }catch(_){} });
   }
-  function foxSay(line){ if(!foxOn||!line) return; var n=0;
-    (function t(){ if(!foxOn) return; if(window.Fen&&window.Fen.say){ try{ window.Fen.say(line); }catch(e){} } else if(n++<40) setTimeout(t,150); })(); }
+  /* lf-fen greets on her own 900ms after waking (no API to skip it), and a line said
+     before that is spoken over. Her pick is held until 1.6s after she was woken. */
+  function foxSay(line){ if(!foxOn||!line) return; var n=0, my=foxGen;
+    (function t(){ if(!foxOn||my!==foxGen) return;
+      if(window.Fen&&window.Fen.say){ var w=foxT0+1600-Date.now();
+        if(w>0){ setTimeout(t,w); return; }
+        try{ window.Fen.say(line); }catch(e){} }
+      else if(n++<60) setTimeout(t,150); })(); }
   function foxOut(now){
     if(!foxOn) return; foxOn=false; var my=++foxGen;
     var done=function(){ if(my!==foxGen) return; try{ if(window.LFFen) window.LFFen.destroy(); }catch(e){}
