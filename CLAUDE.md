@@ -126,6 +126,26 @@
 
 # CURRENT STATE — session handover (read me first)
 
+## SESSION OF 2026-09-24 — GAMIFICATION WORKSTREAM (Leon)
+
+Leon's four directions, taken one at a time: (1) centralize the games, (2) explore the
+parked game ideas, (3) boring games — PARKED in §4, (4) new ideas / new games.
+
+(1) SHIPPED `9fa928d`, lf-nav v41 on all 23 pages: the ⊕ menu row is now "Play / Играть /
+לשחק" and opens a bottom SHEET of all seven games (Leon chose a sheet with tiles over an
+in-menu sub-list and over a new page). Grouped by the facet that carries each game:
+Faces (Crowd) · A life (Order of Things) · Places (Where Was This, Tangled Thread — cool
+blue) · Stories (Whose Story, Missing Voice, What Happened Next — gold). From the sheet a
+game opens in WHOLE-FAMILY mode (no ?id=); person-page facet buttons unchanged (scoped to
+one person). `LFNav.openPlay()` is public. Probe `~/qc/qc-playsheet.js` (keeper, 390x844,
+EN/RU/HE): sheet visible, card flush to the bottom, 7 tiles all on screen, HE dir=rtl,
+backdrop tap closes, tile tap lands on the game, zero page errors. `~/qc/qc-games-noid.js`:
+all 7 games load with no id, zero errors. Missing Voice shows its own "sleeping" screen —
+too few tellers in the data, not a bug. Rig note: run probes with `. ~/qc/env.sh` (it sets
+QC_SHELL AND LD_LIBRARY_PATH; without the latter Chrome dies at launch).
+NOTE: the table of contents at the top of this file is stale — several headings it lists
+(game-feel spec, design house rules, briefs) are not in the body.
+
 ## SESSION OF 2026-09-16 — HANDOVER
 
 See git log for full commit list. Key items:
