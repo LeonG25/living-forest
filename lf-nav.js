@@ -144,17 +144,102 @@
      "The globe" and "Step out" on every page of an otherwise translated app. The words are
      translated now; the layout, the order and the look are untouched. */
   var NAVW={
-    en:{map:'The globe',find:'Search',tree:'The tree',play:'Find them in a crowd',
+    en:{map:'The globe',find:'Search',tree:'The tree',play:'Play',
         when:'The timeline',add:'Contribute',journal:'My journal',clearing:'The clearing',
         mail:'Mailbox',review:'Review',keepers:'Keepers',out:'Step out'},
-    ru:{map:'Глобус',find:'Поиск',tree:'Древо',play:'Найти в толпе',
+    ru:{map:'Глобус',find:'Поиск',tree:'Древо',play:'Играть',
         when:'Лента времени',add:'Добавить',journal:'Мой дневник',clearing:'Поляна',
         mail:'Почта',review:'Проверка',keepers:'Хранители',out:'Выйти'},
-    he:{map:'הגלובוס',find:'חיפוש',tree:'האילן',play:'לזהות בקהל',
+    he:{map:'הגלובוס',find:'חיפוש',tree:'האילן',play:'לשחק',
         when:'ציר הזמן',add:'להוסיף',journal:'היומן שלי',clearing:'הקרחת',
         mail:'דואר',review:'בדיקה',keepers:'שומרים',out:'יציאה'}};
   function navLang(){ try{ return localStorage.getItem('lf_lang')||'en'; }catch(e){ return 'en'; } }
   function W(k){ var d=NAVW[navLang()]||NAVW.en; return d[k]||NAVW.en[k]||k; }
+  /* THE PLAY SHEET (Leon, 2026-09-24): every game in one place. Play in the menu used to
+     open only the Crowd; the other six were reachable only from inside a person's facets.
+     Tapping Play now slides up a sheet of all seven, grouped by the facet that carries them
+     (faces / a life / places / stories). From here a game opens in WHOLE-FAMILY mode (no
+     ?id=); a person page still opens the same game about one person. Colour follows
+     provenance: places are cool (the app located them), the rest gold. Each game builds its
+     rounds from live data and shows its own 'sleeping' screen when the forest is too thin. */
+  var PLAYW={
+    en:{title:'Choose a game',close:'Close',
+        g:{face:'Faces',life:'A life',places:'Places',story:'Stories'},
+        n:{crowd:'Find Them in the Crowd',order:'The Order of Things',wherewas:'Where Was This?',thread:'The Tangled Thread',whose:'Whose Story Is This?',voice:'The Missing Voice',whatnext:'What Happened Next?'},
+        s:{crowd:'Find each relative in one real group photo.',order:'Put the moments of a life in order.',wherewas:'Guess where each photo was taken.',thread:'Find two people one place connects.',whose:'Guess who a story is about.',voice:'Guess who told the story.',whatnext:'Guess which moment came next.'}},
+    ru:{title:'Выберите игру',close:'Закрыть',
+        g:{face:'Лица',life:'Жизнь',places:'Места',story:'Истории'},
+        n:{crowd:'Найди в толпе',order:'Порядок вещей',wherewas:'Где это было?',thread:'Запутанная нить',whose:'Чья это история?',voice:'Пропавший голос',whatnext:'Что было дальше?'},
+        s:{crowd:'Найдите каждого родственника на общем снимке.',order:'Расставьте моменты жизни по порядку.',wherewas:'Угадайте, где сделан снимок.',thread:'Найдите двоих, кого связывает одно место.',whose:'Угадайте, о ком эта история.',voice:'Угадайте, кто рассказал историю.',whatnext:'Угадайте, какой момент был следующим.'}},
+    he:{title:'בחרו משחק',close:'סגירה',
+        g:{face:'פנים',life:'חיים',places:'מקומות',story:'סיפורים'},
+        n:{crowd:'מצאו אותם בקהל',order:'סדר הדברים',wherewas:'איפה זה היה?',thread:'החוט הסבוך',whose:'של מי הסיפור?',voice:'הקול החסר',whatnext:'מה קרה אחר כך?'},
+        s:{crowd:'מצאו כל קרוב משפחה בתמונה קבוצתית אחת.',order:'סדרו את רגעי החיים לפי הסדר.',wherewas:'נחשו איפה צולמה כל תמונה.',thread:'מצאו שניים שמקום אחד מחבר ביניהם.',whose:'נחשו על מי הסיפור.',voice:'נחשו מי סיפר את הסיפור.',whatnext:'נחשו איזה רגע בא אחר כך.'}}};
+  var PLAYG=[
+    {g:'face',  cool:false, games:[['crowd','crowd-real.html']]},
+    {g:'life',  cool:false, games:[['order','game-order-of-things.html']]},
+    {g:'places',cool:true,  games:[['wherewas','game-where-was-this.html'],['thread','game-tangled-thread.html']]},
+    {g:'story', cool:false, games:[['whose','game-who-is-who.html'],['voice','game-missing-voice.html'],['whatnext','game-what-happened-next.html']]}];
+  var PLAYI={
+    face:'<circle cx="12" cy="9" r="4"/><path d="M4.5 20c1.2-3.6 4-5.5 7.5-5.5s6.3 1.9 7.5 5.5"/>',
+    life:'<path d="M3 12h18"/><circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/>',
+    places:'<path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
+    story:'<path d="M5 4.5h10.5L19 8v11.5H5z"/><path d="M8.5 10h7M8.5 13.5h7M8.5 17h4.5"/>'};
+  var playEl=null;
+  function playCss(){
+    if(document.getElementById('lfPlayCss')) return;
+    var c=document.createElement('style'); c.id='lfPlayCss';
+    c.textContent=''
+    +'#lfPlay{position:fixed;inset:0;z-index:61;display:flex;align-items:flex-end;justify-content:center;background:rgba(2,6,14,0);visibility:hidden;pointer-events:none;transition:background .25s,visibility 0s .3s;}'
+    +'#lfPlay.on{background:rgba(2,6,14,.62);visibility:visible;pointer-events:auto;transition:background .25s;}'
+    +'#lfPlay .pc{width:100%;max-width:560px;max-height:calc(100dvh - 40px);overflow-y:auto;overscroll-behavior:contain;background:#0b1520;border:1px solid rgba(255,255,255,.13);border-bottom:0;border-radius:22px 22px 0 0;padding:10px 16px calc(20px + env(safe-area-inset-bottom));color:#f4ead9;font-family:"Hanken Grotesk",system-ui,sans-serif;transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1);box-sizing:border-box;}'
+    +'#lfPlay.on .pc{transform:none;}'
+    +'#lfPlay .grip{width:38px;height:4px;border-radius:2px;background:rgba(255,255,255,.2);margin:0 auto 12px;}'
+    +'#lfPlay .ph{display:flex;align-items:center;justify-content:space-between;margin:0 2px 6px;}'
+    +'#lfPlay .pt{font-family:"Newsreader","Frank Ruhl Libre",Georgia,serif;font-size:23px;font-weight:400;color:#f3cd84;margin:0;}'
+    +'#lfPlay .px{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.14);background:transparent;color:#cfd8e6;font-size:16px;cursor:pointer;display:grid;place-items:center;padding:0;}'
+    +'#lfPlay .pg{display:flex;align-items:center;gap:8px;margin:16px 2px 8px;font-size:13px;color:rgba(244,234,217,.62);}'
+    +'#lfPlay .pg svg{width:16px;height:16px;flex:0 0 auto;}'
+    +'#lfPlay .pg::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.08);}'
+    +'#lfPlay .pw{display:grid;grid-template-columns:1fr 1fr;gap:10px;}'
+    +'#lfPlay .pw>a:only-child,#lfPlay .pw>a:nth-child(3):last-child{grid-column:1 / -1;}'
+    +'#lfPlay a.gt{display:flex;flex-direction:column;gap:6px;min-height:92px;padding:14px 14px 13px;border-radius:14px;text-decoration:none;color:#f4ead9;background:linear-gradient(160deg,rgba(243,205,132,.10),rgba(243,205,132,.02) 60%);border:1px solid rgba(243,205,132,.28);box-sizing:border-box;}'
+    +'#lfPlay a.gt.cool{background:linear-gradient(160deg,rgba(127,180,216,.12),rgba(127,180,216,.02) 60%);border-color:rgba(127,180,216,.32);}'
+    +'#lfPlay a.gt:active{transform:scale(.98);}'
+    +'#lfPlay a.gt:focus-visible,#lfPlay .px:focus-visible{outline:2px solid #f3cd84;outline-offset:2px;}'
+    +'#lfPlay .gn{font-family:"Newsreader","Frank Ruhl Libre",Georgia,serif;font-size:18px;line-height:1.15;color:#f3cd84;}'
+    +'#lfPlay a.gt.cool .gn{color:#a9d0ea;}'
+    +'#lfPlay .gs{font-size:13px;line-height:1.35;color:rgba(244,234,217,.74);}'
+    +'@media (prefers-reduced-motion:reduce){#lfPlay .pc,#lfPlay{transition:none;}}';
+    document.head.appendChild(c);
+  }
+  function openPlay(){
+    playCss();
+    var lg=navLang(), P=PLAYW[lg]||PLAYW.en;
+    if(playEl) playEl.remove();
+    playEl=document.createElement('div'); playEl.id='lfPlay';
+    playEl.setAttribute('role','dialog'); playEl.setAttribute('aria-modal','true'); playEl.setAttribute('aria-label',P.title);
+    if(lg==='he') playEl.dir='rtl';
+    var h='<div class="pc"><div class="grip"></div><div class="ph"><h2 class="pt">'+P.title+'</h2>'
+      +'<button type="button" class="px" aria-label="'+P.close+'">\u2715</button></div>';
+    PLAYG.forEach(function(grp){
+      h+='<div class="pg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">'+PLAYI[grp.g]+'</svg>'+P.g[grp.g]+'</div><div class="pw">';
+      grp.games.forEach(function(gm){
+        h+='<a class="gt'+(grp.cool?' cool':'')+'" data-game="'+gm[0]+'" href="'+gm[1]+'"><span class="gn">'+P.n[gm[0]]+'</span><span class="gs">'+P.s[gm[0]]+'</span></a>';
+      });
+      h+='</div>';
+    });
+    playEl.innerHTML=h+'</div>';
+    document.body.appendChild(playEl);
+    playEl.addEventListener('click', function(e){ if(e.target===playEl) closePlay(); });
+    playEl.querySelector('.px').addEventListener('click', closePlay);
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ playEl.classList.add('on'); }); });
+  }
+  function closePlay(){ if(playEl) playEl.classList.remove('on'); }
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape' && playEl && playEl.classList.contains('on')) closePlay(); });
+  window.LFNav = window.LFNav || {};
+  window.LFNav.openPlay = openPlay;
+
   var items=[
              ['map','◍',W('map'),'index.html'],
              ['find','⌕',W('find'),'search-real.html'],
@@ -170,6 +255,8 @@
     var a=document.createElement('a'); a.href=it[3];
     a.innerHTML='<span class="ic">'+it[1]+'</span><span>'+it[2]+'</span>';
     if(it[0]===HERE) a.className='cur';
+    if(it[0]==='play') a.addEventListener('click', function(ev){ ev.preventDefault();
+      wrap.classList.remove('open'); openPlay(); });
     panel.appendChild(a);
   });
   /* THE MAILBOX, SECOND FROM THE BOTTOM (Leon, 2026-09-06). order:98 sits it directly
