@@ -1068,6 +1068,13 @@ assuming the shell is gone.
 
 ## 4 · PARKED — decided, not now (do not build unasked)
 
+### Some current games are boring (Leon, 2026-09-24) — PARKED
+
+Leon: "Some of the current games are boring. My kids don't want to play them." Parked at his
+word, not for now. When picked up: find out WHICH games the boys skip and why (ask them, or
+read knowledge_events for games started vs finished) before redesigning any. Related: the
+"Twelve ideas for the children" list below and the gamification workstream opened this day.
+
 ### Delete a person (2026-09-22) — PARKED
 
 Leon asked whether a person can be erased from the tree or the system. Today: no option
