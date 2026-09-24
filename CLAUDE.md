@@ -143,6 +143,19 @@ backdrop tap closes, tile tap lands on the game, zero page errors. `~/qc/qc-game
 all 7 games load with no id, zero errors. Missing Voice shows its own "sleeping" screen —
 too few tellers in the data, not a bug. Rig note: run probes with `. ~/qc/env.sh` (it sets
 QC_SHELL AND LD_LIBRARY_PATH; without the latter Chrome dies at launch).
+(1b) SHIPPED `3c78448`, lf-nav v42 — Leon: "something is redundant" (Fen's bud, the clearing,
+the Play sheet all led to the same games). Ruled: the clearing merges into the Play sheet and
+the bud opens the sheet too. Now: Fen's three picks (LFInvite.trio — meet / story / place,
+ember tiles) lead the sheet, all seven games follow; the clearing's menu row is gone
+(clearing-real.html kept, unlinked); the bud on globe/tree/person calls LFNav.openPlay()
+(summon() kept unused for reversal). The clearing's "Fen speaks on her own" switch was NOT
+carried over: nothing ever read its key lf_fen_quiet — a dead switch. Probe
+`~/qc/qc-playsheet2.js` (bud tapped with force:true — its breathing animation is "unstable"
+to Playwright): EN/RU/HE, menu has no clearing row, bud opens sheet, 3 picks filled, pick tap
+lands, zero page errors. Sheet content now ~1080px on a 844px phone: it scrolls.
+Pre-existing copy flaws seen in lf-invite lines (not fixed): RU "о Ионатан" (no declension),
+RU "ты ещё не слышал" / HE "שמעת" address the reader in the masculine; HE story pick named
+a person by surname only ("גולניק").
 NOTE: the table of contents at the top of this file is stale — several headings it lists
 (game-feel spec, design house rules, briefs) are not in the body.
 
