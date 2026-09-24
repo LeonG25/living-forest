@@ -45,7 +45,7 @@
       document.head.appendChild(st); document.body.appendChild(b);
       /* Leon 2026-09-24: the bud opens the Play sheet (Fen's picks lead it) instead of
          summoning Fen with one invitation. summon() is kept below, unused, for reversal. */
-      b.onclick=function(){ if(window.LFNav&&window.LFNav.openPlay) window.LFNav.openPlay(); };
+      b.onclick=function(){ if(window.LFNav&&window.LFNav.openPlay) window.LFNav.openPlay({fox:true}); };
     }
     function loadScript(src){ return new Promise(function(res,rej){
       var sc=document.createElement('script'); sc.src=src; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); }); }
@@ -213,6 +213,7 @@
       if(t.story) c.push([F.story,t.story.line,t.story.go]);
       if(t.place) c.push([F.place,t.place.line,t.place.go]);
       if(!c.length){ box.remove(); return; }
+      foxSay(c[0][1]);
       box.querySelector('.fw').innerHTML=c.map(function(x){
         return '<a class="fp" href="'+fenEsc(x[2])+'"><span class="fk">'+fenEsc(x[0])+'</span><span class="fl">'+fenEsc(x[1])+'</span></a>'; }).join('');
     }).catch(function(){ box.remove(); });
@@ -224,6 +225,7 @@
     +'#lfPlay a.fp:focus-visible{outline:2px solid #e8955c;outline-offset:2px;}'
     +'#lfPlay .fk{font-size:12.5px;color:#f0b48a;}'
     +'#lfPlay .fl{font-family:"Newsreader","Frank Ruhl Libre",Georgia,serif;font-size:17px;line-height:1.25;color:#fbf0e2;}'
+    +'#lfPlay.fox .pc{margin-bottom:151px;border-radius:22px;border-bottom:1px solid rgba(255,255,255,.13);max-height:calc(100dvh - 40px - 151px);padding-bottom:18px;}'
     +'#lfPlay .fdots{color:rgba(244,234,217,.5);font-size:13px;padding:10px 2px;}'; }
   function playCss(){
     if(document.getElementById('lfPlayCss')) return;
@@ -252,7 +254,40 @@
     +'@media (prefers-reduced-motion:reduce){#lfPlay .pc,#lfPlay{transition:none;}}';
     document.head.appendChild(c);
   }
-  function openPlay(){
+  /* THE FOX ON THE SHEET (Leon, 2026-09-24). Her button opens the Play sheet AND wakes
+     her the way the old bud did (lf-fen untouched: LFFen.open / Fen.say / Fen.leave /
+     LFFen.destroy). Her forest strip is lifted onto <body>, fixed, above the sheet's
+     backdrop; the sheet card rests on top of the strip; she speaks the first pick.
+     Closing the sheet walks her out and tears her down; following a link just leaves. */
+  var FOX_STRIP=151, foxOn=false, foxGen=0;
+  function foxLoad(src){ return new Promise(function(res,rej){ var sc=document.createElement('script'); sc.src=src; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); }); }
+  function foxLift(){
+    var st=document.getElementById('lfFenStrip'); if(!st) return false;
+    if(st.parentElement!==document.body){ document.body.appendChild(st);
+      st.querySelectorAll('video').forEach(function(v){ try{ v.play().catch(function(){}); }catch(e){} }); }
+    st.style.position='fixed'; st.style.zIndex='62'; return true;
+  }
+  function foxIn(){
+    foxOn=true; var my=++foxGen;
+    var bud=document.getElementById('lfBud'); if(bud) bud.style.display='none';
+    if(playEl) playEl.classList.add('fox');
+    window.__lfFenManual=1;
+    (window.LFFen? Promise.resolve() : foxLoad('lf-fen.js?v=25')).then(function(){
+      if(my!==foxGen||!foxOn) return;
+      if(!window.Fen && window.LFFen) window.LFFen.open();
+      var n=0; (function lift(){ if(my!==foxGen) return; if(!foxLift() && n++<40) setTimeout(lift,100); })();
+    }).catch(function(e){ foxOut(true); try{ if(window.LFDB) LFDB.note('sheet fox: '+String(e&&e.message||e).slice(0,90)); }catch(_){} });
+  }
+  function foxSay(line){ if(!foxOn||!line) return; var n=0;
+    (function t(){ if(!foxOn) return; if(window.Fen&&window.Fen.say){ try{ window.Fen.say(line); }catch(e){} } else if(n++<40) setTimeout(t,150); })(); }
+  function foxOut(now){
+    if(!foxOn) return; foxOn=false; var my=++foxGen;
+    var done=function(){ if(my!==foxGen) return; try{ if(window.LFFen) window.LFFen.destroy(); }catch(e){}
+      var b=document.getElementById('lfBud'); if(b) b.style.display='grid'; };
+    if(!now && window.Fen && window.Fen.leave){ try{ window.Fen.leave(done); }catch(e){ done(); } setTimeout(done,4000); }
+    else done();
+  }
+  function openPlay(opts){
     playCss();
     var lg=navLang(), P=PLAYW[lg]||PLAYW.en;
     if(playEl) playEl.remove();
@@ -273,11 +308,12 @@
     playEl.innerHTML=h+'</div>';
     document.body.appendChild(playEl);
     fenPicks(playEl.querySelector('.fen'), F, lg);
+    if(opts&&opts.fox) foxIn();
     playEl.addEventListener('click', function(e){ if(e.target===playEl) closePlay(); });
     playEl.querySelector('.px').addEventListener('click', closePlay);
     requestAnimationFrame(function(){ requestAnimationFrame(function(){ playEl.classList.add('on'); }); });
   }
-  function closePlay(){ if(playEl) playEl.classList.remove('on'); }
+  function closePlay(){ if(playEl) playEl.classList.remove('on','fox'); foxOut(false); }
   document.addEventListener('keydown', function(e){ if(e.key==='Escape' && playEl && playEl.classList.contains('on')) closePlay(); });
   window.LFNav = window.LFNav || {};
   window.LFNav.openPlay = openPlay;
