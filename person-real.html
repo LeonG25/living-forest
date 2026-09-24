@@ -2353,14 +2353,23 @@
     /* ONE GROUP PER NAME PART (Leon 2026-09-24): the typed row and its two machine
        translations share a group_id, so the Review page shows ONE item, not three. The
        lock stays ungrouped (a human row in any group still protects that language). */
+    /* TYPED IS NEVER OVERWRITTEN (Leon 2026-09-24). One group per name PART: every
+       language you typed for it plus the machine's fill-ins share that group -> one Review
+       item. Translation runs once per part, from one source (the app's language if you
+       typed it, else the first you typed), only into languages you did NOT type - the
+       `skip` set carries the just-typed ones the database lock cannot see yet. */
+    const gidFor={};
     for(const f of ['given','family','called','maiden','patronymic','honorific']){
       for(const l of LANGS){ const v=read(f,l);
         if(v&&v!==((NAME[f]||{})[l]||'')){
-          const gid=uuid();
+          const gid=gidFor[f]||(gidFor[f]=uuid());
           if(await insFact(f,l,v,0,gid)===false) ok=false; else changed.push({f:f,l:l,v:v,gid:gid}); } } }
-    for(const c of changed){
-      if(await translateInto(PERSON_ID,c.v,c.f,
-           {from:c.l,kind:'name_full',clean:cleanTr,grouped:false,gender:gsex,gid:c.gid})===false) ok=false; }
+    const byField={}; changed.forEach(x=>{ (byField[x.f]=byField[x.f]||[]).push(x); });
+    for(const f in byField){
+      const arr=byField[f]; const typed=new Set(arr.map(x=>x.l));
+      const src=arr.find(x=>x.l===state.lang)||arr[0];
+      if(await translateInto(PERSON_ID,src.v,f,
+           {from:src.l,kind:'name_full',clean:cleanTr,grouped:false,gender:gsex,gid:src.gid,skip:typed})===false) ok=false; }
     if(!quiet){ await reload(); if(ok) toast(d().sent); }
     return ok; }
 
