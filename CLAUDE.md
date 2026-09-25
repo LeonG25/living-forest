@@ -165,6 +165,19 @@ and restores the bud. From the menu's Play row: no fox. Probe `~/qc/qc-sheetfox.
 (tree + globe, EN): strip on body, videos playing, greeting then pick line, closed -> strip
 gone, bud back, zero page errors. On the globe her pick lands later (slower page).
 Known nit: her spoken pick is also listed as a tile below (shows twice).
+MOMENT DATE FIX `8fb40e2` (2026-09-25) — Leon could not fix a wrong date on a photo he had
+just contributed (7aa89987…, "7.3.2014"; no artefact_edits row existed = he never got to
+Send). Causes: (a) tapping the date did nothing outside editing mode (pencil needed first);
+(b) the calendar opened on "Year only: 2014", ignoring the stored day. Now tapping the date
+switches editing on and opens the calendar; calFromStored() pre-fills from when_date +
+when_precision, else parses the typed text (D.M.YYYY, D/M/YYYY, YYYY-MM-DD, M.YYYY, "7 March
+2014", "March 2014", RU genitive months, seasons, year). Still staged -> one Send -> keeper
+review (keeper's own edits too, Leon's 2026-08-07 rule). Probe `~/qc/qc-momedit2.js`: EN
+7.3.2014 -> Exact day 7 March 2014; RU 29/03/2013 -> day 29; HE 2010 -> year; staging shows
+the Send row; nothing written (0 edits verified). Audit of the moment page — editable:
+photo (replace/rotate/delete), story, place, date, details, people tags. NOT editable: who
+told it ("told by" can only be removed, which deletes the story text). Seen, not fixed: RU
+calendar writes nominative months ("29 Март 2013", should be "29 марта 2013").
 NOTE: the table of contents at the top of this file is stale — several headings it lists
 (game-feel spec, design house rules, briefs) are not in the body.
 
