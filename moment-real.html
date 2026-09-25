@@ -16,6 +16,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="lf-db.js?v=13"></script>
 <script src="lf-name.js?v=1"></script>
+<script src="lf-label.js?v=2"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
   html,body{ background:#04070e; }
@@ -1887,7 +1888,10 @@
        male, was made to say חושבת. The app knew he was male on every one of his stories and
        never said so. His sex travels with the text now. */
     tellerSex=null;
-    if(art.contributor_id){ const {data:cp}=await sb.from('people').select('id,sex').eq('id',art.contributor_id).maybeSingle(); if(cp&&cp.sex) tellerSex=({male:'m',female:'f'})[cp.sex]||null; tellerName=(window.LFLabel&&LFLabel.of(art.contributor_id,(localStorage.getItem('lf_lang')||'en')))||''; }
+    /* "Told by" was blank on every moment: this page never loaded lf-label.js, so
+       LFLabel.of() was undefined and the teller's name came back ''. (found 2026-09-25) */
+    if(art.contributor_id){ try{ if(window.LFLabel) await LFLabel.load(sb,[art.contributor_id]); }catch(e){}
+      const {data:cp}=await sb.from('people').select('id,sex').eq('id',art.contributor_id).maybeSingle(); if(cp&&cp.sex) tellerSex=({male:'m',female:'f'})[cp.sex]||null; tellerName=(window.LFLabel&&LFLabel.of(art.contributor_id,(localStorage.getItem('lf_lang')||'en')))||''; }
     const {data:tr}=await sb.from('artefact_translations').select('lang,body,status,machine,created_at').eq('artefact_id',MOMENT_ID).or('status.eq.published,and(status.eq.in_review,machine.eq.true)'); translations=tr||[];
     await loadQueue();
     buildModel(); render(); ensureLangAssets();
