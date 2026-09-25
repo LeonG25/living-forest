@@ -178,6 +178,21 @@ the Send row; nothing written (0 edits verified). Audit of the moment page — e
 photo (replace/rotate/delete), story, place, date, details, people tags. NOT editable: who
 told it ("told by" can only be removed, which deletes the story text). Seen, not fixed: RU
 calendar writes nominative months ("29 Март 2013", should be "29 марта 2013").
+MOMENT EDITS, ROUND 2 (2026-09-25) `247abce` + `e5a6232`:
+- WHO TOLD IT is changeable: edit mode shows "Change who told it" / "Who told it?" on the
+  told line -> the family picker (#nameSheet in nameMode 'teller') -> staged artefact_edits
+  field='teller', ref_id=person -> approval sets artefacts.contributor_id. Only on a story
+  shown in its ORIGINAL language (a machine translation has no told line).
+- Calendar: the year in the header is a native <select> (current year..1850); arrows stay.
+  Exact-day text now RU genitive ("7 марта 2016"), HE with ב ("7 במרץ 2016"); the parser
+  reads both back.
+- REVIEW PAGE DROPPED EDITS: approving an aedit there applied only where/when/photo/delete;
+  details, tags, teller, story_remove, photo_replace were deleted unapplied. Now all apply
+  as moment-page approve() does; tag_add without ref_id and photo_rotate go to the moment
+  page instead. Queue was empty when found (nothing to recover visible).
+- "Told by" was blank on EVERY moment: moment-real never loaded lf-label.js. Now loaded.
+Probes `~/qc/qc-momedit3.js`, `~/qc/qc-teller.js`: year list 177 years, EN/RU/HE date forms,
+teller picker titled, staging shows Send, EN "told by Leon Golnick"; 0 in_review edits after.
 NOTE: the table of contents at the top of this file is stale — several headings it lists
 (game-feel spec, design house rules, briefs) are not in the body.
 
