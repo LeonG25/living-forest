@@ -1218,7 +1218,42 @@
 
   /* ---------- calendar (when) ---------- */
   let calY=1992, calM=6, calD=null, calPrec='year', calSeason=1;
-  function openCal(){ const y=parseInt(yearOf()); if(!isNaN(y)) calY=y; show($('#calSheet')); renderCal(); }
+  /* THE CALENDAR STARTS FROM WHAT IS STORED (Leon, 2026-09-25). It opened on 'Year only:
+     2014' for a photo dated 7.3.2014 - the day and month looked lost, and fixing a wrong day
+     meant rebuilding the date from nothing. It now reads the stored date first: the exact
+     when_date/when_precision the calendar itself writes, else the free text the contribute
+     flow stores as typed (7.3.2014, 29/03/2013, 2014-03-07, 3.2014, '7 March 2014',
+     'March 2014', '7 марта 2014', a season, a bare year). Day-first, as the family writes. */
+  function calFromStored(){
+    const md=(art&&art.metadata)||{};
+    const monthIdx=w=>{ w=String(w||'').toLowerCase(); if(!w) return -1;
+      if(w.indexOf('мая')===0) return 4;
+      for(const L of ['en','ru','he']){ const ms=(UI[L]&&UI[L].months)||[];
+        for(let i=0;i<ms.length;i++){ const m=ms[i].toLowerCase();
+          if(L==='he'){ if(w===m) return i; } else if(w.length>=3 && m.indexOf(w.slice(0,3))===0) return i; } }
+      return -1; };
+    const seasonIdx=w=>{ w=String(w||'').toLowerCase();
+      for(const L of ['en','ru','he']){ const ss=(UI[L]&&UI[L].seasons)||[];
+        for(let i=0;i<ss.length;i++) if(ss[i].toLowerCase()===w) return i; } return -1; };
+    const set=(prec,y,m,d,se)=>{ calPrec=prec; calY=y; if(m!=null) calM=m; calD=d||null;
+      if(se!=null) calSeason=se; else if(m!=null) calSeason=[3,3,0,0,0,1,1,1,2,2,2,3][m]; };
+    const iso=String(md.when_date||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(iso && md.when_precision){ const y=+iso[1], m=+iso[2]-1, d=+iso[3];
+      if(md.when_precision==='day') return set('day',y,m,d);
+      if(md.when_precision==='month') return set('month',y,m);
+      if(md.when_precision==='season') return set('season',y,m);
+      return set('year',y); }
+    const t=String(whenText()||'').trim(); let r;
+    if((r=t.match(/^(\d{1,2})\s*[.\/-]\s*(\d{1,2})\s*[.\/-]\s*(\d{4})$/)) && +r[2]>=1 && +r[2]<=12) return set('day',+r[3],+r[2]-1,+r[1]);
+    if((r=t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))) return set('day',+r[1],+r[2]-1,+r[3]);
+    if((r=t.match(/^(\d{1,2})\s*[.\/]\s*(\d{4})$/)) && +r[1]>=1 && +r[1]<=12) return set('month',+r[2],+r[1]-1);
+    if((r=t.match(/^(\d{1,2})\s+([^\s\d]+)\s+(\d{4})$/)) && monthIdx(r[2])>=0) return set('day',+r[3],monthIdx(r[2]),+r[1]);
+    if((r=t.match(/^([^\s\d]+)\s+(\d{1,2}),?\s+(\d{4})$/)) && monthIdx(r[1])>=0) return set('day',+r[3],monthIdx(r[1]),+r[2]);
+    if((r=t.match(/^([^\s\d]+)\s+(\d{4})$/))){ if(monthIdx(r[1])>=0) return set('month',+r[2],monthIdx(r[1]));
+      if(seasonIdx(r[1])>=0) return set('season',+r[2],null,null,seasonIdx(r[1])); }
+    const y=parseInt(yearOf()); if(!isNaN(y)) set('year',y);
+  }
+  function openCal(){ calFromStored(); show($('#calSheet')); renderCal(); }
   function calText(){ const d=t();
     if(calPrec==='day' && calD) return `${calD} ${d.months[calM]} ${calY}`;
     if(calPrec==='month') return `${d.months[calM]} ${calY}`;
@@ -1642,7 +1677,12 @@
       if(e.target.closest('#photostage')) return;
       if(key==='story') return; // story handled by data-open / editable click below
       if(key==='where'){ if(document.body.classList.contains('editing')){ e.preventDefault(); openPlace(); } else if(whereText()){ location.href='place-real.html?place='+encodeURIComponent(whereText()); } return; }
-      if(key==='when'){ if(document.body.classList.contains('editing')){ e.preventDefault(); openCal(); } return; }
+      /* The date needs no pencil first (Leon, 2026-09-25: he could not find how to fix a
+         wrong date - tapping it did nothing outside editing mode). Tapping it switches
+         editing on and opens the calendar. It still goes through the page's one Send. */
+      if(key==='when'){ e.preventDefault();
+        if(!document.body.classList.contains('editing')){ document.body.classList.add('editing'); const eb=$('#editBtn'); if(eb) eb.classList.add('on'); }
+        openCal(); return; }
       if(!document.body.classList.contains('editing')) return;
       e.preventDefault(); openEditor(key);
     }); });
