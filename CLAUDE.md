@@ -156,6 +156,15 @@ lands, zero page errors. Sheet content now ~1080px on a 844px phone: it scrolls.
 Pre-existing copy flaws seen in lf-invite lines (not fixed): RU "о Ионатан" (no declension),
 RU "ты ещё не слышал" / HE "שמעת" address the reader in the masculine; HE story pick named
 a person by surname only ("גולניק").
+(1c) SHIPPED `29b46b6` (v43) + `1cf61c6` (v44) — Leon: the fox should appear on the sheet when
+her button is tapped. Her button calls LFNav.openPlay({fox:true}): the sheet gets class .fox,
+lf-fen is woken (LFFen.open), her strip is lifted onto <body> fixed z62 under the sheet card
+(card rests on top of the 151px strip), she greets, then says the first pick (held 1.6s so
+her auto-greeting does not talk over it). Closing walks her out (Fen.leave -> LFFen.destroy)
+and restores the bud. From the menu's Play row: no fox. Probe `~/qc/qc-sheetfox.js`
+(tree + globe, EN): strip on body, videos playing, greeting then pick line, closed -> strip
+gone, bud back, zero page errors. On the globe her pick lands later (slower page).
+Known nit: her spoken pick is also listed as a tile below (shows twice).
 NOTE: the table of contents at the top of this file is stale — several headings it lists
 (game-feel spec, design house rules, briefs) are not in the body.
 
