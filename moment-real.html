@@ -512,7 +512,7 @@
       placeP:'Start typing a place…',histTag:'Historical',addPlace:'Add',
       noStoryEm:'No one has told this moment yet.',noStoryCta:'Add the telling →',
       emWhereEm:'The place isn’t known yet.',emWhenEm:'The time isn’t known yet.',addCta:'Add →',
-      removeTelling:'Remove this telling',
+      removeTelling:'Remove this telling',tellerTitle:'Who told it?',tellerSub:'The person whose memory this is.',changeTeller:'Change who told it',addTeller:'Who told it?',
       editTelling:'Edit the story',
       signIn:'Enter the forest',signInSub:'This moment opens once you’re signed in.',email:'you@example.com',pass:'Password',signInBtn:'Sign in',
       keeperStrip:'You’re the keeper · {n} waiting',reviewT:'Suggestions waiting',
@@ -549,7 +549,7 @@
       placeP:'Начните вводить место…',histTag:'Историч.',addPlace:'Добавить',
       noStoryEm:'Этот момент ещё никто не рассказал.',noStoryCta:'Добавить рассказ →',
       emWhereEm:'Место пока неизвестно.',emWhenEm:'Время пока неизвестно.',addCta:'Добавить →',
-      removeTelling:'Убрать этот рассказ',
+      removeTelling:'Убрать этот рассказ',tellerTitle:'Кто рассказал?',tellerSub:'Человек, чьё это воспоминание.',changeTeller:'Изменить рассказчика',addTeller:'Кто рассказал?',monthsGen:['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'],
       editTelling:'Изменить рассказ',
       signIn:'Войти в лес',signInSub:'Момент откроется после входа.',email:'you@example.com',pass:'Пароль',signInBtn:'Войти',
       keeperStrip:'Вы хранитель · {n} на рассмотрении',reviewT:'Правки на рассмотрении',
@@ -586,7 +586,7 @@
       placeP:'התחילו להקליד מקום…',histTag:'היסטורי',addPlace:'הוספה',
       noStoryEm:'עדיין איש לא סיפר את הרגע הזה.',noStoryCta:'הוספת הסיפור →',
       emWhereEm:'המקום עדיין לא ידוע.',emWhenEm:'הזמן עדיין לא ידוע.',addCta:'הוספה →',
-      removeTelling:'הסרת הסיפור הזה',
+      removeTelling:'הסרת הסיפור הזה',tellerTitle:'מי סיפר?',tellerSub:'האדם שזה הזיכרון שלו.',changeTeller:'שינוי המספר',addTeller:'מי סיפר?',
       editTelling:'עריכת הסיפור',
       signIn:'כניסה ליער',signInSub:'הרגע ייפתח לאחר הכניסה.',email:'you@example.com',pass:'סיסמה',signInBtn:'כניסה',
       keeperStrip:'את/ה השומר · {n} ממתינים',reviewT:'הצעות ממתינות',
@@ -815,6 +815,7 @@
           <!-- Leon, 2026-08-20: 'User have to be able to edit a story.' It has been editable all
                along - tapping the words opens it - but nothing on screen said so, and a control
                nobody can see does not exist. It says so now, beside the way to remove it. -->
+          <button class="rmtell" data-chtell="1">${sv(ICON.pencil,1.7)} ${esc(d.teller?d.changeTeller:d.addTeller)}</button>
           ${d.teller?`<button class="rmtell" data-rmtell="1">${sv(ICON.trash,1.7)} ${esc(d.removeTelling)}</button>`:''}</div>
         <div class="pending" data-pending="story"><span class="sp"></span>${esc(d.waiting)}</div></div>`;
     } else if(d.story.kind==='machine'){
@@ -1144,7 +1145,11 @@
     if(window.LFName){ const l=LFName.label(nameFacts[p.id]||[], lang); if(l) return l; }
     return nameFor(p.id,lang)||p.called_name||'';
   }
-  async function openNameSheet(tagId, isNew){ nameTargetId=tagId; await loadAllPeople(); renderNameList(''); show($('#nameSheet')); }
+  /* WHO TOLD IT can be changed (Leon, 2026-09-25): the same family picker, in 'teller' mode.
+     It stages an artefact_edits row field='teller', ref_id=the person; approval sets
+     artefacts.contributor_id (here and on the review page). */
+  let nameMode=null;
+  async function openNameSheet(tagId, isNew, mode){ nameTargetId=tagId; nameMode=mode||null; const sh=$('#nameSheet'); if(sh) sh.innerHTML=''; await loadAllPeople(); renderNameList(''); show(sh); }
   function renderNameList(q){ const d=t(); const sheet=$('#nameSheet'); const ql=q.trim().toLowerCase();
     /* This rebuilt the WHOLE sheet on every keystroke - including the input being typed
        into - so the field lost focus and Leon's keyboard shut after each letter. The
@@ -1155,7 +1160,7 @@
       if(window.LFName && LFName.matches(nameFacts[p.id]||[], ql)) return true;   /* any name, any language */
       return String(p.display_name||'').toLowerCase().includes(ql)
           || String(p.called_name||'').toLowerCase().includes(ql); }).slice(0,40);
-    const HTML = `<div class="grip"></div><h3>${esc(d.whoTitle)}</h3><div class="sub">${esc(d.whoSub)}</div>
+    const HTML = `<div class="grip"></div><h3>${esc(nameMode==='teller'?d.tellerTitle:d.whoTitle)}</h3><div class="sub">${esc(nameMode==='teller'?d.tellerSub:d.whoSub)}</div>
       <div class="searchbox">${sv(ICON.search,1.7)}<input id="pSearch" placeholder="${esc(d.searchFamily)}" value="${esc(q)}"></div>
       <div class="plist">
         ${list.map(p=>`<button class="popt" data-pick="${esc(p.id)}">
@@ -1181,7 +1186,12 @@
     const {data,error}=await sb.from('people').insert({created_by:user.id,status:'in_review'}).select('id,sex').single();
     if(error) throw error; (allPeople=allPeople||[]).push(data); peopleById[data.id]=data; return data.id; }
 
-  async function pickPerson(pid, q){ const tg=TAGS.find(x=>x.id===nameTargetId); if(!tg){ hide(); return; }
+  async function pickPerson(pid, q){
+    if(nameMode==='teller'){ nameMode=null; const d=t(); const pp=(allPeople||[]).find(x=>x.id===pid); const nm=label(pp)||nameFor(pid,lang)||'';
+      if(pid===art.contributor_id){ hide(); return; }
+      stageEdit('teller',{ label:d.tellerTitle, value:nm, flush:()=>proposeEdit('teller',{ref_id:pid, new_value:nm, old_value:tellerName||'', pendKey:'story', silent:true}) });
+      return; }
+    const tg=TAGS.find(x=>x.id===nameTargetId); if(!tg){ hide(); return; }
     const box={x:tg.x,y:tg.y,w:tg.w,h:tg.h};
     let personId = (pid==='__new') ? null : pid;
     let name = (pid==='__new') ? (q||t().someoneNew) : (nameFor(pid,lang) || (allPeople.find(p=>p.id===pid)||{}).display_name || '');
@@ -1230,7 +1240,7 @@
       if(w.indexOf('мая')===0) return 4;
       for(const L of ['en','ru','he']){ const ms=(UI[L]&&UI[L].months)||[];
         for(let i=0;i<ms.length;i++){ const m=ms[i].toLowerCase();
-          if(L==='he'){ if(w===m) return i; } else if(w.length>=3 && m.indexOf(w.slice(0,3))===0) return i; } }
+          if(L==='he'){ if(w===m||(w.charAt(0)==='ב'&&w.slice(1)===m)) return i; } else if(w.length>=3 && m.indexOf(w.slice(0,3))===0) return i; } }
       return -1; };
     const seasonIdx=w=>{ w=String(w||'').toLowerCase();
       for(const L of ['en','ru','he']){ const ss=(UI[L]&&UI[L].seasons)||[];
@@ -1255,23 +1265,30 @@
   }
   function openCal(){ calFromStored(); show($('#calSheet')); renderCal(); }
   function calText(){ const d=t();
-    if(calPrec==='day' && calD) return `${calD} ${d.months[calM]} ${calY}`;
+    /* an exact day reads as a date, not a heading: RU genitive (7 марта), HE with ב (7 במרץ) */
+    if(calPrec==='day' && calD) return `${calD} ${lang==='he'?'ב':''}${(d.monthsGen||d.months)[calM]} ${calY}`;
     if(calPrec==='month') return `${d.months[calM]} ${calY}`;
     if(calPrec==='season') return `${d.seasons[calSeason]} ${calY}`;
     return `${calY}`; }
+  /* A YEAR FROM A LIST (Leon, 2026-09-25): changing the year meant tapping the month arrow
+     twelve times per year. The year in the calendar header is now a native list (the phone's
+     own wheel/menu), newest first, back to 1850; the arrows stay for a step or two. */
+  function ySel(px){ const now=new Date().getFullYear(); const lo=Math.min(1850,calY), hi=Math.max(now,calY);
+    let o=''; for(let y=hi;y>=lo;y--) o+=`<option value="${y}"${y===calY?' selected':''}>${y}</option>`;
+    return `<select class="ysel" aria-label="year" style="font:inherit;font-size:${px}px;color:inherit;background:transparent;border:0;border-bottom:1px dashed currentColor;border-radius:0;padding:0 2px;cursor:pointer;-webkit-appearance:none;appearance:none;direction:ltr">${o}</select>▾`; }
   function renderCal(){ const d=t(); const sheet=$('#calSheet');
     const first=new Date(calY,calM,1); let wd=(first.getDay()+6)%7; const days=new Date(calY,calM+1,0).getDate();
     let cells=''; for(let i=0;i<wd;i++) cells+='<span class="cal-day empty"></span>';
     for(let dd=1;dd<=days;dd++) cells+=`<button class="cal-day ${calPrec==='day'&&calD===dd?'on':''}" data-day="${dd}">${dd}</button>`;
     const wdRow=d.weekdays.map(w=>`<span class="wd">${esc(w)}</span>`).join('');
     const gridBlock=(calPrec==='day'||calPrec==='month')
-      ? `<div class="cal-head"><button class="cal-nav" data-mv="-1">${sv(ICON.chev,2)}</button><span class="my">${esc(d.months[calM])} ${calY}</span><button class="cal-nav" data-mv="1" style="transform:scaleX(-1)">${sv(ICON.chev,2)}</button></div>
+      ? `<div class="cal-head"><button class="cal-nav" data-mv="-1">${sv(ICON.chev,2)}</button><span class="my">${esc(d.months[calM])} ${ySel(18)}</span><button class="cal-nav" data-mv="1" style="transform:scaleX(-1)">${sv(ICON.chev,2)}</button></div>
          ${calPrec==='day'?`<div class="cal-grid">${wdRow}${cells}</div>`:''}` : '';
     const seasonBlock=calPrec==='season'
-      ? `<div class="cal-head"><button class="cal-nav" data-yr="-1">${sv(ICON.chev,2)}</button><span class="my">${calY}</span><button class="cal-nav" data-yr="1" style="transform:scaleX(-1)">${sv(ICON.chev,2)}</button></div>
+      ? `<div class="cal-head"><button class="cal-nav" data-yr="-1">${sv(ICON.chev,2)}</button><span class="my">${ySel(18)}</span><button class="cal-nav" data-yr="1" style="transform:scaleX(-1)">${sv(ICON.chev,2)}</button></div>
          <div class="season-row">${d.seasons.map((s,i)=>`<button class="${calSeason===i?'on':''}" data-season="${i}">${esc(s)}</button>`).join('')}</div>` : '';
     const yearBlock=calPrec==='year'
-      ? `<div class="cal-head"><button class="cal-nav" data-yr="-1">${sv(ICON.chev,2)}</button><span class="my" style="font-size:26px">${calY}</span><button class="cal-nav" data-yr="1" style="transform:scaleX(-1)">${sv(ICON.chev,2)}</button></div>` : '';
+      ? `<div class="cal-head"><button class="cal-nav" data-yr="-1">${sv(ICON.chev,2)}</button><span class="my" style="font-size:26px">${ySel(26)}</span><button class="cal-nav" data-yr="1" style="transform:scaleX(-1)">${sv(ICON.chev,2)}</button></div>` : '';
     sheet.innerHTML=`<div class="grip"></div><h3>${esc(d.calTitle)}</h3><div class="sub">${esc(d.calSub)}</div>
       <div class="prec">
         <button class="${calPrec==='day'?'on':''}" data-prec="day">${esc(d.precDay)}</button>
@@ -1286,6 +1303,7 @@
     sheet.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{calD=+b.dataset.day;renderCal();});
     sheet.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{calM+=+b.dataset.mv;if(calM<0){calM=11;calY--;}if(calM>11){calM=0;calY++;}renderCal();});
     sheet.querySelectorAll('[data-yr]').forEach(b=>b.onclick=()=>{calY+=+b.dataset.yr;renderCal();});
+    sheet.querySelectorAll('.ysel').forEach(x=>x.onchange=()=>{ calY=+x.value; if(calPrec==='day'&&calD){ const dm=new Date(calY,calM+1,0).getDate(); if(calD>dm) calD=dm; } renderCal(); });
     sheet.querySelectorAll('[data-season]').forEach(b=>b.onclick=()=>{calSeason=+b.dataset.season;renderCal();});
     sheet.querySelector('#calCancel').onclick=hide;
     sheet.querySelector('#calSend').onclick=()=>{ const val=calText();
@@ -1573,7 +1591,7 @@
   }
   function labelFor(item){ const d=t(); if(item.kind==='story') return d.story+' · '+langNative(item.lang);
     const map={where:d.whereK,when:d.whenK,tag_add:d.inMoment,tag_remove:d.inMoment,tag_move:d.inMoment,
-      detail_add:d.addDetail,detail_edit:d.addDetail,detail_remove:d.addDetail,story_remove:d.story,
+      teller:d.tellerTitle,detail_add:d.addDetail,detail_edit:d.addDetail,detail_remove:d.addDetail,story_remove:d.story,
       photo_rotate:d.rotate,photo_replace:d.replacePhoto,photo_delete:d.deletePhoto};
     return map[item.field]||item.field; }
   function reviewValue(item){ // human-readable "new value" for the card
@@ -1615,6 +1633,7 @@
       else if(f==='tag_add'){ const m=JSON.parse(item.new_value||'{}'); let pid=item.ref_id; if(!pid){ await loadAllPeople(); pid=await ensurePerson(m.name); } await sb.from('artefact_subjects').upsert({artefact_id:art.id,person_id:pid,detail:m.box||null}); }
       else if(f==='tag_remove'){ await sb.from('artefact_subjects').delete().eq('artefact_id',art.id).eq('person_id',item.ref_id); }
       else if(f==='tag_move'){ const m=JSON.parse(item.new_value||'{}'); await sb.from('artefact_subjects').update({detail:m.box||null}).eq('artefact_id',art.id).eq('person_id',item.ref_id); }
+      else if(f==='teller'){ if(item.ref_id){ await sb.from('artefacts').update({contributor_id:item.ref_id}).eq('id',art.id); art.contributor_id=item.ref_id; } }
       else if(f==='photo_rotate'){ await doRotate(); }
       else if(f==='photo_replace'){ const old=art.storage_path; await sb.from('artefacts').update({storage_path:item.new_value}).eq('id',art.id); art.storage_path=item.new_value; if(old&&old!==item.new_value){try{await sb.storage.from('family').remove([old]);}catch(e){}} }
       else if(f==='photo_delete'){ const old=art.storage_path; await sb.from('artefacts').update({storage_path:null}).eq('id',art.id); art.storage_path=null; if(old){try{await sb.storage.from('family').remove([old]);}catch(e){}} }
@@ -1669,6 +1688,7 @@
 
     $$('[data-open="story"]').forEach(el=>el.onclick=e=>{ e.stopPropagation(); openEditor('story'); });
     const rmt=$('[data-rmtell]'); if(rmt) rmt.onclick=e=>{ e.stopPropagation(); removeTelling(); };
+    const cht=$('[data-chtell]'); if(cht) cht.onclick=e=>{ e.stopPropagation(); openNameSheet(null,false,'teller'); };
 
     $$('[data-edit]').forEach(el=>{ el.addEventListener('click', e=>{
       const key=el.getAttribute('data-edit');
