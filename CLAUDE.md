@@ -214,6 +214,12 @@ runners-up, link to each source photo. Fen narrates every step (EN/RU/HE).
   and .dbg hooks. A harmless 404 for tfjs-backend-wasm-simd.wasm appears in the console.
 - lf-fen v26 (ALL pages): Fen's words wait until her walk-in has ended (PENDSAY, last wins);
   fires document event 'lffen:live' and sets window.__lfFenLive. Leon: "the fox comes first".
+Round 2 `2887dba` (Leon 2026-10-14): "Myself" chip leads BOTH pickers (if the account is
+anchored); people ordered by family distance = BFS steps over published parent/spouse/sibling
+links (friends excluded), from the player in the first picker and from the first person in
+the second; ties alphabetical, unconnected last. Result faces top-aligned so both images share
+one centre line whatever the name length. Probe `~/qc/qc-la-order.js`: keeper (Nadia) -> Jenya
+(spouse) first, then Sofia (2 steps), matching relationships in the DB; face centres equal.
 TESTING ON THIS VPS: 1 vCPU, no GPU - the model runs in software (~30 s per photo) and Chrome
 took 90% CPU next to the live IB setup. Run face probes ONLY with `nice -n 19`, small pairs,
 off market hours. Probes: `~/qc/qc-lookalike.js` (EN pair 2x2 faces: 41%, 2 skipped as turned,
