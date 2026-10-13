@@ -193,6 +193,31 @@ MOMENT EDITS, ROUND 2 (2026-09-25) `247abce` + `e5a6232`:
 - "Told by" was blank on EVERY moment: moment-real never loaded lf-label.js. Now loaded.
 Probes `~/qc/qc-momedit3.js`, `~/qc/qc-teller.js`: year list 177 years, EN/RU/HE date forms,
 teller picker titled, staging shows Send, EN "told by Leon Golnick"; 0 in_review edits after.
+NEW GAME "WHO LOOKS ALIKE?" (Leon, 2026-10-13) — `game-look-alike.html`, `df54ebc`..`da38fce`.
+Built with current graphics at Leon's word (design stage later; no Claude Design yet). First
+tile in the Play sheet (Faces group; lf-nav v45). Flow: pick a person (grid of the 46 people
+with a tagged face box) -> their face strip -> "Compare with someone" (picker, "Myself" chip
+if the account is anchored) or "Find their look-alike" (whole tree) -> progress bar + Stop ->
+reveal: two faces, % count-up, a filling column (Leon: simple bar now, design later), up to 3
+runners-up, link to each source photo. Fen narrates every step (EN/RU/HE).
+- Faces are read IN THE BROWSER: face-api @vladmandic 1.7.15 from jsdelivr (ssdMobilenetv1 +
+  landmark68 + recognition, ~13 MB, browser-cached). Nothing on the VPS, nothing stored:
+  descriptors live in the tab's memory only.
+- The detector runs on the WHOLE photo once; each tag box picks which detected face is whose
+  (detected face must lie >=50% inside the tag). Detecting on the cut-out around a tag found
+  NO faces (tested) - do not go back to crop-detection.
+- Leon's 2026-09-05 face rules: frontal only (landmark yaw |nose offset / eye distance| <=
+  0.28, else skipped and counted in a note); features only (the model reads the face).
+- % = clamp(round((1.15 - euclidean distance) * 100), 0, 99): a presentational mapping, not a
+  probability. Fen says once per visit that it is likeness, not kinship.
+- Diagnosis: window.__lookAlike.WHY (per tag: ok / turned x / no-face / outside tag x / error)
+  and .dbg hooks. A harmless 404 for tfjs-backend-wasm-simd.wasm appears in the console.
+- lf-fen v26 (ALL pages): Fen's words wait until her walk-in has ended (PENDSAY, last wins);
+  fires document event 'lffen:live' and sets window.__lfFenLive. Leon: "the fox comes first".
+TESTING ON THIS VPS: 1 vCPU, no GPU - the model runs in software (~30 s per photo) and Chrome
+took 90% CPU next to the live IB setup. Run face probes ONLY with `nice -n 19`, small pairs,
+off market hours. Probes: `~/qc/qc-lookalike.js` (EN pair 2x2 faces: 41%, 2 skipped as turned,
+0 page errors), `~/qc/qc-la-light.js` (RU/HE text + dir, sheet order alike-first).
 NOTE: the table of contents at the top of this file is stale — several headings it lists
 (game-feel spec, design house rules, briefs) are not in the body.
 
