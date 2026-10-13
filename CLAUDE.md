@@ -1138,6 +1138,17 @@ assuming the shell is gone.
 
 ## 4 · PARKED — decided, not now (do not build unasked)
 
+### Small open items (Leon, 2026-10-13) — PARKED
+
+Parked at Leon's word "for later" while the session turns to games:
+- Missing Voice tile leads to its "sleeping" screen (too few tellers) — dim it on the Play
+  sheet until playable.
+- Fen's spoken pick on the sheet is also listed as a tile below (shows twice).
+- Fen's suggestion lines (lf-invite): RU name not declined ("о Ионатан"); RU/HE address the
+  reader in the masculine ("ты ещё не слышал", "שמעת"); HE names a person by surname only.
+- "Change who told it" is missing on a machine-translated story (no told line there).
+- The table of contents at the top of this file is stale.
+
 ### Some current games are boring (Leon, 2026-09-24) — PARKED
 
 Leon: "Some of the current games are boring. My kids don't want to play them." Parked at his
