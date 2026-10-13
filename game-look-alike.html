@@ -196,20 +196,35 @@
     let side=Math.min(Math.max(bw,bh)*1.7,W,H); const sx=Math.max(0,Math.min(W-side,cx-side/2)), sy=Math.max(0,Math.min(H-side,cy-side/2));
     c.getContext('2d').drawImage(im,sx,sy,side,side,0,0,size,size); return c; }
 
-  /* one tagged face -> its descriptor, or null when it is not clear or not frontal (Leon's rule) */
+  /* one tagged face -> its descriptor, or null when it is not clear or not frontal (Leon's rule).
+     The reader looks at the WHOLE photo once and the tag box only says which of its faces is
+     whose: tested 2026-10-13, the detector found 17 faces in a group photo and none at all in
+     the small cut-out around one tag (it is trained on scenes, not on a face filling the frame).
+     One pass per photo is also cheaper than one per tag. */
   const DESC={}, WHY={};   /* WHY: per face, why it was skipped - for diagnosis only, in memory */
+  const PH={};
+  function photoFaces(path){ if(PH[path]) return PH[path];
+    PH[path]=(async()=>{ const im=await loadImg(path); if(!im) return null;
+      const dets=await FA.detectAllFaces(im,new FA.SsdMobilenetv1Options({minConfidence:0.4})).withFaceLandmarks().withFaceDescriptors();
+      return {im, dets:dets||[]}; })();
+    return PH[path]; }
   async function readFace(t){ if(DESC[t.key]!==undefined) return DESC[t.key];
-    let out=null;
-    let why='no-image';
-    try{ const im=await loadImg(t.path); if(im){ const c=crop(im,t.box,320); why='no-face';
-      const dets=await FA.detectAllFaces(c,new FA.SsdMobilenetv1Options({minConfidence:0.45})).withFaceLandmarks().withFaceDescriptors();
-      let best=null, bd=1e9; (dets||[]).forEach(d=>{ const b=d.detection.box, dx=b.x+b.width/2-160, dy=b.y+b.height/2-160, dd=dx*dx+dy*dy; if(dd<bd){ bd=dd; best=d; } });
-      if(best) why='off-centre '+Math.round(Math.sqrt(bd));
-      if(best && Math.sqrt(bd)<110){ const P=best.landmarks.positions, avg=a=>a.reduce((s,p)=>({x:s.x+p.x/a.length,y:s.y+p.y/a.length}),{x:0,y:0});
-        const el=avg(P.slice(36,42)), er=avg(P.slice(42,48)), nose=P[30];
-        const ed=Math.hypot(er.x-el.x,er.y-el.y), yaw=ed>0?((nose.x-(el.x+er.x)/2)/ed):9;
-        why='turned '+yaw.toFixed(2);
-        if(Math.abs(yaw)<=0.28){ out={d:best.descriptor,t:t}; why='ok'; } } } }catch(e){ out=null; why='error '+String(e&&e.message||e).slice(0,60); }
+    let out=null, why='no-image';
+    try{ const r=await photoFaces(t.path);
+      if(r){ why='no-face'; const W=r.im.naturalWidth, H=r.im.naturalHeight;
+        const tx=t.box.x*W, ty=t.box.y*H, tw=t.box.w*W, th=t.box.h*H;
+        let best=null, bs=0;
+        r.dets.forEach(d=>{ const b=d.detection.box;
+          const ix=Math.max(0,Math.min(tx+tw,b.x+b.width)-Math.max(tx,b.x)), iy=Math.max(0,Math.min(ty+th,b.y+b.height)-Math.max(ty,b.y));
+          const inter=ix*iy, cover=inter/Math.max(1,b.width*b.height);   /* how much of the detected face lies in the tag */
+          if(cover>bs){ bs=cover; best=d; } });
+        if(best && bs>=0.5){ const P=best.landmarks.positions, avg=a=>a.reduce((s,p)=>({x:s.x+p.x/a.length,y:s.y+p.y/a.length}),{x:0,y:0});
+          const el=avg(P.slice(36,42)), er=avg(P.slice(42,48)), nose=P[30];
+          const ed=Math.hypot(er.x-el.x,er.y-el.y), yaw=ed>0?((nose.x-(el.x+er.x)/2)/ed):9;
+          why='turned '+yaw.toFixed(2);
+          if(Math.abs(yaw)<=0.28){ out={d:best.descriptor,t:t}; why='ok'; } }
+        else if(best) why='outside tag '+bs.toFixed(2); } }
+    catch(e){ out=null; why='error '+String(e&&e.message||e).slice(0,60); }
     DESC[t.key]=out; WHY[t.key]=why; return out; }
   const pctOf=d=>Math.max(0,Math.min(99,Math.round((1.15-d)*100)));
   /* ---------- screens ---------- */
