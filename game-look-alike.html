@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr"><head>
+<link rel="icon" href="data:,">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<link rel="stylesheet" href="lf-layout.css?v=1">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Who Looks Alike? · The Living Forest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Frank+Ruhl+Libre:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="lf-db.js?v=13"></script>
+<script src="lf-label.js?v=2"></script>
+<script src="lf-face.js?v=3"></script>
+<!-- WHO LOOKS ALIKE? (Leon, 2026-10-13). Built with the current graphics on purpose: Leon
+     wants to see it work before it goes to design. Faces are read IN THE BROWSER by
+     face-api (vladmandic build, jsdelivr): nothing runs on the VPS and no face data is
+     stored anywhere - descriptors live in this tab's memory only. Hard rules from Leon's
+     2026-09-05 spec: only faces seen from the front count, and the comparison is of facial
+     features only (the model reads the face, never hair). The % is a presentational mapping
+     of the model's face distance; Fen says once that it is likeness, not kinship. -->
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  :root{ --cream:#f4ecdb; --muted:#9db0cc; --dim:#6f83a3; --hair:#ffffff18; --panel:#ffffff0b;
+    --gold:#f3cd84; --gold-hi:#ffe6ad; --cool:#7fb4d8; --cool-hi:#a9d2ee; --ember:#e8955c; }
+  html,body{ background:#04070e; }
+  body{ font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--cream); min-height:100dvh;
+    background:radial-gradient(150% 100% at 50% -6%, #12233c 0%, #0a1526 44%, #04070e 100%); }
+  .serif{ font-family:'Newsreader',Georgia,serif; }
+  [dir="rtl"] .serif{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
+  .wrap{ max-width:560px; margin:0 auto; padding:calc(64px + env(safe-area-inset-top)) 16px 190px; }
+  .kick{ font-size:12px; letter-spacing:.14em; color:var(--muted); text-transform:uppercase; }
+  h1{ font-weight:400; font-size:30px; color:var(--gold); margin:4px 0 18px; }
+  .step{ font-size:14px; color:var(--muted); margin:18px 2px 10px; }
+  .search{ width:100%; padding:11px 14px; border-radius:12px; border:1px solid var(--hair); background:var(--panel);
+    color:var(--cream); font:inherit; font-size:15px; outline:none; }
+  .search:focus{ border-color:rgba(243,205,132,.5); }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(84px,1fr)); gap:12px 8px; margin-top:14px; }
+  .pp{ display:flex; flex-direction:column; align-items:center; gap:6px; background:none; border:0; color:var(--cream);
+    font:inherit; cursor:pointer; padding:4px 2px; border-radius:12px; }
+  .pp:active{ transform:scale(.96); }
+  .pp .av{ width:64px; height:64px; border-radius:50%; overflow:hidden; background:#ffffff10; border:1px solid rgba(243,205,132,.35); }
+  .pp .nm{ font-size:12.5px; line-height:1.2; text-align:center; color:var(--cream); max-width:84px; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  .pp.me .av{ border-color:var(--ember); }
+  .pp[disabled]{ opacity:.4; cursor:default; }
+  .card{ display:flex; align-items:center; gap:14px; padding:14px; border-radius:16px; background:var(--panel); border:1px solid var(--hair); }
+  .card .av{ width:72px; height:72px; border-radius:50%; overflow:hidden; flex:0 0 auto; border:1px solid rgba(243,205,132,.45); background:#ffffff10; }
+  .card .who{ flex:1; min-width:0; }
+  .card .who b{ display:block; font-family:'Newsreader',Georgia,serif; font-weight:400; font-size:21px; color:var(--gold); }
+  .card .who span{ font-size:13px; color:var(--muted); }
+  .link{ background:none; border:0; color:var(--cool-hi); font:inherit; font-size:13px; cursor:pointer; padding:6px 0; }
+  .strip{ display:flex; gap:8px; overflow-x:auto; padding:12px 2px 4px; }
+  .strip .fc{ width:58px; height:58px; border-radius:10px; overflow:hidden; flex:0 0 auto; background:#ffffff10; }
+  .strip .fc canvas{ width:100%; height:100%; display:block; }
+  .acts{ display:flex; flex-direction:column; gap:10px; margin-top:16px; }
+  .btn{ width:100%; padding:15px 16px; border-radius:14px; font:inherit; font-size:16px; font-weight:600; cursor:pointer;
+    border:1px solid rgba(243,205,132,.45); background:linear-gradient(160deg,rgba(243,205,132,.18),rgba(243,205,132,.05)); color:var(--gold-hi); }
+  .btn.alt{ border-color:rgba(127,180,216,.45); background:linear-gradient(160deg,rgba(127,180,216,.18),rgba(127,180,216,.04)); color:var(--cool-hi); }
+  .btn.ghost{ background:none; border-color:var(--hair); color:var(--muted); font-weight:500; }
+  .btn:active{ transform:scale(.98); }
+  .prog{ margin-top:22px; padding:18px; border-radius:16px; background:var(--panel); border:1px solid var(--hair); }
+  .prog .lbl{ font-size:14px; color:var(--muted); margin-bottom:10px; }
+  .bar{ height:12px; border-radius:6px; background:#ffffff12; overflow:hidden; display:flex; }
+  .bar i{ display:block; height:100%; width:0; background:linear-gradient(90deg,var(--gold),var(--ember)); transition:width .25s; }
+  .prog .btn{ margin-top:14px; }
+  .res{ margin-top:18px; }
+  .pair{ display:flex; align-items:flex-end; justify-content:center; gap:12px; }
+  .face{ display:flex; flex-direction:column; align-items:center; gap:8px; width:118px; }
+  .face .big{ width:118px; height:118px; border-radius:18px; overflow:hidden; border:2px solid rgba(243,205,132,.5); background:#ffffff10; }
+  .face .big canvas{ width:100%; height:100%; display:block; }
+  .face b{ font-weight:500; font-size:14px; text-align:center; }
+  .face a{ font-size:12px; color:var(--cool-hi); text-decoration:none; }
+  .meter{ display:flex; flex-direction:column; align-items:center; gap:6px; width:62px; }
+  .col{ width:34px; height:150px; border-radius:10px; background:#ffffff12; border:1px solid var(--hair); position:relative; overflow:hidden; }
+  .col i{ position:absolute; left:0; right:0; bottom:0; height:0; background:linear-gradient(0deg,var(--ember),var(--gold)); transition:height 1.6s cubic-bezier(.2,.8,.2,1); }
+  .pct{ font-family:'Newsreader',Georgia,serif; font-size:30px; color:var(--gold-hi); line-height:1; direction:ltr; }
+  .meter small{ font-size:11px; color:var(--muted); }
+  .also{ margin-top:18px; font-size:13px; color:var(--muted); }
+  .also ul{ margin-top:6px; }
+  .also li{ list-style:none; display:flex; justify-content:space-between; padding:7px 2px; border-bottom:1px solid var(--hair); color:var(--cream); }
+  .also li span:last-child{ direction:ltr; color:var(--gold); }
+  .note{ margin-top:12px; font-size:12.5px; color:var(--dim); }
+  .hide{ display:none !important; }
+</style>
+</head>
+<body>
+<div class="page" id="root"><div class="wrap">
+  <div class="kick" id="kick"></div>
+  <h1 class="serif" id="title"></h1>
+  <section id="sPick">
+    <div class="step" id="stepTxt"></div>
+    <input class="search" id="q" autocomplete="off">
+    <div class="grid" id="grid"></div>
+  </section>
+  <section id="sPerson" class="hide">
+    <div class="card"><div class="av" id="aAv"></div><div class="who"><b id="aName"></b><span id="aFaces"></span><br><button class="link" id="aChange"></button></div></div>
+    <div class="strip" id="aStrip"></div>
+    <div class="acts" id="acts"><button class="btn" id="bCompare"></button><button class="btn alt" id="bAlike"></button></div>
+  </section>
+  <section id="sRun" class="hide"><div class="prog"><div class="lbl" id="pLbl"></div><div class="bar"><i id="pBar"></i></div><button class="btn ghost" id="bStop"></button></div></section>
+  <section id="sRes" class="hide res"></section>
+</div></div>
+<script>
+(function(){
+  const SB_URL='https://oabcdrktuikifbormjip.supabase.co', SB_KEY='sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC';
+  const sb=window.supabase.createClient(SB_URL,SB_KEY);
+  LFDB.install(sb,'game-look-alike'); LFFace.init(sb);
+  const FA_VER='1.7.15', FA_BASE='https://cdn.jsdelivr.net/npm/@vladmandic/face-api@'+FA_VER;
+  const lang=(function(){ try{ const l=localStorage.getItem('lf_lang'); return ['en','ru','he'].includes(l)?l:'en'; }catch(e){ return 'en'; } })();
+  const T={
+    en:{kick:'Faces · a game',title:'Who Looks Alike?',step:'Choose a person',search:'Search the family',
+      faces:n=>n===1?'1 face':n+' faces',change:'Choose someone else',compare:'Compare with someone',alike:'Find their look-alike',
+      stepB:'Compare with…',myself:'Myself',stop:'Stop',again:'Play again',other:'Choose someone else',
+      prog:(i,n)=>'Comparing faces: '+i+' of '+n,model:'Waking up the face reader…',similar:'alike',also:'Also close',
+      skipped:n=>n+(n===1?' face was':' faces were')+' skipped — not clear, or not facing the front.',photo:'the photo',
+      modelFail:'The face reader could not load. Check the connection and try again.',
+      fen:{intro:"Faces run in families. Pick someone, and let's see who they look like.",picked:"Good choice. Compare them with someone — or let me search the whole forest.",
+        pickB:"And who shall we hold them up against?",working:"Hold on — I'm looking closely at every face.",
+        high:p=>"Ta-dam! Look at that — "+p+"%!",mid:p=>"Ta-dam! "+p+"% — there's something there.",low:p=>"Only "+p+"% — not so alike, these two.",
+        honest:"Remember: that's how alike the faces look to me — not how close the family is.",
+        noface:"I can't see a clear face from the front here. Let's try someone else.",stopped:"Stopped. We can try again any time.",
+        noMe:"I don't have a clear photo of you yet — tag yourself in a photo first.",nobody:"Nobody else has a clear face to compare yet."}},
+    ru:{kick:'Лица · игра',title:'Кто на кого похож?',step:'Выберите человека',search:'Поиск по семье',
+      faces:n=>'Лиц: '+n,change:'Выбрать другого',compare:'Сравнить с кем-то',alike:'Найти двойника',
+      stepB:'Сравнить с…',myself:'Я',stop:'Остановить',again:'Ещё раз',other:'Выбрать другого',
+      prog:(i,n)=>'Сравниваю лица: '+i+' из '+n,model:'Включаю распознавание лиц…',similar:'сходство',also:'Тоже похожи',
+      skipped:n=>'Пропущено лиц: '+n+' — нечётко или не анфас.',photo:'снимок',
+      modelFail:'Не удалось загрузить распознавание лиц. Проверьте связь и попробуйте снова.',
+      fen:{intro:'Лица передаются по наследству. Выбери человека — посмотрим, на кого он похож.',picked:'Отлично. Сравни с кем-нибудь — или я поищу по всему лесу.',
+        pickB:'А с кем будем сравнивать?',working:'Подожди — я внимательно смотрю на каждое лицо.',
+        high:p=>'Та-дам! Вот это да — '+p+'%!',mid:p=>'Та-дам! '+p+'% — что-то общее есть.',low:p=>'Всего '+p+'% — не очень похожи.',
+        honest:'Помни: это лишь то, насколько лица похожи на мой взгляд, — а не степень родства.',
+        noface:'Не вижу здесь чёткого лица анфас. Попробуем кого-нибудь другого.',stopped:'Остановились. Можно попробовать снова.',
+        noMe:'У меня пока нет твоего чёткого снимка — сначала отметь себя на фотографии.',nobody:'Пока не с кем сравнить — нет других чётких лиц.'}},
+    he:{kick:'פנים · משחק',title:'מי דומה למי?',step:'בחרו אדם',search:'חיפוש במשפחה',
+      faces:n=>n===1?'פנים אחת':n+' פנים',change:'בחירת מישהו אחר',compare:'השוואה עם מישהו',alike:'מציאת הדומה ביותר',
+      stepB:'השוואה עם…',myself:'אני',stop:'עצירה',again:'שוב',other:'בחירת מישהו אחר',
+      prog:(i,n)=>'משווה פנים: '+i+' מתוך '+n,model:'מעירה את קורא הפנים…',similar:'דמיון',also:'גם דומים',
+      skipped:n=>n+' פנים דולגו — לא ברורות או לא מלפנים.',photo:'התמונה',
+      modelFail:'לא ניתן לטעון את קורא הפנים. בדקו את החיבור ונסו שוב.',
+      fen:{intro:'פנים עוברות במשפחה. בחרו מישהו, ונראה למי הוא דומה.',picked:'בחירה טובה. השוו עם מישהו — או שאחפש בכל היער.',
+        pickB:'ולמי נשווה?',working:'רגע — אני מסתכלת היטב על כל פנים.',
+        high:p=>'טה-דאם! תראו את זה — '+p+'%!',mid:p=>'טה-דאם! '+p+'% — יש משהו דומה.',low:p=>'רק '+p+'% — לא כל כך דומים.',
+        honest:'זכרו: זה כמה הפנים נראות לי דומות — לא כמה קרובה המשפחה.',
+        noface:'אני לא רואה כאן פנים ברורות מלפנים. ננסה מישהו אחר.',stopped:'עצרנו. אפשר לנסות שוב.',
+        noMe:'עדיין אין לי תמונה ברורה שלך — סמנו את עצמכם בתמונה קודם.',nobody:'עדיין אין עם מי להשוות — אין פנים ברורות נוספות.'}}
+  };
+  const L=T[lang];
+  const $=s=>document.querySelector(s);
+  const esc=x=>String(x==null?'':x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function fen(t){ let n=0; (function go(){ if(window.Fen&&Fen.say){ try{ Fen.say(t); }catch(e){} } else if(n++<40) setTimeout(go,150); })(); }
+  let honestSaid=false;
+  const S={ tags:[], byP:{}, people:[], me:null, A:null, mode:'A', abort:false, port:{} };
+  const name=pid=>(window.LFLabel&&LFLabel.of(pid,lang))||'—';
+
+  /* ---------- data: every tagged face box on a published photo this account can see ---------- */
+  async function loadData(){
+    const {data:subs}=await sb.from('artefact_subjects').select('person_id,artefact_id,detail').not('detail','is',null);
+    const aids=[...new Set((subs||[]).map(s=>s.artefact_id))];
+    let arts=[]; if(aids.length){ const r=await sb.from('artefacts').select('id,storage_path').in('id',aids).eq('kind','photo').eq('status','published').not('storage_path','is',null); arts=r.data||[]; }
+    const path={}; arts.forEach(a=>{ path[a.id]=a.storage_path; });
+    (subs||[]).forEach(s=>{ const b=LFFace.normBox(s.detail); if(!b||!(b.w>0)||!path[s.artefact_id]) return;
+      const t={pid:s.person_id,aid:s.artefact_id,path:path[s.artefact_id],box:b,key:s.artefact_id+'|'+s.person_id};
+      S.tags.push(t); (S.byP[t.pid]=S.byP[t.pid]||[]).push(t); });
+    S.people=Object.keys(S.byP);
+    try{ await LFLabel.load(sb,S.people); }catch(e){}
+    S.people.sort((a,b)=>name(a).localeCompare(name(b)));
+    try{ S.port=await LFFace.resolve(S.people); }catch(e){ S.port={}; }
+    try{ const {data:{session}}=await sb.auth.getSession();
+      if(session&&session.user){ const {data:pr}=await sb.from('profiles').select('person_id').eq('id',session.user.id).maybeSingle(); S.me=(pr&&pr.person_id)||null; } }catch(e){}
+  }
+  function avatar(el,pid){ const r=S.port[pid]; const t=(S.byP[pid]||[])[0];
+    LFFace.into(el, r ? Object.assign({size:128},r) : {path:t&&t.path, box:t&&t.box, size:128}); }
+
+  /* ---------- the face reader (loaded on first use, cached by the browser) ---------- */
+  let FA=null, faP=null;
+  function loadFA(){ if(faP) return faP;
+    faP=(async()=>{ const m=await import(FA_BASE+'/dist/face-api.esm.js'); const fa=m.default&&m.default.nets?m.default:m;
+      try{ await fa.tf.setBackend('webgl'); }catch(e){} try{ await fa.tf.ready(); }catch(e){}
+      const M=FA_BASE+'/model';
+      await fa.nets.ssdMobilenetv1.loadFromUri(M); await fa.nets.faceLandmark68Net.loadFromUri(M); await fa.nets.faceRecognitionNet.loadFromUri(M);
+      FA=fa; return fa; })();
+    faP.catch(()=>{ faP=null; }); return faP; }
+
+  const IMG={};
+  function loadImg(path){ if(IMG[path]) return IMG[path];
+    IMG[path]=(async()=>{ const u=await LFFace.url(path,1200); if(!u) return null;
+      return await new Promise(res=>{ const im=new Image(); im.crossOrigin='anonymous'; im.onload=()=>res(im); im.onerror=()=>res(null); im.src=u; }); })();
+    return IMG[path]; }
+  /* the tag box with room around it, as lf-face cuts it: the detector needs a little context */
+  function crop(im,box,size){ const W=im.naturalWidth,H=im.naturalHeight, c=document.createElement('canvas'); c.width=c.height=size;
+    const bw=box.w*W, bh=box.h*H, cx=(box.x+box.w/2)*W, cy=(box.y+box.h/2)*H;
+    let side=Math.min(Math.max(bw,bh)*1.7,W,H); const sx=Math.max(0,Math.min(W-side,cx-side/2)), sy=Math.max(0,Math.min(H-side,cy-side/2));
+    c.getContext('2d').drawImage(im,sx,sy,side,side,0,0,size,size); return c; }
+
+  /* one tagged face -> its descriptor, or null when it is not clear or not frontal (Leon's rule) */
+  const DESC={};
+  async function readFace(t){ if(DESC[t.key]!==undefined) return DESC[t.key];
+    let out=null;
+    try{ const im=await loadImg(t.path); if(im){ const c=crop(im,t.box,320);
+      const dets=await FA.detectAllFaces(c,new FA.SsdMobilenetv1Options({minConfidence:0.45})).withFaceLandmarks().withFaceDescriptors();
+      let best=null, bd=1e9; (dets||[]).forEach(d=>{ const b=d.detection.box, dx=b.x+b.width/2-160, dy=b.y+b.height/2-160, dd=dx*dx+dy*dy; if(dd<bd){ bd=dd; best=d; } });
+      if(best && Math.sqrt(bd)<110){ const P=best.landmarks.positions, avg=a=>a.reduce((s,p)=>({x:s.x+p.x/a.length,y:s.y+p.y/a.length}),{x:0,y:0});
+        const el=avg(P.slice(36,42)), er=avg(P.slice(42,48)), nose=P[30];
+        const ed=Math.hypot(er.x-el.x,er.y-el.y), yaw=ed>0?((nose.x-(el.x+er.x)/2)/ed):9;
+        if(Math.abs(yaw)<=0.28) out={d:best.descriptor,t:t}; } } }catch(e){ out=null; }
+    DESC[t.key]=out; return out; }
+  const pctOf=d=>Math.max(0,Math.min(99,Math.round((1.15-d)*100)));
+  /* ---------- screens ---------- */
+  function only(id){ ['#sPick','#sPerson','#sRun','#sRes'].forEach(s=>$(s).classList.toggle('hide',s!==id)); }
+  function renderGrid(){ const q=($('#q').value||'').trim().toLowerCase(), g=$('#grid');
+    let list=S.people.filter(p=>!(S.mode==='B'&&p===S.A)).filter(p=>!q||name(p).toLowerCase().includes(q));
+    let h='';
+    if(S.mode==='B' && S.me && S.me!==S.A && !q) h+=`<button class="pp me" data-me="1"><span class="av" data-av="${esc(S.me)}"></span><span class="nm">${esc(L.myself)}</span></button>`;
+    h+=list.map(p=>`<button class="pp" data-pid="${esc(p)}"><span class="av" data-av="${esc(p)}"></span><span class="nm">${esc(name(p))}</span></button>`).join('');
+    g.innerHTML=h;
+    g.querySelectorAll('[data-av]').forEach(el=>{ const pid=el.getAttribute('data-av'); if(S.byP[pid]||S.port[pid]) avatar(el,pid); });
+    g.querySelectorAll('[data-pid]').forEach(b=>b.onclick=()=>pick(b.getAttribute('data-pid')));
+    const me=g.querySelector('[data-me]'); if(me) me.onclick=()=>{ if(!S.byP[S.me]){ fen(L.fen.noMe); return; } pick(S.me); };
+  }
+  function openPick(mode){ S.mode=mode; $('#stepTxt').textContent=mode==='B'?L.stepB:L.step; $('#q').value=''; renderGrid();
+    $('#sPick').classList.remove('hide'); if(mode==='A'){ only('#sPick'); } else { $('#acts').classList.add('hide'); $('#sRes').classList.add('hide'); }
+    if(mode==='B') fen(L.fen.pickB); }
+  async function pick(pid){
+    if(S.mode==='B'){ $('#sPick').classList.add('hide'); run([pid]); return; }
+    S.A=pid; only('#sPerson'); $('#acts').classList.remove('hide');
+    $('#aName').textContent=name(pid); $('#aFaces').textContent=L.faces((S.byP[pid]||[]).length);
+    avatar($('#aAv'),pid);
+    const st=$('#aStrip'); st.innerHTML='';
+    for(const t of (S.byP[pid]||[])){ const d=document.createElement('div'); d.className='fc'; st.appendChild(d);
+      loadImg(t.path).then(im=>{ if(im) d.appendChild(crop(im,t.box,116)); }); }
+    fen(L.fen.picked); window.scrollTo({top:0,behavior:'smooth'});
+    loadFA().catch(()=>{});   /* start fetching the reader while they decide */
+  }
+
+  /* ---------- the comparison ---------- */
+  async function run(others){
+    S.abort=false; S.mode='A'; only('#sRun'); $('#pBar').style.width='0%'; $('#pLbl').textContent=L.model; fen(L.fen.working);
+    try{ await loadFA(); }catch(e){ $('#pLbl').textContent=L.modelFail; return; }
+    const aT=S.byP[S.A]||[], bT=[].concat(...others.map(p=>S.byP[p]||[]));
+    const all=aT.concat(bT), n=all.length; let i=0;
+    for(const t of all){ if(S.abort) break; await readFace(t); i++;
+      $('#pBar').style.width=Math.round(100*i/n)+'%'; $('#pLbl').textContent=L.prog(i,n);
+      await new Promise(r=>setTimeout(r,0)); }
+    if(S.abort){ fen(L.fen.stopped); pick(S.A); return; }
+    const A=aT.map(t=>DESC[t.key]).filter(Boolean), B=bT.map(t=>DESC[t.key]).filter(Boolean);
+    const skipped=all.filter(t=>!DESC[t.key]).length;
+    if(!A.length){ fen(L.fen.noface); pick(S.A); return; }
+    if(!B.length){ fen(others.length>1?L.fen.nobody:L.fen.noface); pick(S.A); return; }
+    const best={};   /* per other person: their closest pair to A */
+    for(const a of A) for(const b of B){ const d=FA.euclideanDistance(a.d,b.d); const k=b.t.pid;
+      if(!best[k]||d<best[k].d) best[k]={d,a:a.t,b:b.t}; }
+    const ranked=Object.values(best).sort((x,y)=>x.d-y.d);
+    showResult(ranked[0], ranked.slice(1,4), skipped);
+  }
+
+  async function faceBox(t){ const w=document.createElement('div'); w.className='big'; const im=await loadImg(t.path); if(im) w.appendChild(crop(im,t.box,236)); return w; }
+  async function showResult(top, rest, skipped){
+    const p=pctOf(top.d), r=$('#sRes');
+    r.innerHTML=`<div class="pair"><div class="face" id="fA"></div><div class="meter"><span class="pct" id="pct">0%</span><div class="col"><i id="colI"></i></div><small>${esc(L.similar)}</small></div><div class="face" id="fB"></div></div>
+      ${rest.length?`<div class="also">${esc(L.also)}<ul>${rest.map(x=>`<li><span>${esc(name(x.b.pid))}</span><span>${pctOf(x.d)}%</span></li>`).join('')}</ul></div>`:''}
+      ${skipped?`<div class="note">${esc(L.skipped(skipped))}</div>`:''}
+      <div class="acts"><button class="btn" id="bAgain">${esc(L.again)}</button><button class="btn ghost" id="bOther">${esc(L.other)}</button></div>`;
+    for(const [id,t] of [['#fA',top.a],['#fB',top.b]]){ const f=r.querySelector(id); f.appendChild(await faceBox(t));
+      f.insertAdjacentHTML('beforeend',`<b>${esc(name(t.pid))}</b><a href="moment-real.html?id=${encodeURIComponent(t.aid)}">${esc(L.photo)} ›</a>`); }
+    only('#sRes'); $('#sPerson').classList.remove('hide'); $('#acts').classList.add('hide');
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{ $('#colI').style.height=p+'%'; }));
+    const t0=performance.now(); (function tick(){ const k=Math.min(1,(performance.now()-t0)/1600); $('#pct').textContent=Math.round(p*(1-Math.pow(1-k,3)))+'%'; if(k<1) requestAnimationFrame(tick); })();
+    setTimeout(()=>{ fen(p>=70?L.fen.high(p):p>=45?L.fen.mid(p):L.fen.low(p));
+      if(!honestSaid){ honestSaid=true; setTimeout(()=>fen(L.fen.honest),5200); } },1700);
+    $('#bAgain').onclick=()=>pick(S.A); $('#bOther').onclick=()=>openPick('A');
+    r.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+
+  /* ---------- start ---------- */
+  document.documentElement.lang=lang; $('#root').dir=lang==='he'?'rtl':'ltr';
+  $('#kick').textContent=L.kick; $('#title').textContent=L.title; $('#q').placeholder=L.search;
+  $('#aChange').textContent=L.change; $('#bCompare').textContent=L.compare; $('#bAlike').textContent=L.alike; $('#bStop').textContent=L.stop;
+  $('#aChange').onclick=()=>openPick('A'); $('#bCompare').onclick=()=>openPick('B');
+  $('#bAlike').onclick=()=>run(S.people.filter(p=>p!==S.A)); $('#bStop').onclick=()=>{ S.abort=true; };
+  $('#q').oninput=renderGrid;
+  setTimeout(()=>fen(L.fen.intro),1200);   /* after the stock greeting, so hers is the line that lands */
+  loadData().then(()=>openPick('A')).catch(()=>openPick('A'));
+  window.__lookAlike=S;
+})();
+</script>
+<script src="lf-lang.js?v=7"></script>
+<script src="lf-nav.js?v=45" data-here="" data-parent="index.html"></script>
+<script src="lf-fen.js?v=26"></script>
+</body></html>

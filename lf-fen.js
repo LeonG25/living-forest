@@ -282,7 +282,7 @@
     /* her ember light pools beneath her — the warmth around the fox reads as hers */
     var ember=mk('div','position:absolute;left:-8px;bottom:-10px;width:230px;height:150px;pointer-events:none;background:radial-gradient(60% 72% at 38% 80%, rgba(126,90,46,.34), transparent 72%);');
     var BASEF='drop-shadow(0 4px 8px rgba(0,0,0,.5))';
-    var PHASE='pre', PEND=null;
+    var PHASE='pre', PEND=null, PENDSAY=null;
     function tween(ms,fn,done){ var t0=performance.now();
       (function st(){ var k=Math.min(1,(performance.now()-t0)/ms);
         fn(k); if(k<1) requestAnimationFrame(st); else if(done) done(); })(); }            /* pre -> entrance -> live */
@@ -302,6 +302,10 @@
        Cues raised during PRE/ENTRANCE wait; the last one plays after she settles. */
     (function(){
       function goLive(){ if(PHASE==='live') return; PHASE='live'; flog('live');
+        /* she speaks only once she has arrived (Leon, 2026-10-13): words said during the
+           forest-only pause or the walk-in wait here, last one wins, and land as she sits */
+        if(PENDSAY){ var ps=PENDSAY; PENDSAY=null; setTimeout(function(){ speak(ps[0],ps[1]); },350); }
+        window.__lfFenLive=1; try{ document.dispatchEvent(new Event('lffen:live')); }catch(e){}
         var p=PEND; PEND=null;
         if(p){ setTimeout(function(){ setClip(p[0],p[1],p[2]); },300); }
         else { toIdle(); } }
@@ -378,7 +382,9 @@
     function play(name){ setClip(name,false,toIdle,true); }
 
     var st;
-    function speak(t,hold){ if(!t) return; var l=lang();
+    function speak(t,hold){ if(!t) return;
+      if(PHASE==='pre'||PHASE==='entrance'){ PENDSAY=[t,hold]; return; }
+      var l=lang();
       say.dir=(l==='he')?'rtl':'ltr'; say.style.textAlign=(l==='he')?'right':'left';
       say.textContent=t; say.style.opacity='1';
       clearTimeout(st); if(!hold) st=setTimeout(function(){ say.style.opacity='0'; },4600); }

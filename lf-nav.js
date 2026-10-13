@@ -11,7 +11,7 @@
   function inAppRef(){
     try{ if(!document.referrer) return false;
       var u=new URL(document.referrer);
-      return u.origin===location.origin && /((home-real|person-real|place-real|moment-real|crowd-real|timeline-real|search-real|tree-real|contribute-real|curators-real|review-real|journal-real|reel-real|clearing-real|game-missing-voice|game-tangled-thread|game-who-is-who|game-what-happened-next|game-where-was-this|game-order-of-things|index|preview|preview-globe|prototype)\.html?|\/)$/.test(u.pathname);
+      return u.origin===location.origin && /((home-real|person-real|place-real|moment-real|crowd-real|timeline-real|search-real|tree-real|contribute-real|curators-real|review-real|journal-real|reel-real|clearing-real|game-missing-voice|game-look-alike|game-tangled-thread|game-who-is-who|game-what-happened-next|game-where-was-this|game-order-of-things|index|preview|preview-globe|prototype)\.html?|\/)$/.test(u.pathname);
     }catch(e){ return false; }
   }
   function goBack(){
@@ -167,18 +167,18 @@
   var PLAYW={
     en:{title:'Choose a game',close:'Close',
         g:{face:'Faces',life:'A life',places:'Places',story:'Stories'},
-        n:{crowd:'Find Them in the Crowd',order:'The Order of Things',wherewas:'Where Was This?',thread:'The Tangled Thread',whose:'Whose Story Is This?',voice:'The Missing Voice',whatnext:'What Happened Next?'},
-        s:{crowd:'Find each relative in one real group photo.',order:'Put the moments of a life in order.',wherewas:'Guess where each photo was taken.',thread:'Find two people one place connects.',whose:'Guess who a story is about.',voice:'Guess who told the story.',whatnext:'Guess which moment came next.'}},
+        n:{alike:'Who Looks Alike?',crowd:'Find Them in the Crowd',order:'The Order of Things',wherewas:'Where Was This?',thread:'The Tangled Thread',whose:'Whose Story Is This?',voice:'The Missing Voice',whatnext:'What Happened Next?'},
+        s:{alike:'Compare faces and find the family look-alike.',crowd:'Find each relative in one real group photo.',order:'Put the moments of a life in order.',wherewas:'Guess where each photo was taken.',thread:'Find two people one place connects.',whose:'Guess who a story is about.',voice:'Guess who told the story.',whatnext:'Guess which moment came next.'}},
     ru:{title:'Выберите игру',close:'Закрыть',
         g:{face:'Лица',life:'Жизнь',places:'Места',story:'Истории'},
-        n:{crowd:'Найди в толпе',order:'Порядок вещей',wherewas:'Где это было?',thread:'Запутанная нить',whose:'Чья это история?',voice:'Пропавший голос',whatnext:'Что было дальше?'},
-        s:{crowd:'Найдите каждого родственника на общем снимке.',order:'Расставьте моменты жизни по порядку.',wherewas:'Угадайте, где сделан снимок.',thread:'Найдите двоих, кого связывает одно место.',whose:'Угадайте, о ком эта история.',voice:'Угадайте, кто рассказал историю.',whatnext:'Угадайте, какой момент был следующим.'}},
+        n:{alike:'Кто на кого похож?',crowd:'Найди в толпе',order:'Порядок вещей',wherewas:'Где это было?',thread:'Запутанная нить',whose:'Чья это история?',voice:'Пропавший голос',whatnext:'Что было дальше?'},
+        s:{alike:'Сравните лица и найдите семейного двойника.',crowd:'Найдите каждого родственника на общем снимке.',order:'Расставьте моменты жизни по порядку.',wherewas:'Угадайте, где сделан снимок.',thread:'Найдите двоих, кого связывает одно место.',whose:'Угадайте, о ком эта история.',voice:'Угадайте, кто рассказал историю.',whatnext:'Угадайте, какой момент был следующим.'}},
     he:{title:'בחרו משחק',close:'סגירה',
         g:{face:'פנים',life:'חיים',places:'מקומות',story:'סיפורים'},
-        n:{crowd:'מצאו אותם בקהל',order:'סדר הדברים',wherewas:'איפה זה היה?',thread:'החוט הסבוך',whose:'של מי הסיפור?',voice:'הקול החסר',whatnext:'מה קרה אחר כך?'},
-        s:{crowd:'מצאו כל קרוב משפחה בתמונה קבוצתית אחת.',order:'סדרו את רגעי החיים לפי הסדר.',wherewas:'נחשו איפה צולמה כל תמונה.',thread:'מצאו שניים שמקום אחד מחבר ביניהם.',whose:'נחשו על מי הסיפור.',voice:'נחשו מי סיפר את הסיפור.',whatnext:'נחשו איזה רגע בא אחר כך.'}}};
+        n:{alike:'מי דומה למי?',crowd:'מצאו אותם בקהל',order:'סדר הדברים',wherewas:'איפה זה היה?',thread:'החוט הסבוך',whose:'של מי הסיפור?',voice:'הקול החסר',whatnext:'מה קרה אחר כך?'},
+        s:{alike:'השוו פנים ומצאו את הדומה במשפחה.',crowd:'מצאו כל קרוב משפחה בתמונה קבוצתית אחת.',order:'סדרו את רגעי החיים לפי הסדר.',wherewas:'נחשו איפה צולמה כל תמונה.',thread:'מצאו שניים שמקום אחד מחבר ביניהם.',whose:'נחשו על מי הסיפור.',voice:'נחשו מי סיפר את הסיפור.',whatnext:'נחשו איזה רגע בא אחר כך.'}}};
   var PLAYG=[
-    {g:'face',  cool:false, games:[['crowd','crowd-real.html']]},
+    {g:'face',  cool:false, games:[['alike','game-look-alike.html'],['crowd','crowd-real.html']]},  /* Look-alike first: Leon 2026-10-13 */
     {g:'life',  cool:false, games:[['order','game-order-of-things.html']]},
     {g:'places',cool:true,  games:[['wherewas','game-where-was-this.html'],['thread','game-tangled-thread.html']]},
     {g:'story', cool:false, games:[['whose','game-who-is-who.html'],['voice','game-missing-voice.html'],['whatnext','game-what-happened-next.html']]}];
