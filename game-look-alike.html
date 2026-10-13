@@ -67,13 +67,14 @@
   .bar i{ display:block; height:100%; width:0; background:linear-gradient(90deg,var(--gold),var(--ember)); transition:width .25s; }
   .prog .btn{ margin-top:14px; }
   .res{ margin-top:18px; }
-  .pair{ display:flex; align-items:flex-end; justify-content:center; gap:12px; }
+  /* both faces on one line (Leon 2026-10-14): a two-line name used to push its face up */
+  .pair{ display:flex; align-items:flex-start; justify-content:center; gap:12px; }
   .face{ display:flex; flex-direction:column; align-items:center; gap:8px; width:118px; }
   .face .big{ width:118px; height:118px; border-radius:18px; overflow:hidden; border:2px solid rgba(243,205,132,.5); background:#ffffff10; }
   .face .big canvas{ width:100%; height:100%; display:block; }
   .face b{ font-weight:500; font-size:14px; text-align:center; }
   .face a{ font-size:12px; color:var(--cool-hi); text-decoration:none; }
-  .meter{ display:flex; flex-direction:column; align-items:center; gap:6px; width:62px; }
+  .meter{ display:flex; flex-direction:column; align-items:center; gap:6px; width:62px; margin-top:-22px; }
   .col{ width:34px; height:150px; border-radius:10px; background:#ffffff12; border:1px solid var(--hair); position:relative; overflow:hidden; }
   .col i{ position:absolute; left:0; right:0; bottom:0; height:0; background:linear-gradient(0deg,var(--ember),var(--gold)); transition:height 1.6s cubic-bezier(.2,.8,.2,1); }
   .pct{ font-family:'Newsreader',Georgia,serif; font-size:30px; color:var(--gold-hi); line-height:1; direction:ltr; }
@@ -153,7 +154,7 @@
   const esc=x=>String(x==null?'':x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function fen(t){ let n=0; (function go(){ if(window.Fen&&Fen.say){ try{ Fen.say(t); }catch(e){} } else if(n++<40) setTimeout(go,150); })(); }
   let honestSaid=false;
-  const S={ tags:[], byP:{}, people:[], me:null, A:null, mode:'A', abort:false, port:{} };
+  const S={ tags:[], byP:{}, people:[], me:null, A:null, mode:'A', abort:false, port:{}, adj:{} };
   const name=pid=>(window.LFLabel&&LFLabel.of(pid,lang))||'—';
 
   /* ---------- data: every tagged face box on a published photo this account can see ---------- */
@@ -169,9 +170,19 @@
     try{ await LFLabel.load(sb,S.people); }catch(e){}
     S.people.sort((a,b)=>name(a).localeCompare(name(b)));
     try{ S.port=await LFFace.resolve(S.people); }catch(e){ S.port={}; }
+    /* the family as a graph: one step per parent, child, spouse or sibling link (friends are
+       not family). Used to order the people from the closest outwards (Leon 2026-10-14). */
+    try{ const {data:rel}=await sb.from('relationships').select('from_person,to_person,kind').eq('status','published').in('kind',['parent','spouse','sibling']);
+      (rel||[]).forEach(r=>{ if(!r.from_person||!r.to_person) return;
+        (S.adj[r.from_person]=S.adj[r.from_person]||[]).push(r.to_person); (S.adj[r.to_person]=S.adj[r.to_person]||[]).push(r.from_person); }); }catch(e){}
     try{ const {data:{session}}=await sb.auth.getSession();
       if(session&&session.user){ const {data:pr}=await sb.from('profiles').select('person_id').eq('id',session.user.id).maybeSingle(); S.me=(pr&&pr.person_id)||null; } }catch(e){}
   }
+  const DIST={};
+  function dist(src){ if(!src) return null; if(DIST[src]) return DIST[src];
+    const d={}; d[src]=0; const q=[src];
+    while(q.length){ const x=q.shift(); (S.adj[x]||[]).forEach(y=>{ if(d[y]===undefined){ d[y]=d[x]+1; q.push(y); } }); }
+    return DIST[src]=d; }
   function avatar(el,pid){ const r=S.port[pid]; const t=(S.byP[pid]||[])[0];
     LFFace.into(el, r ? Object.assign({size:128},r) : {path:t&&t.path, box:t&&t.box, size:128}); }
 
@@ -230,9 +241,11 @@
   /* ---------- screens ---------- */
   function only(id){ ['#sPick','#sPerson','#sRun','#sRes'].forEach(s=>$(s).classList.toggle('hide',s!==id)); }
   function renderGrid(){ const q=($('#q').value||'').trim().toLowerCase(), g=$('#grid');
-    let list=S.people.filter(p=>!(S.mode==='B'&&p===S.A)).filter(p=>!q||name(p).toLowerCase().includes(q));
+    const from=S.mode==='B'?S.A:S.me, D=dist(from)||{};
+    let list=S.people.filter(p=>!(S.mode==='B'&&p===S.A)&&p!==S.me).filter(p=>!q||name(p).toLowerCase().includes(q))
+      .sort((a,b)=>((D[a]??1e9)-(D[b]??1e9))||name(a).localeCompare(name(b)));
     let h='';
-    if(S.mode==='B' && S.me && S.me!==S.A && !q) h+=`<button class="pp me" data-me="1"><span class="av" data-av="${esc(S.me)}"></span><span class="nm">${esc(L.myself)}</span></button>`;
+    if(S.me && !(S.mode==='B'&&S.me===S.A) && !q) h+=`<button class="pp me" data-me="1"><span class="av" data-av="${esc(S.me)}"></span><span class="nm">${esc(L.myself)}</span></button>`;
     h+=list.map(p=>`<button class="pp" data-pid="${esc(p)}"><span class="av" data-av="${esc(p)}"></span><span class="nm">${esc(name(p))}</span></button>`).join('');
     g.innerHTML=h;
     g.querySelectorAll('[data-av]').forEach(el=>{ const pid=el.getAttribute('data-av'); if(S.byP[pid]||S.port[pid]) avatar(el,pid); });
