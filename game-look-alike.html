@@ -287,7 +287,7 @@
   $('#q').oninput=renderGrid;
   setTimeout(()=>fen(L.fen.intro),1200);   /* after the stock greeting, so hers is the line that lands */
   loadData().then(()=>openPick('A')).catch(()=>openPick('A'));
-  window.__lookAlike=S; S.WHY=WHY;
+  window.__lookAlike=S; S.WHY=WHY; S.dbg={loadFA,loadImg,crop,readFace,getFA:()=>FA};   /* diagnosis hooks */
 })();
 </script>
 <script src="lf-lang.js?v=7"></script>
