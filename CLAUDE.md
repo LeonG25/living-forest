@@ -229,8 +229,16 @@ Leon chose: within ~10 min, one email per batch; Resend; include people waiting 
 - Edge Function `notify-keepers` (verify_jwt off; guarded by header x-notify-secret = Vault
   secret 'notify_keepers_secret', read via service-role-only RPC public.notify_secret()).
   ?dry=1 reports and changes nothing. Wrong/no secret -> 403 (verified).
-- pg_cron job 'notify-keepers-10min' (*/10) calls it through pg_net. First run 16:30 UTC
-  succeeded (200) and seeded the keeper's memory; nothing old is ever mailed.
+- EVENT-DRIVEN since 2026-10-14 16:52 UTC (Leon: the clock starts at the first request).
+  Triggers `notify_pending` (after insert / update of status into in_review|draft) on artefacts,
+  artefact_edits, artefact_subjects, people, person_facts, relationships, and `notify_gate`
+  (insert on profiles, not yet member) call public.notify_arm(): table public.notify_due
+  (single row) gets due_at = now()+10 min, but ONLY if not already set - later requests join
+  the batch, they never push the clock. pg_cron 'notify-keepers-due' (every minute) runs
+  public.notify_fire_if_due(): a one-row read; if due -> clear due_at, call the function via
+  pg_net. A failed send re-arms the timer (retry in 10 min). The old */10 job is unscheduled.
+  Verified: trigger test in a rolled-back block (armed at +10:00, 2nd request unchanged);
+  forced-due fire -> one call 200, fresh 0, no email, due_at cleared, no repeat next minute.
 - Table keeper_notify_state (RLS on, no policies): per keeper the ids already seen. "New" =
   pending now (status in_review/draft in artefacts, artefact_edits, artefact_subjects, people,
   person_facts, relationships, plus profiles not yet members) minus seen, minus items the
