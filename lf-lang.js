@@ -58,6 +58,19 @@
       '.lflang-card button.on{border-color:rgba(243,205,132,.5);background:rgba(243,205,132,.10);color:#f3cd84}';
     s.textContent=(s.textContent||'')+hide; document.head.appendChild(s);
   }
+  function saveToProfile(l){
+    return new Promise(function(done){
+      var t=setTimeout(done,1500);
+      try{
+        if(!window.supabase||!window.supabase.createClient){ clearTimeout(t); done(); return; }
+        var sb=window.supabase.createClient('https://oabcdrktuikifbormjip.supabase.co','sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC');
+        sb.auth.getSession().then(function(r){ var u=r&&r.data&&r.data.session&&r.data.session.user;
+          if(!u){ clearTimeout(t); done(); return; }
+          sb.from('profiles').update({preferred_lang:l}).eq('id',u.id).then(function(){ clearTimeout(t); done(); },function(){ clearTimeout(t); done(); });
+        }).catch(function(){ clearTimeout(t); done(); });
+      }catch(e){ clearTimeout(t); done(); }
+    });
+  }
   function sheet(){
     var w=document.createElement('div'); w.className='lflang-sheet';
     var c=document.createElement('div'); c.className='lflang-card';
@@ -66,9 +79,10 @@
       b.textContent=NAMES[l]; if(l===cur()) b.className='on';
       b.onclick=function(){
         try{ localStorage.setItem('lf_lang',l); }catch(e){}
-        /* the page redraws itself in the new language; a reload is the honest way to be
-           sure every string on it changes, not only the ones somebody remembered to rewire */
-        location.reload();
+        /* the choice is also the account's language (Leon, 2026-10-14): keeper emails follow
+           profiles.preferred_lang, and this shared button never saved it - pages with their
+           own switch did, these did not. Saved before the reload, given at most 1.5 s. */
+        saveToProfile(l).then(function(){ location.reload(); });
       };
       c.appendChild(b);
     });
