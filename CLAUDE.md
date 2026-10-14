@@ -246,6 +246,11 @@ Leon chose: within ~10 min, one email per batch; Resend; include people waiting 
 - Memory advances only when nothing is new or the email was sent: a missing key or a failed
   send is retried next round, so nothing is lost before the key is set.
 - Keepers with a *.test address are skipped (qc-keeper). Email language = profiles.preferred_lang.
+  Leon 2026-10-14: keep following each keeper's own app language (not the requester's).
+  lf-lang v8 (`d119227`): the SHARED language button now also saves profiles.preferred_lang
+  before its reload (pages with their own switch already did; crowd, timeline, mailbox,
+  look-alike etc. did not). Probe `~/qc/qc-langsave.js` (test keeper, timeline, EN->RU):
+  profile read back 'ru', 0 errors; test keeper restored to null.
 - Sender onboarding@resend.dev: Resend only delivers it to the address that opened the Resend
   account, so Leon signs up with lenya.golnick@gmail.com. A second real keeper needs a verified
   domain in Resend.
