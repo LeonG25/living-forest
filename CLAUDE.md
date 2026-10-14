@@ -224,6 +224,24 @@ TESTING ON THIS VPS: 1 vCPU, no GPU - the model runs in software (~30 s per phot
 took 90% CPU next to the live IB setup. Run face probes ONLY with `nice -n 19`, small pairs,
 off market hours. Probes: `~/qc/qc-lookalike.js` (EN pair 2x2 faces: 41%, 2 skipped as turned,
 0 page errors), `~/qc/qc-la-light.js` (RU/HE text + dir, sheet order alike-first).
+KEEPER EMAIL NOTICES (Leon, 2026-10-14) — built, WAITING FOR RESEND_API_KEY.
+Leon chose: within ~10 min, one email per batch; Resend; include people waiting at the gate.
+- Edge Function `notify-keepers` (verify_jwt off; guarded by header x-notify-secret = Vault
+  secret 'notify_keepers_secret', read via service-role-only RPC public.notify_secret()).
+  ?dry=1 reports and changes nothing. Wrong/no secret -> 403 (verified).
+- pg_cron job 'notify-keepers-10min' (*/10) calls it through pg_net. First run 16:30 UTC
+  succeeded (200) and seeded the keeper's memory; nothing old is ever mailed.
+- Table keeper_notify_state (RLS on, no policies): per keeper the ids already seen. "New" =
+  pending now (status in_review/draft in artefacts, artefact_edits, artefact_subjects, people,
+  person_facts, relationships, plus profiles not yet members) minus seen, minus items the
+  keeper placed (contributor_user / created_by). A draft submitted later still counts.
+- Memory advances only when nothing is new or the email was sent: a missing key or a failed
+  send is retried next round, so nothing is lost before the key is set.
+- Keepers with a *.test address are skipped (qc-keeper). Email language = profiles.preferred_lang.
+- Sender onboarding@resend.dev: Resend only delivers it to the address that opened the Resend
+  account, so Leon signs up with lenya.golnick@gmail.com. A second real keeper needs a verified
+  domain in Resend.
+- Side note: the test keeper (qc-keeper) is anchored to a real person, Nadia Matveev.
 NOTE: the table of contents at the top of this file is stale — several headings it lists
 (game-feel spec, design house rules, briefs) are not in the body.
 
