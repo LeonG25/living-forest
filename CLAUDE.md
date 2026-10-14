@@ -224,7 +224,7 @@ TESTING ON THIS VPS: 1 vCPU, no GPU - the model runs in software (~30 s per phot
 took 90% CPU next to the live IB setup. Run face probes ONLY with `nice -n 19`, small pairs,
 off market hours. Probes: `~/qc/qc-lookalike.js` (EN pair 2x2 faces: 41%, 2 skipped as turned,
 0 page errors), `~/qc/qc-la-light.js` (RU/HE text + dir, sheet order alike-first).
-KEEPER EMAIL NOTICES (Leon, 2026-10-14) — built, WAITING FOR RESEND_API_KEY.
+KEEPER EMAIL NOTICES (Leon, 2026-10-14) — LIVE. RESEND_API_KEY set by Leon 16:40 UTC; test email accepted by Resend (last_sent 16:40:38, 1 item).
 Leon chose: within ~10 min, one email per batch; Resend; include people waiting at the gate.
 - Edge Function `notify-keepers` (verify_jwt off; guarded by header x-notify-secret = Vault
   secret 'notify_keepers_secret', read via service-role-only RPC public.notify_secret()).
