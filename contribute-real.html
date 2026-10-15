@@ -782,23 +782,34 @@
   function txPaint(){ const r=state.rec; const te=document.getElementById('txEdit');
     if(te && !r.txTouched) te.value=r.text||'';   /* late final words land in the edit box too, until the teller edits */
     const el=document.getElementById('liveTx'); if(!el) return;
-    el.innerHTML=esc(r.text)+(r.interim?'<span class="interim"> '+esc(r.interim)+'</span>':''); el.scrollTop=el.scrollHeight; }
+    const cur=((r.text||'')+' '+(r.sess||[]).join(' ')).trim(); el.innerHTML=esc(cur)+(r.interim?'<span class="interim"> '+esc(r.interim)+'</span>':''); el.scrollTop=el.scrollHeight; }
   function startTx(){ const r=state.rec; if(!r.tlang) r.tlang=state.lang||'en';
     if(!SR){ r.txOk=false; return; }
     srWanted=true; r.txOk=true; r.txLog=[]; txLog('lang '+(TXL[r.tlang]||'en-US'));
     try{ srObj=new SR(); srObj.lang=TXL[r.tlang]||'en-US'; srObj.continuous=true; srObj.interimResults=true;
       srObj.onstart=()=>txLog('start'); srObj.onaudiostart=()=>txLog('audio'); srObj.onspeechstart=()=>txLog('speech');
-      srObj.onresult=e=>{ if(!state.rec.txGot){ state.rec.txGot=1; txLog('words'); } let interim=''; for(let i=e.resultIndex;i<e.results.length;i++){ const res=e.results[i];
-          if(res.isFinal){ const w=res[0].transcript.trim(); if(w) state.rec.text=(state.rec.text?state.rec.text+' ':'')+w; } else interim+=res[0].transcript; }
-        state.rec.interim=interim.trim(); txPaint(); };
+      /* Android sends a growing sentence as several FINAL results ("как", "как меня", ...);
+         desktop sends separate pieces. Per listening session: a final that extends the last
+         one replaces it, one already contained is dropped, anything else is a new piece.
+         The session's words join the text when the session ends. (Leon's phone, 2026-10-15) */
+      srObj.onresult=e=>{ const r4=state.rec; if(!r4.txGot){ r4.txGot=1; txLog('words'); } let interim='';
+        for(let i=e.resultIndex;i<e.results.length;i++){ const res=e.results[i];
+          if(res.isFinal){ txAddFinal(res[0].transcript.trim()); } else interim+=res[0].transcript; }
+        r4.interim=interim.trim(); txPaint(); };
       srObj.onerror=e=>{ const r3=state.rec; txLog('error '+e.error);
         if(e.error==='network'){ r3.txFails=(r3.txFails||0)+1; }   /* offline, or a browser build without the service */
         if(e.error==='not-allowed'||e.error==='service-not-allowed'||e.error==='audio-capture'||e.error==='language-not-supported'||(r3.txFails||0)>=3){ srWanted=false; r3.txOk=false; } };
       /* Chrome ends a session after a pause; while the recording runs, it is simply resumed */
-      srObj.onend=()=>{ const r2=state.rec; txLog('end'); if(r2.interim){ r2.text=(r2.text?r2.text+' ':'')+r2.interim; r2.interim=''; txPaint(); }
+      srObj.onend=()=>{ const r2=state.rec; txLog('end'); if(r2.interim){ txAddFinal(r2.interim); r2.interim=''; } txCommit(); txPaint();
         if(srWanted && r2.status==='recording'){ setTimeout(()=>{ if(!srWanted||state.rec.status!=='recording') return; try{ srObj.lang=TXL[state.rec.tlang]||'en-US'; srObj.start(); }catch(e){} },250); } };
       srObj.start();
     }catch(e){ r.txOk=false; srWanted=false; txLog('failed '+String(e&&e.message||e).slice(0,40)); } }
+  function txAddFinal(w){ const r=state.rec; if(!w) return; const S=r.sess||(r.sess=[]); const last=S[S.length-1]||'';
+    const norm=x=>x.toLowerCase().replace(/\s+/g,' ').trim();
+    if(last && norm(w).startsWith(norm(last))) S[S.length-1]=w;
+    else if(last && norm(last).startsWith(norm(w))) return;
+    else S.push(w); }
+  function txCommit(){ const r=state.rec; const S=r.sess||[]; if(S.length){ r.text=((r.text?r.text+' ':'')+S.join(' ')).trim(); } r.sess=[]; }
   function stopTx(){ srWanted=false; if(srObj){ try{ srObj.stop(); }catch(e){} } }
   function setTxLang(l){ const r=state.rec; r.tlang=l;
     if(r.status==='recording' && srObj){ try{ srObj.stop(); }catch(e){} }   /* onend restarts it in the new language */
