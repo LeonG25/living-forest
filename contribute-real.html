@@ -784,10 +784,12 @@
       srObj.onresult=e=>{ let interim=''; for(let i=e.resultIndex;i<e.results.length;i++){ const res=e.results[i];
           if(res.isFinal){ const w=res[0].transcript.trim(); if(w) state.rec.text=(state.rec.text?state.rec.text+' ':'')+w; } else interim+=res[0].transcript; }
         state.rec.interim=interim.trim(); txPaint(); };
-      srObj.onerror=e=>{ if(e.error==='not-allowed'||e.error==='service-not-allowed'||e.error==='audio-capture'||e.error==='language-not-supported'){ srWanted=false; state.rec.txOk=false; } };
+      srObj.onerror=e=>{ const r3=state.rec;
+        if(e.error==='network'){ r3.txFails=(r3.txFails||0)+1; }   /* offline, or a browser build without the service */
+        if(e.error==='not-allowed'||e.error==='service-not-allowed'||e.error==='audio-capture'||e.error==='language-not-supported'||(r3.txFails||0)>=3){ srWanted=false; r3.txOk=false; } };
       /* Chrome ends a session after a pause; while the recording runs, it is simply resumed */
       srObj.onend=()=>{ const r2=state.rec; if(r2.interim){ r2.text=(r2.text?r2.text+' ':'')+r2.interim; r2.interim=''; txPaint(); }
-        if(srWanted && r2.status==='recording'){ try{ srObj.lang=TXL[r2.tlang]||'en-US'; srObj.start(); }catch(e){} } };
+        if(srWanted && r2.status==='recording'){ setTimeout(()=>{ if(!srWanted||state.rec.status!=='recording') return; try{ srObj.lang=TXL[state.rec.tlang]||'en-US'; srObj.start(); }catch(e){} },250); } };
       srObj.start();
     }catch(e){ r.txOk=false; srWanted=false; } }
   function stopTx(){ srWanted=false; if(srObj){ try{ srObj.stop(); }catch(e){} } }
