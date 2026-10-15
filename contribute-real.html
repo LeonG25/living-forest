@@ -808,6 +808,12 @@
       '<button type="button" data-txl="'+x[0]+'" class="'+(x[0]===cur?'on':'')+'">'+x[1]+'</button>').join('')+'</div>'; }
   async function toggleRec(){
     const r=state.rec;
+    /* TEMPORARY TEST (2026-10-15): ?txonly=1 runs ONLY the recogniser - no audio recording -
+       to learn whether Leon's Android gives real sound to one of the two only. Remove after. */
+    if(/[?&]txonly=1/.test(location.search)){
+      if(r.status==='recording'){ stopTx(); setTimeout(()=>{ state.rec.status='idle'; state.msg='TEST heard: '+(state.rec.text||'(nothing)'); render(); },1200); return; }
+      state.msg=''; r.text=''; r.status='recording'; startTx(); render(); txPaint(); return;
+    }
     if(r.status==='recording'){ stopTx(); try{ r.rec.stop(); }catch(e){} return; }
     if(!navigator.mediaDevices||!window.MediaRecorder){ state.msg=t('recPerm'); render(); return; }
     try{
