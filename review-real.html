@@ -360,7 +360,7 @@
       whereWent:'What you welcomed now lives in the forest in <b>gold</b> — the family’s own voice — for everyone to find.',
       foot:'A gift held in violet is not lost — it is waiting to be welcomed.', footEmpty:'An empty queue is the sound of a family that keeps reaching for each other.',
       langtitle:'Language', langsub:'Names, labels and details all follow the language you choose.',
-      voiceRec:'A voice recording', photoRec:'A photograph', theImage:'the image itself',
+      voiceRec:'A voice recording', storyRec:'A told story', photoRec:'A photograph', theImage:'the image itself',
       wasTag:'was', nowTag:'now', noPrev:'adding — no previous value',
       newPerson:'A new person — nothing to compare', newMemory:'A new moment — nothing to compare',
       capCurrent:'current', capProposed:'proposed', noPortrait:'no portrait yet',
@@ -392,7 +392,7 @@
       whereWent:'Принятое теперь живёт в лесу <b>золотом</b> — голосом семьи — для всех.',
       foot:'Дар, хранимый в фиолетовом, не потерян — он ждёт.', footEmpty:'Пустая очередь — звук семьи, которая тянется друг к другу.',
       langtitle:'Язык', langsub:'Имена, подписи и детали — на выбранном языке.',
-      voiceRec:'Голосовая запись', photoRec:'Фотография', theImage:'само изображение',
+      voiceRec:'Голосовая запись', storyRec:'Рассказ', photoRec:'Фотография', theImage:'само изображение',
       wasTag:'было', nowTag:'станет', noPrev:'добавление — прежнего значения нет',
       newPerson:'Новый человек — сравнивать не с чем', newMemory:'Новый момент — сравнивать не с чем',
       capCurrent:'сейчас', capProposed:'предложено', noPortrait:'портрета ещё нет',
@@ -424,7 +424,7 @@
       whereWent:'מה שקיבלת כעת חי ביער ב<b>זהב</b> — קולה של המשפחה — לכולם.',
       foot:'מתנה השמורה בסגול אינה אבודה — היא מחכה שיקבלו אותה.', footEmpty:'תור ריק הוא הצליל של משפחה שממשיכה להושיט יד.',
       langtitle:'שפה', langsub:'שמות, תוויות ופרטים עוקבים אחר השפה שתבחר.',
-      voiceRec:'הקלטת קול', photoRec:'תצלום', theImage:'התמונה עצמה',
+      voiceRec:'הקלטת קול', storyRec:'סיפור', photoRec:'תצלום', theImage:'התמונה עצמה',
       wasTag:'היה', nowTag:'עכשיו', noPrev:'הוספה — אין ערך קודם',
       newPerson:'אדם חדש — אין עם מה להשוות', newMemory:'רגע חדש — אין עם מה להשוות',
       capCurrent:'נוכחי', capProposed:'מוצע', noPortrait:'אין דיוקן עדיין',
@@ -557,7 +557,8 @@
       }
     }catch(e){}
     out.nvs=rNvs.data||[];
-    out.arts=(rArts.data||[]).filter(a=>a.kind==='photo'||a.kind==='voice');
+    /* 'text' = words told by speaking, no photo, no audio (Leon 2026-10-15: Contribute's "Write my words") */
+    out.arts=(rArts.data||[]).filter(a=>a.kind==='photo'||a.kind==='voice'||a.kind==='text');
     let relRows=rRels.data||[];
     if(rRels.error){ const r2=await sb.from('relationships').select('id,from_person,to_person,kind,status'); relRows=r2.data||[]; }
     out.rels=relRows.filter(r=>r.status==='in_review'||r.status==='draft');
@@ -782,14 +783,14 @@
 
   function forLine(it){ const L=d();
     if(it.kind==='person') return `<div class="qfor">${esc(L.newcomerFor)}</div>`;
-    if(it.kind==='artefact'){ let bits=[]; if(it.mediaKind==='voice') bits.push(L.voiceRec); else bits.push(L.photoRec); if(it.when) bits.push(String(it.when)); return `<div class="qfor">${esc(bits.join(' · '))}</div>`; }
+    if(it.kind==='artefact'){ let bits=[]; if(it.mediaKind==='voice') bits.push(L.voiceRec); else if(it.mediaKind==='text') bits.push(L.storyRec); else bits.push(L.photoRec); if(it.when) bits.push(String(it.when)); return `<div class="qfor">${esc(bits.join(' · '))}</div>`; }
     const nm=personName(it.personId); if(nm) return `<div class="qfor">${esc(L.forWhom)} <b>${esc(nm)}</b></div>`;
     return '';
   }
 
   function qtypeLine(it){ const L=d();
     if(it.kind==='person') return `${esc(L.groups.newcomers)} · <b>${esc(L.fld.field)}</b>`;
-    if(it.kind==='artefact') return `${esc(L.groups.memories)} · <b>${esc(it.mediaKind==='voice'?L.voiceRec:L.photoRec)}</b>`;
+    if(it.kind==='artefact') return `${esc(L.groups.memories)} · <b>${esc(it.mediaKind==='voice'?L.voiceRec:it.mediaKind==='text'?L.storyRec:L.photoRec)}</b>`;
     if(it.kind==='group') return `${esc(L.groups.facts)} · <b>${esc(it.customLabel||L.fld.custom)}</b>`;
     if(it.kind==='remreq'||it.kind==='clearreq') return `${esc(L.groups.facts)} · <b>${esc(L.askToRemove)}</b>`;
     if(it.kind==='telling') return `${esc(L.groups.memories)} · <b>${esc(L.aTelling||'A telling')}${esc(langTag(it.lang))}</b>`;
@@ -804,7 +805,7 @@
     if(it.kind==='clearreq') return (L2.fld&&L2.fld[it.target])||it.target;
     return it.value||''; }
   function valMarkup(it){
-    if(it.kind==='artefact'){ return it.value ? `<span class="quiet">“${esc(it.value)}”</span>` : `<span class="quiet">${esc(it.mediaKind==='voice'?d().voiceRec:d().photoRec)}</span>`; }
+    if(it.kind==='artefact'){ return it.value ? `<span class="quiet">“${esc(it.value)}”</span>` : `<span class="quiet">${esc(it.mediaKind==='voice'?d().voiceRec:it.mediaKind==='text'?d().storyRec:d().photoRec)}</span>`; }
     if(it.kind==='group'){ return `${esc(it.value||'—')}`; }
     /* say WHAT is being removed, in the words the family used - a uuid tells the keeper
        nothing, and a keeper who cannot see what they are agreeing to cannot agree. */
@@ -836,7 +837,7 @@
     if(it.kind!=='tag' || !it.photoPath) return '';
     return `<div class="imgcmp">${imgCell(it.photoPath,'new',d().capProposed||'',it.faceBox||null)}</div>`;
   }
-  function isPhotoItem(it){ return it.kind==='artefact' && it.mediaKind!=='voice'; }
+  function isPhotoItem(it){ return it.kind==='artefact' && it.mediaKind!=='voice' && it.mediaKind!=='text'; }
   function arrowCh(){ return d().dir==='rtl'?'←':'→'; }
 
   // {kind:'new'|'none'|'text'|'image'}
@@ -902,7 +903,7 @@
   function thumbMarkup(it){
     if(it.kind==='person') return IC.newcomer;
     // photo artefacts show the image full-width in the old→new block; keep the chip an icon
-    if(it.kind==='artefact'){ if(it.mediaKind==='voice') return IC.voice; return IC.photo; }
+    if(it.kind==='artefact'){ if(it.mediaKind==='voice'||it.mediaKind==='text') return IC.voice; return IC.photo; }
     if(it.kind==='nv') return IC.name;
     if(it.group==='names') return IC.name;
     if(it.field==='lived'||it.field==='pbirth') return IC.place;

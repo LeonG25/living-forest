@@ -224,6 +224,10 @@
     .aur,.embers,.stars,.way.voice,.recbtn,.recbtn::before,.recbtn .core,.almost .ac,.receipt .rc,.pageatmo span{ animation:none !important; }
     .waitrow .sp,.spin{ animation:none; }
   }
+  .recmode{ display:flex; gap:8px; width:100%; margin:4px 0 6px; }
+  .recmode button{ flex:1; font:inherit; font-size:14.5px; padding:11px 8px; border-radius:14px; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.04); color:inherit; cursor:pointer; }
+  .recmode button.on{ border-color:rgba(201,162,255,.6); background:rgba(201,162,255,.16); }
+  .recmodes{ width:100%; text-align:center; font-size:13px; opacity:.7; margin-bottom:14px; }
   .txwrap{ width:100%; margin:14px 0 6px; text-align:start; }
   .txk{ font-size:13px; opacity:.75; margin-bottom:8px; line-height:1.4; }
   .txlang{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:8px; font-size:12.5px; }
@@ -262,7 +266,7 @@
 
   let user=null;
   const state={ lang:'en', screen:'hub', people:[], rels:[], arts:[], gaps:[], pairs:[], pairIdx:0,
-    propose:{ name:'', open:{}, gifts:{} }, rec:{ status:'idle', blob:null, url:'', rec:null, chunks:[], text:'', interim:'', tlang:null, txOk:null }, receipt:null, msg:'' };
+    propose:{ name:'', open:{}, gifts:{} }, recMode:'voice', rec:{ status:'idle', blob:null, url:'', rec:null, chunks:[], text:'', interim:'', tlang:null, txOk:null }, receipt:null, msg:'' };
 
   /* ---------- SVG glyphs ---------- */
   const IC={
@@ -320,7 +324,7 @@
       recDone:'<b>That’s it.</b><br>Listen back, send it, or throw it away.',
       recSending:'Sending your voice to the keeper…',
       discard:'Throw away', reRecord:'Record again', sendVoice:'Send to the keeper',
-      txLive:'Words so far', txLang:'Language', txEdit:'Here’s what we heard. Fix any names or words — you know them best.', txNone:'Writing the words down isn’t available in this browser. You can type them here if you like — it’s optional.', txPh:'The words of the story…',
+      txLive:'Words so far', txLang:'Language', txEdit:'Here’s what we heard. Fix any names or words — you know them best.', txNone:'Writing the words down isn’t available in this browser. You can type them here if you like — it’s optional.', txPh:'The words of the story…', modeVoice:'Keep my voice', modeVoiceS:'Your voice is recorded just as it is.', modeWords:'Write my words', modeWordsS:'Speak, and your words are written down. No recording is kept.', needWords:'There are no words yet — say or type something first.',
       reassure:'Nothing is shared until you choose. You can stop, listen back, or throw it away — any time.',
       voiFoot:'A voice outlives everything else in this forest.',
       voiThinN:'The forest needs a few more people first.', voiThinS:'Once two family members are in the forest, we can ask one to tell about the other. Propose someone to begin.',
@@ -369,7 +373,7 @@
       recDone:'<b>Вот и всё.</b><br>Прослушайте, отправьте или сотрите.',
       recSending:'Отправляем ваш голос хранителю…',
       discard:'Стереть', reRecord:'Записать заново', sendVoice:'Отправить хранителю',
-      txLive:'Текст по ходу записи', txLang:'Язык', txEdit:'Вот что мы услышали. Исправьте имена и слова — вы знаете их лучше всех.', txNone:'В этом браузере текст не записывается. Можно напечатать слова здесь — по желанию.', txPh:'Слова истории…',
+      txLive:'Текст по ходу записи', txLang:'Язык', txEdit:'Вот что мы услышали. Исправьте имена и слова — вы знаете их лучше всех.', txNone:'В этом браузере текст не записывается. Можно напечатать слова здесь — по желанию.', txPh:'Слова истории…', modeVoice:'Сохранить мой голос', modeVoiceS:'Голос записывается как есть.', modeWords:'Записать мои слова', modeWordsS:'Говорите — слова запишутся текстом. Голос не сохраняется.', needWords:'Слов пока нет — скажите или напечатайте что-нибудь.',
       reassure:'Ничего не публикуется, пока вы не решите. Можно остановить, прослушать или стереть — в любой момент.',
       voiFoot:'Голос переживает в этом лесу всё остальное.',
       voiThinN:'Сначала лесу нужно ещё немного людей.', voiThinS:'Когда в лесу будут двое родных, мы попросим одного рассказать о другом. Предложите кого-нибудь, чтобы начать.',
@@ -418,7 +422,7 @@
       recDone:'<b>זהו.</b><br>הקשיבו, שלחו, או השליכו.',
       recSending:'שולח את הקול שלכם לשומר…',
       discard:'להשליך', reRecord:'להקליט שוב', sendVoice:'לשלוח לשומר',
-      txLive:'הטקסט עד עכשיו', txLang:'שפה', txEdit:'זה מה ששמענו. תקנו שמות או מילים — אתם מכירים אותם הכי טוב.', txNone:'בדפדפן הזה אין תמלול. אפשר להקליד כאן את המילים — לא חובה.', txPh:'מילות הסיפור…',
+      txLive:'הטקסט עד עכשיו', txLang:'שפה', txEdit:'זה מה ששמענו. תקנו שמות או מילים — אתם מכירים אותם הכי טוב.', txNone:'בדפדפן הזה אין תמלול. אפשר להקליד כאן את המילים — לא חובה.', txPh:'מילות הסיפור…', modeVoice:'לשמור את הקול שלי', modeVoiceS:'הקול נשמר בדיוק כמו שהוא.', modeWords:'לכתוב את המילים שלי', modeWordsS:'דברו, והמילים ייכתבו. ההקלטה לא נשמרת.', needWords:'עדיין אין מילים — אמרו או הקלידו משהו קודם.',
       reassure:'שום דבר אינו משותף עד שתבחרו. אפשר לעצור, להאזין, או להשליך — בכל רגע.',
       voiFoot:'קול שורד ביער הזה יותר מכל דבר אחר.',
       voiThinN:'קודם היער צריך עוד כמה אנשים.', voiThinS:'כששני בני משפחה יהיו ביער, נוכל לבקש מאחד לספר על השני. הציעו מישהו כדי להתחיל.',
@@ -570,20 +574,23 @@
     }
     const r=state.rec; let recUI='';
     if(r.status==='recorded'){
+      const W=state.recMode==='words';
       recUI='<div class="recbtn"><div class="core"></div></div>'
-        +'<audio controls src="'+esc(r.url)+'"></audio>'
-        +'<div class="rl">'+t('recDone')+'</div>'
-        +'<div class="txwrap"><div class="txk">'+esc(r.txOk===false?t('txNone'):t('txEdit'))+'</div>'+txLangChips()
-        +'<textarea id="txEdit" dir="auto" rows="5" placeholder="'+esc(t('txPh'))+'">'+esc(r.text||'')+'</textarea>'+txDiag()+'</div>'
+        +(W?'':'<audio controls src="'+esc(r.url)+'"></audio><div class="rl">'+t('recDone')+'</div>')
+        +(W?'<div class="txwrap"><div class="txk">'+esc(r.txOk===false?t('txNone'):t('txEdit'))+'</div>'+txLangChips()
+          +'<textarea id="txEdit" dir="auto" rows="5" placeholder="'+esc(t('txPh'))+'">'+esc(r.text||'')+'</textarea>'+txDiag()+'</div>':'')
         +'<div class="recact"><button class="discard" id="discard">'+esc(t('discard'))+'</button><button id="rerecord">'+esc(t('reRecord'))+'</button></div>'
         +'<button class="primary violetbtn" id="sendVoice" style="margin-top:2px">'+IC.send+' '+esc(t('sendVoice'))+'</button>';
     } else if(r.status==='sending'){
       recUI='<div class="recbtn"><div class="core"></div></div><div class="rl">'+esc(t('recSending'))+'</div>';
     } else {
-      const live=r.status==='recording';
-      recUI='<div class="recbtn'+(live?' live':'')+'" id="recbtn" role="button" aria-label="'+esc(t('wVoiN'))+'"><div class="core"></div></div>'
+      const live=r.status==='recording', W=state.recMode==='words';
+      /* VOICE OR WORDS (Leon, 2026-10-15): on Android the recorder and the recogniser cannot
+         both hear the microphone (proven on Leon's phone), so the teller chooses. */
+      recUI=(live?'':'<div class="recmode"><button type="button" data-mode="voice" class="'+(W?'':'on')+'">'+esc(t('modeVoice'))+'</button><button type="button" data-mode="words" class="'+(W?'on':'')+'">'+esc(t('modeWords'))+'</button></div><div class="recmodes">'+esc(W?t('modeWordsS'):t('modeVoiceS'))+'</div>')
+        +'<div class="recbtn'+(live?' live':'')+'" id="recbtn" role="button" aria-label="'+esc(t('wVoiN'))+'"><div class="core"></div></div>'
         +'<div class="rl">'+(live?t('recLive'):t('recIdle'))+'</div>'
-        +(live&&r.txOk!==false?'<div class="txwrap"><div class="txk">'+esc(t('txLive'))+'</div>'+txLangChips()+'<div class="livetx" id="liveTx" dir="auto"></div>'+txDiag()+'</div>'
+        +(!W?'':live&&r.txOk!==false?'<div class="txwrap"><div class="txk">'+esc(t('txLive'))+'</div>'+txLangChips()+'<div class="livetx" id="liveTx" dir="auto"></div>'+txDiag()+'</div>'
           :!live?'<div class="txwrap">'+txLangChips()+'</div>':'');   /* Leon 2026-10-15: choose the language before recording */
     }
     return topbar(t('voiTitle'))+'<div class="pad">'
@@ -762,6 +769,7 @@
     const rr=$('#rerecord'); if(rr) rr.onclick=()=>{ resetRec(); setTimeout(toggleRec,60); };
     const sv=$('#sendVoice'); if(sv) sv.onclick=submitVoice;
     document.querySelectorAll('[data-txl]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); setTxLang(b.getAttribute('data-txl')); });
+    document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); state.recMode=b.getAttribute('data-mode'); render(); });
     const te=$('#txEdit'); if(te) te.oninput=()=>{ state.rec.text=te.value; state.rec.txTouched=true; };
     if(state.rec.status==='recording') txPaint();
   }
@@ -819,11 +827,10 @@
       '<button type="button" data-txl="'+x[0]+'" class="'+(x[0]===cur?'on':'')+'">'+x[1]+'</button>').join('')+'</div>'; }
   async function toggleRec(){
     const r=state.rec;
-    /* TEMPORARY TEST (2026-10-15): ?txonly=1 runs ONLY the recogniser - no audio recording -
-       to learn whether Leon's Android gives real sound to one of the two only. Remove after. */
-    if(/[?&]txonly=1/.test(location.search)){
-      if(r.status==='recording'){ stopTx(); setTimeout(()=>{ state.rec.status='idle'; state.msg='TEST heard: '+(state.rec.text||'(nothing)'); render(); },1200); return; }
-      state.msg=''; r.text=''; r.status='recording'; startTx(); render(); txPaint(); return;
+    /* "Write my words": the recogniser alone has the microphone; nothing is recorded */
+    if(state.recMode==='words'){
+      if(r.status==='recording'){ stopTx(); setTimeout(()=>{ txCommit(); state.rec.status='recorded'; render(); },900); return; }
+      state.msg=''; r.status='recording'; startTx(); render(); txPaint(); return;
     }
     if(r.status==='recording'){ stopTx(); try{ r.rec.stop(); }catch(e){} return; }
     if(!navigator.mediaDevices||!window.MediaRecorder){ state.msg=t('recPerm'); render(); return; }
@@ -834,19 +841,22 @@
       mr.onstop=()=>{ stream.getTracks().forEach(tk=>tk.stop());
         const blob=new Blob(state.rec.chunks,{type:mr.mimeType||'audio/webm'});
         state.rec.blob=blob; state.rec.url=URL.createObjectURL(blob); state.rec.status='recorded'; render(); };
-      mr.start(); state.rec.status='recording'; state.msg=''; startTx(); render(); txPaint();
+      mr.start(); state.rec.status='recording'; state.msg=''; render();   /* "Keep my voice": recorder only */
     }catch(e){ state.msg=t('recPerm'); render(); }
   }
   async function submitVoice(){
-    const r=state.rec; const pr=currentPrompt(); if(!r.blob||!pr||!user) return;
+    const r=state.rec; const pr=currentPrompt(); const W=state.recMode==='words';
+    if(!pr||!user) return; if(!W&&!r.blob) return;
+    if(W && !(r.text||'').trim()){ state.msg=t('needWords'); render(); return; }
     state.rec.status='sending'; state.msg=''; render();
     try{
-      const ext=(r.blob.type&&r.blob.type.indexOf('ogg')>-1)?'ogg':'webm';
-      const path=user.id+'/'+uuid()+'.'+ext;
-      const up=await sb.storage.from('family').upload(path,r.blob,{contentType:r.blob.type||'audio/webm'});
-      if(up.error) throw up.error;
+      let path=null;
+      if(!W){ const ext=(r.blob.type&&r.blob.type.indexOf('ogg')>-1)?'ogg':'webm';
+        path=user.id+'/'+uuid()+'.'+ext;
+        const up=await sb.storage.from('family').upload(path,r.blob,{contentType:r.blob.type||'audio/webm'});
+        if(up.error) throw up.error; }
       const {data:art,error:ae}=await sb.from('artefacts').insert({
-        kind:'voice', storage_path:path, body:((r.text||'').trim()||null),
+        kind:W?'text':'voice', storage_path:path, body:W?((r.text||'').trim()||null):null,
         original_language:(r.tlang||state.lang||'en'),
         contributor_user:user.id,          // who uploaded (account)
         contributor_id:pr.teller.id,        // who told it (person) — Rule 6
