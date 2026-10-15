@@ -232,6 +232,7 @@
   .txlang button.on{ border-color:rgba(243,205,132,.6); background:rgba(243,205,132,.14); }
   .livetx{ min-height:64px; max-height:160px; overflow-y:auto; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); font-size:15px; line-height:1.45; white-space:pre-wrap; }
   .livetx .interim{ opacity:.5; }
+  .txdiag{ margin-top:6px; font:11px/1.4 ui-monospace,Menlo,monospace; opacity:.55; word-break:break-word; }
   #txEdit{ width:100%; box-sizing:border-box; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.18); color:inherit; font:inherit; font-size:15px; line-height:1.45; resize:vertical; }
 </style>
 <script src="lf-bg.js?v=3" defer></script>
@@ -573,7 +574,7 @@
         +'<audio controls src="'+esc(r.url)+'"></audio>'
         +'<div class="rl">'+t('recDone')+'</div>'
         +'<div class="txwrap"><div class="txk">'+esc(r.txOk===false?t('txNone'):t('txEdit'))+'</div>'+txLangChips()
-        +'<textarea id="txEdit" dir="auto" rows="5" placeholder="'+esc(t('txPh'))+'">'+esc(r.text||'')+'</textarea></div>'
+        +'<textarea id="txEdit" dir="auto" rows="5" placeholder="'+esc(t('txPh'))+'">'+esc(r.text||'')+'</textarea>'+txDiag()+'</div>'
         +'<div class="recact"><button class="discard" id="discard">'+esc(t('discard'))+'</button><button id="rerecord">'+esc(t('reRecord'))+'</button></div>'
         +'<button class="primary violetbtn" id="sendVoice" style="margin-top:2px">'+IC.send+' '+esc(t('sendVoice'))+'</button>';
     } else if(r.status==='sending'){
@@ -582,7 +583,8 @@
       const live=r.status==='recording';
       recUI='<div class="recbtn'+(live?' live':'')+'" id="recbtn" role="button" aria-label="'+esc(t('wVoiN'))+'"><div class="core"></div></div>'
         +'<div class="rl">'+(live?t('recLive'):t('recIdle'))+'</div>'
-        +(live&&r.txOk!==false?'<div class="txwrap"><div class="txk">'+esc(t('txLive'))+'</div>'+txLangChips()+'<div class="livetx" id="liveTx" dir="auto"></div></div>':'');
+        +(live&&r.txOk!==false?'<div class="txwrap"><div class="txk">'+esc(t('txLive'))+'</div>'+txLangChips()+'<div class="livetx" id="liveTx" dir="auto"></div>'+txDiag()+'</div>'
+          :!live?'<div class="txwrap">'+txLangChips()+'</div>':'');   /* Leon 2026-10-15: choose the language before recording */
     }
     return topbar(t('voiTitle'))+'<div class="pad">'
       +'<div class="aboutchip"><span class="txt">'+t('aboutChip')(esc((window.LFLabel&&LFLabel.of(pr.teller.id,state.lang))||pr.teller.called_name||pr.teller.display_name),esc(pr.subject.display_name))+'</span></div>'
@@ -773,25 +775,30 @@
   const TXL={en:'en-US',ru:'ru-RU',he:'he-IL'};
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition||null;
   let srObj=null, srWanted=false;
+  /* TEMPORARY (2026-10-15): one small line with the recogniser's own events, to find why
+     nothing was transcribed on Leon's Android Chrome. Remove when solved. */
+  function txLog(ev){ const r=state.rec; r.txLog=(r.txLog||[]).concat(ev).slice(-8); const d=document.getElementById('txDiag'); if(d) d.textContent=r.txLog.join(' · '); }
+  function txDiag(){ const r=state.rec; return '<div class="txdiag" id="txDiag" dir="ltr">'+esc((r.txLog||[]).join(' · ')||(SR?'recogniser: ready':'recogniser: not in this browser'))+'</div>'; }
   function txPaint(){ const r=state.rec; const te=document.getElementById('txEdit');
     if(te && !r.txTouched) te.value=r.text||'';   /* late final words land in the edit box too, until the teller edits */
     const el=document.getElementById('liveTx'); if(!el) return;
     el.innerHTML=esc(r.text)+(r.interim?'<span class="interim"> '+esc(r.interim)+'</span>':''); el.scrollTop=el.scrollHeight; }
   function startTx(){ const r=state.rec; if(!r.tlang) r.tlang=state.lang||'en';
     if(!SR){ r.txOk=false; return; }
-    srWanted=true; r.txOk=true;
+    srWanted=true; r.txOk=true; r.txLog=[]; txLog('lang '+(TXL[r.tlang]||'en-US'));
     try{ srObj=new SR(); srObj.lang=TXL[r.tlang]||'en-US'; srObj.continuous=true; srObj.interimResults=true;
-      srObj.onresult=e=>{ let interim=''; for(let i=e.resultIndex;i<e.results.length;i++){ const res=e.results[i];
+      srObj.onstart=()=>txLog('start'); srObj.onaudiostart=()=>txLog('audio'); srObj.onspeechstart=()=>txLog('speech');
+      srObj.onresult=e=>{ if(!state.rec.txGot){ state.rec.txGot=1; txLog('words'); } let interim=''; for(let i=e.resultIndex;i<e.results.length;i++){ const res=e.results[i];
           if(res.isFinal){ const w=res[0].transcript.trim(); if(w) state.rec.text=(state.rec.text?state.rec.text+' ':'')+w; } else interim+=res[0].transcript; }
         state.rec.interim=interim.trim(); txPaint(); };
-      srObj.onerror=e=>{ const r3=state.rec;
+      srObj.onerror=e=>{ const r3=state.rec; txLog('error '+e.error);
         if(e.error==='network'){ r3.txFails=(r3.txFails||0)+1; }   /* offline, or a browser build without the service */
         if(e.error==='not-allowed'||e.error==='service-not-allowed'||e.error==='audio-capture'||e.error==='language-not-supported'||(r3.txFails||0)>=3){ srWanted=false; r3.txOk=false; } };
       /* Chrome ends a session after a pause; while the recording runs, it is simply resumed */
-      srObj.onend=()=>{ const r2=state.rec; if(r2.interim){ r2.text=(r2.text?r2.text+' ':'')+r2.interim; r2.interim=''; txPaint(); }
+      srObj.onend=()=>{ const r2=state.rec; txLog('end'); if(r2.interim){ r2.text=(r2.text?r2.text+' ':'')+r2.interim; r2.interim=''; txPaint(); }
         if(srWanted && r2.status==='recording'){ setTimeout(()=>{ if(!srWanted||state.rec.status!=='recording') return; try{ srObj.lang=TXL[state.rec.tlang]||'en-US'; srObj.start(); }catch(e){} },250); } };
       srObj.start();
-    }catch(e){ r.txOk=false; srWanted=false; } }
+    }catch(e){ r.txOk=false; srWanted=false; txLog('failed '+String(e&&e.message||e).slice(0,40)); } }
   function stopTx(){ srWanted=false; if(srObj){ try{ srObj.stop(); }catch(e){} } }
   function setTxLang(l){ const r=state.rec; r.tlang=l;
     if(r.status==='recording' && srObj){ try{ srObj.stop(); }catch(e){} }   /* onend restarts it in the new language */
