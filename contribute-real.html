@@ -236,6 +236,7 @@
   .txlang button.on{ border-color:rgba(243,205,132,.6); background:rgba(243,205,132,.14); }
   .livetx{ min-height:64px; max-height:160px; overflow-y:auto; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); font-size:15px; line-height:1.45; white-space:pre-wrap; }
   .livetx .interim{ opacity:.5; }
+  .txpunct{ font-size:12.5px; opacity:.7; margin:-2px 0 8px; }
   .txdiag{ margin-top:6px; font:11px/1.4 ui-monospace,Menlo,monospace; opacity:.55; word-break:break-word; }
   #txEdit{ width:100%; box-sizing:border-box; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.18); color:inherit; font:inherit; font-size:15px; line-height:1.45; resize:vertical; }
 </style>
@@ -324,7 +325,7 @@
       recDone:'<b>That’s it.</b><br>Listen back, send it, or throw it away.',
       recSending:'Sending your voice to the keeper…',
       discard:'Throw away', reRecord:'Record again', sendVoice:'Send to the keeper',
-      txLive:'Words so far', txLang:'Language', txEdit:'Here’s what we heard. Fix any names or words — you know them best.', txNone:'Writing the words down isn’t available in this browser. You can type them here if you like — it’s optional.', txPh:'The words of the story…', modeVoice:'Keep my voice', modeVoiceS:'Your voice is recorded just as it is.', modeWords:'Write my words', modeWordsS:'Speak, and your words are written down. No recording is kept.', needWords:'There are no words yet — say or type something first.',
+      txLive:'Words so far', txLang:'Language', txEdit:'Here’s what we heard. Fix any names or words — you know them best.', txNone:'Writing the words down isn’t available in this browser. You can type them here if you like — it’s optional.', txPh:'The words of the story…', modeVoice:'Keep my voice', modeVoiceS:'Your voice is recorded just as it is.', modeWords:'Write my words', modeWordsS:'Speak, and your words are written down. No recording is kept.', needWords:'There are no words yet — say or type something first.', punctBusy:'Adding punctuation…', punctDone:'Punctuation added — your words are unchanged.',
       reassure:'Nothing is shared until you choose. You can stop, listen back, or throw it away — any time.',
       voiFoot:'A voice outlives everything else in this forest.',
       voiThinN:'The forest needs a few more people first.', voiThinS:'Once two family members are in the forest, we can ask one to tell about the other. Propose someone to begin.',
@@ -373,7 +374,7 @@
       recDone:'<b>Вот и всё.</b><br>Прослушайте, отправьте или сотрите.',
       recSending:'Отправляем ваш голос хранителю…',
       discard:'Стереть', reRecord:'Записать заново', sendVoice:'Отправить хранителю',
-      txLive:'Текст по ходу записи', txLang:'Язык', txEdit:'Вот что мы услышали. Исправьте имена и слова — вы знаете их лучше всех.', txNone:'В этом браузере текст не записывается. Можно напечатать слова здесь — по желанию.', txPh:'Слова истории…', modeVoice:'Сохранить мой голос', modeVoiceS:'Голос записывается как есть.', modeWords:'Записать мои слова', modeWordsS:'Говорите — слова запишутся текстом. Голос не сохраняется.', needWords:'Слов пока нет — скажите или напечатайте что-нибудь.',
+      txLive:'Текст по ходу записи', txLang:'Язык', txEdit:'Вот что мы услышали. Исправьте имена и слова — вы знаете их лучше всех.', txNone:'В этом браузере текст не записывается. Можно напечатать слова здесь — по желанию.', txPh:'Слова истории…', modeVoice:'Сохранить мой голос', modeVoiceS:'Голос записывается как есть.', modeWords:'Записать мои слова', modeWordsS:'Говорите — слова запишутся текстом. Голос не сохраняется.', needWords:'Слов пока нет — скажите или напечатайте что-нибудь.', punctBusy:'Расставляю знаки препинания…', punctDone:'Знаки препинания добавлены — слова те же.',
       reassure:'Ничего не публикуется, пока вы не решите. Можно остановить, прослушать или стереть — в любой момент.',
       voiFoot:'Голос переживает в этом лесу всё остальное.',
       voiThinN:'Сначала лесу нужно ещё немного людей.', voiThinS:'Когда в лесу будут двое родных, мы попросим одного рассказать о другом. Предложите кого-нибудь, чтобы начать.',
@@ -422,7 +423,7 @@
       recDone:'<b>זהו.</b><br>הקשיבו, שלחו, או השליכו.',
       recSending:'שולח את הקול שלכם לשומר…',
       discard:'להשליך', reRecord:'להקליט שוב', sendVoice:'לשלוח לשומר',
-      txLive:'הטקסט עד עכשיו', txLang:'שפה', txEdit:'זה מה ששמענו. תקנו שמות או מילים — אתם מכירים אותם הכי טוב.', txNone:'בדפדפן הזה אין תמלול. אפשר להקליד כאן את המילים — לא חובה.', txPh:'מילות הסיפור…', modeVoice:'לשמור את הקול שלי', modeVoiceS:'הקול נשמר בדיוק כמו שהוא.', modeWords:'לכתוב את המילים שלי', modeWordsS:'דברו, והמילים ייכתבו. ההקלטה לא נשמרת.', needWords:'עדיין אין מילים — אמרו או הקלידו משהו קודם.',
+      txLive:'הטקסט עד עכשיו', txLang:'שפה', txEdit:'זה מה ששמענו. תקנו שמות או מילים — אתם מכירים אותם הכי טוב.', txNone:'בדפדפן הזה אין תמלול. אפשר להקליד כאן את המילים — לא חובה.', txPh:'מילות הסיפור…', modeVoice:'לשמור את הקול שלי', modeVoiceS:'הקול נשמר בדיוק כמו שהוא.', modeWords:'לכתוב את המילים שלי', modeWordsS:'דברו, והמילים ייכתבו. ההקלטה לא נשמרת.', needWords:'עדיין אין מילים — אמרו או הקלידו משהו קודם.', punctBusy:'מוסיפים סימני פיסוק…', punctDone:'נוספו סימני פיסוק — המילים שלכם, ללא שינוי.',
       reassure:'שום דבר אינו משותף עד שתבחרו. אפשר לעצור, להאזין, או להשליך — בכל רגע.',
       voiFoot:'קול שורד ביער הזה יותר מכל דבר אחר.',
       voiThinN:'קודם היער צריך עוד כמה אנשים.', voiThinS:'כששני בני משפחה יהיו ביער, נוכל לבקש מאחד לספר על השני. הציעו מישהו כדי להתחיל.',
@@ -578,6 +579,7 @@
       recUI='<div class="recbtn"><div class="core"></div></div>'
         +(W?'':'<audio controls src="'+esc(r.url)+'"></audio><div class="rl">'+t('recDone')+'</div>')
         +(W?'<div class="txwrap"><div class="txk">'+esc(r.txOk===false?t('txNone'):t('txEdit'))+'</div>'+txLangChips()
+          +(r.punct?'<div class="txpunct">'+esc(r.punct==='busy'?t('punctBusy'):t('punctDone'))+'</div>':'')
           +'<textarea id="txEdit" dir="auto" rows="5" placeholder="'+esc(t('txPh'))+'">'+esc(r.text||'')+'</textarea>'+txDiag()+'</div>':'')
         +'<div class="recact"><button class="discard" id="discard">'+esc(t('discard'))+'</button><button id="rerecord">'+esc(t('reRecord'))+'</button></div>'
         +'<button class="primary violetbtn" id="sendVoice" style="margin-top:2px">'+IC.send+' '+esc(t('sendVoice'))+'</button>';
@@ -825,11 +827,20 @@
   function txLangChips(){ const r=state.rec, cur=r.tlang||state.lang||'en';
     return '<div class="txlang"><span>'+esc(t('txLang'))+'</span>'+[['en','English'],['ru','Русский'],['he','עברית']].map(x=>
       '<button type="button" data-txl="'+x[0]+'" class="'+(x[0]===cur?'on':'')+'">'+x[1]+'</button>').join('')+'</div>'; }
+  /* PUNCTUATION (Leon, 2026-10-15): the recogniser gives bare words; Claude (same key as
+     `translate`) adds sentence ends and commas only. The function refuses any answer whose
+     words differ from the spoken ones, so at worst nothing changes. The teller still edits. */
+  async function punctuate(){ const r=state.rec; r.punct='busy';
+    try{ const {data,error}=await sb.functions.invoke('punctuate',{body:{lang:r.tlang||state.lang||'en', text:r.text}});
+      if(state.rec!==r) return;
+      if(!error && data && data.changed && !r.txTouched){ r.text=data.text; r.punct='done'; } else r.punct='';
+    }catch(e){ r.punct=''; }
+    if(state.rec===r && r.status==='recorded') render(); }
   async function toggleRec(){
     const r=state.rec;
     /* "Write my words": the recogniser alone has the microphone; nothing is recorded */
     if(state.recMode==='words'){
-      if(r.status==='recording'){ stopTx(); setTimeout(()=>{ txCommit(); state.rec.status='recorded'; render(); },900); return; }
+      if(r.status==='recording'){ stopTx(); setTimeout(()=>{ txCommit(); state.rec.status='recorded'; if((state.rec.text||'').trim()) punctuate(); render(); },900); return; }
       state.msg=''; r.status='recording'; startTx(); render(); txPaint(); return;
     }
     if(r.status==='recording'){ stopTx(); try{ r.rec.stop(); }catch(e){} return; }
