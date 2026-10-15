@@ -287,6 +287,14 @@ words, sends nothing. Review shows kind 'text' as "A told story" (no image, no p
 Probe `~/qc/qc-voicemode.js` (all writes intercepted, 0 rows/files written): both modes OK.
 The small grey recogniser line (txDiag) is still shown in words mode - TEMPORARY, remove when
 Leon confirms it works on his phone. The ?txonly test is removed.
+PUNCTUATION (Leon chose AI punctuation, 2026-10-15) `89f2444`: Edge Function `punctuate`
+(verify_jwt on; same ANTHROPIC_API_KEY + TRANSLATE_MODEL as `translate`) adds punctuation and
+sentence capitals ONLY; GUARD compares the word sequence (case/punctuation ignored) and returns
+the original text if any word differs. Contribute calls it once after "Write my words" stops,
+shows "Adding punctuation…" / "Punctuation added — your words are unchanged."; skipped if the
+teller already edited. Tested direct (he/ru/en all punctuated, words intact) and end-to-end
+with a simulated Android-style recogniser (`~/qc/qc-punct.js`, writes blocked): 1 call, box
+updated, 0 errors. Lesson: in a /u regex, \" is an invalid escape -> function boot error 503.
 GAP: approved 'text' stories, like 'voice', are shown NOWHERE yet (person page memories
 require a photo). Part of the next task.
 NEXT (Leon's order): the player for voice recordings (and showing told stories), AFTER
