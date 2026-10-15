@@ -255,6 +255,26 @@ Leon chose: within ~10 min, one email per batch; Resend; include people waiting 
   account, so Leon signs up with lenya.golnick@gmail.com. A second real keeper needs a verified
   domain in Resend.
 - Side note: the test keeper (qc-keeper) is anchored to a real person, Nadia Matveev.
+VOICE: LIVE TRANSCRIPT (Leon, 2026-10-15) `674f2f3`, `faa6c70` — contribute-real voice
+recorder. While recording, the browser's SpeechRecognition writes a live draft ("Words so
+far"), language chips EN/RU/HE (starts from the app language; it cannot auto-detect; a tap
+switches and restarts it); after stopping, an editable box ("fix any names or words") - the
+teller corrects it. Saved as artefacts.body + original_language (the chip), audio always
+uploaded too. Honest limits: Chrome sends audio to Google, Edge to Microsoft, Safari Apple;
+Firefox has none -> the box is for optional typing. Restarts after pauses (250 ms pace),
+gives up after 3 'network' errors. Probe `~/qc/qc-voicetx.js` (fake mic, ALL writes
+intercepted, 0 rows/files written): chips + live box shown, Hebrew tap switches, stop ->
+audio + edit box, captured insert {kind voice, body typed text, original_language he,
+in_review, subject row}. The server's headless Chrome has no recognition service, so only
+the fallback was exercised - a real-phone test is still needed.
+Decided path (Leon): no external paid STT; browser recognition first. Whisper self-hosted
+stays an option (faster-whisper installed in ~/whisper; "small" tested on jfk.wav: 1.8x
+real-time, ~1 GB peak, language detection correct). For RU/HE the candidates are generic
+large-v3-turbo and ivrit.ai large-v3-turbo (Hebrew) - not run: memory risk on 2 GB; test only
+off trading hours with a free-memory guard, or after a RAM upgrade.
+FOUND: the only voice artefact (f6751dc8…, 2026-08-06, published) has NO storage_path and no
+audio file exists in storage at all - cause unknown.
+NEXT (Leon's order): the player for voice recordings, AFTER transcription.
 NOTE: the table of contents at the top of this file is stale — several headings it lists
 (game-feel spec, design house rules, briefs) are not in the body.
 
