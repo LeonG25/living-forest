@@ -274,7 +274,23 @@ large-v3-turbo and ivrit.ai large-v3-turbo (Hebrew) - not run: memory risk on 2 
 off trading hours with a free-memory guard, or after a RAM upgrade.
 FOUND: the only voice artefact (f6751dc8…, 2026-08-06, published) has NO storage_path and no
 audio file exists in storage at all - cause unknown.
-NEXT (Leon's order): the player for voice recordings, AFTER transcription.
+PHONE TEST RESULT (Leon's Android Chrome, 2026-10-15): with the audio recorder running, the
+recogniser got the mic but returned nothing (start-audio-end loops); alone (temporary
+?txonly=1) it transcribed Russian live. => On Android the recorder and recogniser cannot both
+hear the microphone. Also found: Android sends a growing sentence as repeated FINAL results
+("как", "как меня", ...) -> fixed by per-session de-duplication (txAddFinal/txCommit, `130ed4b`).
+DECISION (Leon: "try what you recommend") `07b3c80`: Contribute voice screen asks first -
+"Keep my voice" (recorder only, saved kind 'voice' with audio, no text) or "Write my words"
+(recogniser only, language row EN/RU/HE, live text, editable, saved kind 'text' (an existing
+artefact_kind value), storage_path null, body + original_language). Empty words -> asks for
+words, sends nothing. Review shows kind 'text' as "A told story" (no image, no player).
+Probe `~/qc/qc-voicemode.js` (all writes intercepted, 0 rows/files written): both modes OK.
+The small grey recogniser line (txDiag) is still shown in words mode - TEMPORARY, remove when
+Leon confirms it works on his phone. The ?txonly test is removed.
+GAP: approved 'text' stories, like 'voice', are shown NOWHERE yet (person page memories
+require a photo). Part of the next task.
+NEXT (Leon's order): the player for voice recordings (and showing told stories), AFTER
+transcription. Option B (Whisper on the server for kept voices) remains for later.
 NOTE: the table of contents at the top of this file is stale — several headings it lists
 (game-feel spec, design house rules, briefs) are not in the body.
 
