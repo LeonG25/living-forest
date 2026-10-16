@@ -307,6 +307,16 @@ NEXT = transcription of stored recordings with Whisper on the VPS (Leon's indepe
 preference). Needs real RU/HE recordings to pick a model (none exist yet), memory-guarded
 off-hours tests; a 15-minute recording on 1 CPU may take a long time - to be measured.
 The `punctuate` function stays (Whisper punctuates itself; may be unused).
+FIRST REAL RECORDING (Leon, 2026-10-17 00:23) 32a5f7c3…: 529 KB webm stored, approved. Its
+prompt was saved as " — tell me about the first time you met ." (names empty) - left as is.
+FIXED `75ae6bc`: contribute-real never called LFLabel.load (old display_name column empty) ->
+question/about/receipt showed blanks/"undefined"; now loaded, pname() used. The voice's
+artefact_subjects link (default status in_review) appeared in Review as a separate, puzzling
+"Facts · detail" card: contribute now inserts it status 'published' (the recording itself is
+reviewed), and Review's artefact approve also publishes its pending links. The one stranded
+link was published (Leon had approved the recording). Probe `~/qc/qc-voicenames.js` (writes
+intercepted): "Dudu Betito — tell me about the first time you met Leeya Betito.", receipt
+"Dudu Betito → Leeya Betito", link status published.
 GAP: approved 'text' stories, like 'voice', are shown NOWHERE yet (person page memories
 require a photo). Part of the next task.
 NEXT (Leon's order): the player for voice recordings (and showing told stories), AFTER
