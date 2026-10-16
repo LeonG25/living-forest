@@ -11,7 +11,7 @@
   function inAppRef(){
     try{ if(!document.referrer) return false;
       var u=new URL(document.referrer);
-      return u.origin===location.origin && /((home-real|person-real|place-real|moment-real|crowd-real|timeline-real|search-real|tree-real|contribute-real|curators-real|review-real|journal-real|reel-real|clearing-real|game-missing-voice|game-look-alike|game-tangled-thread|game-who-is-who|game-what-happened-next|game-where-was-this|game-order-of-things|index|preview|preview-globe|prototype)\.html?|\/)$/.test(u.pathname);
+      return u.origin===location.origin && /((home-real|person-real|place-real|moment-real|crowd-real|timeline-real|search-real|tree-real|contribute-real|curators-real|review-real|journal-real|reel-real|clearing-real|game-missing-voice|game-look-alike|voices-real|game-tangled-thread|game-who-is-who|game-what-happened-next|game-where-was-this|game-order-of-things|index|preview|preview-globe|prototype)\.html?|\/)$/.test(u.pathname);
     }catch(e){ return false; }
   }
   function goBack(){
@@ -147,13 +147,13 @@
      translated now; the layout, the order and the look are untouched. */
   var NAVW={
     en:{map:'The globe',find:'Search',tree:'The tree',play:'Play',
-        when:'The timeline',add:'Contribute',journal:'My journal',clearing:'The clearing',
+        when:'The timeline',voices:'Voices',add:'Contribute',journal:'My journal',clearing:'The clearing',
         mail:'Mailbox',review:'Review',keepers:'Keepers',out:'Step out'},
     ru:{map:'Глобус',find:'Поиск',tree:'Древо',play:'Играть',
-        when:'Лента времени',add:'Добавить',journal:'Мой дневник',clearing:'Поляна',
+        when:'Лента времени',voices:'Голоса',add:'Добавить',journal:'Мой дневник',clearing:'Поляна',
         mail:'Почта',review:'Проверка',keepers:'Хранители',out:'Выйти'},
     he:{map:'הגלובוס',find:'חיפוש',tree:'האילן',play:'לשחק',
-        when:'ציר הזמן',add:'להוסיף',journal:'היומן שלי',clearing:'הקרחת',
+        when:'ציר הזמן',voices:'קולות',add:'להוסיף',journal:'היומן שלי',clearing:'הקרחת',
         mail:'דואר',review:'בדיקה',keepers:'שומרים',out:'יציאה'}};
   function navLang(){ try{ return localStorage.getItem('lf_lang')||'en'; }catch(e){ return 'en'; } }
   function W(k){ var d=NAVW[navLang()]||NAVW.en; return d[k]||NAVW.en[k]||k; }
@@ -330,6 +330,7 @@
              ['tree','⋔',W('tree'),'tree-real.html'],
              ['play','❂',W('play'),'crowd-real.html'],
              ['when','◷',W('when'),'timeline-real.html'],
+             ['voices','♪',W('voices'),'voices-real.html'],   /* every recording (Leon 2026-10-17) */
              ['add','✎',W('add'),'contribute-real.html'],
              ['journal','❦',W('journal'),'journal-real.html']];  /* the clearing row retired 2026-09-24: folded into the Play sheet */
   var wrap=document.createElement('div'); wrap.id='lfnav';

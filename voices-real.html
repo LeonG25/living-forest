@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr"><head>
+<link rel="icon" href="data:,">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<link rel="stylesheet" href="lf-layout.css?v=1">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Voices · The Living Forest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Frank+Ruhl+Libre:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="lf-db.js?v=13"></script>
+<script src="lf-label.js?v=2"></script>
+<script src="lf-voice.js?v=1"></script>
+<!-- VOICES (Leon, 2026-10-17): every recorded story in one place, like the timeline is for
+     photographs. Cards, player and "ask to remove" come from lf-voice.js (shared with the person
+     page and games). Built with the current graphics; design pass after Leon has tried it. -->
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  :root{ --cream:#f4ecdb; --muted:#9db0cc; --hair:#ffffff18; --panel:#ffffff0b; --gold:#f3cd84; }
+  html,body{ background:#04070e; }
+  body{ font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--cream); min-height:100dvh;
+    background:radial-gradient(150% 100% at 50% -6%, #1b1638 0%, #0e1124 44%, #04070e 100%); }
+  .wrap{ max-width:620px; margin:0 auto; padding:calc(64px + env(safe-area-inset-top)) 16px 120px; }
+  .kick{ font-size:12px; letter-spacing:.14em; color:var(--muted); text-transform:uppercase; }
+  h1{ font-family:'Newsreader',Georgia,serif; font-weight:400; font-size:30px; color:#e3d2ff; margin:4px 0 6px; }
+  [dir="rtl"] h1{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
+  .sub{ font-size:14px; color:var(--muted); margin-bottom:16px; line-height:1.45; }
+  .search{ width:100%; padding:11px 14px; border-radius:12px; border:1px solid var(--hair); background:var(--panel); color:var(--cream); font:inherit; font-size:15px; outline:none; margin-bottom:14px; }
+  .count{ font-size:12.5px; color:var(--muted); margin:0 2px 10px; }
+</style>
+</head>
+<body>
+<div id="root"><div class="wrap">
+  <div class="kick" id="kick"></div>
+  <h1 id="title"></h1>
+  <div class="sub" id="sub"></div>
+  <input class="search" id="q" autocomplete="off">
+  <div class="count" id="count"></div>
+  <div id="list"></div>
+</div></div>
+<script>
+(function(){
+  const sb=window.supabase.createClient('https://oabcdrktuikifbormjip.supabase.co','sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC');
+  LFDB.install(sb,'voices-real');
+  const lang=(function(){ try{ const l=localStorage.getItem('lf_lang'); return ['en','ru','he'].includes(l)?l:'en'; }catch(e){ return 'en'; } })();
+  const T={ en:{kick:'The family',title:'Voices',sub:'Every story told aloud, newest first. Tap to listen.',search:'Filter by a name',count:n=>n===1?'1 recording':n+' recordings'},
+            ru:{kick:'Семья',title:'Голоса',sub:'Все рассказы, записанные голосом, — сначала новые. Нажмите, чтобы послушать.',search:'Фильтр по имени',count:n=>'Записей: '+n},
+            he:{kick:'המשפחה',title:'קולות',sub:'כל הסיפורים שסופרו בקול, מהחדש לישן. הקישו כדי להאזין.',search:'סינון לפי שם',count:n=>n===1?'הקלטה אחת':n+' הקלטות'} }[lang];
+  const $=s=>document.querySelector(s);
+  document.documentElement.lang=lang; $('#root').dir=lang==='he'?'rtl':'ltr';
+  $('#kick').textContent=T.kick; $('#title').textContent=T.title; $('#sub').textContent=T.sub; $('#q').placeholder=T.search;
+  let all=[];
+  const names=v=>[v.tellerId].concat(v.subjectIds).map(id=>(window.LFLabel&&LFLabel.of(id,lang))||'').join(' ').toLowerCase();
+  function draw(){ const q=($('#q').value||'').trim().toLowerCase(); const vs=q?all.filter(v=>names(v).includes(q)):all;
+    $('#count').textContent=T.count(vs.length); $('#list').innerHTML=LFVoice.list(vs,lang); }
+  (async()=>{ const {data:{session}}=await sb.auth.getSession(); if(!session){ location.replace('index.html?next=voices-real.html'); return; }
+    try{ all=await LFVoice.load(sb,{}); }catch(e){ all=[]; }
+    draw(); LFVoice.wire($('#list'),sb,lang); $('#q').oninput=draw; window.__voices=all; })();
+})();
+</script>
+<script src="lf-lang.js?v=8"></script>
+<script src="lf-nav.js?v=46" data-here="voices" data-parent="index.html"></script>
+</body></html>
