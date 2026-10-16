@@ -317,6 +317,27 @@ reviewed), and Review's artefact approve also publishes its pending links. The o
 link was published (Leon had approved the recording). Probe `~/qc/qc-voicenames.js` (writes
 intercepted): "Dudu Betito — tell me about the first time you met Leeya Betito.", receipt
 "Dudu Betito → Leeya Betito", link status published.
+RECORDINGS EVERYWHERE (Leon, 2026-10-17) `a37b18f`..`6862a01`:
+- WHOSE VOICE: a recording is credited to the LOGGED-IN person (profiles.person_id); "Whose voice
+  is this?" select to pick someone else; questions are about the narrator's own relatives, closest
+  first (BFS over parent/spouse/sibling). Before, the teller came from a random related pair -
+  Leon's two test recordings were saved as Dudu Betito's; re-credited to Leon at his word.
+- lf-voice.js (shared): LFVoice.load(sb,{teller|subject}), card/list, wire (play via signed URL,
+  "Ask to remove"). Old prompts with missing names (" — tell me…") are hidden.
+- Person page Story tab: "Audio stories told" / "Audio stories mentioned in"; voices excluded from
+  the photo "memories" list (they would show as empty story cards).
+- voices-real.html: all recordings, newest first, name filter; ⊕ menu "Voices" after the timeline
+  (lf-nav v46; voices-real added to lf-nav line-14 and mail APP_PAGES lists).
+- REMOVAL: anyone asks (artefact_edits field moment_delete, new_value 'voice', old_value = audio
+  path); Review shows "Asks to remove this recording", the question and a play button; approval
+  runs the existing moment_delete path (file, links, translations, row deleted).
+- notify-keepers v4: keepers never count as "waiting at the gate" (the test keeper did).
+Probes (writes intercepted, 0 rows written): `~/qc/qc-voices.js` - menu shows Voices; page "2
+recordings", "Voice of Leon Golnick · about Leeya Betito"; playback 11 s from a signed URL;
+removal request payload correct; Leon's Story tab told=2, Leeya's mentioned-in=2.
+`~/qc/qc-narrator.js` - default "Nadia Matveev (me)" (the test keeper's linked person), switching
+to Leon re-asks about Leon's relatives.
+NEXT: voices in games (The Missing Voice is the obvious first), then Whisper transcription.
 GAP: approved 'text' stories, like 'voice', are shown NOWHERE yet (person page memories
 require a photo). Part of the next task.
 NEXT (Leon's order): the player for voice recordings (and showing told stories), AFTER
