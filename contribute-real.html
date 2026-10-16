@@ -224,6 +224,9 @@
     .aur,.embers,.stars,.way.voice,.recbtn,.recbtn::before,.recbtn .core,.almost .ac,.receipt .rc,.pageatmo span{ animation:none !important; }
     .waitrow .sp,.spin{ animation:none; }
   }
+  .whospeaks{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:6px 2px 0; font-size:13px; opacity:.9; }
+  .whospeaks select{ font:inherit; font-size:14px; padding:7px 10px; border-radius:10px; background:rgba(255,255,255,.06); color:inherit; border:1px solid rgba(201,162,255,.35); max-width:100%; }
+  .whospeaks option{ color:#111; }
   .rectime{ display:flex; justify-content:center; gap:22px; font-size:14px; opacity:.85; margin:6px 0 2px; font-variant-numeric:tabular-nums; }
   .rectime b{ font-weight:600; }
   .rectime .low{ color:#f0b48a; }
@@ -270,7 +273,7 @@
   const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
   let user=null;
-  const state={ lang:'en', screen:'hub', people:[], rels:[], arts:[], gaps:[], pairs:[], pairIdx:0,
+  const state={ lang:'en', screen:'hub', people:[], rels:[], arts:[], gaps:[], pairs:[], pairIdx:0, me:null, narrator:null,
     propose:{ name:'', open:{}, gifts:{} }, recMode:'voice', rec:{ status:'idle', blob:null, url:'', rec:null, chunks:[], text:'', interim:'', tlang:null, txOk:null }, receipt:null, msg:'' };
 
   /* ---------- SVG glyphs ---------- */
@@ -324,7 +327,7 @@
       voiTitle:'Record a voice',
       aboutChip:(a,b)=>'This is <b>'+a+'’s</b> voice, telling about <b>'+b+'</b>',
       promptK:"You don't have to perform", promptPn:'Not the right question? <b id="another">Ask me another →</b>',
-      recIdle:'<b>Just talk to me.</b><br>Tap when you’re ready. One recording can be up to 15 minutes.', recElapsed:'Recorded', recLeft:'Left', recMaxHit:'That’s the 15-minute limit, so the recording stopped. You can send it, then record a second part.',
+      recIdle:'<b>Just talk to me.</b><br>Tap when you’re ready. One recording can be up to 15 minutes.', recElapsed:'Recorded', whoSpeaks:'Whose voice is this?', whoSpeaksQ:'Whose voice will this be?', meTag:'me', recLeft:'Left', recMaxHit:'That’s the 15-minute limit, so the recording stopped. You can send it, then record a second part.',
       recLive:'<b>Listening.</b><br>Tap again when you’re done.', recPerm:'Allow the microphone to begin — nothing is kept until you send it.',
       recDone:'<b>That’s it.</b><br>Listen back, send it, or throw it away.',
       recSending:'Sending your voice to the keeper…',
@@ -373,7 +376,7 @@
       voiTitle:'Записать голос',
       aboutChip:(a,b)=>'Это голос <b>'+a+'</b>, рассказ о <b>'+b+'</b>',
       promptK:'Не нужно ничего исполнять', promptPn:'Не тот вопрос? <b id="another">Спросите другой →</b>',
-      recIdle:'<b>Просто говорите со мной.</b><br>Нажмите, когда будете готовы. Одна запись — до 15 минут.', recElapsed:'Записано', recLeft:'Осталось', recMaxHit:'Это предел в 15 минут, поэтому запись остановлена. Её можно отправить, а потом записать продолжение.',
+      recIdle:'<b>Просто говорите со мной.</b><br>Нажмите, когда будете готовы. Одна запись — до 15 минут.', recElapsed:'Записано', whoSpeaks:'Чей это голос?', whoSpeaksQ:'Чей голос будет записан?', meTag:'я', recLeft:'Осталось', recMaxHit:'Это предел в 15 минут, поэтому запись остановлена. Её можно отправить, а потом записать продолжение.',
       recLive:'<b>Слушаю.</b><br>Нажмите снова, когда закончите.', recPerm:'Разрешите микрофон, чтобы начать — ничего не сохранится, пока вы не отправите.',
       recDone:'<b>Вот и всё.</b><br>Прослушайте, отправьте или сотрите.',
       recSending:'Отправляем ваш голос хранителю…',
@@ -422,7 +425,7 @@
       voiTitle:'להקליט קול',
       aboutChip:(a,b)=>'זהו קולה של <b>'+a+'</b>, מספר על <b>'+b+'</b>',
       promptK:'אין צורך להופיע', promptPn:'לא השאלה הנכונה? <b id="another">בקשו אחרת →</b>',
-      recIdle:'<b>פשוט דברו אליי.</b><br>הקישו כשאתם מוכנים. הקלטה אחת — עד 15 דקות.', recElapsed:'הוקלט', recLeft:'נותרו', recMaxHit:'הגעתם למגבלה של 15 דקות, ולכן ההקלטה נעצרה. אפשר לשלוח אותה, ואז להקליט המשך.',
+      recIdle:'<b>פשוט דברו אליי.</b><br>הקישו כשאתם מוכנים. הקלטה אחת — עד 15 דקות.', recElapsed:'הוקלט', whoSpeaks:'של מי הקול?', whoSpeaksQ:'של מי הקול שיוקלט?', meTag:'אני', recLeft:'נותרו', recMaxHit:'הגעתם למגבלה של 15 דקות, ולכן ההקלטה נעצרה. אפשר לשלוח אותה, ואז להקליט המשך.',
       recLive:'<b>מקשיב.</b><br>הקישו שוב כשסיימתם.', recPerm:'אשרו את המיקרופון כדי להתחיל — דבר אינו נשמר עד שתשלחו.',
       recDone:'<b>זהו.</b><br>הקשיבו, שלחו, או השליכו.',
       recSending:'שולח את הקול שלכם לשומר…',
@@ -506,18 +509,28 @@
               (a,b)=>a+' — ספרו על '+b+' כשהיו צעירים.',
               (a,b)=>a+', מה '+b+' תמיד היו אומרים?',
               (a,b)=>a+' — איפה הייתם ו'+b+' המאושרים ביותר יחד?' ];
+  /* WHOSE VOICE (Leon, 2026-10-17): a recording is credited to the person LOGGED IN, unless they
+     choose someone else ("Whose voice is this?"). It used to take the teller from a random pair
+     of related people, so Leon's own test recordings were saved as Dudu Betito's voice. The
+     questions are now about the narrator's own relatives, closest first. */
   function buildPairs(){
-    const pairs=[]; const seen=new Set();
-    state.rels.forEach(r=>{ const a=state.people.find(x=>x.id===r.from_person), b=state.people.find(x=>x.id===r.to_person);
-      if(a&&b){ const k=a.id+'>'+b.id; if(!seen.has(k)){ seen.add(k); pairs.push({teller:a,subject:b}); } } });
-    // fallback: any two distinct people so the engine still yields prompts as data grows
-    if(pairs.length<3){ const P=state.people.slice(0,8);
-      for(let i=0;i<P.length&&pairs.length<8;i++){ for(let j=0;j<P.length&&pairs.length<8;j++){ if(i!==j){ const k=P[i].id+'>'+P[j].id; if(!seen.has(k)){ seen.add(k); pairs.push({teller:P[i],subject:P[j]}); } } } } }
-    // shuffle by index rotation (no Math.random needed for correctness)
+    const pairs=[]; const N=state.narrator;
+    if(N){ const adj={}; state.rels.forEach(r=>{ if(r.kind==='friend') return; (adj[r.from_person]=adj[r.from_person]||[]).push(r.to_person); (adj[r.to_person]=adj[r.to_person]||[]).push(r.from_person); });
+      const d={}; d[N]=0; const q=[N]; while(q.length){ const x=q.shift(); (adj[x]||[]).forEach(y=>{ if(d[y]===undefined){ d[y]=d[x]+1; q.push(y); } }); }
+      const teller=state.people.find(x=>x.id===N)||{id:N};
+      state.people.filter(x=>x.id!==N).sort((a,b)=>((d[a.id]??99)-(d[b.id]??99))||String(pname(a)).localeCompare(String(pname(b))))
+        .slice(0,12).forEach(b=>pairs.push({teller,subject:b}));
+    }
     state.pairs=pairs; state.pairIdx=0;
   }
+  function narratorPick(){ const D=state.me; const opts=state.people.slice().sort((a,b)=>String(pname(a)).localeCompare(String(pname(b))));
+    return '<label class="whospeaks"><span>'+esc(t('whoSpeaks'))+'</span><select id="narrSel">'
+      +(state.narrator?'':'<option value="" selected>—</option>')
+      +(D?'<option value="'+esc(D)+'"'+(state.narrator===D?' selected':'')+'>'+esc(pname(state.people.find(x=>x.id===D)||{id:D}))+' ('+esc(t('meTag'))+')</option>':'')
+      +opts.filter(x=>x.id!==D).map(x=>'<option value="'+esc(x.id)+'"'+(state.narrator===x.id?' selected':'')+'>'+esc(pname(x))+'</option>').join('')
+      +'</select></label>'; }
   function currentPrompt(){
-    if(!state.pairs.length) return null;
+    if(!state.pairs.length) return null;   /* no narrator yet -> the page asks "Whose voice is this?" first */
     /* the naming rule, not the stale column - these four were the last direct reads */
     const nmOf=x=>(x&&((window.LFLabel&&LFLabel.of(x.id,state.lang))||x.called_name||x.display_name))||'';
     const p=state.pairs[state.pairIdx%state.pairs.length];
@@ -574,6 +587,9 @@
 
   function screenVoice(){
     const pr=currentPrompt();
+    if(!pr && !state.narrator && state.people.length>1){   /* account not linked to a person: ask first */
+      return topbar(t('voiTitle'))+'<div class="pad"><div class="prompt"><div class="pq serif">'+esc(t('whoSpeaksQ'))+'</div><div style="margin-top:14px">'+narratorPick()+'</div></div></div>';
+    }
     if(!pr){
       return topbar(t('voiTitle'))+'<div class="pad">'
         +'<div class="almost" style="background:linear-gradient(160deg, rgba(201,162,255,.14), rgba(11,15,32,.5));border-color:rgba(201,162,255,.3)">'
@@ -608,7 +624,7 @@
           :!live?'<div class="txwrap">'+txLangChips()+'</div>':'');   /* Leon 2026-10-15: choose the language before recording */
     }
     return topbar(t('voiTitle'))+'<div class="pad">'
-      +'<div class="aboutchip"><span class="txt">'+t('aboutChip')(esc(pname(pr.teller)),esc(pname(pr.subject)))+'</span></div>'
+      +(r.status==='idle'?narratorPick():'<div class="aboutchip"><span class="txt">'+t('aboutChip')(esc(pname(pr.teller)),esc(pname(pr.subject)))+'</span></div>')
       +'<div class="prompt"><div class="pk">'+esc(t('promptK'))+'</div><div class="pq serif">“'+esc(pr.q)+'”</div><div class="pn">'+t('promptPn')+'</div></div>'
       +'<div class="recwrap">'+recUI+'</div>'
       +'<div class="msg'+(state.msg?' err':'')+'" id="msg">'+esc(state.msg)+'</div>'
@@ -778,6 +794,7 @@
   /* ---------- voice ---------- */
   function wireVoice(){
     const another=$('#another'); if(another) another.onclick=()=>{ state.pairIdx++; render(); };
+    const ns=$('#narrSel'); if(ns) ns.onchange=()=>{ state.narrator=ns.value||null; buildPairs(); render(); };
     const recbtn=$('#recbtn'); if(recbtn) recbtn.onclick=toggleRec;
     const dis=$('#discard'); if(dis) dis.onclick=resetRec;
     const rr=$('#rerecord'); if(rr) rr.onclick=()=>{ resetRec(); setTimeout(toggleRec,60); };
@@ -918,7 +935,7 @@
     const {data:{session}}=await sb.auth.getSession();
     if(!session){ location.replace('index.html?next=contribute-real.html'); return; }
     user=session.user;
-    try{ const {data:pr}=await sb.from('profiles').select('display_name,preferred_lang').eq('id',user.id).maybeSingle(); if(pr&&pr.preferred_lang&&!stored&&T[pr.preferred_lang]) state.lang=pr.preferred_lang; }catch(e){}
+    try{ const {data:pr}=await sb.from('profiles').select('display_name,preferred_lang,person_id').eq('id',user.id).maybeSingle(); if(pr&&pr.preferred_lang&&!stored&&T[pr.preferred_lang]) state.lang=pr.preferred_lang; if(pr&&pr.person_id){ state.me=pr.person_id; state.narrator=pr.person_id; } }catch(e){}
     await loadData();
     render();
   }
