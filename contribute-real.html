@@ -327,7 +327,7 @@
       voiTitle:'Record a voice',
       aboutChip:(a,b)=>'This is <b>'+a+'’s</b> voice, telling about <b>'+b+'</b>',
       promptK:"You don't have to perform", promptPn:'Not the right question? <b id="another">Ask me another →</b>',
-      recIdle:'<b>Just talk to me.</b><br>Tap when you’re ready. One recording can be up to 15 minutes.', recElapsed:'Recorded', whoSpeaks:'Whose voice is this?', whoSpeaksQ:'Whose voice will this be?', meTag:'me', recLeft:'Left', recMaxHit:'That’s the 15-minute limit, so the recording stopped. You can send it, then record a second part.',
+      recIdle:'<b>Just talk to me.</b><br>Tap when you’re ready. One recording can be up to 15 minutes.', recElapsed:'Recorded', whoSpeaks:'Whose voice is this?', voiceOf:a=>'This is <b>'+a+'</b>’s voice', whoSpeaksQ:'Whose voice will this be?', meTag:'me', recLeft:'Left', recMaxHit:'That’s the 15-minute limit, so the recording stopped. You can send it, then record a second part.',
       recLive:'<b>Listening.</b><br>Tap again when you’re done.', recPerm:'Allow the microphone to begin — nothing is kept until you send it.',
       recDone:'<b>That’s it.</b><br>Listen back, send it, or throw it away.',
       recSending:'Sending your voice to the keeper…',
@@ -376,7 +376,7 @@
       voiTitle:'Записать голос',
       aboutChip:(a,b)=>'Это голос <b>'+a+'</b>, рассказ о <b>'+b+'</b>',
       promptK:'Не нужно ничего исполнять', promptPn:'Не тот вопрос? <b id="another">Спросите другой →</b>',
-      recIdle:'<b>Просто говорите со мной.</b><br>Нажмите, когда будете готовы. Одна запись — до 15 минут.', recElapsed:'Записано', whoSpeaks:'Чей это голос?', whoSpeaksQ:'Чей голос будет записан?', meTag:'я', recLeft:'Осталось', recMaxHit:'Это предел в 15 минут, поэтому запись остановлена. Её можно отправить, а потом записать продолжение.',
+      recIdle:'<b>Просто говорите со мной.</b><br>Нажмите, когда будете готовы. Одна запись — до 15 минут.', recElapsed:'Записано', whoSpeaks:'Чей это голос?', voiceOf:a=>'Это голос: <b>'+a+'</b>', whoSpeaksQ:'Чей голос будет записан?', meTag:'я', recLeft:'Осталось', recMaxHit:'Это предел в 15 минут, поэтому запись остановлена. Её можно отправить, а потом записать продолжение.',
       recLive:'<b>Слушаю.</b><br>Нажмите снова, когда закончите.', recPerm:'Разрешите микрофон, чтобы начать — ничего не сохранится, пока вы не отправите.',
       recDone:'<b>Вот и всё.</b><br>Прослушайте, отправьте или сотрите.',
       recSending:'Отправляем ваш голос хранителю…',
@@ -425,7 +425,7 @@
       voiTitle:'להקליט קול',
       aboutChip:(a,b)=>'זהו קולה של <b>'+a+'</b>, מספר על <b>'+b+'</b>',
       promptK:'אין צורך להופיע', promptPn:'לא השאלה הנכונה? <b id="another">בקשו אחרת →</b>',
-      recIdle:'<b>פשוט דברו אליי.</b><br>הקישו כשאתם מוכנים. הקלטה אחת — עד 15 דקות.', recElapsed:'הוקלט', whoSpeaks:'של מי הקול?', whoSpeaksQ:'של מי הקול שיוקלט?', meTag:'אני', recLeft:'נותרו', recMaxHit:'הגעתם למגבלה של 15 דקות, ולכן ההקלטה נעצרה. אפשר לשלוח אותה, ואז להקליט המשך.',
+      recIdle:'<b>פשוט דברו אליי.</b><br>הקישו כשאתם מוכנים. הקלטה אחת — עד 15 דקות.', recElapsed:'הוקלט', whoSpeaks:'של מי הקול?', voiceOf:a=>'זה הקול של <b>'+a+'</b>', whoSpeaksQ:'של מי הקול שיוקלט?', meTag:'אני', recLeft:'נותרו', recMaxHit:'הגעתם למגבלה של 15 דקות, ולכן ההקלטה נעצרה. אפשר לשלוח אותה, ואז להקליט המשך.',
       recLive:'<b>מקשיב.</b><br>הקישו שוב כשסיימתם.', recPerm:'אשרו את המיקרופון כדי להתחיל — דבר אינו נשמר עד שתשלחו.',
       recDone:'<b>זהו.</b><br>הקשיבו, שלחו, או השליכו.',
       recSending:'שולח את הקול שלכם לשומר…',
@@ -529,6 +529,9 @@
       +(D?'<option value="'+esc(D)+'"'+(state.narrator===D?' selected':'')+'>'+esc(pname(state.people.find(x=>x.id===D)||{id:D}))+' ('+esc(t('meTag'))+')</option>':'')
       +opts.filter(x=>x.id!==D).map(x=>'<option value="'+esc(x.id)+'"'+(state.narrator===x.id?' selected':'')+'>'+esc(pname(x))+'</option>').join('')
       +'</select></label>'; }
+  /* NO QUESTIONS (Leon, 2026-10-17): "there is no need to guide the narrator". A recording is
+     just the narrator's voice; who it mentions will be found later in its transcript. */
+  function voiceTeller(){ return state.narrator?{ teller:(state.people.find(x=>x.id===state.narrator)||{id:state.narrator}) }:null; }
   function currentPrompt(){
     if(!state.pairs.length) return null;   /* no narrator yet -> the page asks "Whose voice is this?" first */
     /* the naming rule, not the stale column - these four were the last direct reads */
@@ -586,8 +589,8 @@
   }
 
   function screenVoice(){
-    const pr=currentPrompt();
-    if(!pr && !state.narrator && state.people.length>1){   /* account not linked to a person: ask first */
+    const pr=voiceTeller();
+    if(!pr && state.people.length>1){   /* account not linked to a person: ask first */
       return topbar(t('voiTitle'))+'<div class="pad"><div class="prompt"><div class="pq serif">'+esc(t('whoSpeaksQ'))+'</div><div style="margin-top:14px">'+narratorPick()+'</div></div></div>';
     }
     if(!pr){
@@ -624,8 +627,8 @@
           :!live?'<div class="txwrap">'+txLangChips()+'</div>':'');   /* Leon 2026-10-15: choose the language before recording */
     }
     return topbar(t('voiTitle'))+'<div class="pad">'
-      +(r.status==='idle'?narratorPick():'<div class="aboutchip"><span class="txt">'+t('aboutChip')(esc(pname(pr.teller)),esc(pname(pr.subject)))+'</span></div>')
-      +'<div class="prompt"><div class="pk">'+esc(t('promptK'))+'</div><div class="pq serif">“'+esc(pr.q)+'”</div><div class="pn">'+t('promptPn')+'</div></div>'
+      +(r.status==='idle'?narratorPick():'<div class="aboutchip"><span class="txt">'+t('voiceOf')(esc(pname(pr.teller)))+'</span></div>')
+      /* the question card is gone (Leon 2026-10-17) */
       +'<div class="recwrap">'+recUI+'</div>'
       +'<div class="msg'+(state.msg?' err':'')+'" id="msg">'+esc(state.msg)+'</div>'
       +'<div class="reassure">'+IC.shieldp+'<span>'+esc(t('reassure'))+'</span></div>'
@@ -896,7 +899,7 @@
     }catch(e){ state.msg=t('recPerm'); render(); }
   }
   async function submitVoice(){
-    const r=state.rec; const pr=currentPrompt(); const W=state.recMode==='words';
+    const r=state.rec; const pr=voiceTeller(); const W=state.recMode==='words';
     if(!pr||!user) return; if(!W&&!r.blob) return;
     if(W && !(r.text||'').trim()){ state.msg=t('needWords'); render(); return; }
     state.rec.status='sending'; state.msg=''; render();
@@ -912,13 +915,12 @@
         contributor_user:user.id,          // who uploaded (account)
         contributor_id:pr.teller.id,        // who told it (person) — Rule 6
         status:'in_review',
-        metadata:{ about:pname(pr.subject), prompt:pr.q }
+        metadata:{}   /* no question, no subject: people are found later in the transcript */
       }).select('id').single();
       if(ae) throw ae;
       /* who the recording is about is part of the recording, reviewed with it - not a separate
          request (it showed up as a puzzling 'Facts · detail' card, 2026-10-17) */
-      try{ await sb.from('artefact_subjects').insert({ artefact_id:art.id, person_id:pr.subject.id, detail:null, status:'published' }); }catch(e){}
-      state.receipt={ kind:'voice', gave:pname(pr.teller)+' → '+pname(pr.subject) };
+      state.receipt={ kind:'voice', gave:pname(pr.teller) };
       resetRecSilent();
       go('receipt');
     }catch(err){ state.rec.status='recorded'; state.msg=t('errSend'); render(); }
