@@ -359,6 +359,14 @@ TRANSCRIPTION RULES (Leon, 2026-10-17) - build to these:
 - The transcript is translated automatically into the other app languages; anyone may edit the
   transcript and the translations (via review, like other text).
 - Voices in games: LATER (Leon).
+WHISPER TEST ON THE 2 GB VPS (2026-10-17 ~23:45 UTC, Saturday, no trading) - `~/whisper/wtest2.py`
+(guard: stops itself if MemAvailable < 250 MB), Leon's 3 real recordings in ~/whisper/samples:
+"small" int8: load 4 s / 600 MB; recording 32a5f7c3 (37 s, Russian, detected 0.98) transcribed in
+27 s (0.7x real time), text readable but with clear errors ("аппликацию Squad AI", "из-за слади").
+On the 2nd recording free memory fell to 148 MB and the guard stopped it. Nothing else was using
+memory (IB java ~290 MB). => this server cannot run Whisper safely, and the larger models RU/HE
+need (large-v3-turbo / ivrit.ai) cannot even be tried. Needs more RAM (Leon said he would buy it).
+
 NEXT (for a NEW session, Leon agreed the session is long): 1) unlink Fima from 2a57c012 if Leon
 confirms; 2) why keeper recordings publish at once; 3) Whisper transcription -> text + auto
 people links; 4) voices in games (The Missing Voice first).
