@@ -457,10 +457,15 @@
   /* ---------- data ---------- */
   async function loadData(){
     try{ const {data}=await sb.from('people').select('id,sex,primary_asset,portrait_path,birth_date,is_living'); state.people=(data||[]); }catch(e){ state.people=[]; }
+    /* NAMES WERE NEVER LOADED HERE (found 2026-10-17): lf-label.js was included but LFLabel.load
+       never called, and the old display_name column is empty - so the voice question read
+       "...the first time you met ." and the receipt "undefined -> undefined". */
+    try{ if(window.LFLabel) await LFLabel.load(sb,(state.people||[]).map(x=>x.id)); }catch(e){}
     try{ const {data}=await sb.from('relationships').select('id,from_person,to_person,kind'); state.rels=data||[]; }catch(e){ state.rels=[]; }
     try{ const {data}=await sb.from('artefacts').select('id,kind,storage_path,metadata,contributor_id,status').eq('status','published'); state.arts=data||[]; }catch(e){ state.arts=[]; }
     buildGaps(); buildPairs();
   }
+  const pname=x=>(x&&((window.LFLabel&&LFLabel.of(x.id,state.lang))||x.called_name||x.display_name))||t('unnamed');
   const nameOf=id=>{ const p=state.people.find(x=>x.id===id); return p?(LFLabel.of(id,state.lang)||p.called_name||p.display_name||t('unnamed')):t('unnamed'); };
 
   /* ---------- gaps engine (computed from live data — never hard-coded) ---------- */
@@ -603,7 +608,7 @@
           :!live?'<div class="txwrap">'+txLangChips()+'</div>':'');   /* Leon 2026-10-15: choose the language before recording */
     }
     return topbar(t('voiTitle'))+'<div class="pad">'
-      +'<div class="aboutchip"><span class="txt">'+t('aboutChip')(esc((window.LFLabel&&LFLabel.of(pr.teller.id,state.lang))||pr.teller.called_name||pr.teller.display_name),esc(pr.subject.display_name))+'</span></div>'
+      +'<div class="aboutchip"><span class="txt">'+t('aboutChip')(esc(pname(pr.teller)),esc(pname(pr.subject)))+'</span></div>'
       +'<div class="prompt"><div class="pk">'+esc(t('promptK'))+'</div><div class="pq serif">“'+esc(pr.q)+'”</div><div class="pn">'+t('promptPn')+'</div></div>'
       +'<div class="recwrap">'+recUI+'</div>'
       +'<div class="msg'+(state.msg?' err':'')+'" id="msg">'+esc(state.msg)+'</div>'
@@ -890,11 +895,13 @@
         contributor_user:user.id,          // who uploaded (account)
         contributor_id:pr.teller.id,        // who told it (person) — Rule 6
         status:'in_review',
-        metadata:{ about:((window.LFLabel&&LFLabel.of(pr.subject.id,state.lang))||pr.subject.called_name||pr.subject.display_name), prompt:pr.q }
+        metadata:{ about:pname(pr.subject), prompt:pr.q }
       }).select('id').single();
       if(ae) throw ae;
-      try{ await sb.from('artefact_subjects').insert({ artefact_id:art.id, person_id:pr.subject.id, detail:null }); }catch(e){}
-      state.receipt={ kind:'voice', gave:((window.LFLabel&&LFLabel.of(pr.teller.id,state.lang))||pr.teller.display_name)+' → '+pr.subject.display_name };
+      /* who the recording is about is part of the recording, reviewed with it - not a separate
+         request (it showed up as a puzzling 'Facts · detail' card, 2026-10-17) */
+      try{ await sb.from('artefact_subjects').insert({ artefact_id:art.id, person_id:pr.subject.id, detail:null, status:'published' }); }catch(e){}
+      state.receipt={ kind:'voice', gave:pname(pr.teller)+' → '+pname(pr.subject) };
       resetRecSilent();
       go('receipt');
     }catch(err){ state.rec.status='recorded'; state.msg=t('errSend'); render(); }

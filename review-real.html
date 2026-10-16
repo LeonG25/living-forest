@@ -1199,7 +1199,8 @@
         if(NAMEPARTS2.includes(ff.field)){ try{ await sb.from('person_facts').delete().eq('person_id',ff.person_id).eq('lang',ff.lang).eq('field',ff.field).eq('status','published').neq('id',ff.id); }catch(e){} }
         const u2=await sb.from('person_facts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',ff.id);
         if(u2.error){ console.error('approve group',u2.error); await reload(); toast(d().approveFail,false); return; } } }
-    else if(kind==='artefact'){ try{ await sb.from('artefacts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){ try{ await sb.from('artefacts').update({status:'published',reviewed_by:user.id}).eq('id',id); }catch(e2){} } }
+    else if(kind==='artefact'){ try{ await sb.from('artefact_subjects').update({status:'published'}).eq('artefact_id',id).in('status',['in_review','draft']); }catch(e){}   /* its 'about whom' links come with it (2026-10-17) */
+      try{ await sb.from('artefacts').update({status:'published',reviewed_by:user.id,published_at:now}).eq('id',id); }catch(e){ try{ await sb.from('artefacts').update({status:'published',reviewed_by:user.id}).eq('id',id); }catch(e2){} } }
     /* A TRANSLATION IS NOT A DECISION (Leon, 2026-08-20). The app's own retellings were
        filed as waiting - and the keeper's page never listed them, so there was no way to
        approve one and they would have waited forever. They go live with the memory they
