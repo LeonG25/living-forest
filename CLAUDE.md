@@ -349,6 +349,16 @@ TRANSCRIPTION: none exists yet; nothing is shown anywhere. Planned: Whisper on t
 each player + on Review for the keeper to correct, names in it -> artefact_subjects.
 Probe `~/qc/qc-noq.js`: no question card, chip "This is Nadia Matveev's voice", saved metadata {},
 0 subject links, receipt "Nadia Matveev".
+DONE 2026-10-17 01:45: Fima's link removed from 2a57c012 (Leon: yes). "Published at once" was NOT a
+bug: reviewed_by = Leon, published 1:40 after sending (the first two: 3:43 and 0:22).
+TRANSCRIPTION RULES (Leon, 2026-10-17) - build to these:
+- Whisper on the VPS transcribes each finished recording (language detected among en/ru/he).
+- People mentioned are recognised AUTOMATICALLY from the transcript and linked; anyone may remove
+  a recognised person or add another - through the keeper, same logic as name parts and
+  translations (machine first, humans overwrite via review).
+- The transcript is translated automatically into the other app languages; anyone may edit the
+  transcript and the translations (via review, like other text).
+- Voices in games: LATER (Leon).
 NEXT (for a NEW session, Leon agreed the session is long): 1) unlink Fima from 2a57c012 if Leon
 confirms; 2) why keeper recordings publish at once; 3) Whisper transcription -> text + auto
 people links; 4) voices in games (The Missing Voice first).
