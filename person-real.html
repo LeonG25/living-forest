@@ -23,6 +23,7 @@
 <script src="lf-kin.js?v=1"></script>
 <script src="lf-tongue.js?v=1"></script>
 <script src="lf-label.js?v=2"></script>
+<script src="lf-voice.js?v=1"></script>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
   html,body{ background:#04070e; }
@@ -486,7 +487,7 @@
       born:'Born', died:'Died', precision:'Precision', prec:['Precise','Approximate'], living:'Still living',
       gender:'Gender', genderHint:'', gopts:['Male','Female'],
       pbirth:'Place of birth', lived:'Places lived', addplace:'add a home',
-      memories:'Stories told about this person', addmemory:'add a story', stepIn:'Step into this moment', noStory:'The story of this is waiting for its teller.', askSomeone:'Ask someone who might know →',
+      memories:'Stories told about this person', addmemory:'add a story', audioTold:'Audio stories told', audioAbout:'Audio stories mentioned in', stepIn:'Step into this moment', noStory:'The story of this is waiting for its teller.', askSomeone:'Ask someone who might know →',
       relations:'Relatives', addkin:'add a connection', kinApp:'The app works out how each of them connects back to you.',
       itsYou:'It’s you! ✨',
       kinFar:'No line runs from you to them through the ties the forest holds yet.',
@@ -537,7 +538,7 @@
       born:'Дата рождения', died:'Дата смерти', precision:'Точность', prec:['Точно','Приблизительно'], living:'Живёт сейчас',
       gender:'Род', genderHint:'', gopts:['Мужской','Женский'],
       pbirth:'Место рождения', lived:'Место жительства', addplace:'добавить дом',
-      memories:'Истории об этом человеке', addmemory:'добавить историю', stepIn:'Войти в этот момент', noStory:'Эта история ждёт своего рассказчика.', askSomeone:'Спросить того, кто знает →',
+      memories:'Истории об этом человеке', audioTold:'Записанные рассказы', audioAbout:'Упоминается в записях', addmemory:'добавить историю', stepIn:'Войти в этот момент', noStory:'Эта история ждёт своего рассказчика.', askSomeone:'Спросить того, кто знает →',
       relations:'Родственники', addkin:'добавить связь', kinApp:'Приложение вычисляет, как каждый связан с вами.',
       itsYou:'Это ты! ✨',
       kinFar:'Пока в лесу нет связей, по которым можно пройти от вас к этому человеку.',
@@ -588,7 +589,7 @@
       born:'תאריך לידה', died:'תאריך פטירה', precision:'דיוק', prec:['מדויק','משוער'], living:'עדיין בחיים',
       gender:'מין', genderHint:'', gopts:['זכר','נקבה'],
       pbirth:'מקום לידה', lived:'מקום מגורים', addplace:'הוספת בית',
-      memories:'סיפורים על אדם זה', addmemory:'הוספת סיפור', stepIn:'להיכנס אל הרגע הזה', noStory:'הסיפור הזה מחכה למספר שלו.', askSomeone:'שאלו מישהו שאולי מכיר ←',
+      memories:'סיפורים על אדם זה', addmemory:'הוספת סיפור', audioTold:'סיפורים מוקלטים שסופרו', audioAbout:'הקלטות שמזכירות את השם', stepIn:'להיכנס אל הרגע הזה', noStory:'הסיפור הזה מחכה למספר שלו.', askSomeone:'שאלו מישהו שאולי מכיר ←',
       relations:'בני משפחה', addkin:'הוספת קשר', kinApp:'האפליקציה מחשבת כיצד כל אחד קשור אליכם.',
       itsYou:'זה את/ה! ✨',
       kinFar:'בינתיים אין ביער קשרים שדרכם אפשר להגיע מכם אל האדם הזה.',
@@ -827,7 +828,10 @@
     }catch(e){}
   }
 
+  let voicesTold=[], voicesAbout=[];
   async function loadData(){
+    /* AUDIO STORIES (Leon, 2026-10-17): told by this person / mentioning this person - lf-voice.js */
+    try{ if(window.LFVoice){ voicesTold=await LFVoice.load(sb,{teller:PERSON_ID}); voicesAbout=await LFVoice.load(sb,{subject:PERSON_ID}); } }catch(e){ voicesTold=[]; voicesAbout=[]; }
     try{ if(window.LFPerson) PERSONA=await LFPerson.get(PERSON_ID,{lang:state.lang}); }catch(e){}
     faceFirst();                                     /* deliberately not awaited */
     try{ const {data:p}=await sb.from('people').select('id,sex,primary_asset,portrait_path,birth_date,birth_certainty,death_date,death_certainty,is_living,metadata').eq('id',PERSON_ID).maybeSingle(); person=p||{id:PERSON_ID}; }catch(e){ person={id:PERSON_ID}; }
@@ -852,7 +856,7 @@
     else { try{ await LFLabel.load(sb); }catch(e){ console.error('LFLabel.load failed',e); } }
     tagged=[]; contribNames={};
     try{ const {data:subs}=await sb.from('artefact_subjects').select('artefact_id,detail').eq('person_id',PERSON_ID); const ids=(subs||[]).map(s=>s.artefact_id);
-      if(ids.length){ let arts=[]; try{ const {data:a}=await LFDB.arts(sb, state.lang, q=>q.select('id,storage_path,metadata,contributor_id,body').in('id',ids)); arts=a||[]; }
+      if(ids.length){ let arts=[]; try{ const {data:a}=await LFDB.arts(sb, state.lang, q=>q.select('id,kind,storage_path,metadata,contributor_id,body').in('id',ids)); arts=(a||[]).filter(x=>x.kind!=='voice'); }   /* voices have their own sections (2026-10-17) */
         catch(e){ try{ const {data:a2}=await sb.from('artefacts').select('id,storage_path').in('id',ids); arts=a2||[]; }catch(e2){ arts=[]; } }
         const byId={}; arts.forEach(a=>byId[a.id]=a);
         tagged=(subs||[]).filter(s=>byId[s.artefact_id]&&byId[s.artefact_id].storage_path).map(s=>({artefact_id:s.artefact_id,storage_path:byId[s.artefact_id].storage_path,box:s.detail||null,meta:(byId[s.artefact_id]||{}).metadata||{},body:(byId[s.artefact_id]||{}).body||'',contributor_id:(byId[s.artefact_id]||{}).contributor_id||null}));
@@ -1743,6 +1747,9 @@
       if(memories.length) h+=memories.map(m=>`<div class="memory"><div class="words">${m.cap?('“'+esc(m.cap)+'”'):esc(L.noStory)}</div>${m.whenwhere?`<div class="cap2" style="margin-top:4px;opacity:.75">${esc(m.whenwhere)}</div>`:''}${m.teller?`<div class="told"><span class="flame"></span><b>${esc(m.teller)}</b></div>`:''}${m.id?`<a class="stepin" href="moment-real.html?id=${esc(m.id)}">${esc(L.stepIn)}</a>`:''}</div>`).join('');
       else h+=`<div class="invite"><div class="words">${L.noStory}</div><div class="cta" data-act="addmemory">${L.askSomeone}</div></div>`;
       h+=`<div class="chips" style="margin-top:10px"><button class="chip add" data-act="addmemory">${sv(I.plus,2)} ${L.addmemory}</button></div>`;
+      if(window.LFVoice){ h+=`<div class="field" style="margin-top:18px"><label>${esc(L.audioTold)}</label>${LFVoice.list(voicesTold,state.lang)}</div>`
+        +`<div class="field"><label>${esc(L.audioAbout)}</label>${LFVoice.list(voicesAbout,state.lang)}</div>`;
+        setTimeout(()=>{ try{ LFVoice.wire(document.body,sb,state.lang); }catch(e){} },0); }
       return h+gamesHTML(f); }
     if(id==='kin'){
       /* a real connection: kind, direction, certainty, note — each editable and removable */
