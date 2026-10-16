@@ -224,6 +224,10 @@
     .aur,.embers,.stars,.way.voice,.recbtn,.recbtn::before,.recbtn .core,.almost .ac,.receipt .rc,.pageatmo span{ animation:none !important; }
     .waitrow .sp,.spin{ animation:none; }
   }
+  .rectime{ display:flex; justify-content:center; gap:22px; font-size:14px; opacity:.85; margin:6px 0 2px; font-variant-numeric:tabular-nums; }
+  .rectime b{ font-weight:600; }
+  .rectime .low{ color:#f0b48a; }
+  .recmax{ width:100%; text-align:center; font-size:13.5px; color:#f0b48a; margin:6px 0 4px; }
   .recmode{ display:flex; gap:8px; width:100%; margin:4px 0 6px; }
   .recmode button{ flex:1; font:inherit; font-size:14.5px; padding:11px 8px; border-radius:14px; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.04); color:inherit; cursor:pointer; }
   .recmode button.on{ border-color:rgba(201,162,255,.6); background:rgba(201,162,255,.16); }
@@ -320,7 +324,7 @@
       voiTitle:'Record a voice',
       aboutChip:(a,b)=>'This is <b>'+a+'’s</b> voice, telling about <b>'+b+'</b>',
       promptK:"You don't have to perform", promptPn:'Not the right question? <b id="another">Ask me another →</b>',
-      recIdle:'<b>Just talk to me.</b><br>Tap when you’re ready — there’s no clock.',
+      recIdle:'<b>Just talk to me.</b><br>Tap when you’re ready. One recording can be up to 15 minutes.', recElapsed:'Recorded', recLeft:'Left', recMaxHit:'That’s the 15-minute limit, so the recording stopped. You can send it, then record a second part.',
       recLive:'<b>Listening.</b><br>Tap again when you’re done.', recPerm:'Allow the microphone to begin — nothing is kept until you send it.',
       recDone:'<b>That’s it.</b><br>Listen back, send it, or throw it away.',
       recSending:'Sending your voice to the keeper…',
@@ -369,7 +373,7 @@
       voiTitle:'Записать голос',
       aboutChip:(a,b)=>'Это голос <b>'+a+'</b>, рассказ о <b>'+b+'</b>',
       promptK:'Не нужно ничего исполнять', promptPn:'Не тот вопрос? <b id="another">Спросите другой →</b>',
-      recIdle:'<b>Просто говорите со мной.</b><br>Нажмите, когда будете готовы — часов нет.',
+      recIdle:'<b>Просто говорите со мной.</b><br>Нажмите, когда будете готовы. Одна запись — до 15 минут.', recElapsed:'Записано', recLeft:'Осталось', recMaxHit:'Это предел в 15 минут, поэтому запись остановлена. Её можно отправить, а потом записать продолжение.',
       recLive:'<b>Слушаю.</b><br>Нажмите снова, когда закончите.', recPerm:'Разрешите микрофон, чтобы начать — ничего не сохранится, пока вы не отправите.',
       recDone:'<b>Вот и всё.</b><br>Прослушайте, отправьте или сотрите.',
       recSending:'Отправляем ваш голос хранителю…',
@@ -418,7 +422,7 @@
       voiTitle:'להקליט קול',
       aboutChip:(a,b)=>'זהו קולה של <b>'+a+'</b>, מספר על <b>'+b+'</b>',
       promptK:'אין צורך להופיע', promptPn:'לא השאלה הנכונה? <b id="another">בקשו אחרת →</b>',
-      recIdle:'<b>פשוט דברו אליי.</b><br>הקישו כשאתם מוכנים — אין שעון.',
+      recIdle:'<b>פשוט דברו אליי.</b><br>הקישו כשאתם מוכנים. הקלטה אחת — עד 15 דקות.', recElapsed:'הוקלט', recLeft:'נותרו', recMaxHit:'הגעתם למגבלה של 15 דקות, ולכן ההקלטה נעצרה. אפשר לשלוח אותה, ואז להקליט המשך.',
       recLive:'<b>מקשיב.</b><br>הקישו שוב כשסיימתם.', recPerm:'אשרו את המיקרופון כדי להתחיל — דבר אינו נשמר עד שתשלחו.',
       recDone:'<b>זהו.</b><br>הקשיבו, שלחו, או השליכו.',
       recSending:'שולח את הקול שלכם לשומר…',
@@ -577,7 +581,7 @@
     if(r.status==='recorded'){
       const W=state.recMode==='words';
       recUI='<div class="recbtn"><div class="core"></div></div>'
-        +(W?'':'<audio controls src="'+esc(r.url)+'"></audio><div class="rl">'+t('recDone')+'</div>')
+        +(W?'':'<audio controls src="'+esc(r.url)+'"></audio><div class="rl">'+t('recDone')+'</div>'+(r.maxHit?'<div class="recmax">'+esc(t('recMaxHit'))+'</div>':''))
         +(W?'<div class="txwrap"><div class="txk">'+esc(r.txOk===false?t('txNone'):t('txEdit'))+'</div>'+txLangChips()
           +(r.punct?'<div class="txpunct">'+esc(r.punct==='busy'?t('punctBusy'):t('punctDone'))+'</div>':'')
           +'<textarea id="txEdit" dir="auto" rows="5" placeholder="'+esc(t('txPh'))+'">'+esc(r.text||'')+'</textarea>'+txDiag()+'</div>':'')
@@ -589,7 +593,10 @@
       const live=r.status==='recording', W=state.recMode==='words';
       /* VOICE OR WORDS (Leon, 2026-10-15): on Android the recorder and the recogniser cannot
          both hear the microphone (proven on Leon's phone), so the teller chooses. */
-      recUI=(live?'':'<div class="recmode"><button type="button" data-mode="voice" class="'+(W?'':'on')+'">'+esc(t('modeVoice'))+'</button><button type="button" data-mode="words" class="'+(W?'on':'')+'">'+esc(t('modeWords'))+'</button></div><div class="recmodes">'+esc(W?t('modeWordsS'):t('modeVoiceS'))+'</div>')
+      /* ONE FLOW (Leon, 2026-10-17): the voice is always kept; transcription happens AFTER
+         recording, so nothing disturbs the teller. The voice/words choice and the live
+         recogniser are switched off (code kept, dormant: state.recMode stays 'voice'). */
+      recUI=(live?'<div class="rectime" id="recTime">'+recClock()+'</div>':'')
         +'<div class="recbtn'+(live?' live':'')+'" id="recbtn" role="button" aria-label="'+esc(t('wVoiN'))+'"><div class="core"></div></div>'
         +'<div class="rl">'+(live?t('recLive'):t('recIdle'))+'</div>'
         +(!W?'':live&&r.txOk!==false?'<div class="txwrap"><div class="txk">'+esc(t('txLive'))+'</div>'+txLangChips()+'<div class="livetx" id="liveTx" dir="auto"></div>'+txDiag()+'</div>'
@@ -820,7 +827,7 @@
     else if(last && norm(last).startsWith(norm(w))) return;
     else S.push(w); }
   function txCommit(){ const r=state.rec; const S=r.sess||[]; if(S.length){ r.text=((r.text?r.text+' ':'')+S.join(' ')).trim(); } r.sess=[]; }
-  function stopTx(){ srWanted=false; if(srObj){ try{ srObj.stop(); }catch(e){} } }
+  function stopTx(){ stopClock(); srWanted=false; if(srObj){ try{ srObj.stop(); }catch(e){} } }
   function setTxLang(l){ const r=state.rec; r.tlang=l;
     if(r.status==='recording' && srObj){ try{ srObj.stop(); }catch(e){} }   /* onend restarts it in the new language */
     document.querySelectorAll('[data-txl]').forEach(b=>b.classList.toggle('on',b.getAttribute('data-txl')===l)); }
@@ -836,6 +843,16 @@
       if(!error && data && data.changed && !r.txTouched){ r.text=data.text; r.punct='done'; } else r.punct='';
     }catch(e){ r.punct=''; }
     if(state.rec===r && r.status==='recorded') render(); }
+  /* 15 MINUTES PER RECORDING (Leon, 2026-10-17), said before recording, and counted while it runs */
+  const REC_MAX=15*60;
+  const mmss=x=>{ x=Math.max(0,Math.round(x)); return Math.floor(x/60)+':'+String(x%60).padStart(2,'0'); };
+  function recElapsedS(){ const r=state.rec; return r.t0?(Date.now()-r.t0)/1000:0; }
+  function recClock(){ const e=recElapsedS(), left=REC_MAX-e;
+    return '<span>'+esc(t('recElapsed'))+' <b>'+mmss(e)+'</b></span><span class="'+(left<=60?'low':'')+'">'+esc(t('recLeft'))+' <b>'+mmss(left)+'</b></span>'; }
+  function stopClock(){ const r=state.rec; if(r.timer){ clearInterval(r.timer); r.timer=null; } }
+  function tickRec(){ const r=state.rec; if(r.status!=='recording'){ stopClock(); return; }
+    const el=document.getElementById('recTime'); if(el) el.innerHTML=recClock();
+    if(recElapsedS()>=REC_MAX){ r.maxHit=true; stopClock(); try{ r.rec.stop(); }catch(e){} } }
   async function toggleRec(){
     const r=state.rec;
     /* "Write my words": the recogniser alone has the microphone; nothing is recorded */
@@ -843,7 +860,7 @@
       if(r.status==='recording'){ stopTx(); setTimeout(()=>{ txCommit(); state.rec.status='recorded'; if((state.rec.text||'').trim()) punctuate(); render(); },900); return; }
       state.msg=''; r.status='recording'; startTx(); render(); txPaint(); return;
     }
-    if(r.status==='recording'){ stopTx(); try{ r.rec.stop(); }catch(e){} return; }
+    if(r.status==='recording'){ stopClock(); stopTx(); try{ r.rec.stop(); }catch(e){} return; }
     if(!navigator.mediaDevices||!window.MediaRecorder){ state.msg=t('recPerm'); render(); return; }
     try{
       const stream=await navigator.mediaDevices.getUserMedia({audio:true});
@@ -852,7 +869,8 @@
       mr.onstop=()=>{ stream.getTracks().forEach(tk=>tk.stop());
         const blob=new Blob(state.rec.chunks,{type:mr.mimeType||'audio/webm'});
         state.rec.blob=blob; state.rec.url=URL.createObjectURL(blob); state.rec.status='recorded'; render(); };
-      mr.start(); state.rec.status='recording'; state.msg=''; render();   /* "Keep my voice": recorder only */
+      mr.start(); state.rec.status='recording'; state.rec.t0=Date.now(); state.rec.maxHit=false; state.msg=''; render();
+      state.rec.timer=setInterval(tickRec,500);
     }catch(e){ state.msg=t('recPerm'); render(); }
   }
   async function submitVoice(){
