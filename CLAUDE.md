@@ -337,7 +337,21 @@ recordings", "Voice of Leon Golnick · about Leeya Betito"; playback 11 s from a
 removal request payload correct; Leon's Story tab told=2, Leeya's mentioned-in=2.
 `~/qc/qc-narrator.js` - default "Nadia Matveev (me)" (the test keeper's linked person), switching
 to Leon re-asks about Leon's relatives.
-NEXT: voices in games (The Missing Voice is the obvious first), then Whisper transcription.
+NO QUESTIONS (Leon, 2026-10-17) `e898477`: "there is no need to guide the narrator" - the voice
+screen has no question card; a recording is only the narrator's voice (metadata {}, NO
+artefact_subjects link). Leon: the people a recording mentions are to be linked AUTOMATICALLY FROM
+THE TRANSCRIPT (needs Whisper first). Until then "Audio stories mentioned in" stays empty for new
+recordings. Leon's 3rd recording 2a57c012… (23:15 UTC) is still linked to Fima Golnick from the
+old auto-question - he said Fima has nothing to do with it; not changed yet (ask: unlink?).
+Also open: it was 'published' seconds after sending while the receipt said "waiting for the
+keeper" - cause not checked.
+TRANSCRIPTION: none exists yet; nothing is shown anywhere. Planned: Whisper on the VPS, text under
+each player + on Review for the keeper to correct, names in it -> artefact_subjects.
+Probe `~/qc/qc-noq.js`: no question card, chip "This is Nadia Matveev's voice", saved metadata {},
+0 subject links, receipt "Nadia Matveev".
+NEXT (for a NEW session, Leon agreed the session is long): 1) unlink Fima from 2a57c012 if Leon
+confirms; 2) why keeper recordings publish at once; 3) Whisper transcription -> text + auto
+people links; 4) voices in games (The Missing Voice first).
 GAP: approved 'text' stories, like 'voice', are shown NOWHERE yet (person page memories
 require a photo). Part of the next task.
 NEXT (Leon's order): the player for voice recordings (and showing told stories), AFTER
