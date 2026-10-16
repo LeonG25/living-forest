@@ -295,6 +295,18 @@ shows "Adding punctuation…" / "Punctuation added — your words are unchanged.
 teller already edited. Tested direct (he/ru/en all punctuated, words intact) and end-to-end
 with a simulated Android-style recogniser (`~/qc/qc-punct.js`, writes blocked): 1 call, box
 updated, 0 errors. Lesson: in a /u regex, \" is an invalid escape -> function boot error 503.
+LEON 2026-10-17 — NEW DIRECTION `4a63a1f`: the voice is ALWAYS kept, recorded with the app's
+own button; transcription happens AFTER recording (nothing live, nothing disturbs the teller -
+on Android the live recogniser beeped at every pause). The voice/words choice and live
+recogniser are switched off in the UI (code dormant; state.recMode stays 'voice'). 15-minute
+limit per recording: stated before recording ("One recording can be up to 15 minutes"),
+clock while recording ("Recorded m:ss · Left m:ss", amber in the last minute), automatic stop
+at 15:00 with a note suggesting a second part. Probe `~/qc/qc-reclimit.js` (clock fast-
+forwarded, writes blocked): EN/HE text, 0:02/14:58, amber at 0:52, auto-stop + note, 0 errors.
+NEXT = transcription of stored recordings with Whisper on the VPS (Leon's independent-engine
+preference). Needs real RU/HE recordings to pick a model (none exist yet), memory-guarded
+off-hours tests; a 15-minute recording on 1 CPU may take a long time - to be measured.
+The `punctuate` function stays (Whisper punctuates itself; may be unused).
 GAP: approved 'text' stories, like 'voice', are shown NOWHERE yet (person page memories
 require a photo). Part of the next task.
 NEXT (Leon's order): the player for voice recordings (and showing told stories), AFTER
