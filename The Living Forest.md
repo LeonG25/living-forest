@@ -395,6 +395,30 @@ Results: ru 37 s very good, no hallucination, "Claude AI" right, last word cut (
 ru 7 s perfect; he 11 s: "הזמן שמה אין אני מסתכל בכל מיני תמונות ישנות ו ההקלטה הזאת זאת בדיקה." (2nd half
 right, opening wrong) - far better than Cloudflare. 3-4 s each. Recommended: Gemini for all three
 languages; switch to PAID tier (~$0.005/min, content not used by Google) before family recordings.
+TRANSCRIPTION BUILT (Leon, 2026-10-18; Gemini for all 3 languages; FREE tier until Leon's tests
+are done, then PAID - Leon's plan). `1a38895`, `9c1f8bf`:
+- Edge Function `transcribe` (source: supabase-functions/transcribe/index.ts): Gemini transcript ->
+  artefacts.body + original_language (from the script: Hebrew/Cyrillic/Latin); Claude (8192 tokens,
+  narrator's gender) -> artefact_translations (status published, machine=true, created_by = the
+  recording's account - REQUIRED, the first run silently failed without it; every write is now
+  checked). State in metadata.transcript {status working|retry|done|failed, attempts, transcribed,
+  langs, error, human}. 3 attempts; after the 3rd failure: one email to keepers (Resend) and the
+  card says so to everyone. A person's translation (machine=false) is never overwritten.
+- DB trigger transcribe_new_voice (after insert, kind voice) -> transcribe_call(id) via pg_net (never
+  blocks the upload); pg_cron 'transcribe-retry-10min' -> transcribe_call(null) = the queue.
+- lf-voice.js v2: under each player 3 FOLDED boxes (original first, then the two others), labelled
+  "original · automatic text" / "machine translation" / "checked by the family"; Edit/Done in place;
+  edits wait in STAGED; ONE fixed bar at the bottom "Send N changes to the keeper" + Discard (left
+  16px, right 88px to clear the language globe); leaving with unsent edits asks first. Sent as
+  artefact_edits field 'voice_text' (lang, old, new). "Text changes are waiting for the keeper".
+- Review: label "Asks to change the text of a recording", value prefixed [LANG]; approval: original
+  language -> body + transcript.human, and machine translations queued for redo (status retry,
+  attempts 0, langs []); other language -> that translation, machine=false.
+- Leon's 3 recordings processed: ru/he/ru transcripts + 2 translations each.
+Probe `~/qc/qc-voicetext.js` (send intercepted, 0 edits written): EN/HE cards, 3 folded boxes each,
+2 edits -> bar "Send 2 changes to the keeper", payload voice_text en/he in_review, toast, 0 errors.
+NOT TESTED: the Review approval path for voice_text (would change Leon's data) - Leon to try.
+NOT YET: people recognised from the transcript (Leon's rule) - next.
 Detection can leave en/ru/he (no per-language probabilities returned): plan = if the detected
 language is outside the three, mark the transcript uncertain for the keeper instead of guessing.
 
