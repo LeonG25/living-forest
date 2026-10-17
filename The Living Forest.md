@@ -359,6 +359,10 @@ TRANSCRIPTION RULES (Leon, 2026-10-17) - build to these:
 - The transcript is translated automatically into the other app languages; anyone may edit the
   transcript and the translations (via review, like other text).
 - Voices in games: LATER (Leon).
+THIS FILE WAS RENAMED (Leon, 2026-10-18): CLAUDE.md -> "The Living Forest.md" - the single,
+project-only journal and documentation. All references updated (helper prompts in ~/qc/*.sh, code
+comments, the page map). Claude Code no longer auto-loads it: every agent prompt must say to read
+"The Living Forest.md" explicitly (the mailbox scripts already do).
 TRANSCRIPTION ENGINE DECIDED (Leon, 2026-10-17 12:20): Cloudflare Workers AI
 @cf/openai/whisper-large-v3-turbo (open model, hosted; ~$0.0005/audio min, free daily allowance).
 Leon: external providers are fine, BUT the app must not break when they fail, and the keeper AND
@@ -973,7 +977,7 @@ contribute hub header (Leon saw, low priority); qc probes must assert GEOMETRY, 
 class names.
 
 This section IS the handover. There is no separate handover file: Leon asked on 2026-08-24
-that CLAUDE.md be the only document, and a `docs/HANDOVER.md` written that day was deleted
+that The Living Forest.md be the only document, and a `docs/HANDOVER.md` written that day was deleted
 rather than left to disagree with this one.
 
 ### Finished and verified in the stretch to 2026-08-24
@@ -1169,7 +1173,7 @@ only at the end):
   its own view mode.
 - D: switch entries (hub "Add a memory" → moment-real?create=1; identify-first lock's
   allowed list follows), retire contribute-add.
-- E: full contributor re-walk (RU, phone profile) + connectedness checks + CLAUDE.md.
+- E: full contributor re-walk (RU, phone profile) + connectedness checks + The Living Forest.md.
 
 **Keeper-side welcome — bug found and fixed, then USED FOR REAL (2026-09-01, live
 `74a3ab0`):** review-real never called loadGate() at boot (only after an approve/
@@ -1872,7 +1876,7 @@ renamed. There is no `whoiswho` key in the map at all, so `openGame('whoiswho')`
 through to the placeholder sheet - the game is advertised on every person page, gated only
 by `tagged.length<1`, and leads nowhere.
 
-CLAUDE.md has listed Who Is Who among the live games and that has been wrong. Live games
+The Living Forest.md has listed Who Is Who among the live games and that has been wrong. Live games
 are: Find Them in the Crowd, Put Their Life in Order, Whose Story Is This, Where Was This,
 What Happened Next. Not built: Who Is Who, The Missing Voice, The Tangled Thread.
 
@@ -1973,9 +1977,9 @@ The 'wrong' cue plays **fen-earperk.webm** (the surprised ear-shoot) as the stum
 
 # Design deliveries — catalogue
 
-> **Revision:** 2026-07-17 10:24 (UTC+2) · commit `e566a08` · authority: `CLAUDE.md` (root)
+> **Revision:** 2026-07-17 10:24 (UTC+2) · commit `e566a08` · authority: `The Living Forest.md` (root)
 
-**Naming — dated on purpose.** Unlike text documents (which are single, stable-named files — see CLAUDE.md §0), design deliveries **are** dated: they are immutable artefacts, several versions legitimately coexist, and we must always know which one a build was made from.
+**Naming — dated on purpose.** Unlike text documents (which are single, stable-named files — see The Living Forest.md §0), design deliveries **are** dated: they are immutable artefacts, several versions legitimately coexist, and we must always know which one a build was made from.
 
 ```
 docs/designs/YYYY-MM-DD--<page>--v<N>.html
@@ -2007,7 +2011,7 @@ bundle, not Design #1, and the resemblance to the Design #1 name is a trap.
 
 | File | Design # | Page | Delivered | Filed | QC | Notes |
 |---|---|---|---|---|---|---|
-| `2026-07-15--person--v1.html` | **1** | Person (8 facets) | **2026-07-15 09:18** ‡ | ✅ **78,814 b, verified** | ✅ **PASSED** 2026-07-15 17:41 | Flat source `The Person Page.html`. Brief: `person-page-brief-for-claude-design.md`. **QC: passes — invents nothing the schema cannot hold** (CLAUDE.md §7). Two follow-ups: patronymic + honorific are specified in the facet model but **not drawn**; the Story facet needs `contributor_id` backfilled or it renders without a narrator. |
+| `2026-07-15--person--v1.html` | **1** | Person (8 facets) | **2026-07-15 09:18** ‡ | ✅ **78,814 b, verified** | ✅ **PASSED** 2026-07-15 17:41 | Flat source `The Person Page.html`. Brief: `person-page-brief-for-claude-design.md`. **QC: passes — invents nothing the schema cannot hold** (The Living Forest.md §7). Two follow-ups: patronymic + honorific are specified in the facet model but **not drawn**; the Story facet needs `contributor_id` backfilled or it renders without a narrator. |
 | `2026-07-12--place-tel-aviv--v2.html` | **2** | Place | **2026-07-12 02:28** ‡ | ✅ **42,328 b, verified** | ❌ pending | Flat source `screens/Place v2.html`, 42,328 b. **Design #2 = this file — Leon, 2026-07-17: *"The one with globe."*** The globe is the identifying feature and it is unambiguous: v2 loads `three.min.js` + `topojson-client` (`:10–11`) and renders a live WebGL globe as the page's fixed background (`<canvas id="globe">`, `:173`); v1 loads no JS libraries at all. **Build gap vs. v2 — see below.** Predates keeper / i18n / in-place-edit decisions. |
 | `2026-07-11--place-tel-aviv--v1.html` | — | Place | **2026-07-11 23:12** ‡ | ✅ **24,693 b, verified** | — | Flat source `screens/Place.html`, 24,693 b. **Superseded** by v2 above, 3h16m later. Reference only — **do not build from it.** Its distinct idea, not carried into v2: the **time-of-day place-scape** (`--sky-top`/`--sun`/`--haze` interpolated by scroll through morning → golden hour → dusk, `:339–357`), and the cool cartographic strip (`.cartostrip`, `:197`). v2 replaces both with the globe. |
 | `2026-07-13--moment--v1.html` | **3** | Moment | **2026-07-13 23:48** ‡ | ✅ **41,600 b, verified** | ✅ | Flat source `screens/Moment.html`, 41,600 b. Built and live: `moment-real.html`, commit `30ebd89`. The design itself had never been filed. |
@@ -2016,7 +2020,7 @@ bundle, not Design #1, and the resemblance to the Design #1 name is a trap.
 | `2026-07-13--moment-directions--v1.html` | — | Moment — Directions | **2026-07-13 22:43** ‡ | ✅ **23,310 b, verified** | — | Flat source `screens/Moment - Directions.html`, 23,310 b. **Was not in this catalogue before 2026-07-17.** |
 | `2026-07-13--moment-reliquary--v1.html` | — | Moment — Reliquary | **2026-07-13 22:53** ‡ | ✅ **19,016 b, verified** | — | Flat source `screens/Moment - Reliquary.html`, 19,016 b. **Was not in this catalogue before 2026-07-17.** |
 | `2026-07-11--person-rita--v0.html` | — | Person (old five-light hub) | **2026-07-11 17:54** ‡ | ✅ **28,415 b, verified** | — | Flat source `screens/Person.html`, 28,415 b. **Superseded** by the facet model. Reference only. Live version recoverable at commit `75defd8`. See the warning box above. |
-| `2026-07-14--person-edit--v1.html` | — | Person Edit | **2026-07-14 17:34** ‡ | ✅ **47,771 b, verified** | — | Flat source `screens/Person Edit.html`, 47,771 b. **Was not in this catalogue before 2026-07-17.** **The page it designs is retired** (CLAUDE.md: `person-edit-real.html` is a 404; everything is edited in place). Filed for the record only — **do not build from it.** |
+| `2026-07-14--person-edit--v1.html` | — | Person Edit | **2026-07-14 17:34** ‡ | ✅ **47,771 b, verified** | — | Flat source `screens/Person Edit.html`, 47,771 b. **Was not in this catalogue before 2026-07-17.** **The page it designs is retired** (The Living Forest.md: `person-edit-real.html` is a 404; everything is edited in place). Filed for the record only — **do not build from it.** |
 | `2026-07-09--crowd--v1.html` | — | Find Them in the Crowd | **2026-07-09 22:01** ‡ | ✅ **32,204 b, verified** | — | Flat source `Find Them in the Crowd.html` (project root), 32,204 b. **Was not in this catalogue before 2026-07-17.** The earliest delivery we hold. |
 
 ### Design #2 (Place v2) vs `place-real.html` — the gap, restated 2026-07-17
@@ -2092,7 +2096,7 @@ Verified on this run, beyond the byte counts:
 - **Zero residual `&lt;`/`&gt;`** in any of the nine files; all open `<!DOCTYPE html>` and close `</html>`.
 
 The standing rule that produced this outcome holds: **a wrong file here is worse than a missing one.** This
-directory is the design of record, builds cite it, and CLAUDE.md §3 puts design fidelity first.
+directory is the design of record, builds cite it, and The Living Forest.md §3 puts design fidelity first.
 
 ---
 
@@ -2112,7 +2116,7 @@ directory is the design of record, builds cite it, and CLAUDE.md §3 puts design
 
 ## Fetching from the Claude Design MCP
 Project `4931d7e6-358d-4ef9-a066-9a422439ee44` — **29 files** (`list_files`, depth -1, verified 2026-07-17;
-28 excluding `.thumbnail`). **CLAUDE.md and the standing brief both say 26 — they are wrong; 29 is the measured
+28 excluding `.thumbnail`). **The Living Forest.md and the standing brief both say 26 — they are wrong; 29 is the measured
 count.** The "26" predates three deliveries.
 
 - **Flat sources live in `screens/` and at the project root. Never fetch the `(standalone)` bundles** — 0.8–1.2 MB with embedded woff2 font blobs.
@@ -2244,7 +2248,7 @@ This is player-facing game UI, not keeper-only. §0 voice law applies: people AR
 *Not fixed:* awaiting Leon's direction from the 2026-07-31 filing on whether EN tone is to be reframed OR whether RU should match EN's current word choice (preserving the violation), or if this is a lower-priority item behind the larger voice-law audit.
 
 **6. lf-fen.js version documentation is now accurate.**
-CLAUDE.md line 159 (2026-08-02 update) correctly states live pages carry v=21. All 8 Fen pages verified: game-who-is-who, game-order-of-things, game-where-was-this, game-missing-voice, game-what-happened-next, game-tangled-thread, journal-real, crowd-real. All ?v=21. ✅ Verified live (v8→v21 timeline not documented; considered acceptable per line 159 note).
+The Living Forest.md line 159 (2026-08-02 update) correctly states live pages carry v=21. All 8 Fen pages verified: game-who-is-who, game-order-of-things, game-where-was-this, game-missing-voice, game-what-happened-next, game-tangled-thread, journal-real, crowd-real. All ?v=21. ✅ Verified live (v8→v21 timeline not documented; considered acceptable per line 159 note).
 
 **7. QC smoke baseline clean.**
 All 19 pages tested (anon + signed-in EN): 0 errors. Links audit: 0 dead links. Baseline maintained.

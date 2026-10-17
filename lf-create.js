@@ -1,7 +1,7 @@
 /* lf-create.js \u2014 the Memory page's creation mode (Stages A + B).
    One page from birth: opened with ?create=1 the memory page renders empty and
    fillable. Everything lives on the phone until Send; leaving saves nothing.
-   Decision: Leon, 2026-09-01 (CLAUDE.md, "ONE MEMORY PAGE"). No designer pass \u2014
+   Decision: Leon, 2026-09-01 (The Living Forest.md, "ONE MEMORY PAGE"). No designer pass \u2014
    the page's own design language, the old prototype's arrangement.
    Stage B (2026-09-03): the who. Face boxes drawn on the LOCAL photo (fractions
    of the image, kept in M.people as {id,label,box} \u2014 the same shape the moment

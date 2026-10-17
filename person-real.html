@@ -869,7 +869,7 @@
       catch(e){ const {data}=await sb.from('relationships').select('id,from_person,to_person').or(filt); rp=data||[]; }
       const others=[...new Set(rp.map(r=>r.from_person===PERSON_ID?r.to_person:r.from_person).filter(Boolean))];
       let names={}; if(others.length){ try{ const {data:pp}=await sb.from('people').select('id').in('id',others); (pp||[]).forEach(x=>names[x.id]=(window.LFLabel&&LFLabel.of(x.id,(localStorage.getItem('lf_lang')||'en')))||''); }catch(e){} }
-      /* from_person = PARENT, to_person = CHILD (CLAUDE.md §9) */
+      /* from_person = PARENT, to_person = CHILD (The Living Forest.md §9) */
       rels=rp.map(r=>{ const isFrom=r.from_person===PERSON_ID; const other=isFrom?r.to_person:r.from_person;
         return { id:r.id, other, name:names[other]||'—', kind:r.kind||'parent', certainty:r.certainty||'remembered', note:r.note||'',
                  dir:isFrom?'other_child':'other_parent', relKey:isFrom?'child':'parent' }; });
@@ -1374,7 +1374,7 @@
      The lock, which is the whole point: a language a HUMAN has typed is never translated
      over again, ever. Once someone corrects the Russian, the Russian is theirs.
      No diffing, no splicing, no staleness tracking - those are the expensive parts and they
-     stay parked (see CLAUDE.md 4 PARKED).
+     stay parked (see The Living Forest.md 4 PARKED).
      A failure is spoken aloud. This function failed silently for an unknown length of time
      because its one caller swallowed the error and returned null. */
   /* A MODEL'S ANSWER IS NOT A FACT UNTIL IT LOOKS LIKE ONE.

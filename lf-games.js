@@ -5,7 +5,7 @@
  * client (`sb`) and returns a challenge SPEC (data in → spec out). Separately
  * designed play screens consume these specs later.
  *
- * HARD RULES honoured (see CLAUDE.md):
+ * HARD RULES honoured (see The Living Forest.md):
  *  - Rule 8: challenges are generated dynamically from live DB rows, never
  *    hard-coded from a snapshot. Add data → new challenges, no app rebuild.
  *  - Rule 9: this file builds NO page/UI. Logic module only.
