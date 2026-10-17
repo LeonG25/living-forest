@@ -20,12 +20,22 @@ const b64 = (buf: Uint8Array) => { let s = ""; const C = 0x8000; for (let i = 0;
 const langOf = (t: string) => { const he = (t.match(/[\u0590-\u05FF]/g) || []).length, ru = (t.match(/[\u0400-\u04FF]/g) || []).length, la = (t.match(/[A-Za-z]/g) || []).length;
   return he >= ru && he >= la && he > 0 ? "he" : ru >= la && ru > 0 ? "ru" : "en"; };
 
-async function gemini(bytes: Uint8Array, mime: string): Promise<string> {
+/* FAMILY NAMES AS VOCABULARY (Leon, 2026-10-18: "Ионатан" was not recognised - not a Russian name).
+   Gemini's custom_vocabulary biases recognition toward these words. All published name forms in all
+   three languages (412 on 2026-10-18; the limit is 1000, so the list is capped). */
+async function familyNames(sb: any): Promise<string[]> {
+  const { data } = await sb.from("person_facts").select("value").eq("status", "published").in("field", ["called", "given", "family"]);
+  const set = new Set<string>();
+  (data || []).forEach((r: any) => String(r.value || "").split(/\s+/).forEach((w) => { w = w.replace(/[^\p{L}'\u05f3-]/gu, ""); if (w.length > 1) set.add(w); }));
+  return Array.from(set).slice(0, 1000);
+}
+
+async function gemini(bytes: Uint8Array, mime: string, vocab: string[] = []): Promise<string> {
   const key = Deno.env.get("GEMINI_API_KEY"); if (!key) throw new Error("GEMINI_API_KEY missing");
   const r = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
     method: "POST", headers: { "x-goog-api-key": key, "Content-Type": "application/json" },
     body: JSON.stringify({ model: "gemini-3.5-transcribe", input: [{ type: "audio", data: b64(bytes), mime_type: mime }],
-      generation_config: { transcription_config: { language_codes: ["he-IL", "ru-RU", "en-US"] } } }) });
+      generation_config: { transcription_config: { language_codes: ["he-IL", "ru-RU", "en-US"], ...(vocab.length ? { custom_vocabulary: vocab } : {}) } } }) });
   const txt = await r.text(); let j: any = null; try { j = JSON.parse(txt); } catch (_) {}
   if (!r.ok) throw new Error("gemini " + r.status + ": " + txt.slice(0, 200));
   let text = j?.output_text || "";
@@ -79,7 +89,7 @@ async function work(sb: any, a: any): Promise<any> {
     if (!text) {   // step 1: the transcript (kept if a later step fails, so a retry only redoes what is missing)
       const dl = await sb.storage.from("family").download(a.storage_path);
       if (dl.error) throw new Error("download: " + dl.error.message);
-      text = await gemini(new Uint8Array(await dl.data.arrayBuffer()), a.storage_path.endsWith(".ogg") ? "audio/ogg" : "audio/webm");
+      text = await gemini(new Uint8Array(await dl.data.arrayBuffer()), a.storage_path.endsWith(".ogg") ? "audio/ogg" : "audio/webm", await familyNames(sb).catch(() => []));
       lang = langOf(text);
       md.transcript = { ...md.transcript, transcribed: true, engine: "gemini-3.5-transcribe" };
       const w1 = await sb.from("artefacts").update({ body: text, original_language: lang, metadata: md }).eq("id", a.id);
@@ -122,8 +132,9 @@ Deno.serve(async (req: Request) => {
   if (u.searchParams.get("dry") === "1" && id) {
     const { data: a } = await sb.from("artefacts").select("storage_path").eq("id", id).maybeSingle();
     const dl = await sb.storage.from("family").download(a.storage_path);
-    const text = await gemini(new Uint8Array(await dl.data.arrayBuffer()), "audio/webm");
-    return Response.json({ dry: true, lang: langOf(text), text });
+    const vocab = u.searchParams.get("vocab") === "0" ? [] : await familyNames(sb);
+    const text = await gemini(new Uint8Array(await dl.data.arrayBuffer()), "audio/webm", vocab);
+    return Response.json({ dry: true, lang: langOf(text), vocab: vocab.length, text });
   }
   let q = sb.from("artefacts").select("id,storage_path,body,original_language,metadata,contributor_id,contributor_user").eq("kind", "voice").not("storage_path", "is", null);
   q = id ? q.eq("id", id) : q.order("created_at", { ascending: true }).limit(100);
