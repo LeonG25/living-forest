@@ -417,7 +417,14 @@ are done, then PAID - Leon's plan). `1a38895`, `9c1f8bf`:
 - Leon's 3 recordings processed: ru/he/ru transcripts + 2 translations each.
 Probe `~/qc/qc-voicetext.js` (send intercepted, 0 edits written): EN/HE cards, 3 folded boxes each,
 2 edits -> bar "Send 2 changes to the keeper", payload voice_text en/he in_review, toast, 0 errors.
-NOT TESTED: the Review approval path for voice_text (would change Leon's data) - Leon to try.
+LEON TESTED the approval path (2026-10-18 01:27): it WORKS (edit -> send -> approve -> body replaced ->
+machine translations redone). He saw his correction "undone": proven a STALE PAGE - the text he saw was
+word-for-word the first machine transcript, while Review's card showed the DB already held his first
+correction. Cause: Back restores the browser's kept copy. Fixed `f4ac386`: lf-voice v3 reloads a page
+restored from that cache (pageshow persisted), unless it holds unsent edits.
+Review `f9efc5c`: a voice_text card shows WAS = the old text ([LANG] prefix) instead of "adding - no
+previous value", and no longer shows the current text as a big quote under NOW (it read as the new text).
+Probe `~/qc/qc-reviewvt.js` (fake pending edit fed to the page, nothing in the DB): WAS row correct.
 NOT YET: people recognised from the transcript (Leon's rule) - next.
 Detection can leave en/ru/he (no per-language probabilities returned): plan = if the detected
 language is outside the three, mark the transcript uncertain for the keeper instead of guessing.
