@@ -425,6 +425,12 @@ restored from that cache (pageshow persisted), unless it holds unsent edits.
 Review `f9efc5c`: a voice_text card shows WAS = the old text ([LANG] prefix) instead of "adding - no
 previous value", and no longer shows the current text as a big quote under NOW (it read as the new text).
 Probe `~/qc/qc-reviewvt.js` (fake pending edit fed to the page, nothing in the DB): WAS row correct.
+FAMILY NAMES AS VOCABULARY `1c8bd18` (transcribe v7, Leon 2026-10-18: "Ионатан" not recognised): every
+transcription sends Gemini custom_vocabulary = all published called/given/family name words in all
+languages (418 on 2026-10-18; capped at 1000; Google advises <=100 for best results - watch quality as it
+grows). Dry test on d512cd69: without -> "И на фотографии он, э-э"; with -> "и на фотографию Ионатана"
+(also "Доброй ночи" fixed). d512cd69 redone for real (no human edits existed). Hebrew translation of it
+still rough ("קשה" for the cat Кеша, "שעה וקשלושים") - left for the family to edit.
 NOT YET: people recognised from the transcript (Leon's rule) - next.
 Detection can leave en/ru/he (no per-language probabilities returned): plan = if the detected
 language is outside the three, mark the transcript uncertain for the keeper instead of guessing.
