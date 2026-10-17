@@ -227,6 +227,7 @@
   .whospeaks{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:6px 2px 0; font-size:13px; opacity:.9; }
   .whospeaks select{ font:inherit; font-size:14px; padding:7px 10px; border-radius:10px; background:rgba(255,255,255,.06); color:inherit; border:1px solid rgba(201,162,255,.35); max-width:100%; }
   .whospeaks option{ color:#111; }
+  .recnote{ width:100%; text-align:center; font-size:13px; line-height:1.45; opacity:.8; margin:4px 0 6px; }   /* Leon 2026-10-18: names are often misheard */
   .rectime{ display:flex; justify-content:center; gap:22px; font-size:14px; opacity:.85; margin:6px 0 2px; font-variant-numeric:tabular-nums; }
   .rectime b{ font-weight:600; }
   .rectime .low{ color:#f0b48a; }
@@ -327,7 +328,7 @@
       voiTitle:'Record a voice',
       aboutChip:(a,b)=>'This is <b>'+a+'’s</b> voice, telling about <b>'+b+'</b>',
       promptK:"You don't have to perform", promptPn:'Not the right question? <b id="another">Ask me another →</b>',
-      recIdle:'<b>Just talk to me.</b><br>Tap when you’re ready. One recording can be up to 15 minutes.', recElapsed:'Recorded', whoSpeaks:'Whose voice is this?', voiceOf:a=>'This is <b>'+a+'</b>’s voice', whoSpeaksQ:'Whose voice will this be?', meTag:'me', recLeft:'Left', recMaxHit:'That’s the 15-minute limit, so the recording stopped. You can send it, then record a second part.',
+      recIdle:'<b>Just talk to me.</b><br>Tap when you’re ready. One recording can be up to 15 minutes.', recElapsed:'Recorded', recNote:'The text is written automatically and translated into the other languages. Names are often misheard, so please check them in all three versions later.', whoSpeaks:'Whose voice is this?', voiceOf:a=>'This is <b>'+a+'</b>’s voice', whoSpeaksQ:'Whose voice will this be?', meTag:'me', recLeft:'Left', recMaxHit:'That’s the 15-minute limit, so the recording stopped. You can send it, then record a second part.',
       recLive:'<b>Listening.</b><br>Tap again when you’re done.', recPerm:'Allow the microphone to begin — nothing is kept until you send it.',
       recDone:'<b>That’s it.</b><br>Listen back, send it, or throw it away.',
       recSending:'Sending your voice to the keeper…',
@@ -376,7 +377,7 @@
       voiTitle:'Записать голос',
       aboutChip:(a,b)=>'Это голос <b>'+a+'</b>, рассказ о <b>'+b+'</b>',
       promptK:'Не нужно ничего исполнять', promptPn:'Не тот вопрос? <b id="another">Спросите другой →</b>',
-      recIdle:'<b>Просто говорите со мной.</b><br>Нажмите, когда будете готовы. Одна запись — до 15 минут.', recElapsed:'Записано', whoSpeaks:'Чей это голос?', voiceOf:a=>'Это голос: <b>'+a+'</b>', whoSpeaksQ:'Чей голос будет записан?', meTag:'я', recLeft:'Осталось', recMaxHit:'Это предел в 15 минут, поэтому запись остановлена. Её можно отправить, а потом записать продолжение.',
+      recIdle:'<b>Просто говорите со мной.</b><br>Нажмите, когда будете готовы. Одна запись — до 15 минут.', recElapsed:'Записано', recNote:'Текст записывается автоматически и переводится на другие языки. Имена часто распознаются неверно — пожалуйста, потом проверьте их во всех трёх версиях.', whoSpeaks:'Чей это голос?', voiceOf:a=>'Это голос: <b>'+a+'</b>', whoSpeaksQ:'Чей голос будет записан?', meTag:'я', recLeft:'Осталось', recMaxHit:'Это предел в 15 минут, поэтому запись остановлена. Её можно отправить, а потом записать продолжение.',
       recLive:'<b>Слушаю.</b><br>Нажмите снова, когда закончите.', recPerm:'Разрешите микрофон, чтобы начать — ничего не сохранится, пока вы не отправите.',
       recDone:'<b>Вот и всё.</b><br>Прослушайте, отправьте или сотрите.',
       recSending:'Отправляем ваш голос хранителю…',
@@ -425,7 +426,7 @@
       voiTitle:'להקליט קול',
       aboutChip:(a,b)=>'זהו קולה של <b>'+a+'</b>, מספר על <b>'+b+'</b>',
       promptK:'אין צורך להופיע', promptPn:'לא השאלה הנכונה? <b id="another">בקשו אחרת →</b>',
-      recIdle:'<b>פשוט דברו אליי.</b><br>הקישו כשאתם מוכנים. הקלטה אחת — עד 15 דקות.', recElapsed:'הוקלט', whoSpeaks:'של מי הקול?', voiceOf:a=>'זה הקול של <b>'+a+'</b>', whoSpeaksQ:'של מי הקול שיוקלט?', meTag:'אני', recLeft:'נותרו', recMaxHit:'הגעתם למגבלה של 15 דקות, ולכן ההקלטה נעצרה. אפשר לשלוח אותה, ואז להקליט המשך.',
+      recIdle:'<b>פשוט דברו אליי.</b><br>הקישו כשאתם מוכנים. הקלטה אחת — עד 15 דקות.', recElapsed:'הוקלט', recNote:'הטקסט נכתב אוטומטית ומתורגם לשפות האחרות. שמות מזוהים לעיתים קרובות בטעות — אנא בדקו אותם אחר כך בכל שלוש הגרסאות.', whoSpeaks:'של מי הקול?', voiceOf:a=>'זה הקול של <b>'+a+'</b>', whoSpeaksQ:'של מי הקול שיוקלט?', meTag:'אני', recLeft:'נותרו', recMaxHit:'הגעתם למגבלה של 15 דקות, ולכן ההקלטה נעצרה. אפשר לשלוח אותה, ואז להקליט המשך.',
       recLive:'<b>מקשיב.</b><br>הקישו שוב כשסיימתם.', recPerm:'אשרו את המיקרופון כדי להתחיל — דבר אינו נשמר עד שתשלחו.',
       recDone:'<b>זהו.</b><br>הקשיבו, שלחו, או השליכו.',
       recSending:'שולח את הקול שלכם לשומר…',
@@ -605,7 +606,7 @@
     if(r.status==='recorded'){
       const W=state.recMode==='words';
       recUI='<div class="recbtn"><div class="core"></div></div>'
-        +(W?'':'<audio controls src="'+esc(r.url)+'"></audio><div class="rl">'+t('recDone')+'</div>'+(r.maxHit?'<div class="recmax">'+esc(t('recMaxHit'))+'</div>':''))
+        +(W?'':'<audio controls src="'+esc(r.url)+'"></audio><div class="rl">'+t('recDone')+'</div><div class="recnote">'+esc(t('recNote'))+'</div>'+(r.maxHit?'<div class="recmax">'+esc(t('recMaxHit'))+'</div>':''))
         +(W?'<div class="txwrap"><div class="txk">'+esc(r.txOk===false?t('txNone'):t('txEdit'))+'</div>'+txLangChips()
           +(r.punct?'<div class="txpunct">'+esc(r.punct==='busy'?t('punctBusy'):t('punctDone'))+'</div>':'')
           +'<textarea id="txEdit" dir="auto" rows="5" placeholder="'+esc(t('txPh'))+'">'+esc(r.text||'')+'</textarea>'+txDiag()+'</div>':'')

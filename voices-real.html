@@ -30,6 +30,7 @@
   [dir="rtl"] h1{ font-family:'Frank Ruhl Libre','Newsreader',serif; }
   .sub{ font-size:14px; color:var(--muted); margin-bottom:16px; line-height:1.45; }
   .search{ width:100%; padding:11px 14px; border-radius:12px; border:1px solid var(--hair); background:var(--panel); color:var(--cream); font:inherit; font-size:15px; outline:none; margin-bottom:14px; }
+  .namenote{ font-size:13px; line-height:1.45; color:#f0c98a; background:rgba(243,205,132,.08); border:1px solid rgba(243,205,132,.25); border-radius:12px; padding:9px 12px; margin:-4px 0 16px; }
   .count{ font-size:12.5px; color:var(--muted); margin:0 2px 10px; }
 </style>
 </head>
@@ -38,6 +39,7 @@
   <div class="kick" id="kick"></div>
   <h1 id="title"></h1>
   <div class="sub" id="sub"></div>
+  <div class="namenote" id="namenote"></div>
   <input class="search" id="q" autocomplete="off">
   <div class="count" id="count"></div>
   <div id="list"></div>
@@ -47,12 +49,12 @@
   const sb=window.supabase.createClient('https://oabcdrktuikifbormjip.supabase.co','sb_publishable_MnuwKTP5JaUy-P8-bKWsgA_f98esOXC');
   LFDB.install(sb,'voices-real');
   const lang=(function(){ try{ const l=localStorage.getItem('lf_lang'); return ['en','ru','he'].includes(l)?l:'en'; }catch(e){ return 'en'; } })();
-  const T={ en:{kick:'The family',title:'Voices',sub:'Every story told aloud, newest first. Tap to listen.',search:'Filter by a name',count:n=>n===1?'1 recording':n+' recordings'},
-            ru:{kick:'Семья',title:'Голоса',sub:'Все рассказы, записанные голосом, — сначала новые. Нажмите, чтобы послушать.',search:'Фильтр по имени',count:n=>'Записей: '+n},
-            he:{kick:'המשפחה',title:'קולות',sub:'כל הסיפורים שסופרו בקול, מהחדש לישן. הקישו כדי להאזין.',search:'סינון לפי שם',count:n=>n===1?'הקלטה אחת':n+' הקלטות'} }[lang];
+  const T={ en:{kick:'The family',title:'Voices',sub:'Every story told aloud, newest first. Tap to listen.',namenote:'Texts are written and translated automatically. Names are often misheard: please check names in every language and correct them.',search:'Filter by a name',count:n=>n===1?'1 recording':n+' recordings'},
+            ru:{kick:'Семья',title:'Голоса',sub:'Все рассказы, записанные голосом, — сначала новые. Нажмите, чтобы послушать.',namenote:'Тексты записываются и переводятся автоматически. Имена часто распознаются неверно: пожалуйста, проверяйте имена на каждом языке и исправляйте их.',search:'Фильтр по имени',count:n=>'Записей: '+n},
+            he:{kick:'המשפחה',title:'קולות',sub:'כל הסיפורים שסופרו בקול, מהחדש לישן. הקישו כדי להאזין.',namenote:'הטקסטים נכתבים ומתורגמים אוטומטית. שמות מזוהים לעיתים קרובות בטעות: אנא בדקו את השמות בכל שפה ותקנו אותם.',search:'סינון לפי שם',count:n=>n===1?'הקלטה אחת':n+' הקלטות'} }[lang];
   const $=s=>document.querySelector(s);
   document.documentElement.lang=lang; $('#root').dir=lang==='he'?'rtl':'ltr';
-  $('#kick').textContent=T.kick; $('#title').textContent=T.title; $('#sub').textContent=T.sub; $('#q').placeholder=T.search;
+  $('#kick').textContent=T.kick; $('#title').textContent=T.title; $('#sub').textContent=T.sub; $('#namenote').textContent=T.namenote; $('#q').placeholder=T.search;
   let all=[];
   const names=v=>[v.tellerId].concat(v.subjectIds).map(id=>(window.LFLabel&&LFLabel.of(id,lang))||'').join(' ').toLowerCase();
   function draw(){ const q=($('#q').value||'').trim().toLowerCase(); const vs=q?all.filter(v=>names(v).includes(q)):all;
