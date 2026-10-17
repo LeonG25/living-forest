@@ -373,8 +373,16 @@ the keeper's computer, a home computer, or the upgrade.
 API: POST .../accounts/{id}/ai/run/@cf/openai/whisper-large-v3-turbo, audio = base64 string (or
 {body,contentType}), optional language, vad_filter, initial_prompt; returns text, segments, vtt,
 transcription_info. Supported container formats are NOT documented -> test webm first.
-Setup in progress: Leon creates a Cloudflare account -> Account ID + API token (Workers AI) ->
-Supabase Edge Function secrets CF_ACCOUNT_ID, CF_API_TOKEN.
+SETUP DONE 2026-10-18 00:28: Leon's Cloudflare account; Supabase secrets CF_ACCOUNT_ID, CF_API_TOKEN.
+FIRST TEST - Edge Function `transcribe` (TEST STAGE, writes nothing; ?id=&dry=1&lang=; guard
+x-notify-secret): phone webm ACCEPTED; 37 s took 5.7 s.
+ - 32a5f7c3 (37 s): ru 0.998, very good text, BUT a hallucinated tail "Субтитры создавал DimaTorzok"
+   (classic Whisper end-of-silence invention) -> needs a filter / hallucination_silence_threshold.
+ - 2a57c012 (7 s): ru 0.995, perfect.
+ - 570778c2 (11 s): detected "sl" 0.66 -> nonsense; forced he -> "תודה רבה" x4 (hallucination),
+   forced ru / en -> nonsense. The recording itself seems unintelligible - asked Leon what he said.
+Detection can leave en/ru/he (no per-language probabilities returned): plan = if the detected
+language is outside the three, mark the transcript uncertain for the keeper instead of guessing.
 
 WHISPER TEST ON THE 2 GB VPS (2026-10-17 ~23:45 UTC, Saturday, no trading) - `~/whisper/wtest2.py`
 (guard: stops itself if MemAvailable < 250 MB), Leon's 3 real recordings in ~/whisper/samples:
