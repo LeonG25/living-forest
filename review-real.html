@@ -721,7 +721,7 @@
       const vq=(md.prompt&&!/^\s*[\u2014,-]/.test(md.prompt))?('\u201c'+md.prompt+'\u201d'):'';
       items.memories.push({ kind:'aedit', id:e.id, group:'memories', artefactId:e.artefact_id, voiceDel:vdel, audio:vdel?(ea.storage_path||e.old_value||''):'',
         field:e.field, lang:e.lang, value:vdel?'':(e.field==='voice_text'?('['+String(e.lang||'').toUpperCase()+'] '+(e.new_value||'')):e.new_value), oldValue:e.old_value,
-        which: vdel ? vq : words ? ('\u201c'+words+(words.length>=90?'\u2026':'')+'\u201d'+(ww?(' \u00b7 '+ww):'')) : (ww||''),
+        which: vdel ? vq : e.field==='voice_text' ? '' : words ? ('\u201c'+words+(words.length>=90?'\u2026':'')+'\u201d'+(ww?(' \u00b7 '+ww):'')) : (ww||''),
         thumb:(ea&&ea.storage_path)||'',
         suggester:accountName(e.created_by), created_at:e.created_at });
     });
@@ -898,6 +898,11 @@
        IS the value; what it will have is nothing. */
     if(it.kind==='remreq'||it.kind==='clearreq')
       return `<div class="wasrow"><span class="wastag">${esc(L.wasTag)}</span><span class="wasval">${esc(valText(it))}</span><span class="arrow">${arrowCh()}</span></div>`;
+    /* the text of a recording: WAS is the text the person edited from (it rides on the edit itself) -
+       it showed "adding - no previous value" although the old text was there (Leon, 2026-10-18) */
+    if(it.kind==='aedit' && it.field==='voice_text'){
+      return it.oldValue ? `<div class="wasrow"><span class="wastag">${esc(L.wasTag)}</span><span class="wasval" dir="auto">[${esc(String(it.lang||'').toUpperCase())}] ${esc(it.oldValue)}</span><span class="arrow">${arrowCh()}</span></div>`
+                         : `<div class="wasrow"><span class="wastag">${esc(L.wasTag)}</span><span class="wasnone">${esc(L.noPrev)}</span></div>`; }
     if(o.kind==='new')  return `<div class="newmark">${IC.leaf} ${esc(o.why==='person'?L.newPerson:L.newMemory)}</div>`;
     if(o.kind==='none') return `<div class="wasrow"><span class="wastag">${esc(L.wasTag)}</span><span class="wasnone">${esc(L.noPrev)}</span></div>`;
     return `<div class="wasrow"><span class="wastag">${esc(L.wasTag)}</span><span class="wasval">${esc(o.text)}</span><span class="arrow">${arrowCh()}</span></div>`;
