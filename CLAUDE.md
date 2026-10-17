@@ -359,6 +359,19 @@ TRANSCRIPTION RULES (Leon, 2026-10-17) - build to these:
 - The transcript is translated automatically into the other app languages; anyone may edit the
   transcript and the translations (via review, like other text).
 - Voices in games: LATER (Leon).
+TRANSCRIPTION ENGINE DECIDED (Leon, 2026-10-17 12:20): Cloudflare Workers AI
+@cf/openai/whisper-large-v3-turbo (open model, hosted; ~$0.0005/audio min, free daily allowance).
+Leon: external providers are fine, BUT the app must not break when they fail, and the keeper AND
+the user must be notified. Ruled out: Claude API (no audio input - verified in docs), GitHub Actions
+(terms: develop/test only, not "part of a serverless application"), VPS (2 GB, guard tripped),
+server upgrade (Leon: last option). Fallbacks if Cloudflare disappoints: same model in-browser on
+the keeper's computer, a home computer, or the upgrade.
+API: POST .../accounts/{id}/ai/run/@cf/openai/whisper-large-v3-turbo, audio = base64 string (or
+{body,contentType}), optional language, vad_filter, initial_prompt; returns text, segments, vtt,
+transcription_info. Supported container formats are NOT documented -> test webm first.
+Setup in progress: Leon creates a Cloudflare account -> Account ID + API token (Workers AI) ->
+Supabase Edge Function secrets CF_ACCOUNT_ID, CF_API_TOKEN.
+
 WHISPER TEST ON THE 2 GB VPS (2026-10-17 ~23:45 UTC, Saturday, no trading) - `~/whisper/wtest2.py`
 (guard: stops itself if MemAvailable < 250 MB), Leon's 3 real recordings in ~/whisper/samples:
 "small" int8: load 4 s / 600 MB; recording 32a5f7c3 (37 s, Russian, detected 0.98) transcribed in
