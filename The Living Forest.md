@@ -381,6 +381,12 @@ x-notify-secret): phone webm ACCEPTED; 37 s took 5.7 s.
  - 2a57c012 (7 s): ru 0.995, perfect.
  - 570778c2 (11 s): detected "sl" 0.66 -> nonsense; forced he -> "תודה רבה" x4 (hallucination),
    forced ru / en -> nonsense. The recording itself seems unintelligible - asked Leon what he said.
+570778c2 is Leon's HEBREW: "אז מה נשמע? הנה, אני מסתכל פה על כל מיני תמונות ישנות וההקלטה הזאתי זאת
+בדיקה." Turbo, forced he, vad off: "אז פנשמה, ינענימי שתכר פל כולי נתפנות ישנות ועקלט הזאת זה תקט."
+(avg_logprob -1.23 = low confidence); with a Hebrew initial_prompt -> "תודה רבה" x3; auto -> sl;
+@cf/openai/whisper (older) -> Cyrillic gibberish. => CLOUDFLARE: RUSSIAN GOOD, HEBREW NOT USABLE.
+avg_logprob is a usable "uncertain" signal. Options put to Leon: Groq large-v3, ivrit.ai on RunPod,
+Google Gemini (audio in), or Hebrew marked uncertain. Suggested: test Gemini first.
 Detection can leave en/ru/he (no per-language probabilities returned): plan = if the detected
 language is outside the three, mark the transcript uncertain for the keeper instead of guessing.
 
