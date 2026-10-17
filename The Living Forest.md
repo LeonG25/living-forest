@@ -387,6 +387,14 @@ x-notify-secret): phone webm ACCEPTED; 37 s took 5.7 s.
 @cf/openai/whisper (older) -> Cyrillic gibberish. => CLOUDFLARE: RUSSIAN GOOD, HEBREW NOT USABLE.
 avg_logprob is a usable "uncertain" signal. Options put to Leon: Groq large-v3, ivrit.ai on RunPod,
 Google Gemini (audio in), or Hebrew marked uncertain. Suggested: test Gemini first.
+GEMINI TEST (Leon chose Gemini, FREE tier for the test only - Google may use free-tier content;
+only Leon's own 3 test recordings sent). Secret GEMINI_API_KEY. Model gemini-3.5-transcribe via
+POST /v1beta/interactions, inline audio {type:audio, data:base64, mime_type:audio/webm} works;
+transcription_config.language_codes = ["he-IL","ru-RU","en-US"] restricts detection (fixes "sl").
+Results: ru 37 s very good, no hallucination, "Claude AI" right, last word cut ("Зоя и");
+ru 7 s perfect; he 11 s: "הזמן שמה אין אני מסתכל בכל מיני תמונות ישנות ו ההקלטה הזאת זאת בדיקה." (2nd half
+right, opening wrong) - far better than Cloudflare. 3-4 s each. Recommended: Gemini for all three
+languages; switch to PAID tier (~$0.005/min, content not used by Google) before family recordings.
 Detection can leave en/ru/he (no per-language probabilities returned): plan = if the detected
 language is outside the three, mark the transcript uncertain for the keeper instead of guessing.
 
