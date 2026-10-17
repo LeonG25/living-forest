@@ -108,6 +108,10 @@
     return true; }
   var VTEXT={};   /* id|lang -> the text as loaded, the "old value" of an edit */
   window.addEventListener('beforeunload',function(e){ if(stagedCount()){ e.preventDefault(); e.returnValue=''; } });
+  /* BACK SHOWED STALE TEXT (Leon, 2026-10-18): returning with the Back button restores the browser's
+     kept copy of the page, so an approved correction looked undone. A restored page reloads itself -
+     unless it holds unsent edits, which a reload would lose. */
+  window.addEventListener('pageshow',function(e){ if(e.persisted && !stagedCount() && document.querySelector('.lfv')) location.reload(); });
   function css(){ if(document.getElementById('lfVoiceCss')) return; var c=document.createElement('style'); c.id='lfVoiceCss';
     c.textContent=textCss()+'.lfv{display:flex;flex-direction:column;gap:8px;padding:13px 14px;border-radius:14px;background:rgba(201,162,255,.06);border:1px solid rgba(201,162,255,.22);margin-bottom:10px}'
       +'.lfv-top{display:flex;align-items:center;gap:12px}'
