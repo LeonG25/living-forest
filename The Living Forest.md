@@ -1395,6 +1395,16 @@ assuming the shell is gone.
 
 ## 4 · PARKED — decided, not now (do not build unasked)
 
+- **Transcription cleanup (Leon, 2026-10-18, "leave for now, remove later"):**
+  - Remove Supabase function secrets `CF_ACCOUNT_ID` and `CF_API_TOKEN` (Cloudflare test, unused since
+    Gemini was chosen). Leon revokes the token itself in Cloudflare (My Profile -> API Tokens).
+  - Decide on voice artefact `f6751dc8-0575-4285-9412-f49d711c9553` (6 Aug 23:43, published, NO audio,
+    no text - likely an unfinished early upload; not shown on Voices). Ask Leon before deleting.
+  - DONE 2026-10-18: VPS `~/whisper/` deleted (946 MB: Whisper install, model, test scripts, copies of
+    the 3 test recordings). The 3 test recordings themselves were already removed in the app via Review.
+- **Gemini paid tier:** Leon switches it on 2026-10-19 (free tier lets Google use the audio). Until then
+  only test recordings should be made.
+
 ### Small open items (Leon, 2026-10-13) — PARKED
 
 Parked at Leon's word "for later" while the session turns to games:
